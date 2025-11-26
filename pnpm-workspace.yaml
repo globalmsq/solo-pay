@@ -1,0 +1,14 @@
+packages:
+  - contracts
+  - packages/*
+  - apps/*
+  - subgraph
+
+onlyBuiltDependencies:
+  - bufferutil
+  - esbuild
+  - keccak
+  - protobufjs
+  - secp256k1
+  - unrs-resolver
+  - utf-8-validate

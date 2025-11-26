@@ -1,0 +1,135 @@
+"use client";
+
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useChainId } from "wagmi";
+import { ProductCard } from "@/components/ProductCard";
+import { PaymentHistory } from "@/components/PaymentHistory";
+import { DEFAULT_TOKEN_SYMBOL, TOKENS } from "@/lib/wagmi";
+
+// Sample products for demo
+const PRODUCTS = [
+  {
+    id: "product-1",
+    name: "Digital Art Pack",
+    description: "Collection of 10 unique digital artworks",
+    price: "10",
+    image: "/images/art.png",
+  },
+  {
+    id: "product-2",
+    name: "Premium Membership",
+    description: "1 month access to premium features",
+    price: "50",
+    image: "/images/membership.png",
+  },
+  {
+    id: "product-3",
+    name: "Game Credits",
+    description: "1000 in-game credits for your account",
+    price: "25",
+    image: "/images/credits.png",
+  },
+  {
+    id: "product-4",
+    name: "NFT Mint Pass",
+    description: "Whitelist access to upcoming NFT drop",
+    price: "100",
+    image: "/images/nft.png",
+  },
+];
+
+export default function Home() {
+  const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const tokenSymbol = DEFAULT_TOKEN_SYMBOL[chainId] || "TOKEN";
+  const tokenAddress = TOKENS[chainId]?.[tokenSymbol];
+  const isLocalhost = chainId === 31337;
+
+  return (
+    <main className="min-h-screen p-8">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-12">
+        <div>
+          <h1 className="text-3xl font-bold text-primary-600">MSQ Pay Demo</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Blockchain Payment Gateway - {isLocalhost ? "Localhost (Hardhat)" : "Polygon Amoy Testnet"}
+          </p>
+        </div>
+        <ConnectButton />
+      </header>
+
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto">
+        {/* Info banner */}
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
+          <h2 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+            How it works
+          </h2>
+          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+            <li>
+              • <strong>Direct Payment:</strong> You pay gas fees with {isLocalhost ? "ETH" : "MATIC"}
+            </li>
+            <li>
+              • <strong>Gasless Payment:</strong> Service covers gas - just sign!
+            </li>
+            <li>
+              • <strong>Token:</strong> {tokenSymbol} ({isLocalhost ? "Test Token on Localhost" : "Test Token on Polygon Amoy"})
+            </li>
+          </ul>
+        </div>
+
+        {/* Products grid */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-6">Products</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PRODUCTS.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                disabled={!isConnected}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Payment history */}
+        {isConnected && (
+          <section>
+            <h2 className="text-2xl font-semibold mb-6">Your Payment History</h2>
+            <PaymentHistory />
+          </section>
+        )}
+
+        {/* Not connected message */}
+        {!isConnected && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Connect your wallet to start making payments
+            </p>
+            <ConnectButton />
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
+        <p>MSQ Pay Demo - {isLocalhost ? "Localhost (Hardhat)" : "Polygon Amoy Testnet"}</p>
+        <p className="mt-1">
+          {tokenSymbol} Token:{" "}
+          {isLocalhost ? (
+            <span className="text-primary-600">{tokenAddress}</span>
+          ) : (
+            <a
+              href={`https://amoy.polygonscan.com/address/${tokenAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:underline"
+            >
+              {tokenAddress?.slice(0, 6)}...{tokenAddress?.slice(-4)}
+            </a>
+          )}
+        </p>
+      </footer>
+    </main>
+  );
+}

@@ -1,0 +1,32 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: PaymentGateway
+    network: polygon-amoy
+    source:
+      # Address will be updated after deployment
+      address: "0x0000000000000000000000000000000000000000"
+      abi: PaymentGateway
+      # Start block will be updated after deployment
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Payment
+        - MerchantStats
+        - DailyVolume
+        - TokenStats
+        - GlobalStats
+      abis:
+        - name: PaymentGateway
+          file: ./abis/PaymentGateway.json
+      eventHandlers:
+        - event: PaymentCompleted(indexed bytes32,indexed address,indexed address,address,uint256,uint256)
+          handler: handlePaymentCompleted
+      file: ./src/payment-gateway.ts

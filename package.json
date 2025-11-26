@@ -1,0 +1,26 @@
+{
+  "name": "msq-pay-onchain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-Service Blockchain Payment Gateway",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean"
+  },
+  "keywords": [
+    "blockchain",
+    "payment",
+    "erc20",
+    "polygon",
+    "meta-transaction"
+  ],
+  "author": "MSQ Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@10.23.0"
+}

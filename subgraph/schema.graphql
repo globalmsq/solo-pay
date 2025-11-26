@@ -1,0 +1,98 @@
+# Payment entity - represents a completed payment
+type Payment @entity(immutable: true) {
+  "Unique identifier (paymentId as hex string)"
+  id: ID!
+
+  "Address of the payer"
+  payer: Bytes!
+
+  "Address of the merchant (recipient)"
+  merchant: Bytes!
+
+  "ERC20 token address used for payment"
+  token: Bytes!
+
+  "Payment amount in token's smallest unit"
+  amount: BigInt!
+
+  "Block timestamp when payment was processed"
+  timestamp: BigInt!
+
+  "Transaction hash"
+  transactionHash: Bytes!
+
+  "Block number"
+  blockNumber: BigInt!
+
+  "Gas mode: Direct (user paid gas) or MetaTx (gasless)"
+  gasMode: GasMode!
+}
+
+# Enum for gas payment mode
+enum GasMode {
+  Direct
+  MetaTx
+}
+
+# Merchant statistics - aggregated data per merchant
+type MerchantStats @entity {
+  "Merchant address (lowercase)"
+  id: ID!
+
+  "Total amount received across all payments"
+  totalReceived: BigInt!
+
+  "Number of payments received"
+  paymentCount: Int!
+
+  "Timestamp of the last payment received"
+  lastPaymentAt: BigInt
+}
+
+# Daily volume statistics
+type DailyVolume @entity {
+  "Date string (YYYY-MM-DD)"
+  id: ID!
+
+  "Unix timestamp of the start of the day"
+  date: BigInt!
+
+  "Total volume for the day"
+  volume: BigInt!
+
+  "Number of transactions for the day"
+  count: Int!
+}
+
+# Token statistics - aggregated data per token
+type TokenStats @entity {
+  "Token address (lowercase)"
+  id: ID!
+
+  "Token symbol (cached from first transaction)"
+  symbol: String
+
+  "Total volume transacted"
+  totalVolume: BigInt!
+
+  "Number of transactions"
+  transactionCount: Int!
+}
+
+# Global statistics
+type GlobalStats @entity {
+  "Singleton ID: 'global'"
+  id: ID!
+
+  "Total number of payments processed"
+  totalPayments: Int!
+
+  "Total volume across all tokens (note: mixed decimals)"
+  totalVolume: BigInt!
+
+  "Number of unique merchants"
+  uniqueMerchants: Int!
+
+  "Number of unique payers"
+  uniquePayers: Int!
+}
