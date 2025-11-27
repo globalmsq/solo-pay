@@ -1,9 +1,11 @@
 "use client";
 
+import { useState, useRef, useCallback } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId } from "wagmi";
 import { ProductCard } from "@/components/ProductCard";
-import { PaymentHistory } from "@/components/PaymentHistory";
+import { PaymentHistory, PaymentHistoryRef } from "@/components/PaymentHistory";
+import { Toast } from "@/components/Toast";
 import { DEFAULT_TOKEN_SYMBOL, TOKENS } from "@/lib/wagmi";
 
 // Sample products for demo
@@ -45,8 +47,32 @@ export default function Home() {
   const tokenAddress = TOKENS[chainId]?.[tokenSymbol];
   const isLocalhost = chainId === 31337;
 
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  // PaymentHistory ref for refresh
+  const paymentHistoryRef = useRef<PaymentHistoryRef>(null);
+
+  // Handle payment success
+  const handlePaymentSuccess = useCallback((txHash: string) => {
+    setToast({ message: "Payment successful!", type: "success" });
+    // Refresh payment history after a short delay to allow blockchain to update
+    setTimeout(() => {
+      paymentHistoryRef.current?.refresh();
+    }, 500);
+  }, []);
+
   return (
     <main className="min-h-screen p-8">
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       {/* Header */}
       <header className="flex justify-between items-center mb-12">
         <div>
@@ -87,6 +113,7 @@ export default function Home() {
                 key={product.id}
                 product={product}
                 disabled={!isConnected}
+                onPaymentSuccess={handlePaymentSuccess}
               />
             ))}
           </div>
@@ -96,7 +123,7 @@ export default function Home() {
         {isConnected && (
           <section>
             <h2 className="text-2xl font-semibold mb-6">Your Payment History</h2>
-            <PaymentHistory />
+            <PaymentHistory ref={paymentHistoryRef} />
           </section>
         )}
 

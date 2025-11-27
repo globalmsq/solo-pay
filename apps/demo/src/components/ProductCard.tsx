@@ -16,9 +16,10 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   disabled?: boolean;
+  onPaymentSuccess?: (txHash: string) => void;
 }
 
-export function ProductCard({ product, disabled }: ProductCardProps) {
+export function ProductCard({ product, disabled, onPaymentSuccess }: ProductCardProps) {
   const [showPayment, setShowPayment] = useState(false);
   const chainId = useChainId();
   const tokenSymbol = DEFAULT_TOKEN_SYMBOL[chainId] || "TOKEN";
@@ -63,6 +64,7 @@ export function ProductCard({ product, disabled }: ProductCardProps) {
         <PaymentModal
           product={product}
           onClose={() => setShowPayment(false)}
+          onSuccess={onPaymentSuccess}
         />
       )}
     </>

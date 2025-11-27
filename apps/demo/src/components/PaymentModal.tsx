@@ -61,6 +61,7 @@ interface Product {
 interface PaymentModalProps {
   product: Product;
   onClose: () => void;
+  onSuccess?: (txHash: string) => void;
 }
 
 type PaymentStatus =
@@ -77,7 +78,7 @@ type GasMode = "direct" | "gasless";
 // Demo merchant address
 const MERCHANT_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" as `0x${string}`;
 
-export function PaymentModal({ product, onClose }: PaymentModalProps) {
+export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
@@ -185,6 +186,14 @@ export function PaymentModal({ product, onClose }: PaymentModalProps) {
       await publicClient.waitForTransactionReceipt({ hash });
 
       setStatus("success");
+
+      // Call onSuccess callback and close modal after a short delay
+      if (onSuccess) {
+        onSuccess(hash);
+      }
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (err: any) {
       console.error("Payment error:", err);
       setError(err.message || "Payment failed");
