@@ -5,7 +5,7 @@
   "description": "MSQ Pay Onchain Subgraph for payment event indexing",
   "scripts": {
     "codegen": "graph codegen",
-    "build": "graph build",
+    "build": "graph codegen && graph build",
     "deploy": "graph deploy --studio msq-pay-polygon-amoy",
     "deploy:local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 msq-pay",
     "create:local": "graph create --node http://localhost:8020/ msq-pay",

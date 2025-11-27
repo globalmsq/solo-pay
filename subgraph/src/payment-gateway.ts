@@ -138,17 +138,12 @@ function updateGlobalStats(event: PaymentCompletedEvent): void {
 }
 
 /**
- * Get day ID string (YYYY-MM-DD format)
+ * Get day ID string (day number since epoch)
+ * AssemblyScript doesn't support JavaScript Date API
  */
 function getDayId(timestamp: BigInt): string {
-  let dayTimestamp = getDayStart(timestamp);
-  let date = new Date(dayTimestamp.toI64() * 1000);
-
-  let year = date.getUTCFullYear().toString();
-  let month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
-  let day = date.getUTCDate().toString().padStart(2, "0");
-
-  return year + "-" + month + "-" + day;
+  let dayNumber = timestamp.div(BigInt.fromI32(SECONDS_PER_DAY));
+  return "day-" + dayNumber.toString();
 }
 
 /**

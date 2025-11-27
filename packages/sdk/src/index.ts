@@ -12,7 +12,6 @@ export type {
   SignedForwardRequest,
   Payment,
   MerchantStats,
-  PaymentQuery,
   PaymentCallback,
   Unsubscribe,
 } from "./types";

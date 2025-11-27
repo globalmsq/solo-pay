@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useAccount, useWalletClient, usePublicClient, useChainId } from "wagmi";
-import { parseUnits, formatUnits, encodeFunctionData, keccak256, toHex } from "viem";
+import { parseUnits, formatUnits, keccak256, toHex } from "viem";
 import { getTokenForChain, getContractsForChain } from "@/lib/wagmi";
+import { DEMO_MERCHANT_ADDRESS } from "@/lib/constants";
 
 // Simplified ABI for demo
 const ERC20_ABI = [
@@ -75,8 +76,6 @@ type PaymentStatus =
 
 type GasMode = "direct" | "gasless";
 
-// Demo merchant address
-const MERCHANT_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" as `0x${string}`;
 
 export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps) {
   const { address } = useAccount();
@@ -88,8 +87,8 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [balance, setBalance] = useState<bigint>(0n);
-  const [allowance, setAllowance] = useState<bigint>(0n);
+  const [balance, setBalance] = useState<bigint>(BigInt(0));
+  const [allowance, setAllowance] = useState<bigint>(BigInt(0));
 
   const amount = parseUnits(product.price, 18);
   const token = getTokenForChain(chainId);
@@ -118,8 +117,8 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
           }),
         ]);
 
-        setBalance(bal);
-        setAllowance(allow);
+        setBalance(bal as bigint);
+        setAllowance(allow as bigint);
         setStatus(allow >= amount ? "approved" : "idle");
       } catch (err) {
         console.error("Error checking balance:", err);
@@ -177,7 +176,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
         address: contracts.gateway,
         abi: PAYMENT_GATEWAY_ABI,
         functionName: "pay",
-        args: [paymentId, token.address, amount, MERCHANT_ADDRESS],
+        args: [paymentId, token.address, amount, DEMO_MERCHANT_ADDRESS],
       });
 
       setTxHash(hash);

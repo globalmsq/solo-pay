@@ -115,18 +115,6 @@ export interface MerchantStats {
 }
 
 /**
- * Payment query parameters
- */
-export interface PaymentQuery {
-  merchant?: Address;
-  payer?: Address;
-  fromTimestamp?: bigint;
-  toTimestamp?: bigint;
-  first?: number;
-  skip?: number;
-}
-
-/**
  * Payment event callback
  */
 export type PaymentCallback = (payment: Payment) => void;

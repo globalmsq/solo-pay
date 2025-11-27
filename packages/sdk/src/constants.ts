@@ -17,9 +17,9 @@ export const POLYGON_AMOY = {
 } as const;
 
 /**
- * Localhost (Hardhat) chain configuration
+ * Localhost (Hardhat) chain configuration (internal use only)
  */
-export const LOCALHOST = {
+const LOCALHOST = {
   chainId: 31337,
   name: "Localhost",
   rpcUrl: "http://127.0.0.1:8545",

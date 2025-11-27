@@ -4,6 +4,8 @@ import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useAccount, usePublicClient, useChainId } from "wagmi";
 import { formatUnits, parseAbiItem } from "viem";
 import { getSubgraphUrl, getContractsForChain, getTokenForChain } from "@/lib/wagmi";
+import { RECENT_BLOCKS_SCAN_LIMIT, SUBGRAPH_QUERY_LIMIT } from "@/lib/constants";
+import { truncateAddress, truncateHash, formatTimestamp } from "@/lib/utils";
 
 interface Payment {
   id: string;
@@ -43,9 +45,11 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
     if (!address || !publicClient || !contracts) return;
 
     try {
-      // Only scan recent 100 blocks for performance
+      // Only scan recent blocks for performance
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > 100n ? currentBlock - 100n : 0n;
+      const fromBlock = currentBlock > BigInt(RECENT_BLOCKS_SCAN_LIMIT)
+        ? currentBlock - BigInt(RECENT_BLOCKS_SCAN_LIMIT)
+        : BigInt(0);
 
       const logs = await publicClient.getLogs({
         address: contracts.gateway,
@@ -66,7 +70,7 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
             payer: log.args.payer || "",
             merchant: log.args.merchant || "",
             token: log.args.token || "",
-            amount: (log.args.amount || 0n).toString(),
+            amount: (log.args.amount || BigInt(0)).toString(),
             timestamp: block.timestamp.toString(),
             transactionHash: log.transactionHash,
           };
@@ -95,7 +99,7 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
           where: { payer: $payer }
           orderBy: timestamp
           orderDirection: desc
-          first: 20
+          first: ${SUBGRAPH_QUERY_LIMIT}
         ) {
           id
           paymentId
@@ -156,19 +160,6 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
     }
   }, [address, chainId]);
 
-  const formatDate = (timestamp: string) => {
-    const date = new Date(parseInt(timestamp) * 1000);
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-  };
-
-  const truncateAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  const truncatePaymentId = (id: string) => {
-    return `${id.slice(0, 10)}...${id.slice(-8)}`;
-  };
-
   const getExplorerUrl = (txHash: string) => {
     if (chainId === 31337) {
       return null; // No explorer for localhost
@@ -182,7 +173,7 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
         <div>
           <h3 className="font-semibold">Recent Payments</h3>
           <p className="text-xs text-gray-500">
-            {subgraphUrl ? "From Subgraph" : "Recent 100 blocks"}
+            {subgraphUrl ? "From Subgraph" : `Recent ${RECENT_BLOCKS_SCAN_LIMIT} blocks`}
           </p>
         </div>
         <button
@@ -219,13 +210,13 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {formatDate(payment.timestamp)}
+                    {formatTimestamp(payment.timestamp)}
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <div>To: {truncateAddress(payment.merchant)}</div>
                   <div className="text-xs">
-                    Payment ID: {truncatePaymentId(payment.paymentId)}
+                    Payment ID: {truncateHash(payment.paymentId)}
                   </div>
                 </div>
                 {getExplorerUrl(payment.transactionHash) ? (

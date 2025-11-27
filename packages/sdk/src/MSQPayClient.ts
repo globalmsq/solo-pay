@@ -14,7 +14,6 @@ import type {
   MetaTxSignRequest,
   SignedForwardRequest,
   Payment,
-  PaymentQuery,
   PaymentCallback,
   Unsubscribe,
   ForwardRequest,
@@ -445,16 +444,6 @@ export class MSQPayClient {
     });
 
     return result as bigint;
-  }
-
-  /**
-   * Convert a payment ID string to bytes32
-   *
-   * @param paymentId Payment ID string
-   * @returns bytes32 representation
-   */
-  paymentIdToBytes32(paymentId: string): Hex {
-    return paymentIdToBytes32(paymentId);
   }
 
   /**

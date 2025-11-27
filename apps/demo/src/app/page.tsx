@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { PaymentHistory, PaymentHistoryRef } from "@/components/PaymentHistory";
 import { Toast } from "@/components/Toast";
 import { DEFAULT_TOKEN_SYMBOL, TOKENS } from "@/lib/wagmi";
+import { PAYMENT_HISTORY_REFRESH_DELAY } from "@/lib/constants";
 
 // Sample products for demo
 const PRODUCTS = [
@@ -59,7 +60,7 @@ export default function Home() {
     // Refresh payment history after a short delay to allow blockchain to update
     setTimeout(() => {
       paymentHistoryRef.current?.refresh();
-    }, 500);
+    }, PAYMENT_HISTORY_REFRESH_DELAY);
   }, []);
 
   return (

@@ -5,7 +5,9 @@ import { DEFAULT_META_TX_GAS, DEFAULT_META_TX_DEADLINE_SECONDS } from "./constan
 /**
  * EIP-712 type definitions for ForwardRequest
  */
-export const FORWARD_REQUEST_TYPES = {
+export const FORWARD_REQUEST_TYPES: {
+  ForwardRequest: Array<{ name: string; type: string }>;
+} = {
   ForwardRequest: [
     { name: "from", type: "address" },
     { name: "to", type: "address" },
@@ -15,7 +17,7 @@ export const FORWARD_REQUEST_TYPES = {
     { name: "deadline", type: "uint48" },
     { name: "data", type: "bytes" },
   ],
-} as const;
+};
 
 /**
  * Create EIP-712 domain for the forwarder
