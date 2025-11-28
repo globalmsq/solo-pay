@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-## MSQ Pay Onchain - Blockchain Payment Gateway
+## MSQPay - Blockchain Payment Gateway
 
 ### Document Information
 - **Version**: 1.0 (MVP)

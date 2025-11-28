@@ -1,4 +1,4 @@
-# MSQ Pay Onchain - Remaining Tasks
+# MSQPay Monorepo - Remaining Tasks
 
 Last Updated: 2025-11-27
 Status: Architecture Finalized
@@ -216,19 +216,19 @@ pnpm test
 ## Project Structure
 
 ```
-msq-pay-onchain/
+msqpay-monorepo/
 ├── contracts/           # Smart contracts (완료)
 ├── packages/
 │   ├── sdk/             # @globalmsq/msqpay (신규 개발)
 │   └── server/          # 결제서버 (신규 개발)
 ├── apps/
 │   └── demo/            # Demo App (수정 필요)
-├── docs/
-│   ├── prd.md           # PRD (업데이트 완료)
-│   ├── technical-spec.md # 기술 스펙 (업데이트 완료)
-│   └── architecture.md  # 아키텍처 (신규)
-└── claudedocs/
-    └── REMAINING_TASKS.md # 이 파일
+└── docs/
+    ├── prd.md              # PRD (업데이트 완료)
+    ├── technical-spec.md   # 기술 스펙 (업데이트 완료)
+    ├── architecture.md     # 아키텍처 (신규)
+    ├── implementation-plan.md # 구현 계획서 (신규)
+    └── REMAINING_TASKS.md  # 이 파일
 ```
 
 ---

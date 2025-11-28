@@ -1,4 +1,4 @@
-# MSQ Pay Onchain - 아키텍처 문서
+# MSQPay - 아키텍처 문서
 
 ## Document Information
 - **Version**: 1.0

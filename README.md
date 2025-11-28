@@ -1,27 +1,44 @@
-# MSQ Pay Onchain
+# MSQPay Monorepo
 
 Multi-Service Blockchain Payment Gateway - ERC-20 토큰 결제 게이트웨이
 
 ## Overview
 
-여러 서비스가 직접 통합할 수 있는 블록체인 결제 시스템입니다.
+여러 서비스가 통합할 수 있는 블록체인 결제 시스템입니다.
+
+### 핵심 원칙
+
+| 원칙 | 설명 |
+|------|------|
+| **Contract = Source of Truth** | 결제 완료 여부는 오직 스마트 컨트랙트만 신뢰 |
+| **Stateless MVP** | DB/Redis/이벤트 모니터링 없이 Contract 직접 조회 |
+| **동일 API 인터페이스** | MVP와 Production 모두 같은 API 형태 |
+| **서버 발급 paymentId** | 결제서버가 유일한 paymentId 생성자 |
+| **상점서버 ↔ 블록체인 분리** | 상점서버는 결제서버 API만 호출, 블록체인 접근 불가 |
 
 ### Features
 
 - **Direct Payment**: 사용자가 가스비를 직접 지불
-- **Gasless Payment**: Meta-transaction을 통한 가스비 대납
-- **TypeScript SDK**: 쉬운 통합을 위한 SDK 제공
-- **Subgraph**: 결제 이벤트 인덱싱 및 조회
+- **Gasless Payment**: Meta-transaction을 통한 가스비 대납 (OZ Defender Relay)
+- **TypeScript SDK**: 상점서버용 API 클라이언트 (`@globalmsq/msqpay`)
+- **결제서버**: paymentId 발급, Contract 상태 조회, Gasless Relay
 - **Demo App**: 테스트용 웹앱
+
+## System Architecture
+
+```
+프론트엔드 → 상점서버 → 결제서버 → Contract
+           (SDK)      (API)    (Source of Truth)
+```
 
 ## Project Structure
 
 ```
-msq-pay-onchain/
+msqpay-monorepo/
 ├── contracts/          # Smart Contracts (Hardhat)
 ├── packages/
-│   └── sdk/           # TypeScript SDK
-├── subgraph/          # The Graph Subgraph
+│   ├── sdk/           # TypeScript SDK (@globalmsq/msqpay)
+│   └── server/        # 결제서버 (Fastify)
 ├── apps/
 │   └── demo/          # Demo Web App (Next.js)
 └── docs/              # Documentation
@@ -47,12 +64,19 @@ pnpm build
 ### Development
 
 ```bash
-# Contracts
+# Terminal 1: Start Hardhat node
 cd contracts
-pnpm compile
-pnpm test
+npx hardhat node
 
-# Demo app
+# Terminal 2: Deploy contracts
+cd contracts
+pnpm deploy:local
+
+# Terminal 3: Start Payment Server
+cd packages/server
+pnpm dev
+
+# Terminal 4: Start Demo App
 cd apps/demo
 pnpm dev
 ```
@@ -77,89 +101,52 @@ ERC2771Forwarder: 0x...
 
 ## SDK Usage
 
-### Direct Payment
-
 ```typescript
-import { MSQPayClient } from '@msq/pay-sdk';
+import { MSQPayClient } from '@globalmsq/msqpay';
 
+// 초기화
 const client = new MSQPayClient({
-  chainId: 80002,
-  rpcUrl: 'https://rpc-amoy.polygon.technology',
-  gatewayAddress: '0x...',
-  forwarderAddress: '0x...',
+  environment: 'development',
+  apiKey: 'sk_test_abc123'
 });
 
-// Get transaction data
-const txData = client.getPaymentTxData({
-  paymentId: 'ORDER_123',
-  token: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-  amount: parseUnits('100', 18),
-  merchant: '0x...',
+// 결제 생성
+const payment = await client.createPayment({
+  orderId: 'order_123',
+  amount: '1000000000000000000',
+  token: '0xE4C...',
+  merchant: '0x...'
 });
 
-// Send via wallet
-await signer.sendTransaction(txData);
-```
+// 상태 조회
+const status = await client.getPaymentStatus(payment.paymentId);
 
-### Meta-Transaction (Gasless)
+// Gasless 데이터 요청
+const gaslessData = await client.getGaslessData(payment.paymentId, userAddress);
 
-```typescript
-// Get signature request
-const signRequest = await client.getMetaTxSignRequest(params, userAddress);
-
-// User signs
-const signature = await signer.signTypedData(
-  signRequest.domain,
-  signRequest.types,
-  signRequest.message
+// 서명 제출
+const result = await client.submitGaslessSignature(
+  payment.paymentId,
+  signature,
+  gaslessData.forwardRequest
 );
-
-// Submit to relay
-const txHash = await client.submitMetaTx({ request: signRequest.message, signature });
 ```
 
-## Deployment
+## Payment Server API
 
-### Contracts
-
-```bash
-cd contracts
-
-# Deploy to Polygon Amoy
-pnpm deploy:amoy
-
-# Verify on Polygonscan
-pnpm verify --network polygonAmoy <CONTRACT_ADDRESS>
-```
-
-### Subgraph
-
-```bash
-cd subgraph
-
-# Generate types
-pnpm codegen
-
-# Build
-pnpm build
-
-# Deploy to Subgraph Studio
-pnpm deploy
-```
-
-### Demo App
-
-```bash
-cd apps/demo
-pnpm build
-
-# Deploy to Vercel or any static hosting
-```
+| 엔드포인트 | 메서드 | 용도 |
+|-----------|--------|------|
+| `/payments/create` | POST | 결제 생성, paymentId 발급 |
+| `/payments/:id/status` | GET | 결제 상태 조회 (Contract 조회) |
+| `/payments/:id/gasless` | GET | Gasless 서명 데이터 조회 |
+| `/payments/:id/relay` | POST | Gasless 서명 제출 → Relay |
 
 ## Documentation
 
 - [PRD (요구사항)](./docs/prd.md)
 - [Technical Specification](./docs/technical-spec.md)
+- [Architecture](./docs/architecture.md)
+- [Implementation Plan](./docs/implementation-plan.md)
 
 ## Tech Stack
 
@@ -167,8 +154,9 @@ pnpm build
 |-----------|------------|
 | Smart Contract | Solidity 0.8.24, OpenZeppelin 5.x |
 | Contract Framework | Hardhat |
-| SDK | TypeScript, viem |
-| Subgraph | The Graph |
+| Payment Server | Node.js, Fastify |
+| SDK | TypeScript, axios |
+| Relay | OpenZeppelin Defender |
 | Demo App | Next.js 14, wagmi, RainbowKit |
 | Package Manager | pnpm |
 
