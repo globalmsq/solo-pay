@@ -11,12 +11,12 @@ server.register(cors, {
 });
 
 // Health check endpoint
-server.get('/health', async (request, reply) => {
+server.get('/health', async (_request, _reply) => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
 
 // Root endpoint
-server.get('/', async (request, reply) => {
+server.get('/', async (_request, _reply) => {
   return {
     service: 'MSQ Pay Server',
     version: '0.1.0',

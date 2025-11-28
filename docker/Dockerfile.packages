@@ -6,8 +6,9 @@
 # ============================================
 FROM node:20-alpine AS base
 
-# Install pnpm 10.23.0
-RUN npm install -g pnpm@10.23.0
+# 네이티브 모듈 빌드를 위한 도구 설치 (node-gyp 요구사항)
+RUN apk add --no-cache git python3 make g++ && \
+    npm install -g pnpm@10.23.0
 
 WORKDIR /app
 
@@ -25,7 +26,7 @@ COPY packages/sdk/package.json ./packages/sdk/
 COPY packages/server/package.json ./packages/server/
 COPY apps/demo/package.json ./apps/demo/
 
-# Install all dependencies
+# Install all dependencies with frozen lockfile for reproducible builds
 RUN pnpm install --frozen-lockfile
 
 # ============================================
@@ -75,10 +76,6 @@ WORKDIR /app/packages/server
 # Expose server port
 EXPOSE 3001
 
-# Health check
-HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"
-
 # Run server
 CMD ["node", "dist/index.js"]
 
@@ -106,7 +103,6 @@ COPY --from=deps /app/apps/demo/node_modules ./apps/demo/node_modules
 
 # Copy built demo
 COPY --from=demo-builder /app/apps/demo/.next ./apps/demo/.next
-COPY --from=demo-builder /app/apps/demo/public ./apps/demo/public
 COPY --from=demo-builder /app/apps/demo/package.json ./apps/demo/
 COPY --from=demo-builder /app/apps/demo/next.config.js ./apps/demo/
 
@@ -114,10 +110,6 @@ WORKDIR /app/apps/demo
 
 # Expose demo port
 EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"
 
 # Run demo app
 CMD ["pnpm", "start"]

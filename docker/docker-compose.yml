@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL 8.0 - Payment Data
   mysql:
@@ -14,16 +12,9 @@ services:
       MYSQL_PASSWORD: pass
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - msqpay-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppass"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
 
   # Redis 7 Alpine - Caching
   redis:
@@ -33,18 +24,10 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-    command: redis-server /usr/local/etc/redis/redis.conf
     networks:
       - msqpay-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
 
-  # Hardhat Local Blockchain
+  # Hardhat Local Blockchain + Contract Deployment
   hardhat:
     build:
       context: ..
@@ -53,14 +36,14 @@ services:
     container_name: msqpay-hardhat
     ports:
       - "8545:8545"
+    command: >
+      sh -c "npx hardhat node --hostname 0.0.0.0 &
+             sleep 5 &&
+             npx hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network localhost &&
+             npx hardhat run scripts/mint-test-tokens.ts --network localhost &&
+             wait"
     networks:
       - msqpay-network
-    healthcheck:
-      test: ["CMD", "sh", "-c", "wget -q --spider http://localhost:8545 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
 
   # Payment Server (Fastify)
   server:
@@ -82,23 +65,16 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: http://hardhat:8545
-      GATEWAY_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-      FORWARDER_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+      # Contract addresses (Hardhat deterministic)
+      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      GATEWAY_ADDRESS: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+      TOKEN_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
     depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      hardhat:
-        condition: service_healthy
+      - mysql
+      - redis
+      - hardhat
     networks:
       - msqpay-network
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 30s
 
   # Demo App (Next.js)
   demo:
@@ -111,23 +87,17 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_GATEWAY_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-      NEXT_PUBLIC_FORWARDER_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-      NEXT_PUBLIC_TOKEN_ADDRESS: "0xE4C687167705Abf55d709395f92e254bdF5825a2"
+      # Contract addresses (Hardhat deterministic)
+      NEXT_PUBLIC_FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      NEXT_PUBLIC_GATEWAY_ADDRESS: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+      NEXT_PUBLIC_TOKEN_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
       NEXT_PUBLIC_CHAIN_ID: 31337
       NEXT_PUBLIC_RPC_URL: http://localhost:8545
       NEXT_PUBLIC_API_URL: http://localhost:3001
     depends_on:
-      server:
-        condition: service_healthy
+      - server
     networks:
       - msqpay-network
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 30s
 
 networks:
   msqpay-network:

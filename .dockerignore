@@ -1,0 +1,55 @@
+# Node.js dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+**/dist
+.next
+**/.next
+
+# Git
+.git
+.gitignore
+
+# Coverage and testing
+coverage
+**/coverage
+
+# Build cache
+.turbo
+**/.turbo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation (not needed in Docker build)
+docs
+*.md
+!README.md
+
+# MoAI-ADK
+.moai
+.claude
+
+# Backup files
+.moai-backups
