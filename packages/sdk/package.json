@@ -49,6 +49,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mufin/msq-pay-onchain"
+    "url": "https://github.com/mufin/msqpay-monorepo"
   }
 }

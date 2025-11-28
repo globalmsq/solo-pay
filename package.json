@@ -1,8 +1,8 @@
 {
-  "name": "msq-pay-onchain",
+  "name": "msqpay-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Multi-Service Blockchain Payment Gateway",
+  "description": "MSQPay - Blockchain Payment Gateway Monorepo",
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
