@@ -93,7 +93,8 @@ packages/server/
 │   │   └── eip712.schema.ts       # EIP-712 타입 정의
 │   ├── types/
 │   │   ├── payment.types.ts       # Payment 인터페이스
-│   │   └── blockchain.types.ts    # 블록체인 타입
+│   │   ├── blockchain.types.ts    # 블록체인 타입
+│   │   └── error.types.ts         # 에러 타입 정의 (NEW)
 │   ├── config/
 │   │   └── environment.ts         # 환경 변수 관리
 │   └── server.ts                  # Fastify 서버 초기화
@@ -164,6 +165,190 @@ export async function createServer() {
 ```
 
 **REFACTOR**: 환경 변수 기반 설정, 로깅 개선
+
+#### Step 1.5: 에러 타입 정의 (Error Type Definitions)
+
+**목표**: Self-descriptive 에러 코드 시스템 구현
+
+**TypeScript 타입 정의 (src/types/error.types.ts)**:
+```typescript
+// Error Type Enum (에러 타입 분류)
+export enum ErrorType {
+  VALIDATION_ERROR = 'validation_error',
+  AUTHENTICATION_ERROR = 'authentication_error',
+  NOT_FOUND_ERROR = 'not_found_error',
+  STATE_ERROR = 'state_error',
+  EXPIRED_ERROR = 'expired_error',
+  RATE_LIMIT_ERROR = 'rate_limit_error',
+  SERVICE_UNAVAILABLE_ERROR = 'service_unavailable_error',
+  INTERNAL_ERROR = 'internal_error'
+}
+
+// Error Code Enum (Self-descriptive 에러 코드)
+export enum ErrorCode {
+  // Validation Errors (400)
+  PAYMENT_STORE_INVALID_ADDRESS = 'PAYMENT_STORE_INVALID_ADDRESS',
+  PAYMENT_TOKEN_INVALID_ADDRESS = 'PAYMENT_TOKEN_INVALID_ADDRESS',
+  PAYMENT_AMOUNT_INVALID_ZERO = 'PAYMENT_AMOUNT_INVALID_ZERO',
+
+  // Authentication Errors (401)
+  SIGNATURE_INVALID = 'SIGNATURE_INVALID',
+  SIGNATURE_SIGNER_MISMATCH = 'SIGNATURE_SIGNER_MISMATCH',
+
+  // Not Found Errors (404)
+  PAYMENT_NOT_FOUND = 'PAYMENT_NOT_FOUND',
+
+  // State Errors (400)
+  PAYMENT_ALREADY_PROCESSED = 'PAYMENT_ALREADY_PROCESSED',
+
+  // Expired Errors (410)
+  PAYMENT_EXPIRED = 'PAYMENT_EXPIRED',
+
+  // Rate Limit Errors (429)
+  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
+
+  // Service Unavailable Errors (503)
+  DATABASE_CONNECTION_FAILED = 'DATABASE_CONNECTION_FAILED',
+  REDIS_CONNECTION_FAILED = 'REDIS_CONNECTION_FAILED',
+  BLOCKCHAIN_RPC_ERROR = 'BLOCKCHAIN_RPC_ERROR',
+  DEFENDER_API_ERROR = 'DEFENDER_API_ERROR',
+  GASLESS_LIMIT_EXCEEDED = 'GASLESS_LIMIT_EXCEEDED',
+
+  // Internal Errors (500)
+  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
+}
+
+// Error Response Interface
+export interface ErrorResponse {
+  error: {
+    type: ErrorType;
+    code: ErrorCode;
+    message: string;
+    field?: string;
+    value?: any;
+    docs_url?: string;
+  };
+}
+
+// Error Class for structured error handling
+export class ApiError extends Error {
+  constructor(
+    public type: ErrorType,
+    public code: ErrorCode,
+    public message: string,
+    public httpStatus: number,
+    public field?: string,
+    public value?: any
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+
+  toJSON(): ErrorResponse {
+    return {
+      error: {
+        type: this.type,
+        code: this.code,
+        message: this.message,
+        field: this.field,
+        value: this.value,
+        docs_url: `https://docs.msqpay.io/errors/${this.code}`
+      }
+    };
+  }
+}
+
+// Error Factory Functions
+export const createValidationError = (
+  code: ErrorCode,
+  message: string,
+  field?: string,
+  value?: any
+): ApiError => {
+  return new ApiError(ErrorType.VALIDATION_ERROR, code, message, 400, field, value);
+};
+
+export const createAuthError = (code: ErrorCode, message: string): ApiError => {
+  return new ApiError(ErrorType.AUTHENTICATION_ERROR, code, message, 401);
+};
+
+export const createNotFoundError = (code: ErrorCode, message: string): ApiError => {
+  return new ApiError(ErrorType.NOT_FOUND_ERROR, code, message, 404);
+};
+
+export const createExpiredError = (code: ErrorCode, message: string): ApiError => {
+  return new ApiError(ErrorType.EXPIRED_ERROR, code, message, 410);
+};
+
+export const createServiceUnavailableError = (
+  code: ErrorCode,
+  message: string
+): ApiError => {
+  return new ApiError(ErrorType.SERVICE_UNAVAILABLE_ERROR, code, message, 503);
+};
+```
+
+**Global Error Handler (src/middleware/error-handler.ts)**:
+```typescript
+import { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
+import { ApiError, ErrorType, ErrorCode } from '../types/error.types';
+
+export async function globalErrorHandler(
+  error: Error | FastifyError | ApiError,
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  // ApiError (structured error)
+  if (error instanceof ApiError) {
+    return reply.status(error.httpStatus).send(error.toJSON());
+  }
+
+  // Zod Validation Error
+  if (error.name === 'ZodError') {
+    const zodError = error as any;
+    const firstIssue = zodError.issues[0];
+    const apiError = new ApiError(
+      ErrorType.VALIDATION_ERROR,
+      getErrorCodeFromField(firstIssue.path[0]),
+      firstIssue.message,
+      400,
+      firstIssue.path[0],
+      firstIssue.received
+    );
+    return reply.status(400).send(apiError.toJSON());
+  }
+
+  // Database Error
+  if (error.message.includes('ECONNREFUSED') || error.message.includes('Connection')) {
+    const dbError = new ApiError(
+      ErrorType.SERVICE_UNAVAILABLE_ERROR,
+      ErrorCode.DATABASE_CONNECTION_FAILED,
+      'Database connection failed',
+      503
+    );
+    return reply.status(503).send(dbError.toJSON());
+  }
+
+  // Default Internal Server Error
+  const internalError = new ApiError(
+    ErrorType.INTERNAL_ERROR,
+    ErrorCode.INTERNAL_SERVER_ERROR,
+    'Internal server error',
+    500
+  );
+  return reply.status(500).send(internalError.toJSON());
+}
+
+// Helper function to map field names to error codes
+function getErrorCodeFromField(field: string): ErrorCode {
+  const fieldMapping: Record<string, ErrorCode> = {
+    storeAddress: ErrorCode.PAYMENT_STORE_INVALID_ADDRESS,
+    tokenAddress: ErrorCode.PAYMENT_TOKEN_INVALID_ADDRESS,
+    amount: ErrorCode.PAYMENT_AMOUNT_INVALID_ZERO
+  };
+  return fieldMapping[field] || ErrorCode.INTERNAL_SERVER_ERROR;
+}
+```
 
 **환경 변수 설정 (.env.example)**:
 ```bash

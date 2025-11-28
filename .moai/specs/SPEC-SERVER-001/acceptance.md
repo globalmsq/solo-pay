@@ -79,16 +79,17 @@ const invalidPayload = {
 
 **Then**:
 - HTTP 400 Bad Request 응답
-- 에러 코드 "PAY_001" 반환
-- 에러 메시지에 "Invalid storeAddress" 포함
+- 에러 코드 "PAYMENT_STORE_INVALID_ADDRESS" 반환
+- 에러 타입 "validation_error"
+- 에러 메시지에 "address" 포함
 
 ```typescript
 expect(response.statusCode).toBe(400);
-const error = response.json();
-expect(error.code).toBe('PAY_001');
-expect(error.error).toBe('VALIDATION_ERROR');
-expect(error.message).toContain('Invalid storeAddress');
-expect(error.details.field).toBe('storeAddress');
+const error = response.json().error;
+expect(error.code).toBe('PAYMENT_STORE_INVALID_ADDRESS');
+expect(error.type).toBe('validation_error');
+expect(error.message).toContain('address');
+expect(error.field).toBe('storeAddress');
 ```
 
 ---
@@ -108,16 +109,17 @@ const zeroAmountPayload = {
 
 **Then**:
 - HTTP 400 Bad Request 응답
-- 에러 코드 "PAY_003" 반환
-- 에러 메시지에 "Amount must be greater than 0" 포함
+- 에러 코드 "PAYMENT_AMOUNT_INVALID_ZERO" 반환
+- 에러 타입 "validation_error"
+- 에러 메시지에 "amount" 포함
 
 ```typescript
 expect(response.statusCode).toBe(400);
-const error = response.json();
-expect(error.code).toBe('PAY_003');
-expect(error.error).toBe('VALIDATION_ERROR');
-expect(error.message).toContain('Amount must be greater than 0');
-expect(error.details.field).toBe('amount');
+const error = response.json().error;
+expect(error.code).toBe('PAYMENT_AMOUNT_INVALID_ZERO');
+expect(error.type).toBe('validation_error');
+expect(error.message).toContain('amount');
+expect(error.field).toBe('amount');
 ```
 
 ---

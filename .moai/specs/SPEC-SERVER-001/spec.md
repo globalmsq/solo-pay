@@ -283,18 +283,23 @@ MSQPay 블록체인 결제 게이트웨이의 백엔드 API 서버를 구현합�
 - 400 Bad Request: 입력 검증 실패
   ```typescript
   {
-    error: "VALIDATION_ERROR",
-    code: "PAY_001",
-    message: "Invalid storeAddress: must be a valid Ethereum address",
-    details: { field: "storeAddress", value: "..." }
+    error: {
+      type: "validation_error",
+      code: "PAYMENT_STORE_INVALID_ADDRESS",
+      message: "Store address must be a valid Ethereum address",
+      field: "storeAddress",
+      value: "invalid-address"
+    }
   }
   ```
 - 500 Internal Server Error: 서버 오류
   ```typescript
   {
-    error: "INTERNAL_ERROR",
-    code: "PAY_999",
-    message: "Failed to create payment"
+    error: {
+      type: "internal_error",
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to create payment"
+    }
   }
   ```
 
@@ -469,33 +474,37 @@ const PAYMENT_TYPE = {
 
 ## 4.5 에러 코드 표준 (Error Code Standards)
 
-시스템은 다음 에러 코드 체계를 사용해야 한다:
+시스템은 Self-Descriptive 에러 코드 체계를 사용해야 한다:
 
-| 에러 코드 | 설명 | HTTP 상태 |
-|----------|------|----------|
-| **PAY_001** | Invalid storeAddress | 400 |
-| **PAY_002** | Invalid tokenAddress | 400 |
-| **PAY_003** | Invalid amount (must be > 0) | 400 |
-| **PAY_004** | Payment not found | 404 |
-| **PAY_005** | Payment already expired | 410 |
-| **PAY_006** | Payment already processed | 400 |
-| **PAY_007** | Invalid EIP-712 signature | 401 |
-| **PAY_008** | Signature mismatch (signer != customerAddress) | 401 |
-| **PAY_009** | Gasless transaction limit exceeded | 503 |
-| **PAY_010** | Rate limit exceeded | 429 |
-| **PAY_011** | Database connection failed | 503 |
-| **PAY_012** | Redis connection failed | 503 |
-| **PAY_013** | Blockchain RPC error | 503 |
-| **PAY_014** | OZ Defender API error | 503 |
-| **PAY_999** | Internal server error | 500 |
+| HTTP 상태 | 에러 타입 | 에러 코드 | 설명 | 원인 |
+|-----------|----------|----------|------|------|
+| 400 | validation_error | PAYMENT_STORE_INVALID_ADDRESS | 상점 주소 형식 오류 | storeAddress가 유효한 Ethereum 주소 아님 |
+| 400 | validation_error | PAYMENT_TOKEN_INVALID_ADDRESS | 토큰 주소 형식 오류 | tokenAddress가 유효한 Ethereum 주소 아님 |
+| 400 | validation_error | PAYMENT_AMOUNT_INVALID_ZERO | 금액이 0 | amount ≤ 0 |
+| 401 | authentication_error | SIGNATURE_INVALID | 서명 검증 실패 | EIP-712 서명이 유효하지 않음 |
+| 401 | authentication_error | SIGNATURE_SIGNER_MISMATCH | 서명자 불일치 | 서명자 주소 ≠ customerAddress |
+| 404 | not_found_error | PAYMENT_NOT_FOUND | 결제 정보 없음 | paymentId가 존재하지 않음 |
+| 400 | state_error | PAYMENT_ALREADY_PROCESSED | 이미 처리된 결제 | status ≠ 'pending' |
+| 410 | expired_error | PAYMENT_EXPIRED | 결제 만료 | expiresAt < 현재 시간 |
+| 429 | rate_limit_error | RATE_LIMIT_EXCEEDED | Rate Limiting 초과 | IP당 100 req/min 초과 |
+| 503 | service_unavailable_error | DATABASE_CONNECTION_FAILED | DB 연결 실패 | MySQL 연결 불가 |
+| 503 | service_unavailable_error | REDIS_CONNECTION_FAILED | Redis 연결 실패 | Redis 연결 불가 |
+| 503 | service_unavailable_error | BLOCKCHAIN_RPC_ERROR | 블록체인 RPC 오류 | viem RPC 호출 실패 |
+| 503 | service_unavailable_error | DEFENDER_API_ERROR | OZ Defender API 오류 | Defender API 호출 실패 |
+| 503 | service_unavailable_error | GASLESS_LIMIT_EXCEEDED | Gasless TX 제한 초과 | 동시 10개 초과 |
+| 500 | internal_error | INTERNAL_SERVER_ERROR | 내부 서버 오류 | 예상치 못한 오류 |
 
-**에러 응답 형식**:
+**에러 응답 형식** (GitHub API + Stripe 스타일):
 ```typescript
 {
-  error: string; // 에러 타입 (예: "VALIDATION_ERROR", "NOT_FOUND")
-  code: string; // 에러 코드 (예: "PAY_001")
-  message: string; // 사람이 읽을 수 있는 에러 메시지
-  details?: Record<string, any>; // 추가 컨텍스트 (선택적)
+  error: {
+    type: string; // 에러 타입 (예: "validation_error", "authentication_error")
+    code: string; // Self-descriptive 에러 코드 (예: "PAYMENT_STORE_INVALID_ADDRESS")
+    message: string; // 사용자 친화적 메시지
+    field?: string; // 문제가 발생한 필드 (선택적)
+    value?: any; // 실제 입력값 (디버깅용, 선택적)
+    docs_url?: string; // 문서 링크 (선택적)
+  }
 }
 ```
 
