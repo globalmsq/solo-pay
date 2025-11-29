@@ -182,12 +182,21 @@ const result = await client.submitGaslessSignature(
 
 ## Payment Server API
 
+### 엔드포인트
+
 | 엔드포인트 | 메서드 | 용도 |
 |-----------|--------|------|
 | `/payments/create` | POST | 결제 생성, paymentId 발급 |
 | `/payments/:id/status` | GET | 결제 상태 조회 (Contract 조회) |
-| `/payments/:id/gasless` | GET | Gasless 서명 데이터 조회 |
-| `/payments/:id/relay` | POST | Gasless 서명 제출 → Relay |
+| `/payments/:id/gasless` | POST | Gasless 거래 제출 |
+| `/payments/:id/relay` | POST | 릴레이 거래 실행 |
+
+### 상세 문서
+
+- **[API 레퍼런스](./docs/api/payments.md)** - 모든 엔드포인트의 요청/응답 포맷, 사용 예제
+- **[아키텍처 가이드](./docs/architecture-payments.md)** - 시스템 설계, Mermaid 다이어그램, 무상태 설계 원칙
+- **[구현 가이드](./docs/implementation/payments-api.md)** - BlockchainService, DefenderService 사용 방법, 테스트 작성 패턴
+- **[배포 가이드](./docs/deployment/payments-setup.md)** - 프로덕션 배포, 환경 설정, Docker, 클라우드 배포
 
 ## Documentation
 
@@ -195,6 +204,8 @@ const result = await client.submitGaslessSignature(
 - [Technical Specification](./docs/technical-spec.md)
 - [Architecture](./docs/architecture.md)
 - [Implementation Plan](./docs/implementation-plan.md)
+- **[Payment API Documentation](./docs/api/payments.md)** ⭐ (New - SPEC-SERVER-002)
+- **[Payment Architecture](./docs/architecture-payments.md)** ⭐ (New - SPEC-SERVER-002)
 
 ## Tech Stack
 

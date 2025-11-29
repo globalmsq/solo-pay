@@ -1,7 +1,7 @@
 # MSQPay Monorepo - Remaining Tasks
 
-Last Updated: 2025-11-27
-Status: Architecture Finalized
+Last Updated: 2025-11-29
+Status: Payment API Implementation Complete (SPEC-SERVER-002)
 
 ## Current State
 
@@ -19,6 +19,18 @@ Status: Architecture Finalized
 - [x] Technical Spec 문서 업데이트
 - [x] Architecture 문서 작성
 - [x] **Docker Compose 로컬 개발 환경**
+- [x] **SPEC-SERVER-002: Payment API Implementation** (Fastify v5, viem v2.21, TDD)
+  - [x] 4개 라우트 (create, status, gasless, relay)
+  - [x] 2개 서비스 (BlockchainService, DefenderService)
+  - [x] Zod 검증 스키마
+  - [x] 65개 테스트 통과, 82.89% 커버리지
+  - [x] TypeScript 0 컴파일 에러
+  - [x] **문서화 완료 (SPEC-SERVER-002)**
+    - [x] API 레퍼런스 (docs/api/payments.md)
+    - [x] 아키텍처 가이드 (docs/architecture-payments.md) + Mermaid 다이어그램
+    - [x] 구현 가이드 (docs/implementation/payments-api.md)
+    - [x] 배포 가이드 (docs/deployment/payments-setup.md)
+    - [x] README 및 REMAINING_TASKS 업데이트
 
 ### Architecture Summary
 
