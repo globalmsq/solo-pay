@@ -367,6 +367,237 @@ console.log(data.transactionHash);
 
 ---
 
+### 5. 결제 이력 조회 (Get Payment History)
+
+사용자의 결제 이력을 조회합니다.
+
+```http
+GET /payments/{id}/history
+```
+
+#### URL 파라미터
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| `id` | string | ✅ | 결제 ID |
+
+#### 응답 (Response)
+
+**Status: 200 OK**
+
+```json
+{
+  "success": true,
+  "data": {
+    "paymentId": "payment_123",
+    "history": [
+      {
+        "txHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "confirmed",
+        "timestamp": "2024-11-29T10:01:00.000Z",
+        "blockNumber": 42000000,
+        "confirmations": 5
+      }
+    ]
+  }
+}
+```
+
+##### Response 필드
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `paymentId` | string | 결제 ID |
+| `history` | array | 거래 이력 배열 |
+| `history[].txHash` | string | 트랜잭션 해시 |
+| `history[].status` | string | 거래 상태 |
+| `history[].timestamp` | ISO8601 | 거래 시간 |
+| `history[].blockNumber` | number | 블록 번호 |
+| `history[].confirmations` | number | 확인 수 |
+
+#### 사용 예제
+
+```bash
+curl -X GET http://localhost:3000/payments/payment_123/history
+```
+
+---
+
+### 6. 토큰 잔액 조회 (Get Token Balance)
+
+ERC-20 토큰의 지갑 잔액을 조회합니다.
+
+```http
+GET /tokens/balance
+```
+
+#### 쿼리 파라미터
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| `tokenAddress` | string | ✅ | ERC-20 토큰 계약 주소 |
+| `address` | string | ✅ | 조회할 지갑 주소 |
+
+#### 응답 (Response)
+
+**Status: 200 OK**
+
+```json
+{
+  "success": true,
+  "data": {
+    "tokenAddress": "0x2791Bca1f2de4661ED88A30C99a7a9449Aa84174",
+    "address": "0x1234567890123456789012345678901234567890",
+    "balance": "1000000000000000000",
+    "decimals": 6,
+    "symbol": "USDC"
+  }
+}
+```
+
+##### Response 필드
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `tokenAddress` | string | 토큰 계약 주소 |
+| `address` | string | 조회 지갑 주소 |
+| `balance` | string | 잔액 (Wei 단위) |
+| `decimals` | number | 토큰 소수점 자리수 |
+| `symbol` | string | 토큰 심볼 |
+
+#### 사용 예제
+
+```bash
+curl -X GET "http://localhost:3000/tokens/balance?tokenAddress=0x2791Bca1f2de4661ED88A30C99a7a9449Aa84174&address=0x1234567890123456789012345678901234567890"
+```
+
+---
+
+### 7. 토큰 Approval 조회 (Get Token Allowance)
+
+토큰 approval 금액을 조회합니다.
+
+```http
+GET /tokens/allowance
+```
+
+#### 쿼리 파라미터
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| `tokenAddress` | string | ✅ | ERC-20 토큰 계약 주소 |
+| `owner` | string | ✅ | 소유자 주소 |
+| `spender` | string | ✅ | 승인받은 주소 (보통 Gateway Contract) |
+
+#### 응답 (Response)
+
+**Status: 200 OK**
+
+```json
+{
+  "success": true,
+  "data": {
+    "tokenAddress": "0x2791Bca1f2de4661ED88A30C99a7a9449Aa84174",
+    "owner": "0x1234567890123456789012345678901234567890",
+    "spender": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "allowance": "5000000000000000000",
+    "decimals": 6,
+    "symbol": "USDC"
+  }
+}
+```
+
+##### Response 필드
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `tokenAddress` | string | 토큰 계약 주소 |
+| `owner` | string | 소유자 주소 |
+| `spender` | string | 승인받은 주소 |
+| `allowance` | string | 승인 금액 (Wei 단위) |
+| `decimals` | number | 토큰 소수점 자리수 |
+| `symbol` | string | 토큰 심볼 |
+
+#### 사용 예제
+
+```bash
+curl -X GET "http://localhost:3000/tokens/allowance?tokenAddress=0x2791Bca1f2de4661ED88A30C99a7a9449Aa84174&owner=0x1234567890123456789012345678901234567890&spender=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+```
+
+---
+
+### 8. 거래 상태 조회 (Get Transaction Status)
+
+트랜잭션 상태와 확인 정보를 조회합니다.
+
+```http
+GET /transactions/{id}/status
+```
+
+#### URL 파라미터
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| `id` | string | ✅ | 트랜잭션 해시 |
+
+#### 응답 (Response)
+
+**Status: 200 OK**
+
+```json
+{
+  "success": true,
+  "data": {
+    "transactionHash": "0xabcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
+    "status": "confirmed",
+    "blockNumber": 42000000,
+    "confirmations": 10,
+    "from": "0x1234567890123456789012345678901234567890",
+    "to": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "gasUsed": 150000,
+    "gasPrice": "25000000000",
+    "timestamp": "2024-11-29T10:01:00.000Z"
+  }
+}
+```
+
+##### Response 필드
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `transactionHash` | string | 트랜잭션 해시 |
+| `status` | string | 거래 상태 (`pending`, `confirmed`, `failed`) |
+| `blockNumber` | number | 블록 번호 (미확인 시 null) |
+| `confirmations` | number | 확인 수 (미확인 시 0) |
+| `from` | string | 발신자 주소 |
+| `to` | string | 수신자 주소 |
+| `gasUsed` | number | 사용한 가스 |
+| `gasPrice` | string | 가스 가격 (Wei 단위) |
+| `timestamp` | ISO8601 | 거래 시간 |
+
+#### 상태 값 설명
+
+| 상태 | 설명 |
+|------|------|
+| `pending` | 트랜잭션이 채굴 대기 중 |
+| `confirmed` | 트랜잭션이 확인됨 (1개 이상 블록 생성) |
+| `failed` | 트랜잭션 실행 실패 |
+
+#### 사용 예제
+
+```bash
+curl -X GET http://localhost:3000/transactions/0xabcd1234.../status
+```
+
+```typescript
+const response = await fetch('http://localhost:3000/transactions/0xabcd1234.../status');
+const data = await response.json();
+console.log(data.data.status); // "confirmed"
+console.log(data.data.confirmations); // 10
+```
+
+---
+
 ## 상태 전이 (Status Transitions)
 
 결제는 다음과 같은 상태 전이를 거칩니다:

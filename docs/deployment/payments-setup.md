@@ -22,16 +22,19 @@ MSQPay 결제 API를 프로덕션 환경에 배포하기 위한 단계별 가이
 
 ```bash
 # ============================================
-# Blockchain Configuration
+# Blockchain Configuration (Required)
 # ============================================
-POLYGON_RPC_URL=https://polygon-rpc.com
-# 또는 전용 RPC:
-# POLYGON_RPC_URL=https://mainnet.infura.io/v3/YOUR-PROJECT-ID
-# POLYGON_RPC_URL=https://polygon.llamarpc.com
-# POLYGON_RPC_URL=https://rpc.ankr.com/polygon
 
-CONTRACT_ADDRESS=0x1234567890123456789012345678901234567890
-# 스마트 컨트랙트 주소 (Polygon 메인넷 또는 테스트넷)
+# PaymentGateway 컨트랙트 주소 (필수)
+# 서버 시작 시 이 값이 없으면 에러 발생
+GATEWAY_ADDRESS=0x1234567890123456789012345678901234567890
+
+# Blockchain RPC 엔드포인트 (선택, 기본값: https://polygon-rpc.com)
+BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
+# 또는 전용 RPC:
+# BLOCKCHAIN_RPC_URL=https://mainnet.infura.io/v3/YOUR-PROJECT-ID
+# BLOCKCHAIN_RPC_URL=https://polygon.llamarpc.com
+# BLOCKCHAIN_RPC_URL=https://rpc.ankr.com/polygon
 
 # ============================================
 # OpenZeppelin Defender Configuration
@@ -137,15 +140,15 @@ git commit -m "chore: add .env files to gitignore"
 
 ### 3.2 RPC 선택 기준
 
-```typescript
-// 개발/테스트용: 공개 RPC 사용 (무료)
-POLYGON_RPC_URL=https://polygon-rpc.com
+```bash
+# 개발/테스트용: 공개 RPC 사용 (무료)
+BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
 
-// 프로덕션 (저볼륨): 공개 RPC 또는 Infura
-POLYGON_RPC_URL=https://mainnet.infura.io/v3/YOUR-PROJECT-ID
+# 프로덕션 (저볼륨): 공개 RPC 또는 Infura
+BLOCKCHAIN_RPC_URL=https://mainnet.infura.io/v3/YOUR-PROJECT-ID
 
-// 프로덕션 (고볼륨): Alchemy 또는 QuickNode (권장)
-POLYGON_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR-API-KEY
+# 프로덕션 (고볼륨): Alchemy 또는 QuickNode (권장)
+BLOCKCHAIN_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR-API-KEY
 ```
 
 ### 3.3 RPC 건강성 확인
@@ -212,8 +215,8 @@ NODE_ENV=production pnpm start
 # 환경 변수 검증
 cat > check-env.js << 'EOF'
 const required = [
-  'POLYGON_RPC_URL',
-  'CONTRACT_ADDRESS',
+  'BLOCKCHAIN_RPC_URL',
+  'GATEWAY_ADDRESS',
   'DEFENDER_API_KEY',
   'DEFENDER_API_SECRET',
   'DEFENDER_RELAYER_ADDRESS',
@@ -275,8 +278,8 @@ docker build -t msqpay-api:latest .
 
 # 이미지 테스트 (로컬)
 docker run -p 3000:3000 \
-  -e POLYGON_RPC_URL=https://polygon-rpc.com \
-  -e CONTRACT_ADDRESS=0x... \
+  -e BLOCKCHAIN_RPC_URL=https://polygon-rpc.com \
+  -e GATEWAY_ADDRESS=0x... \
   -e DEFENDER_API_KEY=xxx \
   -e DEFENDER_API_SECRET=xxx \
   -e DEFENDER_RELAYER_ADDRESS=0x... \
@@ -298,8 +301,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      POLYGON_RPC_URL: https://polygon-rpc.com
-      CONTRACT_ADDRESS: 0x...
+      BLOCKCHAIN_RPC_URL: https://polygon-rpc.com
+      GATEWAY_ADDRESS: 0x...
       DEFENDER_API_KEY: ${DEFENDER_API_KEY}
       DEFENDER_API_SECRET: ${DEFENDER_API_SECRET}
       DEFENDER_RELAYER_ADDRESS: 0x...
@@ -329,8 +332,8 @@ railway login
 railway init
 
 # 4. 환경 변수 설정
-railway variable set POLYGON_RPC_URL https://polygon-rpc.com
-railway variable set CONTRACT_ADDRESS 0x...
+railway variable set BLOCKCHAIN_RPC_URL https://polygon-rpc.com
+railway variable set GATEWAY_ADDRESS 0x...
 railway variable set DEFENDER_API_KEY xxx
 railway variable set DEFENDER_API_SECRET xxx
 railway variable set DEFENDER_RELAYER_ADDRESS 0x...
@@ -352,7 +355,12 @@ vercel login
 vercel
 
 # 4. 환경 변수 설정
-# Vercel 대시보드 > Settings > Environment Variables에서 설정
+# Vercel 대시보드 > Settings > Environment Variables에서 설정:
+# - BLOCKCHAIN_RPC_URL
+# - GATEWAY_ADDRESS
+# - DEFENDER_API_KEY
+# - DEFENDER_API_SECRET
+# - DEFENDER_RELAYER_ADDRESS
 ```
 
 ### 6.3 AWS Lambda 배포
@@ -373,9 +381,11 @@ provider:
   runtime: nodejs20.x
   region: us-east-1
   environment:
-    POLYGON_RPC_URL: ${env:POLYGON_RPC_URL}
-    CONTRACT_ADDRESS: ${env:CONTRACT_ADDRESS}
+    BLOCKCHAIN_RPC_URL: ${env:BLOCKCHAIN_RPC_URL}
+    GATEWAY_ADDRESS: ${env:GATEWAY_ADDRESS}
     DEFENDER_API_KEY: ${env:DEFENDER_API_KEY}
+    DEFENDER_API_SECRET: ${env:DEFENDER_API_SECRET}
+    DEFENDER_RELAYER_ADDRESS: ${env:DEFENDER_RELAYER_ADDRESS}
 
 functions:
   api:

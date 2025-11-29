@@ -480,6 +480,137 @@ logger.warn('High gas price detected', { gasPrice, threshold });
 
 ---
 
+## API 라우트 흐름도
+
+### 결제 관련 API
+
+```mermaid
+flowchart TD
+    A["POST /payments/create"] -->|CreatePaymentSchema| B["BlockchainService.recordPaymentOnChain"]
+    B -->|publicClient.readContract| C["Contract: getPayment"]
+    B -->|publicClient.readContract| D["Contract: recordPayment"]
+    D -->|트랜잭션 해시| E["201 Created"]
+
+    F["GET /payments/:id/status"] -->|paymentId| G["BlockchainService.getPaymentStatus"]
+    G -->|publicClient.readContract| H["Contract: getPayment"]
+    H -->|PaymentData| I["200 OK"]
+
+    J["GET /payments/:id/history"] -->|paymentId| K["BlockchainService.getPaymentHistory"]
+    K -->|publicClient.getTransactionReceipt| L["거래 이력 조회"]
+    L -->|History Array| M["200 OK"]
+
+    N["POST /payments/:id/gasless"] -->|GaslessRequestSchema| O["DefenderService.submitGaslessTransaction"]
+    O -->|Defender API| P["릴레이 요청"]
+    P -->|relayRequestId| Q["202 Accepted"]
+
+    R["POST /payments/:id/relay"] -->|RelayExecutionSchema| S["DefenderService.executeRelayTransaction"]
+    S -->|Defender API| T["릴레이 실행"]
+    T -->|transactionHash| U["200 OK"]
+
+    style E fill:#4CAF50,color:#fff
+    style I fill:#4CAF50,color:#fff
+    style M fill:#4CAF50,color:#fff
+    style Q fill:#FF9800,color:#fff
+    style U fill:#4CAF50,color:#fff
+```
+
+### 토큰 조회 API
+
+```mermaid
+flowchart TD
+    A["GET /tokens/balance?tokenAddress&address"] -->|query params| B["BlockchainService.getTokenBalance"]
+    B -->|publicClient.readContract| C["ERC20 Contract: balanceOf"]
+    C -->|balance| D["200 OK"]
+
+    E["GET /tokens/allowance?tokenAddress&owner&spender"] -->|query params| F["BlockchainService.getTokenAllowance"]
+    F -->|publicClient.readContract| G["ERC20 Contract: allowance"]
+    G -->|allowance| H["200 OK"]
+
+    style D fill:#4CAF50,color:#fff
+    style H fill:#4CAF50,color:#fff
+```
+
+### 거래 상태 조회 API
+
+```mermaid
+flowchart TD
+    A["GET /transactions/:id/status"] -->|txHash| B["BlockchainService.getTransactionStatus"]
+    B -->|publicClient.getTransaction| C["RPC: eth_getTransactionByHash"]
+    C -->|tx data| B
+
+    B -->|publicClient.getTransactionReceipt| D["RPC: eth_getTransactionReceipt"]
+    D -->|tx receipt| B
+
+    B -->|데이터 정리| E["TransactionStatus Object"]
+    E -->|200 OK| F["클라이언트"]
+
+    style F fill:#4CAF50,color:#fff
+```
+
+### 통합 결제 흐름 (클라이언트 API 기반)
+
+```mermaid
+sequenceDiagram
+    participant App as Demo App
+    participant API as Fastify API
+    participant BS as BlockchainService
+    participant viem as viem Client
+    participant Contract as Smart Contract
+    participant RPC as Polygon RPC
+
+    App->>API: 1. POST /payments/create
+    API->>BS: recordPaymentOnChain()
+    BS->>viem: publicClient.readContract()
+    viem->>RPC: eth_call (getPayment)
+    RPC-->>viem: null (새 결제)
+
+    BS->>viem: publicClient.readContract() [write]
+    viem->>RPC: eth_sendTransaction (recordPayment)
+    RPC->>Contract: 거래 실행
+    Contract-->>RPC: txHash
+
+    RPC-->>viem: txHash
+    viem-->>BS: transactionHash
+    BS-->>API: paymentId, txHash
+    API-->>App: 201 Created
+
+    Note over App: 2초 간격 폴링
+
+    loop 폴링 (2초마다)
+        App->>API: 2. GET /payments/:id/status
+        API->>BS: getPaymentStatus(paymentId)
+        BS->>viem: publicClient.readContract()
+        viem->>RPC: eth_call (getPayment)
+        RPC-->>viem: PaymentData
+        viem-->>BS: payment info
+        BS-->>API: status, blockNumber
+        API-->>App: 200 OK (status=pending)
+    end
+
+    Note over App: 확인됨
+
+    App->>API: 3. GET /transactions/:id/status
+    API->>BS: getTransactionStatus(txHash)
+    BS->>viem: publicClient.getTransactionReceipt()
+    viem->>RPC: eth_getTransactionReceipt
+    RPC-->>viem: receipt (blockNumber, confirmations)
+    viem-->>BS: transaction info
+    BS-->>API: status=confirmed, confirmations=10
+    API-->>App: 200 OK
+
+    Note over App: 결제 이력 조회 (선택사항)
+    App->>API: 4. GET /payments/:id/history
+    API->>BS: getPaymentHistory(paymentId)
+    BS->>viem: publicClient.getTransactionReceipt()
+    viem->>RPC: eth_getTransactionReceipt
+    RPC-->>viem: history data
+    viem-->>BS: history array
+    BS-->>API: history
+    API-->>App: 200 OK
+```
+
+---
+
 ## 향후 개선 사항
 
 1. **데이터베이스 캐싱**: 자주 조회되는 결제 캐싱

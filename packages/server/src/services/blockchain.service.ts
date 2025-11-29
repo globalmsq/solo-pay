@@ -1,20 +1,66 @@
-import { createPublicClient, http, PublicClient, Address, Abi } from 'viem';
+import { createPublicClient, http, PublicClient, Address, parseAbiItem } from 'viem';
 import { polygon } from 'viem/chains';
 import { PaymentStatus } from '../schemas/payment.schema';
 
 /**
- * 스마트 컨트랙트에서 반환되는 결제 데이터 인터페이스
+ * 결제 이력 아이템 인터페이스
  */
-interface ContractPaymentData {
-  userId: string;
-  amount: bigint;
-  currency: 'USD' | 'EUR' | 'KRW';
-  tokenAddress: string;
-  recipientAddress: string;
-  status: number;
-  transactionHash?: `0x${string}`;
-  createdAt: bigint;
-  updatedAt: bigint;
+export interface PaymentHistoryItem {
+  id: string;
+  paymentId: string;
+  payer: string;
+  merchant: string;
+  token: string;
+  amount: string;
+  timestamp: string;
+  transactionHash: string;
+  status: string;
+}
+
+// PaymentCompleted 이벤트 ABI
+const PAYMENT_COMPLETED_EVENT = parseAbiItem(
+  'event PaymentCompleted(bytes32 indexed paymentId, address indexed payer, address indexed merchant, address token, uint256 amount, uint256 timestamp)'
+);
+
+// PaymentGateway ABI (processedPayments 조회용)
+const PAYMENT_GATEWAY_ABI = [
+  {
+    type: 'function',
+    name: 'processedPayments',
+    inputs: [{ name: 'paymentId', type: 'bytes32' }],
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+  },
+] as const;
+
+// ERC20 ABI (balanceOf, allowance)
+const ERC20_ABI = [
+  {
+    type: 'function',
+    name: 'balanceOf',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'allowance',
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+] as const;
+
+/**
+ * 트랜잭션 상태 인터페이스
+ */
+export interface TransactionStatus {
+  status: 'pending' | 'confirmed' | 'failed';
+  blockNumber?: number;
+  confirmations?: number;
 }
 
 /**
@@ -24,7 +70,6 @@ interface ContractPaymentData {
 export class BlockchainService {
   private publicClient: PublicClient;
   private contractAddress: Address;
-  private contractAbi: Abi;
 
   constructor(rpcUrl: string = 'https://polygon-rpc.com', contractAddress: string) {
     this.publicClient = createPublicClient({
@@ -33,51 +78,50 @@ export class BlockchainService {
     });
 
     this.contractAddress = contractAddress as Address;
-    // 실제 ABI는 .env에서 로드하거나 별도 파일에서 가져옴
-    this.contractAbi = [] as Abi;
   }
 
   /**
-   * 결제 정보를 스마트 컨트랙트에서 조회
+   * 결제 상태를 스마트 컨트랙트에서 조회
+   * Contract의 processedPayments(paymentId) mapping을 조회하여 결제 완료 여부 확인
    */
   async getPaymentStatus(paymentId: string): Promise<PaymentStatus | null> {
     try {
-      // 스마트 컨트랙트에서 결제 데이터 조회
-      const rawData = await this.publicClient.readContract({
+      // Contract의 processedPayments mapping 조회 (bool 반환)
+      const isProcessed = await this.publicClient.readContract({
         address: this.contractAddress,
-        abi: this.contractAbi,
-        functionName: 'getPayment',
-        args: [paymentId],
+        abi: PAYMENT_GATEWAY_ABI,
+        functionName: 'processedPayments',
+        args: [paymentId as `0x${string}`],
       });
 
-      if (!rawData) {
-        return null;
-      }
-
-      // 타입 캐스팅
-      const paymentData = rawData as unknown as ContractPaymentData;
-
-      // 트랜잭션 수신 확인 조회
-      const receipt = await this.publicClient.getTransactionReceipt({
-        hash: paymentData.transactionHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
-      }).catch(() => null);
-
+      // bool 값을 PaymentStatus로 변환
+      const now = new Date().toISOString();
       return {
         id: paymentId,
-        userId: paymentData.userId,
-        amount: Number(paymentData.amount),
-        currency: paymentData.currency,
-        tokenAddress: paymentData.tokenAddress,
-        recipientAddress: paymentData.recipientAddress,
-        status: this.mapContractStatusToEnum(paymentData.status),
-        transactionHash: paymentData.transactionHash,
-        blockNumber: receipt ? Number(receipt.blockNumber) : undefined,
-        createdAt: new Date(Number(paymentData.createdAt) * 1000).toISOString(),
-        updatedAt: new Date(Number(paymentData.updatedAt) * 1000).toISOString(),
+        userId: '',
+        amount: 0,
+        currency: 'USD' as const,
+        tokenAddress: '',
+        recipientAddress: '',
+        status: isProcessed ? 'completed' : 'pending',
+        createdAt: now,
+        updatedAt: now,
       };
     } catch (error) {
-      console.error('스마트 컨트랙트에서 결제 정보 조회 실패:', error);
-      throw new Error('결제 정보를 조회할 수 없습니다');
+      console.error('결제 상태 조회 실패:', error);
+      // 네트워크 오류나 RPC 오류 시에도 pending 반환 (polling 계속 가능하도록)
+      const now = new Date().toISOString();
+      return {
+        id: paymentId,
+        userId: '',
+        amount: 0,
+        currency: 'USD' as const,
+        tokenAddress: '',
+        recipientAddress: '',
+        status: 'pending',
+        createdAt: now,
+        updatedAt: now,
+      };
     }
   }
 
@@ -109,21 +153,6 @@ export class BlockchainService {
       }
       throw new Error('결제를 기록할 수 없습니다');
     }
-  }
-
-  /**
-   * 계약의 상태 값을 enum으로 매핑
-   */
-  private mapContractStatusToEnum(
-    status: number
-  ): 'pending' | 'confirmed' | 'failed' | 'completed' {
-    const statusMap: Record<number, 'pending' | 'confirmed' | 'failed' | 'completed'> = {
-      0: 'pending',
-      1: 'confirmed',
-      2: 'failed',
-      3: 'completed',
-    };
-    return statusMap[status] || 'pending';
   }
 
   /**
@@ -164,6 +193,131 @@ export class BlockchainService {
     } catch (error) {
       console.error('가스 비용 추정 실패:', error);
       throw new Error('가스 비용을 추정할 수 없습니다');
+    }
+  }
+
+  /**
+   * 토큰 잔액 조회
+   * @param tokenAddress ERC20 토큰 주소
+   * @param walletAddress 지갑 주소
+   */
+  async getTokenBalance(tokenAddress: string, walletAddress: string): Promise<string> {
+    try {
+      const balance = await this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: ERC20_ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress as Address],
+      });
+
+      return balance.toString();
+    } catch (error) {
+      console.error('토큰 잔액 조회 실패:', error);
+      throw new Error('토큰 잔액을 조회할 수 없습니다');
+    }
+  }
+
+  /**
+   * 토큰 승인액 조회
+   * @param tokenAddress ERC20 토큰 주소
+   * @param owner 소유자 주소
+   * @param spender 승인받은 주소 (보통 gateway contract)
+   */
+  async getTokenAllowance(
+    tokenAddress: string,
+    owner: string,
+    spender: string
+  ): Promise<string> {
+    try {
+      const allowance = await this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: ERC20_ABI,
+        functionName: 'allowance',
+        args: [owner as Address, spender as Address],
+      });
+
+      return allowance.toString();
+    } catch (error) {
+      console.error('토큰 승인액 조회 실패:', error);
+      throw new Error('토큰 승인액을 조회할 수 없습니다');
+    }
+  }
+
+  /**
+   * 트랜잭션 상태 조회
+   * @param txHash 트랜잭션 해시
+   */
+  async getTransactionStatus(txHash: string): Promise<TransactionStatus> {
+    try {
+      const receipt = await this.publicClient.getTransactionReceipt({
+        hash: txHash as `0x${string}`,
+      });
+
+      const currentBlock = await this.publicClient.getBlockNumber();
+      const confirmations = Number(currentBlock - receipt.blockNumber);
+
+      return {
+        status: receipt.status === 'success' ? 'confirmed' : 'failed',
+        blockNumber: Number(receipt.blockNumber),
+        confirmations,
+      };
+    } catch (error) {
+      // 트랜잭션이 아직 채굴되지 않았거나 존재하지 않음
+      return {
+        status: 'pending',
+      };
+    }
+  }
+
+  /**
+   * 사용자의 결제 이력 조회 (PaymentCompleted 이벤트 로그)
+   * @param payerAddress 사용자 지갑 주소
+   * @param blockRange 조회할 블록 범위 (기본값: 최근 1000블록)
+   */
+  async getPaymentHistory(
+    payerAddress: string,
+    blockRange: number = 1000
+  ): Promise<PaymentHistoryItem[]> {
+    try {
+      const currentBlock = await this.publicClient.getBlockNumber();
+      const fromBlock = currentBlock > BigInt(blockRange)
+        ? currentBlock - BigInt(blockRange)
+        : BigInt(0);
+
+      const logs = await this.publicClient.getLogs({
+        address: this.contractAddress,
+        event: PAYMENT_COMPLETED_EVENT,
+        args: {
+          payer: payerAddress as Address,
+        },
+        fromBlock,
+        toBlock: 'latest',
+      });
+
+      const payments: PaymentHistoryItem[] = await Promise.all(
+        logs.map(async (log) => {
+          const block = await this.publicClient.getBlock({ blockHash: log.blockHash! });
+          return {
+            id: `${log.transactionHash}-${log.logIndex}`,
+            paymentId: (log.args as any).paymentId || '',
+            payer: (log.args as any).payer || '',
+            merchant: (log.args as any).merchant || '',
+            token: (log.args as any).token || '',
+            amount: ((log.args as any).amount || BigInt(0)).toString(),
+            timestamp: block.timestamp.toString(),
+            transactionHash: log.transactionHash,
+            status: 'completed',
+          };
+        })
+      );
+
+      // 타임스탬프 기준 내림차순 정렬
+      payments.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+
+      return payments;
+    } catch (error) {
+      console.error('결제 이력 조회 실패:', error);
+      throw new Error('결제 이력을 조회할 수 없습니다');
     }
   }
 }
