@@ -6,11 +6,11 @@ import { PaymentStatus } from '../schemas/payment.schema';
  * 결제 이력 아이템 인터페이스
  */
 export interface PaymentHistoryItem {
-  id: string;
   paymentId: string;
   payer: string;
   merchant: string;
   token: string;
+  tokenSymbol: string;
   amount: string;
   timestamp: string;
   transactionHash: string;
@@ -33,7 +33,7 @@ const PAYMENT_GATEWAY_ABI = [
   },
 ] as const;
 
-// ERC20 ABI (balanceOf, allowance)
+// ERC20 ABI (balanceOf, allowance, symbol)
 const ERC20_ABI = [
   {
     type: 'function',
@@ -50,6 +50,13 @@ const ERC20_ABI = [
       { name: 'spender', type: 'address' },
     ],
     outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'symbol',
+    inputs: [],
+    outputs: [{ name: '', type: 'string' }],
     stateMutability: 'view',
   },
 ] as const;
@@ -82,7 +89,7 @@ export class BlockchainService {
 
   /**
    * 결제 상태를 스마트 컨트랙트에서 조회
-   * Contract의 processedPayments(paymentId) mapping을 조회하여 결제 완료 여부 확인
+   * Contract의 processedPayments(paymentId) mapping과 PaymentCompleted 이벤트를 조회
    */
   async getPaymentStatus(paymentId: string): Promise<PaymentStatus | null> {
     try {
@@ -94,16 +101,36 @@ export class BlockchainService {
         args: [paymentId as `0x${string}`],
       });
 
-      // bool 값을 PaymentStatus로 변환
       const now = new Date().toISOString();
+
+      // 결제가 완료된 경우, 이벤트 로그에서 실제 결제 정보 조회
+      if (isProcessed) {
+        const paymentDetails = await this.getPaymentDetailsByPaymentId(paymentId);
+        if (paymentDetails) {
+          return {
+            paymentId,
+            userId: paymentDetails.payer,
+            amount: Number(paymentDetails.amount),
+            tokenAddress: paymentDetails.token,
+            tokenSymbol: paymentDetails.tokenSymbol,
+            recipientAddress: paymentDetails.merchant,
+            status: 'completed',
+            createdAt: paymentDetails.timestamp,
+            updatedAt: now,
+            transactionHash: paymentDetails.transactionHash,
+          };
+        }
+      }
+
+      // 아직 처리되지 않은 결제
       return {
-        id: paymentId,
+        paymentId,
         userId: '',
         amount: 0,
-        currency: 'USD' as const,
         tokenAddress: '',
+        tokenSymbol: '',
         recipientAddress: '',
-        status: isProcessed ? 'completed' : 'pending',
+        status: 'pending',
         createdAt: now,
         updatedAt: now,
       };
@@ -112,16 +139,72 @@ export class BlockchainService {
       // 네트워크 오류나 RPC 오류 시에도 pending 반환 (polling 계속 가능하도록)
       const now = new Date().toISOString();
       return {
-        id: paymentId,
+        paymentId,
         userId: '',
         amount: 0,
-        currency: 'USD' as const,
         tokenAddress: '',
+        tokenSymbol: '',
         recipientAddress: '',
         status: 'pending',
         createdAt: now,
         updatedAt: now,
       };
+    }
+  }
+
+  /**
+   * paymentId로 PaymentCompleted 이벤트 조회
+   * @param paymentId 결제 ID (bytes32)
+   */
+  private async getPaymentDetailsByPaymentId(paymentId: string): Promise<{
+    payer: string;
+    merchant: string;
+    token: string;
+    tokenSymbol: string;
+    amount: string;
+    timestamp: string;
+    transactionHash: string;
+  } | null> {
+    try {
+      const currentBlock = await this.publicClient.getBlockNumber();
+      // 최근 10000블록 범위에서 검색 (약 5-6시간)
+      const fromBlock = currentBlock > BigInt(10000)
+        ? currentBlock - BigInt(10000)
+        : BigInt(0);
+
+      const logs = await this.publicClient.getLogs({
+        address: this.contractAddress,
+        event: PAYMENT_COMPLETED_EVENT,
+        args: {
+          paymentId: paymentId as `0x${string}`,
+        },
+        fromBlock,
+        toBlock: 'latest',
+      });
+
+      if (logs.length === 0) {
+        return null;
+      }
+
+      const log = logs[0];
+      const block = await this.publicClient.getBlock({ blockHash: log.blockHash! });
+      const tokenAddress = (log.args as any).token || '';
+
+      // 온체인에서 토큰 심볼 조회
+      const tokenSymbol = tokenAddress ? await this.getTokenSymbol(tokenAddress) : 'UNKNOWN';
+
+      return {
+        payer: (log.args as any).payer || '',
+        merchant: (log.args as any).merchant || '',
+        token: tokenAddress,
+        tokenSymbol,
+        amount: ((log.args as any).amount || BigInt(0)).toString(),
+        timestamp: new Date(Number(block.timestamp) * 1000).toISOString(),
+        transactionHash: log.transactionHash,
+      };
+    } catch (error) {
+      console.error('결제 상세 정보 조회 실패:', error);
+      return null;
     }
   }
 
@@ -244,6 +327,27 @@ export class BlockchainService {
   }
 
   /**
+   * 토큰 심볼 조회 (온체인 ERC20.symbol())
+   * @param tokenAddress ERC20 토큰 주소
+   * @returns 토큰 심볼 (예: "USDC", "USDT")
+   */
+  async getTokenSymbol(tokenAddress: string): Promise<string> {
+    try {
+      const symbol = await this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: ERC20_ABI,
+        functionName: 'symbol',
+      });
+
+      return symbol;
+    } catch (error) {
+      console.error('토큰 심볼 조회 실패:', error);
+      // 조회 실패 시 기본값 반환 (알 수 없는 토큰)
+      return 'UNKNOWN';
+    }
+  }
+
+  /**
    * 트랜잭션 상태 조회
    * @param txHash 트랜잭션 해시
    */
@@ -297,12 +401,16 @@ export class BlockchainService {
       const payments: PaymentHistoryItem[] = await Promise.all(
         logs.map(async (log) => {
           const block = await this.publicClient.getBlock({ blockHash: log.blockHash! });
+          const tokenAddress = (log.args as any).token || '';
+          // 온체인에서 토큰 심볼 조회
+          const tokenSymbol = tokenAddress ? await this.getTokenSymbol(tokenAddress) : 'UNKNOWN';
+
           return {
-            id: `${log.transactionHash}-${log.logIndex}`,
             paymentId: (log.args as any).paymentId || '',
             payer: (log.args as any).payer || '',
             merchant: (log.args as any).merchant || '',
-            token: (log.args as any).token || '',
+            token: tokenAddress,
+            tokenSymbol,
             amount: ((log.args as any).amount || BigInt(0)).toString(),
             timestamp: block.timestamp.toString(),
             transactionHash: log.transactionHash,

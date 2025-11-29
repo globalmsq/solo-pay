@@ -14,11 +14,11 @@ export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
 
 // 결제 상태 조회 응답 스키마
 export const PaymentStatusSchema = z.object({
-  id: z.string(),
+  paymentId: z.string(),
   userId: z.string(),
   amount: z.number(),
-  currency: z.enum(['USD', 'EUR', 'KRW']),
   tokenAddress: z.string(),
+  tokenSymbol: z.string(),
   recipientAddress: z.string(),
   status: z.enum(['pending', 'confirmed', 'failed', 'completed']),
   transactionHash: z.string().optional(),

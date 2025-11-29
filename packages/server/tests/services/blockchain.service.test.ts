@@ -72,15 +72,18 @@ describe('BlockchainService', () => {
 
   describe('getPaymentStatus', () => {
     it('결제 정보를 조회할 때 PaymentStatus를 반환해야 함', async () => {
-      // 실제 구현에서는 RPC 호출이 필요하므로 여기서는 에러가 발생할 것으로 예상
-      await expect(blockchainService.getPaymentStatus('payment-123')).rejects.toThrow();
+      // RPC 호출 실패 시에도 pending 상태로 반환 (fail-safe 설계)
+      const result = await blockchainService.getPaymentStatus('payment-123');
+      expect(result).toBeDefined();
+      expect(result?.status).toBe('pending');
+      expect(result?.paymentId).toBe('payment-123');
     });
 
-    it('존재하지 않는 결제 ID로 조회하면 null을 반환해야 함', async () => {
-      // 실제 구현에서는 RPC 호출이 필요
-      await expect(
-        blockchainService.getPaymentStatus('nonexistent-id')
-      ).rejects.toThrow();
+    it('존재하지 않는 결제 ID로 조회하면 pending 상태로 반환해야 함', async () => {
+      // RPC 호출 실패 시에도 pending 상태로 반환하여 polling 계속 가능하도록 함
+      const result = await blockchainService.getPaymentStatus('nonexistent-id');
+      expect(result).toBeDefined();
+      expect(result?.status).toBe('pending');
     });
   });
 
@@ -147,12 +150,13 @@ describe('BlockchainService', () => {
 
   describe('mapContractStatusToEnum (private method via getPaymentStatus)', () => {
     // private 메서드는 직접 테스트할 수 없으므로 getPaymentStatus를 통해 간접 테스트
-    // 하지만 실제 RPC가 필요하므로 에러 케이스만 테스트
+    // RPC 에러 발생 시에도 fail-safe 설계로 pending 상태로 반환
     it('getPaymentStatus 호출 시 스마트 컨트랙트 에러를 적절히 처리해야 함', async () => {
-      // ABI가 비어있으므로 에러가 발생
-      await expect(blockchainService.getPaymentStatus('test-id')).rejects.toThrow(
-        '결제 정보를 조회할 수 없습니다'
-      );
+      // RPC 호출 실패 시에도 pending 상태로 안전하게 반환
+      const result = await blockchainService.getPaymentStatus('test-id');
+      expect(result).toBeDefined();
+      expect(result?.status).toBe('pending');
+      expect(result?.paymentId).toBe('test-id');
     });
   });
 });

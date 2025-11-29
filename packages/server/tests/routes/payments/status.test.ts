@@ -10,11 +10,11 @@ describe('GET /payments/:id/status', () => {
   let blockchainService: BlockchainService;
 
   const mockPaymentStatus: PaymentStatus = {
-    id: 'payment-123',
+    paymentId: 'payment-123',
     userId: 'user123',
     amount: 100,
-    currency: 'USD',
     tokenAddress: '0x' + 'a'.repeat(40),
+    tokenSymbol: 'USDC',
     recipientAddress: '0x' + 'b'.repeat(40),
     status: 'pending',
     createdAt: new Date().toISOString(),
@@ -60,11 +60,11 @@ describe('GET /payments/:id/status', () => {
       const body = JSON.parse(response.body);
       const data = body.data;
 
-      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty('paymentId');
       expect(data).toHaveProperty('userId');
       expect(data).toHaveProperty('amount');
-      expect(data).toHaveProperty('currency');
       expect(data).toHaveProperty('tokenAddress');
+      expect(data).toHaveProperty('tokenSymbol');
       expect(data).toHaveProperty('recipientAddress');
       expect(data).toHaveProperty('status');
       expect(data).toHaveProperty('createdAt');
