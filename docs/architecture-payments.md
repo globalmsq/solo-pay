@@ -253,10 +253,10 @@ interface ContractPaymentData {
 
 ```typescript
 interface PaymentStatus {
-  id: string;                  // 결제 ID
+  paymentId: string;           // 결제 ID (변경: id → paymentId)
   userId: string;              // 사용자 ID
   amount: number;              // 결제 금액 (정수)
-  currency: string;            // 통화
+  tokenSymbol: string;         // 토큰 심볼 (변경: currency → tokenSymbol, 온체인 조회)
   tokenAddress: string;        // 토큰 주소
   recipientAddress: string;    // 수령자 주소
   status: 'pending' | 'confirmed' | 'failed' | 'completed';
@@ -266,6 +266,10 @@ interface PaymentStatus {
   updatedAt: ISO8601String;   // ISO 형식 수정 시간
 }
 ```
+
+> **Note (2025-11-30)**: API 필드 변경사항
+> - `id` → `paymentId`: 일관된 명명 규칙 적용
+> - `currency` → `tokenSymbol`: 온체인 ERC20 컨트랙트에서 `symbol()` 함수로 조회
 
 ---
 

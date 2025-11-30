@@ -40,7 +40,7 @@ MSQPay 결제 API는 블록체인 기반 결제 시스템을 제공합니다. �
 
 ### 1. 결제 생성 (Create Payment)
 
-새로운 결제를 생성하고 스마트 컨트랙트에 기록합니다.
+새로운 결제를 생성합니다. 서버가 체인별 컨트랙트 주소를 응답에 포함하므로 클라이언트는 토큰 심볼과 chainId만 제공하면 됩니다.
 
 ```http
 POST /payments/create
@@ -51,12 +51,10 @@ Content-Type: application/json
 
 ```json
 {
-  "userId": "user_123",
-  "amount": 1000000,
-  "currency": "USD",
-  "tokenAddress": "0x2791Bca1f2de4661ED88A30C99a7a9449Aa84174",
-  "recipientAddress": "0x1234567890123456789012345678901234567890",
-  "description": "Product purchase"
+  "amount": 100,
+  "currency": "SUT",
+  "chainId": 80002,
+  "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
 }
 ```
 
@@ -64,12 +62,17 @@ Content-Type: application/json
 
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `userId` | string | ✅ | 사용자 ID (고유) |
-| `amount` | number | ✅ | 결제 금액 (가장 작은 단위) |
-| `currency` | string | ✅ | 통화 (USD, EUR, KRW) |
-| `tokenAddress` | string | ✅ | ERC-20 토큰 계약 주소 |
-| `recipientAddress` | string | ✅ | 수령자 지갑 주소 |
-| `description` | string | ❌ | 결제 설명 |
+| `amount` | number | ✅ | 결제 금액 (토큰 단위, 예: 100 SUT) |
+| `currency` | string | ✅ | 토큰 심볼 (SUT, MSQ, TEST 등) |
+| `chainId` | number | ✅ | 블록체인 네트워크 ID (MetaMask 연결 체인) |
+| `recipientAddress` | string | ✅ | 결제 수령자(판매자) 지갑 주소 |
+
+##### 지원 체인 및 토큰
+
+| chainId | 네트워크 | 지원 토큰 |
+|---------|---------|----------|
+| 80002 | Polygon Amoy | SUT |
+| 31337 | Hardhat (로컬) | TEST |
 
 #### 응답 (Response)
 
@@ -78,8 +81,11 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "paymentId": "payment-1732882643000",
-  "transactionHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "paymentId": "pay_1732960000000",
+  "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
+  "gatewayAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "amount": "100000000000000000000",
   "status": "pending"
 }
 ```
@@ -90,26 +96,31 @@ Content-Type: application/json
 |------|------|------|
 | `success` | boolean | 요청 성공 여부 |
 | `paymentId` | string | 생성된 결제 ID |
-| `transactionHash` | string | 트랜잭션 해시 (블록체인) |
+| `tokenAddress` | string | 해당 체인의 토큰 컨트랙트 주소 |
+| `gatewayAddress` | string | 해당 체인의 Payment Gateway 주소 |
+| `forwarderAddress` | string | Gasless 거래용 Forwarder 주소 |
+| `amount` | string | wei 단위 변환된 금액 (decimals 적용) |
 | `status` | string | 결제 상태 (pending, confirmed, failed, completed) |
+
+> **참고**: 클라이언트는 응답에 포함된 `tokenAddress`, `gatewayAddress`를 사용하여 블록체인 트랜잭션을 생성합니다. 더 이상 하드코딩된 컨트랙트 주소가 필요 없습니다.
 
 #### 에러 응답
 
 ```json
 {
-  "code": "VALIDATION_ERROR",
-  "message": "입력 검증 실패",
-  "details": [
-    {
-      "code": "too_small",
-      "minimum": 1,
-      "type": "number",
-      "path": ["amount"],
-      "message": "Number must be greater than or equal to 1"
-    }
-  ]
+  "code": "UNSUPPORTED_CHAIN",
+  "message": "Chain ID 1 is not supported"
 }
 ```
+
+##### 에러 코드 (Create Payment)
+
+| 코드 | HTTP Status | 설명 |
+|------|-------------|------|
+| `VALIDATION_ERROR` | 400 | 입력 데이터 검증 실패 |
+| `UNSUPPORTED_CHAIN` | 400 | 지원하지 않는 체인 ID |
+| `UNSUPPORTED_TOKEN` | 400 | 해당 체인에서 지원하지 않는 토큰 |
+| `INTERNAL_ERROR` | 500 | 서버 내부 오류 |
 
 #### 사용 예제
 
@@ -118,12 +129,10 @@ Content-Type: application/json
 curl -X POST http://localhost:3000/payments/create \
   -H "Content-Type: application/json" \
   -d '{
-    "userId": "user_123",
-    "amount": 1000000,
-    "currency": "USD",
-    "tokenAddress": "0x2791Bca1f2de4661ED88A30C99a7a9449Aa84174",
-    "recipientAddress": "0x1234567890123456789012345678901234567890",
-    "description": "Product purchase"
+    "amount": 100,
+    "currency": "SUT",
+    "chainId": 80002,
+    "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
   }'
 ```
 
@@ -133,17 +142,17 @@ const response = await fetch('http://localhost:3000/payments/create', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    userId: 'user_123',
-    amount: 1000000,
-    currency: 'USD',
-    tokenAddress: '0x2791Bca1f2de4661ED88A30C99a7a9449Aa84174',
-    recipientAddress: '0x1234567890123456789012345678901234567890',
-    description: 'Product purchase',
+    amount: 100,
+    currency: 'SUT',
+    chainId: 80002,
+    recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   }),
 });
 
 const data = await response.json();
-console.log(data.paymentId); // payment-1732882643000
+console.log(data.paymentId);        // pay_1732960000000
+console.log(data.tokenAddress);     // 0xE4C687167705...
+console.log(data.gatewayAddress);   // 0xCf7Ed3AccA5a...
 ```
 
 ---

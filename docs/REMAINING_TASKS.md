@@ -1,6 +1,6 @@
 # MSQPay Monorepo - Remaining Tasks
 
-Last Updated: 2025-11-29
+Last Updated: 2025-11-30
 Status: Payment API & SDK Implementation Complete (SPEC-SERVER-002 ✅ SPEC-SDK-001 ✅)
 
 ## Current State
@@ -139,9 +139,16 @@ packages/sdk/
 
 ---
 
-### Priority 3: Demo App 통합
+### Priority 3: Demo App 통합 (Next.js API Routes 방식)
 
 **Location**: `apps/demo/`
+
+**선택된 아키텍처**: Next.js API Routes (DB 없음)
+```
+Frontend (React) → Next.js API Routes (SDK) → 결제서버 → Smart Contract
+                        ↓
+                  MSQPayClient (@globalmsq/msqpay)
+```
 
 **필요한 변경**:
 
@@ -150,18 +157,29 @@ packages/sdk/
    - MSQPayClient 초기화 (development 환경)
    - API 호출 플로우 연동
 
-2. **결제 플로우 수정**
+2. **API Routes 생성**
+   ```
+   apps/demo/src/app/api/payments/
+   ├── create/route.ts      # POST - 결제 생성
+   ├── [id]/status/route.ts # GET - 상태 조회
+   ├── [id]/gasless/route.ts # POST - Gasless 제출
+   └── [id]/relay/route.ts  # POST - Relay 실행
+   ```
+
+3. **결제 플로우 수정**
    - 기존: 클라이언트에서 paymentId 생성
    - 신규: SDK를 통해 서버에서 paymentId 받기
 
-3. **상태 확인 방식**
+4. **상태 확인 방식**
    - 기존: 클라이언트에서 블록체인 직접 확인
    - 신규: SDK를 통해 서버 API polling
 
-4. **샘플 코드 제공**
+5. **샘플 코드 제공**
    - Direct Payment (wagmi useWriteContract + SDK)
    - Gasless Payment (wagmi useSignTypedData + SDK)
    - Approve (1회 무한 승인)
+
+> **Note**: API 필드 변경 (`id` → `paymentId`, `currency` → `tokenSymbol`) 반영 필요
 
 ---
 
