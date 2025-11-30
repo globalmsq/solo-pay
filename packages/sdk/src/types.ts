@@ -8,12 +8,10 @@ export interface MSQPayConfig {
 
 // Request types
 export interface CreatePaymentParams {
-  userId: string;
   amount: number;
-  currency?: 'USD' | 'EUR' | 'KRW';
-  tokenAddress: string;
+  currency: string;
+  chainId: number;
   recipientAddress: string;
-  description?: string;
 }
 
 export interface GaslessParams {
@@ -30,10 +28,13 @@ export interface RelayParams {
 
 // Response types
 export interface CreatePaymentResponse {
-  success: true;
+  success: boolean;
   paymentId: string;
-  transactionHash: string;
-  status: 'pending';
+  tokenAddress: string;
+  gatewayAddress: string;
+  forwarderAddress: string;
+  amount: string; // wei
+  status: string;
 }
 
 export interface PaymentStatusResponse {

@@ -11,27 +11,22 @@ export const config = getDefaultConfig({
   ssr: true,
 });
 
-// Contract addresses per chain
-export const CONTRACTS: Record<number, { gateway: `0x${string}`; forwarder: `0x${string}` }> = {
-  // Polygon Amoy - TBD after deployment
-  [polygonAmoy.id]: {
-    gateway: "0x0000000000000000000000000000000000000000",
-    forwarder: "0x0000000000000000000000000000000000000000",
-  },
-  // Localhost (Hardhat)
-  [hardhat.id]: {
-    gateway: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-    forwarder: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  },
+// ⚠️ DEPRECATED: These are only kept for UI display purposes
+// Contract addresses and token addresses are now provided by the server
+// See: POST /payments/create API response
+
+// Default token symbol per chain (for UI display only)
+export const DEFAULT_TOKEN_SYMBOL: Record<number, string> = {
+  [polygonAmoy.id]: "SUT",
+  [hardhat.id]: "TEST",
 };
 
-// Token addresses per chain
+// Token addresses per chain (for UI display only - NOT used for contract interaction)
 export const TOKENS: Record<number, Record<string, `0x${string}`>> = {
   [polygonAmoy.id]: {
     SUT: "0xE4C687167705Abf55d709395f92e254bdF5825a2",
   },
   [hardhat.id]: {
-    // MockERC20 deployed via ignition
     TEST: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
   },
 };
@@ -49,13 +44,7 @@ export function getSubgraphUrl(chainId: number): string | undefined {
   return SUBGRAPH_URLS[chainId];
 }
 
-// Default token symbol per chain
-export const DEFAULT_TOKEN_SYMBOL: Record<number, string> = {
-  [polygonAmoy.id]: "SUT",
-  [hardhat.id]: "TEST",
-};
-
-// Helper to get token config for a chain
+// Helper to get token config for a chain (for UI display only)
 export function getTokenForChain(chainId: number): { address: `0x${string}`; symbol: string } | undefined {
   const symbol = DEFAULT_TOKEN_SYMBOL[chainId];
   if (!symbol) return undefined;
@@ -64,7 +53,23 @@ export function getTokenForChain(chainId: number): { address: `0x${string}`; sym
   return { address, symbol };
 }
 
-// Helper to get contracts for a chain
+// ⚠️ NOTE: These contract values are DEPRECATED - for UI display only
+// Contract addresses are now retrieved from the POST /payments/create API response
+const LEGACY_CONTRACTS: Record<number, { gateway: `0x${string}`; forwarder: `0x${string}` }> = {
+  // Polygon Amoy - TBD after deployment
+  [polygonAmoy.id]: {
+    gateway: "0x0000000000000000000000000000000000000000",
+    forwarder: "0x0000000000000000000000000000000000000000",
+  },
+  // Localhost (Hardhat)
+  [hardhat.id]: {
+    gateway: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    forwarder: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  },
+};
+
 export function getContractsForChain(chainId: number): { gateway: `0x${string}`; forwarder: `0x${string}` } | undefined {
-  return CONTRACTS[chainId];
+  // DEPRECATED: Use server-provided addresses from POST /payments/create response instead
+  // This function is kept for backward compatibility during migration
+  return LEGACY_CONTRACTS[chainId];
 }

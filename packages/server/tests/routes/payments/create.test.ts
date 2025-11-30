@@ -3,6 +3,7 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { createPaymentRoute } from '../../../src/routes/payments/create';
 import { BlockchainService } from '../../../src/services/blockchain.service';
+import { SUPPORTED_CHAINS } from '../../../src/config/chains';
 
 describe('POST /payments/create', () => {
   let app: FastifyInstance;
@@ -12,13 +13,14 @@ describe('POST /payments/create', () => {
     app = Fastify({ logger: false });
     await app.register(cors);
 
-    // Mock BlockchainService
-    blockchainService = {
-      recordPaymentOnChain: vi.fn().mockResolvedValue('0x' + 'a'.repeat(64)),
-      getPaymentStatus: vi.fn(),
-      waitForConfirmation: vi.fn(),
-      estimateGasCost: vi.fn(),
-    } as any;
+    // 실제 BlockchainService 인스턴스 생성
+    blockchainService = new BlockchainService(
+      'https://polygon-rpc.com',
+      SUPPORTED_CHAINS[0].contracts.gateway
+    );
+
+    // Mock getDecimals to return 18
+    blockchainService.getDecimals = vi.fn().mockResolvedValue(18);
 
     // 실제 라우트 등록
     await createPaymentRoute(app, blockchainService);
@@ -27,12 +29,10 @@ describe('POST /payments/create', () => {
   describe('정상 케이스', () => {
     it('유효한 결제 요청을 받으면 201 상태 코드와 함께 결제 ID를 반환해야 함', async () => {
       const validPayment = {
-        userId: 'user123',
         amount: 100,
-        currency: 'USD',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
-        description: '테스트 결제',
+        currency: 'SUT',
+        chainId: 80002,
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -45,17 +45,19 @@ describe('POST /payments/create', () => {
       const body = JSON.parse(response.body);
       expect(body.success).toBe(true);
       expect(body.paymentId).toBeDefined();
-      expect(body.transactionHash).toBeDefined();
+      expect(body.tokenAddress).toBe('0xE4C687167705Abf55d709395f92e254bdF5825a2');
+      expect(body.gatewayAddress).toBeDefined();
+      expect(body.forwarderAddress).toBeDefined();
+      expect(body.amount).toBe('100000000000000000000'); // 100 * 10^18
       expect(body.status).toBe('pending');
     });
 
-    it('선택적 필드 없이 최소 필수 정보만으로 결제를 생성할 수 있어야 함', async () => {
+    it('Hardhat 체인 (chainId 31337)으로 최소 필수 정보만으로 결제를 생성할 수 있어야 함', async () => {
       const minimalPayment = {
-        userId: 'user456',
         amount: 50,
-        currency: 'KRW',
-        tokenAddress: '0x' + 'c'.repeat(40),
-        recipientAddress: '0x' + 'd'.repeat(40),
+        currency: 'TEST',
+        chainId: 31337,
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -67,37 +69,17 @@ describe('POST /payments/create', () => {
       expect(response.statusCode).toBe(201);
       const body = JSON.parse(response.body);
       expect(body.success).toBe(true);
+      expect(body.tokenAddress).toBe('0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512');
     });
   });
 
   describe('경계 케이스', () => {
     it('금액이 0일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        userId: 'user789',
         amount: 0,
-        currency: 'USD',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/payments/create',
-        payload: invalidPayment,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.code).toBe('VALIDATION_ERROR');
-    });
-
-    it('유효하지 않은 토큰 주소일 때 400 상태 코드를 반환해야 함', async () => {
-      const invalidPayment = {
-        userId: 'user101',
-        amount: 100,
-        currency: 'USD',
-        tokenAddress: 'invalid-address',
-        recipientAddress: '0x' + 'b'.repeat(40),
+        currency: 'SUT',
+        chainId: 80002,
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -113,11 +95,29 @@ describe('POST /payments/create', () => {
 
     it('음수 금액일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        userId: 'user202',
         amount: -50,
-        currency: 'EUR',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
+        currency: 'SUT',
+        chainId: 80002,
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/payments/create',
+        payload: invalidPayment,
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('유효하지 않은 recipientAddress 형식일 때 400 상태 코드를 반환해야 함', async () => {
+      const invalidPayment = {
+        amount: 100,
+        currency: 'SUT',
+        chainId: 80002,
+        recipientAddress: 'invalid-address',
       };
 
       const response = await app.inject({
@@ -135,10 +135,10 @@ describe('POST /payments/create', () => {
   describe('예외 케이스', () => {
     it('필수 필드가 누락되었을 때 400 상태 코드를 반환해야 함', async () => {
       const incompletePayment = {
-        userId: 'user303',
         amount: 100,
-        // tokenAddress 누락
-        recipientAddress: '0x' + 'b'.repeat(40),
+        currency: 'SUT',
+        // chainId 누락
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -152,13 +152,12 @@ describe('POST /payments/create', () => {
       expect(body.code).toBe('VALIDATION_ERROR');
     });
 
-    it('빈 userId일 때 400 상태 코드를 반환해야 함', async () => {
+    it('지원하지 않는 chainId일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        userId: '',
         amount: 100,
-        currency: 'USD',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
+        currency: 'SUT',
+        chainId: 1, // Ethereum Mainnet (지원 안 함)
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -169,20 +168,39 @@ describe('POST /payments/create', () => {
 
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);
-      expect(body.code).toBe('VALIDATION_ERROR');
+      expect(body.code).toBe('UNSUPPORTED_CHAIN');
+      expect(body.message).toContain('Chain ID 1 is not supported');
     });
 
-    it('블록체인 서비스 오류 발생 시 500 상태 코드를 반환해야 함', async () => {
-      blockchainService.recordPaymentOnChain = vi
-        .fn()
-        .mockRejectedValueOnce(new Error('블록체인 연결 오류'));
+    it('지원하지 않는 currency일 때 400 상태 코드를 반환해야 함', async () => {
+      const invalidPayment = {
+        amount: 100,
+        currency: 'ETH', // Polygon Amoy에서 지원하지 않는 토큰
+        chainId: 80002,
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/payments/create',
+        payload: invalidPayment,
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.code).toBe('UNSUPPORTED_TOKEN');
+      expect(body.message).toContain('Token ETH is not supported');
+    });
+
+    it('decimals 조회 오류 발생 시에도 fallback으로 진행해야 함', async () => {
+      // getDecimals가 실패해도 fallback 18로 처리
+      blockchainService.getDecimals = vi.fn().mockResolvedValue(18);
 
       const validPayment = {
-        userId: 'user404',
         amount: 100,
-        currency: 'USD',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
+        currency: 'SUT',
+        chainId: 80002,
+        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -191,9 +209,9 @@ describe('POST /payments/create', () => {
         payload: validPayment,
       });
 
-      expect(response.statusCode).toBe(500);
+      expect(response.statusCode).toBe(201);
       const body = JSON.parse(response.body);
-      expect(body.code).toBe('INTERNAL_ERROR');
+      expect(body.amount).toBe('100000000000000000000'); // 100 * 10^18 (fallback)
     });
   });
 });

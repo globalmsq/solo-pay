@@ -454,11 +454,10 @@ export class BlockchainService {
   /**
    * ERC20 토큰의 decimals 조회
    * decimals() 호출 실패 시 기본값 18로 fallback
-   * @param chainId 네트워크 체인 ID
    * @param tokenAddress ERC20 토큰 주소
    * @returns decimals 값 (기본: 18)
    */
-  async getDecimals(chainId: number, tokenAddress: string): Promise<number> {
+  async getDecimals(_chainId: number, tokenAddress: string): Promise<number> {
     try {
       const ERC20_ABI = [
         {
