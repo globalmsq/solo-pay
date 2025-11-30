@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 // 결제 생성 요청 스키마
 export const CreatePaymentSchema = z.object({
-  userId: z.string().min(1, '사용자 ID는 필수입니다'),
   amount: z.number().positive('금액은 양수여야 합니다'),
-  currency: z.enum(['USD', 'EUR', 'KRW']).default('USD'),
-  tokenAddress: z.string().startsWith('0x').length(42, '유효한 ERC20 토큰 주소여야 합니다'),
-  recipientAddress: z.string().startsWith('0x').length(42, '유효한 지갑 주소여야 합니다'),
-  description: z.string().optional(),
+  currency: z.string().min(1, '토큰 심볼은 필수입니다'),
+  chainId: z.number().int().positive('지원하는 체인 ID여야 합니다'),
+  recipientAddress: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/, '유효한 Ethereum 주소여야 합니다 (0x + 40자 hex)'),
 });
 
 export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
