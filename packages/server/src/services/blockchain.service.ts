@@ -1,6 +1,7 @@
 import { createPublicClient, http, PublicClient, Address, parseAbiItem } from 'viem';
 import { polygon } from 'viem/chains';
 import { PaymentStatus } from '../schemas/payment.schema';
+import { SUPPORTED_CHAINS } from '../config/chains';
 
 /**
  * 결제 이력 아이템 인터페이스
@@ -426,6 +427,59 @@ export class BlockchainService {
     } catch (error) {
       console.error('결제 이력 조회 실패:', error);
       throw new Error('결제 이력을 조회할 수 없습니다');
+    }
+  }
+
+  /**
+   * 특정 체인과 토큰 심볼로 토큰 주소 조회
+   * @param chainId 네트워크 체인 ID
+   * @param symbol 토큰 심볼 (예: "SUT", "TEST")
+   * @returns 토큰 주소 또는 undefined (지원하지 않는 체인/토큰)
+   */
+  getTokenAddress(chainId: number, symbol: string): string | undefined {
+    const chain = SUPPORTED_CHAINS.find(c => c.id === chainId);
+    return chain?.tokens[symbol];
+  }
+
+  /**
+   * 특정 체인의 컨트랙트 주소 조회
+   * @param chainId 네트워크 체인 ID
+   * @returns 컨트랙트 정보 (gateway, forwarder) 또는 undefined
+   */
+  getChainContracts(chainId: number): { gateway: string; forwarder: string } | undefined {
+    const chain = SUPPORTED_CHAINS.find(c => c.id === chainId);
+    return chain?.contracts;
+  }
+
+  /**
+   * ERC20 토큰의 decimals 조회
+   * decimals() 호출 실패 시 기본값 18로 fallback
+   * @param chainId 네트워크 체인 ID
+   * @param tokenAddress ERC20 토큰 주소
+   * @returns decimals 값 (기본: 18)
+   */
+  async getDecimals(chainId: number, tokenAddress: string): Promise<number> {
+    try {
+      const ERC20_ABI = [
+        {
+          type: 'function',
+          name: 'decimals',
+          inputs: [],
+          outputs: [{ name: '', type: 'uint8' }],
+          stateMutability: 'view',
+        },
+      ] as const;
+
+      const decimals = await this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: ERC20_ABI,
+        functionName: 'decimals',
+      });
+
+      return Number(decimals);
+    } catch (error) {
+      console.warn(`Failed to get decimals for ${tokenAddress}, using fallback 18`);
+      return 18;
     }
   }
 }
