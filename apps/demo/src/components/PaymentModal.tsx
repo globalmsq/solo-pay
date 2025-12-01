@@ -9,9 +9,10 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { parseUnits, formatUnits, keccak256, toHex, type Address } from "viem";
-import { getTokenForChain, getContractsForChain } from "@/lib/wagmi";
+import { getTokenForChain } from "@/lib/wagmi";
 import { DEMO_MERCHANT_ADDRESS } from "@/lib/constants";
-import { getPaymentStatus } from "@/lib/api";
+import { getPaymentStatus, createPayment } from "@/lib/api";
+import type { CreatePaymentResponse } from "@/lib/api";
 
 // ERC20 ABI with view functions for balance/allowance queries
 const ERC20_ABI = [
@@ -101,10 +102,42 @@ export function PaymentModal({
     undefined
   );
   const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
+  const [serverConfig, setServerConfig] = useState<CreatePaymentResponse | null>(null);
+  const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const amount = parseUnits(product.price, 18);
   const token = getTokenForChain(chainId);
-  const contracts = getContractsForChain(chainId);
+
+  // Load server configuration on mount
+  useEffect(() => {
+    const loadServerConfig = async () => {
+      if (!address) return;
+
+      setIsLoadingConfig(true);
+      setConfigError(null);
+
+      try {
+        const response = await createPayment({
+          chainId,
+          amount: product.price,
+          merchantId: DEMO_MERCHANT_ADDRESS,
+        });
+
+        if (response.success && response.data) {
+          setServerConfig(response.data);
+        } else {
+          setConfigError(response.message || "Failed to load server configuration");
+        }
+      } catch (err) {
+        setConfigError(err instanceof Error ? err.message : "Failed to load server configuration");
+      } finally {
+        setIsLoadingConfig(false);
+      }
+    };
+
+    loadServerConfig();
+  }, [address, chainId, product.price]);
 
   // Read token balance using wagmi hook (MetaMask handles RPC)
   const { data: balance, isLoading: balanceLoading } = useReadContract({
@@ -122,9 +155,9 @@ export function PaymentModal({
     address: token?.address as Address,
     abi: ERC20_ABI,
     functionName: "allowance",
-    args: address && contracts ? [address, contracts.gateway as Address] : undefined,
+    args: address && serverConfig ? [address, serverConfig.gatewayAddress as Address] : undefined,
     query: {
-      enabled: !!address && !!token && !!contracts,
+      enabled: !!address && !!token && !!serverConfig,
     },
   });
 
@@ -182,7 +215,7 @@ export function PaymentModal({
 
   // Handle token approval
   const handleApprove = async () => {
-    if (!walletClient || !address || !token || !contracts) return;
+    if (!walletClient || !address || !token || !serverConfig) return;
 
     try {
       setStatus("approving");
@@ -192,7 +225,7 @@ export function PaymentModal({
         address: token.address as Address,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [contracts.gateway as Address, amount],
+        args: [serverConfig.gatewayAddress as Address, amount],
       });
 
       setApproveTxHash(hash);
@@ -206,7 +239,7 @@ export function PaymentModal({
 
   // Handle direct payment
   const handleDirectPayment = async () => {
-    if (!walletClient || !address || !token || !contracts) return;
+    if (!walletClient || !address || !token || !serverConfig) return;
 
     try {
       setStatus("paying");
@@ -217,7 +250,7 @@ export function PaymentModal({
 
       // 1. Send payment TX to Contract
       const hash = await walletClient.writeContract({
-        address: contracts.gateway as Address,
+        address: serverConfig.gatewayAddress as Address,
         abi: PAYMENT_GATEWAY_ABI,
         functionName: "pay",
         args: [
@@ -273,7 +306,7 @@ export function PaymentModal({
   const currentAllowance = allowance ?? BigInt(0);
   const hasInsufficientBalance = currentBalance < amount;
   const needsApproval = currentAllowance < amount;
-  const isLoading = balanceLoading || approveTxLoading;
+  const isLoading = balanceLoading || approveTxLoading || isLoadingConfig;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -363,9 +396,9 @@ export function PaymentModal({
           </div>
 
           {/* Error message */}
-          {error && (
+          {(error || configError) && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-sm text-red-700 dark:text-red-300">
-              {error}
+              {error || configError}
             </div>
           )}
 
