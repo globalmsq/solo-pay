@@ -1,6 +1,6 @@
 ---
 id: SPEC-DEMO-002
-version: "1.0.0"
+version: "1.0.1"
 status: "draft"
 created: "2025-12-01"
 updated: "2025-12-01"
@@ -126,7 +126,7 @@ SPEC-API-001의 서버 기반 블록체인 설정을 Demo App에 적용합니다
 ## 🔗 Dependencies
 
 - **Parent**: SPEC-API-001 (서버/SDK 구현 완료)
-- **Libraries**: Zod, Wagmi, Viem, React
+- **Libraries**: Zod (⚠️ 설치 필요), Wagmi, Viem, React
 - **Services**: MSQPay Server (packages/server)
 
 ---

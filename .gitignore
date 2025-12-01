@@ -188,6 +188,7 @@ env/
 # Claude Code - 필수 파일만 포함
 .claude/*
 !.claude/commands/
+!.claude/hooks/
 !.claude/settings.json
 # CLAUDE.md - Git에 포함
 # .mcp.json - Git에 포함

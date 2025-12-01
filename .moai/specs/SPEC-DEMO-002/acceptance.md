@@ -28,7 +28,7 @@ created: "2025-12-01"
 
 ### 검증 방법
 ```typescript
-// Test: packages/demo-app/src/utils/api.test.ts
+// Test: apps/demo/src/utils/api.test.ts
 const request: CreatePaymentRequest = {
   merchantId: 'merchant-123',
   amount: 100,
@@ -65,7 +65,7 @@ expect(response.data?.gatewayAddress).toMatch(/^0x[a-fA-F0-9]{40}$/);
 
 ### 검증 방법
 ```typescript
-// Test: packages/demo-app/src/utils/api.test.ts
+// Test: apps/demo/src/utils/api.test.ts
 const invalidRequest = {
   merchantId: 'merchant-123',
   amount: 100,
@@ -114,7 +114,7 @@ await createPayment(invalidCurrency); // VALIDATION_ERROR
 
 ### 검증 방법
 ```typescript
-// Test: packages/demo-app/src/utils/api.test.ts
+// Test: apps/demo/src/utils/api.test.ts
 const mockResponse = {
   success: true,
   data: { paymentId: 'payment-123', /* ... */ },
@@ -172,7 +172,7 @@ PaymentModal이 마운트될 때 자동으로 서버 API를 호출하여 블록�
 
 ### 검증 방법
 ```typescript
-// Test: packages/demo-app/src/components/PaymentModal.test.tsx
+// Test: apps/demo/src/components/PaymentModal.test.tsx
 const createPaymentSpy = vi.spyOn(api, 'createPayment').mockResolvedValueOnce({
   success: true,
   data: {
@@ -235,7 +235,7 @@ expect(createPaymentSpy).not.toHaveBeenCalled();
 
 ### 검증 방법
 ```typescript
-// Test: packages/demo-app/src/components/PaymentModal.test.tsx
+// Test: apps/demo/src/components/PaymentModal.test.tsx
 const writeContractSpy = vi.fn();
 
 vi.mock('wagmi', () => ({
@@ -296,10 +296,10 @@ wagmi.ts에서 LEGACY_CONTRACTS와 getContractsForChain() 함수가 완전히 �
 
 ### 검증 방법
 ```bash
-# 스크립트: packages/demo-app/scripts/verify-cleanup.sh
+# 스크립트: apps/demo/scripts/verify-cleanup.sh
 
 # LEGACY_CONTRACTS 검색
-LEGACY_COUNT=$(git grep -c "LEGACY_CONTRACTS" packages/demo-app/src || echo "0")
+LEGACY_COUNT=$(git grep -c "LEGACY_CONTRACTS" apps/demo/src || echo "0")
 
 if [ "$LEGACY_COUNT" != "0" ]; then
   echo "❌ FAILED: LEGACY_CONTRACTS still exists!"
@@ -307,7 +307,7 @@ if [ "$LEGACY_COUNT" != "0" ]; then
 fi
 
 # getContractsForChain 검색
-GET_CONTRACTS_COUNT=$(git grep -c "getContractsForChain" packages/demo-app/src || echo "0")
+GET_CONTRACTS_COUNT=$(git grep -c "getContractsForChain" apps/demo/src || echo "0")
 
 if [ "$GET_CONTRACTS_COUNT" != "0" ]; then
   echo "❌ FAILED: getContractsForChain still exists!"
@@ -315,7 +315,7 @@ if [ "$GET_CONTRACTS_COUNT" != "0" ]; then
 fi
 
 # getTokenForChain은 유지되어야 함 (UI 표시용)
-GET_TOKEN_COUNT=$(git grep -c "getTokenForChain" packages/demo-app/src || echo "0")
+GET_TOKEN_COUNT=$(git grep -c "getTokenForChain" apps/demo/src || echo "0")
 
 if [ "$GET_TOKEN_COUNT" == "0" ]; then
   echo "❌ FAILED: getTokenForChain was removed (should be kept)!"
@@ -332,7 +332,7 @@ echo "✅ PASSED: All legacy code removed successfully!"
 
 ### 수동 검증
 ```typescript
-// packages/demo-app/src/config/wagmi.ts 파일 확인
+// apps/demo/src/config/wagmi.ts 파일 확인
 
 // ❌ 존재하지 않아야 함
 // export const LEGACY_CONTRACTS = { ... };
