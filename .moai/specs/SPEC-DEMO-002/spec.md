@@ -1,7 +1,7 @@
 ---
 id: SPEC-DEMO-002
-version: "1.0.2"
-status: "draft"
+version: "1.1.0"
+status: "completed"
 created: "2025-12-01"
 updated: "2025-12-01"
 author: "Harry"
@@ -15,6 +15,8 @@ parent: "SPEC-API-001"
 |---------|------|--------|---------|
 | 1.0.0 | 2025-12-01 | Harry | Initial draft |
 | 1.0.2 | 2025-12-01 | Harry | 금액 조작 방지 보안 요구사항 추가 |
+| 1.0.3 | 2025-12-01 | Harry | Decimals 동적 처리 요구사항 추가 |
+| 1.1.0 | 2025-12-01 | Harry | 구현 완료 - 서버 기반 블록체인 설정, 토큰 심볼 수정, Hardhat 체인 설정 |
 
 ---
 
@@ -65,6 +67,12 @@ SPEC-API-001의 서버 기반 블록체인 설정을 Demo App에 적용합니다
 **FR-4**: API 클라이언트 MUST 네트워크 에러 발생 시 최대 3회까지 재시도해야 한다.
 
 **FR-5**: PaymentModal MUST 서버 설정 로딩 중 사용자에게 로딩 상태를 표시해야 한다.
+
+**FR-6**: 상품 데이터 MUST 토큰 decimals 정보를 포함해야 한다.
+
+**FR-7**: Checkout API 응답 MUST decimals 필드를 포함해야 한다.
+
+**FR-8**: PaymentModal MUST 서버 응답의 decimals를 사용하여 금액을 wei 단위로 변환해야 한다.
 
 ### Non-Functional Requirements (비기능 요구사항)
 
@@ -161,6 +169,24 @@ SPEC-API-001의 서버 기반 블록체인 설정을 Demo App에 적용합니다
 **GIVEN** Next.js API Route `/api/checkout` 코드를 검토할 때
 **WHEN** 결제서버 API 호출 로직을 확인하면
 **THEN** `amount`는 서버에서 조회한 가격을 사용하고, 클라이언트에서 받은 값을 사용하지 않아야 한다.
+
+### AC-10: 상품 데이터에 decimals 포함
+
+**GIVEN** products.ts 파일을 검토할 때
+**WHEN** Product 인터페이스를 확인하면
+**THEN** `decimals` 필드가 존재하고 모든 상품에 decimals 값이 설정되어 있어야 한다.
+
+### AC-11: Checkout API 응답에 decimals 포함
+
+**GIVEN** `/api/checkout` API를 호출할 때
+**WHEN** 성공 응답을 받으면
+**THEN** 응답에 `decimals` 필드가 포함되어 있어야 한다.
+
+### AC-12: PaymentModal에서 동적 decimals 사용
+
+**GIVEN** PaymentModal.tsx 코드를 검토할 때
+**WHEN** parseUnits() 호출을 확인하면
+**THEN** 하드코딩된 18 대신 serverConfig.decimals를 사용해야 한다.
 
 ---
 

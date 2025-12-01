@@ -95,7 +95,8 @@ Content-Type: application/json
   "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
   "gatewayAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
   "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "amount": "100000000000000000000",
+  "amount": "100",
+  "decimals": 18,
   "status": "pending"
 }
 ```
@@ -109,8 +110,12 @@ Content-Type: application/json
 | `tokenAddress` | string | 해당 체인의 토큰 컨트랙트 주소 |
 | `gatewayAddress` | string | 해당 체인의 Payment Gateway 주소 |
 | `forwarderAddress` | string | Gasless 거래용 Forwarder 주소 |
-| `amount` | string | wei 단위 변환된 금액 (decimals 적용) |
+| `amount` | string | 결제 금액 (human-readable, 예: "100") |
+| `decimals` | number | 토큰 소수점 자리수 (예: 18, 6) |
 | `status` | string | 결제 상태 (pending, confirmed, failed, completed) |
+
+> **참고**: 클라이언트는 블록체인 트랜잭션 생성 시 `amount`와 `decimals`를 사용하여 wei 단위로 변환해야 합니다.
+> 예: `parseUnits(amount, decimals)` → `parseUnits("100", 18)` → `100000000000000000000n`
 
 > **참고**: 클라이언트는 응답에 포함된 `tokenAddress`, `gatewayAddress`를 사용하여 블록체인 트랜잭션을 생성합니다. 더 이상 하드코딩된 컨트랙트 주소가 필요 없습니다.
 

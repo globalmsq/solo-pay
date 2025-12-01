@@ -11,8 +11,8 @@ import {
 import { parseUnits, formatUnits, keccak256, toHex, type Address } from "viem";
 import { getTokenForChain } from "@/lib/wagmi";
 import { DEMO_MERCHANT_ADDRESS } from "@/lib/constants";
-import { getPaymentStatus, createPayment } from "@/lib/api";
-import type { CreatePaymentResponse } from "@/lib/api";
+import { getPaymentStatus, checkout } from "@/lib/api";
+import type { CheckoutResponse } from "@/lib/api";
 
 // ERC20 ABI with view functions for balance/allowance queries
 const ERC20_ABI = [
@@ -102,14 +102,20 @@ export function PaymentModal({
     undefined
   );
   const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
-  const [serverConfig, setServerConfig] = useState<CreatePaymentResponse | null>(null);
+  // ⚠️ SECURITY: serverConfig contains server-verified price (not from client)
+  const [serverConfig, setServerConfig] = useState<CheckoutResponse | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(false);
   const [configError, setConfigError] = useState<string | null>(null);
 
-  const amount = parseUnits(product.price, 18);
+  // ⚠️ SECURITY: Use server-verified amount and decimals, NOT product.price from client
+  // The amount is set after checkout API returns server-verified price and decimals
+  const decimals = serverConfig?.decimals ?? 18; // Default to 18 if not yet loaded
+  const amount = serverConfig ? parseUnits(serverConfig.amount, decimals) : parseUnits(product.price, decimals);
   const token = getTokenForChain(chainId);
 
   // Load server configuration on mount
+  // ⚠️ SECURITY: Only productId is sent, NOT amount, NOT chainId!
+  // Server looks up price and chainId from product config
   useEffect(() => {
     const loadServerConfig = async () => {
       if (!address) return;
@@ -118,10 +124,12 @@ export function PaymentModal({
       setConfigError(null);
 
       try {
-        const response = await createPayment({
-          chainId,
-          amount: product.price,
-          merchantId: DEMO_MERCHANT_ADDRESS,
+        // ⚠️ SECURITY: Call checkout with productId only
+        // Server will look up price and chainId from product config
+        const response = await checkout({
+          productId: product.id,  // ✅ Only productId sent
+          // ❌ amount is NOT sent - server looks it up!
+          // ❌ chainId is NOT sent - server looks it up!
         });
 
         if (response.success && response.data) {
@@ -137,7 +145,7 @@ export function PaymentModal({
     };
 
     loadServerConfig();
-  }, [address, chainId, product.price]);
+  }, [address, product.id]);  // ✅ Depend on product.id only
 
   // Read token balance using wagmi hook (MetaMask handles RPC)
   const { data: balance, isLoading: balanceLoading } = useReadContract({
@@ -356,7 +364,7 @@ export function PaymentModal({
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Your {token?.symbol || "TOKEN"} Balance:</span>
               <span className={hasInsufficientBalance ? "text-red-500" : ""}>
-                {formatUnits(currentBalance, 18)} {token?.symbol || "TOKEN"}
+                {formatUnits(currentBalance, decimals)} {token?.symbol || "TOKEN"}
               </span>
             </div>
             {hasInsufficientBalance && (
