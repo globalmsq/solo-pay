@@ -11,7 +11,7 @@ import {
 import { parseUnits, formatUnits, keccak256, toHex, type Address } from "viem";
 import { getTokenForChain } from "@/lib/wagmi";
 import { DEMO_MERCHANT_ADDRESS } from "@/lib/constants";
-import { getPaymentStatus, checkout } from "@/lib/api";
+import { getPaymentStatus, checkout, submitGaslessPayment, waitForRelayTransaction } from "@/lib/api";
 import type { CheckoutResponse } from "@/lib/api";
 
 // ERC20 ABI with view functions for balance/allowance queries
@@ -102,6 +102,7 @@ export function PaymentModal({
     undefined
   );
   const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
+  const [relayRequestId, setRelayRequestId] = useState<string | null>(null);
   // ⚠️ SECURITY: serverConfig contains server-verified price (not from client)
   const [serverConfig, setServerConfig] = useState<CheckoutResponse | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(false);
@@ -293,13 +294,105 @@ export function PaymentModal({
 
   // Handle gasless payment (meta-transaction)
   const handleGaslessPayment = async () => {
-    // TODO: Implement meta-transaction flow
-    // This requires:
-    // 1. Get nonce from forwarder
-    // 2. Create EIP-712 typed data
-    // 3. Request signature from user
-    // 4. Submit to OZ Defender relay
-    setError("Gasless payments coming soon! Use direct payment for now.");
+    if (!walletClient || !address || !token || !serverConfig) return;
+
+    try {
+      setStatus("paying");
+      setError(null);
+
+      const paymentId = generatePaymentId();
+      setCurrentPaymentId(paymentId);
+
+      // 1. Create EIP-712 typed data for gasless payment forward request
+      // The domain and types must match the Forwarder contract's EIP-712 signature verification
+      const domain = {
+        name: 'MSQPayForwarder',
+        version: '1',
+        chainId: BigInt(serverConfig.chainId),
+        verifyingContract: serverConfig.forwarderAddress as Address,
+      };
+
+      const types = {
+        ForwardRequest: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'gas', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'deadline', type: 'uint256' },
+          { name: 'data', type: 'bytes' },
+        ],
+      };
+
+      // Encode the pay function call data
+      const paymentData = {
+        paymentId,
+        token: token.address as Address,
+        amount,
+        merchant: DEMO_MERCHANT_ADDRESS as Address,
+      };
+
+      // Create forward request message
+      // nonce: simple timestamp-based nonce (server should track actual nonces)
+      // deadline: 10 minutes from now
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
+      const nonce = BigInt(Date.now());
+
+      const message = {
+        from: address,
+        to: serverConfig.gatewayAddress as Address,
+        value: BigInt(0),
+        gas: BigInt(300000), // Estimated gas for payment
+        nonce,
+        deadline,
+        data: paymentId, // Simplified: just send paymentId, server encodes full calldata
+      };
+
+      // 2. Request EIP-712 signature from user
+      const signature = await walletClient.signTypedData({
+        domain,
+        types,
+        primaryType: 'ForwardRequest',
+        message,
+      });
+
+      // 3. Submit to OZ Defender relay via our gasless API
+      const submitResponse = await submitGaslessPayment(
+        paymentId,
+        serverConfig.forwarderAddress,
+        signature
+      );
+
+      if (!submitResponse.success || !submitResponse.data) {
+        throw new Error(submitResponse.message || 'Failed to submit gasless payment');
+      }
+
+      setRelayRequestId(submitResponse.data.relayRequestId);
+
+      // 4. Wait for relay transaction to be mined
+      const relayResult = await waitForRelayTransaction(submitResponse.data.relayRequestId);
+
+      if (relayResult.status === 'failed') {
+        throw new Error('Gasless payment relay failed');
+      }
+
+      // 5. Payment confirmed
+      setPendingTxHash(relayResult.transactionHash as Address | undefined);
+      setStatus("success");
+
+      if (onSuccess && relayResult.transactionHash) {
+        onSuccess(relayResult.transactionHash);
+      }
+
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err: unknown) {
+      console.error("Gasless payment error:", err);
+      const message = err instanceof Error ? err.message : "Gasless payment failed";
+      setError(message);
+      setStatus("error");
+    }
   };
 
   const handlePayment = () => {

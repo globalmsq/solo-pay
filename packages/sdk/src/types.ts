@@ -69,6 +69,13 @@ export interface RelayResponse {
   message: string;
 }
 
+export interface RelayStatusResponse {
+  success: true;
+  relayRequestId: string;
+  transactionHash?: string;
+  status: 'submitted' | 'pending' | 'mined' | 'confirmed' | 'failed';
+}
+
 export interface ErrorResponse {
   success: false;
   code: string;

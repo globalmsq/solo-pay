@@ -203,6 +203,168 @@ export async function waitForTransaction(
   throw new Error('Transaction confirmation timeout');
 }
 
+// ============================================================
+// Gasless Payment API
+// ============================================================
+
+/**
+ * Gasless Payment Request Schema
+ */
+export const GaslessPaymentRequestSchema = z.object({
+  paymentId: z.string().min(1, 'Payment ID is required'),
+  forwarderAddress: z.string().startsWith('0x').length(42, 'Invalid forwarder address'),
+  signature: z.string().startsWith('0x', 'Signature must start with 0x'),
+});
+
+export type GaslessPaymentRequest = z.infer<typeof GaslessPaymentRequestSchema>;
+
+/**
+ * Gasless Payment Response Schema
+ */
+export const GaslessPaymentResponseSchema = z.object({
+  success: z.boolean(),
+  relayRequestId: z.string(),
+  status: z.enum(['submitted', 'pending', 'mined', 'confirmed', 'failed']),
+  message: z.string().optional(),
+});
+
+export type GaslessPaymentResponse = z.infer<typeof GaslessPaymentResponseSchema>;
+
+/**
+ * Relay Status Response Schema
+ */
+export const RelayStatusResponseSchema = z.object({
+  success: z.boolean(),
+  relayRequestId: z.string(),
+  transactionHash: z.string().optional(),
+  status: z.enum(['submitted', 'pending', 'mined', 'confirmed', 'failed']),
+});
+
+export type RelayStatusResponse = z.infer<typeof RelayStatusResponseSchema>;
+
+/**
+ * Submit gasless payment via OZ Defender relay
+ * @param paymentId Payment ID (from checkout)
+ * @param forwarderAddress Forwarder contract address (from checkout response)
+ * @param signature User's EIP-712 signature
+ */
+export async function submitGaslessPayment(
+  paymentId: string,
+  forwarderAddress: string,
+  signature: string
+): Promise<ApiResponse<GaslessPaymentResponse>> {
+  // Validate input
+  const validation = GaslessPaymentRequestSchema.safeParse({
+    paymentId,
+    forwarderAddress,
+    signature,
+  });
+
+  if (!validation.success) {
+    return {
+      success: false,
+      code: ApiErrorCode.VALIDATION_ERROR,
+      message: validation.error.errors[0]?.message || 'Validation failed',
+    };
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/payments/${paymentId}/gasless`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        paymentId,
+        forwarderAddress,
+        signature,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Gasless payment submission failed' }));
+      return {
+        success: false,
+        code: error.code || ApiErrorCode.SERVER_ERROR,
+        message: error.message,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data: data as GaslessPaymentResponse,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      code: ApiErrorCode.NETWORK_ERROR,
+      message: err instanceof Error ? err.message : 'Network error',
+    };
+  }
+}
+
+/**
+ * Get relay transaction status
+ * @param relayRequestId Relay request ID (from submitGaslessPayment response)
+ */
+export async function getRelayStatus(
+  relayRequestId: string
+): Promise<ApiResponse<RelayStatusResponse>> {
+  try {
+    const response = await fetch(`${API_URL}/payments/relay/${relayRequestId}/status`);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to fetch relay status' }));
+      return {
+        success: false,
+        code: error.code || ApiErrorCode.SERVER_ERROR,
+        message: error.message,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data: data as RelayStatusResponse,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      code: ApiErrorCode.NETWORK_ERROR,
+      message: err instanceof Error ? err.message : 'Network error',
+    };
+  }
+}
+
+/**
+ * Wait for relay transaction to complete
+ * @param relayRequestId Relay request ID
+ * @param options Polling options
+ */
+export async function waitForRelayTransaction(
+  relayRequestId: string,
+  options: { timeout?: number; interval?: number } = {}
+): Promise<RelayStatusResponse> {
+  const { timeout = 120000, interval = 3000 } = options;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const response = await getRelayStatus(relayRequestId);
+
+    if (response.success && response.data) {
+      const status = response.data.status;
+      if (status === 'mined' || status === 'confirmed' || status === 'failed') {
+        return response.data;
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+
+  throw new Error('Relay transaction confirmation timeout');
+}
+
 // API Error Codes
 export enum ApiErrorCode {
   VALIDATION_ERROR = 'VALIDATION_ERROR',

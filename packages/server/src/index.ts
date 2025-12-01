@@ -7,6 +7,7 @@ import { createPaymentRoute } from './routes/payments/create';
 import { getPaymentStatusRoute } from './routes/payments/status';
 import { submitGaslessRoute } from './routes/payments/gasless';
 import { executeRelayRoute } from './routes/payments/relay';
+import { getRelayStatusRoute } from './routes/payments/relay-status';
 import { getPaymentHistoryRoute } from './routes/payments/history';
 import { getTokenBalanceRoute } from './routes/tokens/balance';
 import { getTokenAllowanceRoute } from './routes/tokens/allowance';
@@ -58,6 +59,7 @@ const registerRoutes = async () => {
   await getPaymentStatusRoute(server, blockchainService);
   await submitGaslessRoute(server, defenderService);
   await executeRelayRoute(server, defenderService);
+  await getRelayStatusRoute(server, defenderService);
   await getPaymentHistoryRoute(server, blockchainService);
   await getTokenBalanceRoute(server, blockchainService);
   await getTokenAllowanceRoute(server, blockchainService);

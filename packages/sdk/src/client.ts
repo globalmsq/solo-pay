@@ -10,6 +10,7 @@ import type {
   GaslessResponse,
   RelayParams,
   RelayResponse,
+  RelayStatusResponse,
   ErrorResponse
 } from './types';
 
@@ -54,6 +55,10 @@ export class MSQPayClient {
   async executeRelay(params: RelayParams): Promise<RelayResponse> {
     const path = `/payments/${params.paymentId}/relay`;
     return this.request<RelayResponse>('POST', path, params);
+  }
+
+  async getRelayStatus(relayRequestId: string): Promise<RelayStatusResponse> {
+    return this.request<RelayStatusResponse>('GET', `/payments/relay/${relayRequestId}/status`);
   }
 
   private async request<T>(
