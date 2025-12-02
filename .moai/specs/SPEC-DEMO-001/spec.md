@@ -328,7 +328,7 @@ apps/demo/src/app/api/payments/
 
 ### 6.3 관련 코드
 - `packages/sdk/src/index.ts` - MSQPayClient 클래스
-- `packages/server/src/routes/payment.ts` - Payment Server API
+- `packages/pay-server/src/routes/payment.ts` - Payment Server API
 
 ---
 

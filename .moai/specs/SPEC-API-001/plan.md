@@ -8,7 +8,7 @@ version: "1.0.0"
 ## Phase 1: 서버 설정 (4시간)
 
 ### 1.1 chains.ts 생성
-**파일**: `packages/server/src/config/chains.ts`
+**파일**: `packages/pay-server/src/config/chains.ts`
 
 **작업**:
 - ChainConfig 인터페이스 정의
@@ -31,7 +31,7 @@ export const SUPPORTED_CHAINS: ChainConfig[] = [
 ---
 
 ### 1.2 payment.schema.ts 수정
-**파일**: `packages/server/src/schemas/payment.schema.ts`
+**파일**: `packages/pay-server/src/schemas/payment.schema.ts`
 
 **작업**:
 - CreatePaymentSchema에 `chainId` 필드 추가
@@ -66,7 +66,7 @@ export const CreatePaymentSchema = z.object({
 ---
 
 ### 1.3 blockchain.service.ts 확장
-**파일**: `packages/server/src/services/blockchain.service.ts`
+**파일**: `packages/pay-server/src/services/blockchain.service.ts`
 
 **작업**:
 1. **getTokenAddress 메서드 추가**
@@ -121,7 +121,7 @@ export class BlockchainService {
 ---
 
 ### 1.4 routes/payments/create.ts 수정
-**파일**: `packages/server/src/routes/payments/create.ts`
+**파일**: `packages/pay-server/src/routes/payments/create.ts`
 
 **작업**:
 1. Request 타입 변경

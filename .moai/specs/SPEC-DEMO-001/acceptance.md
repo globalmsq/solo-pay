@@ -430,7 +430,7 @@ updated: "2025-11-30"
 
 ```bash
 # Terminal 1: Payment Server 실행
-cd packages/server
+cd packages/pay-server
 pnpm dev  # Port 3001
 
 # Terminal 2: Demo App 실행

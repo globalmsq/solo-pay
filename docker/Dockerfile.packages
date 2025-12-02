@@ -23,7 +23,7 @@ FROM base AS deps
 # Copy all package.json files
 COPY contracts/package.json ./contracts/
 COPY packages/sdk/package.json ./packages/sdk/
-COPY packages/server/package.json ./packages/server/
+COPY packages/pay-server/package.json ./packages/pay-server/
 COPY apps/demo/package.json ./apps/demo/
 
 # Install all dependencies with frozen lockfile for reproducible builds
@@ -51,9 +51,9 @@ CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
 FROM deps AS server-builder
 
 # Copy server source
-COPY packages/server ./packages/server
+COPY packages/pay-server ./packages/pay-server
 
-WORKDIR /app/packages/server
+WORKDIR /app/packages/pay-server
 
 # Build server
 RUN pnpm build
@@ -65,13 +65,13 @@ FROM base AS server
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/server/node_modules ./packages/server/node_modules
+COPY --from=deps /app/packages/pay-server/node_modules ./packages/pay-server/node_modules
 
 # Copy built server
-COPY --from=server-builder /app/packages/server/dist ./packages/server/dist
-COPY --from=server-builder /app/packages/server/package.json ./packages/server/
+COPY --from=server-builder /app/packages/pay-server/dist ./packages/pay-server/dist
+COPY --from=server-builder /app/packages/pay-server/package.json ./packages/pay-server/
 
-WORKDIR /app/packages/server
+WORKDIR /app/packages/pay-server
 
 # Expose server port
 EXPOSE 3001
@@ -129,3 +129,57 @@ EXPOSE 3000
 
 # Run demo app
 CMD ["pnpm", "start"]
+
+# ============================================
+# Simple Defender Dependencies Stage
+# ============================================
+FROM base AS simple-defender-deps
+
+# Copy simple-defender package.json
+COPY packages/simple-defender/package.json ./packages/simple-defender/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --filter @msqpay/simple-defender
+
+# ============================================
+# Simple Defender Builder Stage
+# ============================================
+FROM simple-defender-deps AS simple-defender-builder
+
+# Copy simple-defender source
+COPY packages/simple-defender ./packages/simple-defender
+
+WORKDIR /app/packages/simple-defender
+
+# Build simple-defender
+RUN pnpm build
+
+# ============================================
+# Simple Defender Runtime Stage
+# ============================================
+FROM base AS simple-defender
+
+# Copy dependencies from simple-defender-deps stage
+COPY --from=simple-defender-deps /app/node_modules ./node_modules
+COPY --from=simple-defender-deps /app/packages/simple-defender/node_modules ./packages/simple-defender/node_modules
+
+# Copy built simple-defender
+COPY --from=simple-defender-builder /app/packages/simple-defender/dist ./packages/simple-defender/dist
+COPY --from=simple-defender-builder /app/packages/simple-defender/package.json ./packages/simple-defender/
+
+WORKDIR /app/packages/simple-defender
+
+# Environment variables
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3001
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Run server
+CMD ["node", "dist/server.js"]

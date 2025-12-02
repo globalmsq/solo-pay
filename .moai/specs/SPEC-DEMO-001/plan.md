@@ -345,7 +345,7 @@ MSQPAY_API_KEY=dev-key-not-required
 
 ```bash
 # Terminal 1: Payment Server 실행
-cd packages/server && pnpm dev  # Port 3001
+cd packages/pay-server && pnpm dev  # Port 3001
 
 # Terminal 2: SDK 설치
 cd apps/demo && pnpm install

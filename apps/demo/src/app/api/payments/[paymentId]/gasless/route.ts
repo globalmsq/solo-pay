@@ -12,7 +12,7 @@ export async function POST(
     const result = await client.submitGasless({
       paymentId: params.paymentId,
       forwarderAddress: body.forwarderAddress,
-      signature: body.signature
+      forwardRequest: body.forwardRequest
     });
 
     return NextResponse.json(result);

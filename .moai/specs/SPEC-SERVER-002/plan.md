@@ -31,7 +31,7 @@ created_at: 2025-11-29
 
 **Tasks**:
 1. **프로젝트 구조 생성**
-   - `packages/server/` 디렉토리 생성
+   - `packages/pay-server/` 디렉토리 생성
    - `package.json` 설정 (Fastify, viem, zod, ethers, OZ Defender SDK)
    - TypeScript 설정 (`tsconfig.json`)
 
@@ -236,7 +236,7 @@ created_at: 2025-11-29
 ### Directory Structure
 
 ```
-packages/server/
+packages/pay-server/
 ├── src/
 │   ├── app.ts                  # Fastify 앱 인스턴스
 │   ├── server.ts               # 엔트리 포인트

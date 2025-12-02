@@ -22,7 +22,7 @@ priority: "high"
 
 **시스템**: MSQ Pay 결제 시스템
 **대상 컴포넌트**:
-- packages/server (결제 서버)
+- packages/pay-server (결제 서버)
 - packages/sdk (상점 SDK)
 - apps/demo (데모 앱)
 
@@ -110,7 +110,7 @@ priority: "high"
 
 ### 4.1 파일 구조 변경
 
-#### 서버 (packages/server)
+#### 서버 (packages/pay-server)
 
 **신규 파일**:
 

@@ -8,10 +8,10 @@ import {
   useReadContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { parseUnits, formatUnits, keccak256, toHex, type Address } from "viem";
+import { parseUnits, formatUnits, keccak256, toHex, encodeFunctionData, type Address } from "viem";
 import { getTokenForChain } from "@/lib/wagmi";
 import { DEMO_MERCHANT_ADDRESS } from "@/lib/constants";
-import { getPaymentStatus, checkout } from "@/lib/api";
+import { getPaymentStatus, checkout, submitGaslessPayment, waitForRelayTransaction } from "@/lib/api";
 import type { CheckoutResponse } from "@/lib/api";
 
 // ERC20 ABI with view functions for balance/allowance queries
@@ -60,6 +60,17 @@ const PAYMENT_GATEWAY_ABI = [
   },
 ] as const;
 
+// ERC2771Forwarder ABI - only nonces function needed for gasless payments
+const FORWARDER_ABI = [
+  {
+    type: "function",
+    name: "nonces",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+] as const;
+
 interface Product {
   id: string;
   name: string;
@@ -102,6 +113,7 @@ export function PaymentModal({
     undefined
   );
   const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
+  const [relayRequestId, setRelayRequestId] = useState<string | null>(null);
   // ⚠️ SECURITY: serverConfig contains server-verified price (not from client)
   const [serverConfig, setServerConfig] = useState<CheckoutResponse | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(false);
@@ -166,6 +178,17 @@ export function PaymentModal({
     args: address && serverConfig ? [address, serverConfig.gatewayAddress as Address] : undefined,
     query: {
       enabled: !!address && !!token && !!serverConfig,
+    },
+  });
+
+  // Read user's nonce from Forwarder contract for gasless payments (MetaMask handles RPC)
+  const { data: forwarderNonce, refetch: refetchNonce } = useReadContract({
+    address: serverConfig?.forwarderAddress as Address,
+    abi: FORWARDER_ABI,
+    functionName: "nonces",
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address && !!serverConfig?.forwarderAddress,
     },
   });
 
@@ -293,13 +316,124 @@ export function PaymentModal({
 
   // Handle gasless payment (meta-transaction)
   const handleGaslessPayment = async () => {
-    // TODO: Implement meta-transaction flow
-    // This requires:
-    // 1. Get nonce from forwarder
-    // 2. Create EIP-712 typed data
-    // 3. Request signature from user
-    // 4. Submit to OZ Defender relay
-    setError("Gasless payments coming soon! Use direct payment for now.");
+    if (!walletClient || !address || !token || !serverConfig) return;
+
+    try {
+      setStatus("paying");
+      setError(null);
+
+      // Refetch nonce to ensure we have the latest value
+      const { data: freshNonce } = await refetchNonce();
+      if (freshNonce === undefined) {
+        throw new Error('Failed to fetch nonce from Forwarder contract');
+      }
+      const nonce = freshNonce;
+
+      const paymentId = generatePaymentId();
+      setCurrentPaymentId(paymentId);
+
+      // 1. Encode the PaymentGateway.pay() function call
+      const payCallData = encodeFunctionData({
+        abi: PAYMENT_GATEWAY_ABI,
+        functionName: 'pay',
+        args: [
+          paymentId as `0x${string}`,
+          token.address as Address,
+          amount,
+          DEMO_MERCHANT_ADDRESS as Address,
+        ],
+      });
+
+      // 2. Create EIP-712 typed data for gasless payment forward request
+      // OZ ERC2771Forwarder expects: ForwardRequest(address from,address to,uint256 value,uint256 gas,uint256 nonce,uint48 deadline,bytes data)
+      const domain = {
+        name: 'MSQPayForwarder',  // Must match deployed contract name
+        version: '1',
+        chainId: BigInt(serverConfig.chainId),
+        verifyingContract: serverConfig.forwarderAddress as Address,
+      };
+
+      const types = {
+        ForwardRequest: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'gas', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'deadline', type: 'uint48' },  // uint48 per OZ spec
+          { name: 'data', type: 'bytes' },
+        ],
+      };
+
+      // deadline: 10 minutes from now (as uint48)
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
+
+      const forwardMessage = {
+        from: address,
+        to: serverConfig.gatewayAddress as Address,
+        value: BigInt(0),
+        gas: BigInt(300000), // Estimated gas for payment
+        nonce,
+        deadline,
+        data: payCallData,  // Encoded pay() function call
+      };
+
+      // 3. Request EIP-712 signature from user
+      const signature = await walletClient.signTypedData({
+        domain,
+        types,
+        primaryType: 'ForwardRequest',
+        message: forwardMessage,
+      });
+
+      // 4. Create ForwardRequest with signature for relay
+      const forwardRequest = {
+        from: address,
+        to: serverConfig.gatewayAddress,
+        value: '0',
+        gas: '300000',
+        deadline: deadline.toString(),
+        data: payCallData,
+        signature,
+      };
+
+      // 5. Submit to OZ Defender relay via our gasless API
+      const submitResponse = await submitGaslessPayment(
+        paymentId,
+        serverConfig.forwarderAddress,
+        forwardRequest
+      );
+
+      if (!submitResponse.success || !submitResponse.data) {
+        throw new Error(submitResponse.message || 'Failed to submit gasless payment');
+      }
+
+      setRelayRequestId(submitResponse.data.relayRequestId);
+
+      // 6. Wait for relay transaction to be mined
+      const relayResult = await waitForRelayTransaction(submitResponse.data.relayRequestId);
+
+      if (relayResult.status === 'failed') {
+        throw new Error('Gasless payment relay failed');
+      }
+
+      // 7. Payment confirmed
+      setPendingTxHash(relayResult.transactionHash as Address | undefined);
+      setStatus("success");
+
+      if (onSuccess && relayResult.transactionHash) {
+        onSuccess(relayResult.transactionHash);
+      }
+
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err: unknown) {
+      console.error("Gasless payment error:", err);
+      const message = err instanceof Error ? err.message : "Gasless payment failed";
+      setError(message);
+      setStatus("error");
+    }
   };
 
   const handlePayment = () => {
@@ -430,8 +564,8 @@ export function PaymentModal({
           {/* Action buttons */}
           {status !== "success" && (
             <div className="space-y-3">
-              {/* Approval button */}
-              {needsApproval && gasMode === "direct" && (
+              {/* Approval button - required for both direct and gasless modes */}
+              {needsApproval && (
                 <button
                   onClick={handleApprove}
                   disabled={
@@ -452,7 +586,7 @@ export function PaymentModal({
                 onClick={handlePayment}
                 disabled={
                   hasInsufficientBalance ||
-                  (needsApproval && gasMode === "direct") ||
+                  needsApproval ||
                   status === "paying" ||
                   isLoading
                 }

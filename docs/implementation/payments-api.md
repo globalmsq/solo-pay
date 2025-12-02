@@ -1,11 +1,11 @@
 # 결제 API 구현 가이드
 
-개발자를 위한 MSQPay 결제 API 구현 및 테스트 가이드입니다. BlockchainService, DefenderService 사용 방법, 테스트 작성 패턴을 포함합니다.
+개발자를 위한 MSQPay 결제 API 구현 및 테스트 가이드입니다. BlockchainService, ForwarderService 사용 방법, 테스트 작성 패턴을 포함합니다.
 
 ## 프로젝트 구조
 
 ```
-packages/server/
+packages/pay-server/
 ├── src/
 │   ├── routes/
 │   │   └── payments/
@@ -15,7 +15,7 @@ packages/server/
 │   │       └── relay.ts           # POST /payments/:id/relay
 │   ├── services/
 │   │   ├── blockchain.service.ts  # viem 클라이언트 래퍼
-│   │   └── defender.service.ts    # Defender SDK 래퍼
+│   │   └── forwarder.service.ts   # ERC2771 Forwarder 서비스
 │   └── schemas/
 │       └── payment.schema.ts       # Zod 검증 스키마
 ├── tests/
@@ -27,7 +27,7 @@ packages/server/
 │   │       └── relay.test.ts
 │   └── services/
 │       ├── blockchain.service.test.ts
-│       └── defender.service.test.ts
+│       └── forwarder.service.test.ts
 ├── vitest.config.ts              # 테스트 설정
 └── package.json                   # 의존성
 ```
@@ -124,57 +124,117 @@ console.log('가스 추정치:', gasEstimate.toString()); // "200000"
 
 ---
 
-## 2. DefenderService 사용 가이드
+## 2. ForwarderService 사용 가이드
 
-### 초기화
+### OZ Defender API 호환 Relay 아키텍처 (v4.0.0)
+
+MSQPay는 모든 환경에서 동일한 HTTP 클라이언트 기반 아키텍처를 사용합니다. `DEFENDER_API_URL` 환경변수만 변경하여 환경을 전환합니다:
+
+| 환경 | Relay 서비스 | API URL |
+|------|-------------|----------|
+| **Local** | SimpleDefender HTTP 서비스 | `http://simple-defender:3001` |
+| **Testnet/Mainnet** | OZ Defender API | `https://api.defender.openzeppelin.com` |
 
 ```typescript
 import { DefenderService } from '../services/defender.service';
 
-// DefenderService 인스턴스 생성
+// DefenderService는 HTTP 클라이언트로 동작
+// 환경에 따라 DEFENDER_API_URL만 변경
 const defenderService = new DefenderService(
-  process.env.DEFENDER_API_KEY!,      // Defender API 키
-  process.env.DEFENDER_API_SECRET!,   // Defender API 시크릿
-  process.env.DEFENDER_RELAYER_ADDRESS!  // 릴레이어 주소
+  process.env.DEFENDER_API_URL!,       // http://simple-defender:3001 또는 OZ Defender URL
+  process.env.DEFENDER_API_KEY,         // Production에서만 필요
+  process.env.DEFENDER_API_SECRET,      // Production에서만 필요
+  process.env.RELAYER_ADDRESS!          // Relayer 주소
+);
+
+// Local 환경: DEFENDER_API_URL=http://simple-defender:3001
+// → SimpleDefender HTTP 서비스로 요청
+
+// Production 환경: DEFENDER_API_URL=https://api.defender.openzeppelin.com
+// → OZ Defender API로 요청
+```
+
+### ForwarderService 직접 사용 (선택사항)
+
+ForwarderService를 직접 사용할 수도 있습니다:
+
+```typescript
+import { ForwarderService } from '../services/forwarder.service';
+
+// ForwarderService 인스턴스 생성
+const forwarderService = new ForwarderService(
+  process.env.BLOCKCHAIN_RPC_URL!,        // RPC URL
+  process.env.FORWARDER_ADDRESS!,         // ERC2771Forwarder 컨트랙트 주소
+  process.env.RELAYER_PRIVATE_KEY!        // 릴레이어 개인키
 );
 ```
 
-### Gasless 거래 제출
+### ForwardRequest 생성
 
 ```typescript
-import { Address } from 'viem';
+import { Address, encodeFunctionData } from 'viem';
 
-const result = await defenderService.submitGaslessTransaction(
-  'payment_123',  // 결제 ID
-  '0x1234567890123456789012345678901234567890' as Address,  // Forwarder 주소
-  '0x...'  // EIP-191 형식의 서명
-);
+// pay() 함수 호출 데이터 인코딩
+const callData = encodeFunctionData({
+  abi: PaymentGatewayABI,
+  functionName: 'pay',
+  args: [paymentId, tokenAddress, amount, merchantAddress]
+});
 
-console.log(result);
+// ForwardRequest 생성
+const forwardRequest = await forwarderService.createForwardRequest({
+  from: userAddress,           // 사용자 주소
+  to: gatewayAddress,          // PaymentGateway 주소
+  value: 0n,                   // ETH 값 (0)
+  gas: 200000n,                // 가스 한도
+  data: callData               // 인코딩된 함수 호출
+});
+
+console.log(forwardRequest);
 // {
-//   relayRequestId: 'relay_request_123',
-//   transactionHash: '0xbbbb...',
-//   status: 'pending'  // 또는 'mined', 'failed'
+//   from: '0x...',
+//   to: '0x...',
+//   value: 0n,
+//   gas: 200000n,
+//   nonce: 0n,
+//   deadline: 1735689600n,
+//   data: '0x...'
 // }
 ```
 
-### 거래 데이터 검증
+### EIP-712 서명 검증
 
 ```typescript
-// 서명 형식 검증 (EIP-191)
-const isValid = defenderService.validateTransactionData(
-  '0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'
+// EIP-712 서명 검증
+const isValid = await forwarderService.verifySignature(
+  forwardRequest,
+  signature  // 사용자의 EIP-712 서명
 );
 
 console.log('검증 결과:', isValid); // true | false
 ```
 
-### 릴레이어 주소 조회
+### Meta-Transaction 실행
 
 ```typescript
-const relayerAddress = defenderService.getRelayerAddress();
-console.log('릴레이어 주소:', relayerAddress);
-// 0x1234567890123456789012345678901234567890
+const result = await forwarderService.executeForwardRequest(
+  forwardRequest,
+  signature
+);
+
+console.log(result);
+// {
+//   transactionHash: '0xbbbb...',
+//   status: 'submitted'
+// }
+```
+
+### Nonce 조회
+
+```typescript
+const nonce = await forwarderService.getNonce(userAddress);
+console.log('현재 nonce:', nonce);
+// 0n (또는 이전 거래 수)
 ```
 
 ---
@@ -357,21 +417,60 @@ describe('POST /payments/create', () => {
 
 ## 5. 로컬 개발 환경 구성
 
-### 필수 환경 변수 (.env)
+### 환경별 환경 변수 (.env)
+
+#### Local 환경 (Docker Compose)
 
 ```bash
-# Blockchain Configuration
-POLYGON_RPC_URL=https://polygon-rpc.com
-CONTRACT_ADDRESS=0x1234567890123456789012345678901234567890
+# Relay Configuration (SimpleDefender HTTP 서비스)
+DEFENDER_API_URL=http://simple-defender:3001
+DEFENDER_API_KEY=
+DEFENDER_API_SECRET=
+RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
-# OpenZeppelin Defender
-DEFENDER_API_KEY=your_defender_api_key
-DEFENDER_API_SECRET=your_defender_api_secret
-DEFENDER_RELAYER_ADDRESS=0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
+# Blockchain Configuration
+BLOCKCHAIN_RPC_URL=http://hardhat:8545
+GATEWAY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+CHAIN_ID=31337
+
+# ERC2771 Forwarder Configuration
+FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 
 # Server Configuration
 PORT=3000
 NODE_ENV=development
+```
+
+#### SimpleDefender 서비스 환경 변수
+
+```bash
+# SimpleDefender Docker 컨테이너 설정
+RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+RPC_URL=http://hardhat:8545
+CHAIN_ID=31337
+FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+
+#### Testnet/Mainnet 환경 (OZ Defender API)
+
+```bash
+# Relay Configuration (OZ Defender API)
+DEFENDER_API_URL=https://api.defender.openzeppelin.com
+DEFENDER_API_KEY=your_defender_api_key
+DEFENDER_API_SECRET=your_defender_api_secret
+RELAYER_ADDRESS=0x...
+
+# Blockchain Configuration
+BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
+GATEWAY_ADDRESS=0x...
+CHAIN_ID=80002  # Amoy Testnet (또는 137 Mainnet)
+
+# ERC2771 Forwarder Configuration
+FORWARDER_ADDRESS=0x...
+
+# Server Configuration
+PORT=3000
+NODE_ENV=production
 ```
 
 ### 로컬 실행

@@ -33,11 +33,11 @@ Demo App (Client) : ████░░░░░░░░░░░░░░░░
 - [x] 82.89% 테스트 커버리지 달성
 
 **생성된 파일**:
-- `/packages/server/src/config/chains.ts` - ChainConfig 타입 및 SUPPORTED_CHAINS
-- `/packages/server/src/services/blockchain.service.ts` - 블록체인 서비스
-- `/packages/server/src/schemas/payment.schema.ts` - Zod 검증 스키마
-- `/packages/server/src/routes/payments.ts` - Payment API 라우트
-- `/packages/server/tests/payments.test.ts` - 65개 테스트
+- `/packages/pay-server/src/config/chains.ts` - ChainConfig 타입 및 SUPPORTED_CHAINS
+- `/packages/pay-server/src/services/blockchain.service.ts` - 블록체인 서비스
+- `/packages/pay-server/src/schemas/payment.schema.ts` - Zod 검증 스키마
+- `/packages/pay-server/src/routes/payments.ts` - Payment API 라우트
+- `/packages/pay-server/tests/payments.test.ts` - 65개 테스트
 
 ---
 
@@ -201,9 +201,9 @@ Overall: 91/100 tests PASS ✅
 ### Server Tests (65/65 PASS)
 
 ```bash
-$ cd packages/server && pnpm test
+$ cd packages/pay-server && pnpm test
 
-PASS packages/server/tests/payments.test.ts
+PASS packages/pay-server/tests/payments.test.ts
   ✓ POST /payments/create - valid request
   ✓ POST /payments/create - chainId=80002, currency=SUT
   ✓ POST /payments/create - chainId=31337, currency=TEST

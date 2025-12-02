@@ -243,7 +243,7 @@ console.log(data.data.status); // "confirmed"
 
 ### 3. Gasless 거래 제출 (Submit Gasless Transaction)
 
-OpenZeppelin Defender를 사용하여 가스비 없이 거래를 실행합니다.
+ERC2771Forwarder를 사용하여 가스비 없이 Meta-Transaction을 실행합니다. 사용자는 EIP-712 형식으로 ForwardRequest에 서명하고, 서버가 Forwarder 컨트랙트를 통해 거래를 제출합니다.
 
 ```http
 POST /payments/{id}/gasless
@@ -260,7 +260,15 @@ Content-Type: application/json
 
 ```json
 {
-  "forwarderAddress": "0x1234567890123456789012345678901234567890",
+  "forwardRequest": {
+    "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "to": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "value": "0",
+    "gas": "200000",
+    "nonce": "0",
+    "deadline": "1735689600",
+    "data": "0x..."
+  },
   "signature": "0x..."
 }
 ```
@@ -269,19 +277,26 @@ Content-Type: application/json
 
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `forwarderAddress` | string | ✅ | Forwarder 계약 주소 |
-| `signature` | string | ✅ | 트랜잭션 서명 (EIP-191) |
+| `forwardRequest` | object | ✅ | EIP-712 ForwardRequest 구조 |
+| `forwardRequest.from` | string | ✅ | 원래 서명자 주소 (사용자) |
+| `forwardRequest.to` | string | ✅ | 대상 컨트랙트 (PaymentGateway) |
+| `forwardRequest.value` | string | ✅ | ETH 값 (일반적으로 "0") |
+| `forwardRequest.gas` | string | ✅ | 가스 한도 |
+| `forwardRequest.nonce` | string | ✅ | 재생 공격 방지용 nonce |
+| `forwardRequest.deadline` | string | ✅ | 요청 만료 시간 (Unix timestamp) |
+| `forwardRequest.data` | string | ✅ | 인코딩된 함수 호출 데이터 |
+| `signature` | string | ✅ | EIP-712 서명 |
 
 #### 응답 (Response)
 
-**Status: 202 Accepted**
+**Status: 200 OK**
 
 ```json
 {
   "success": true,
-  "relayRequestId": "relay_request_123",
-  "status": "pending",
-  "message": "Gasless 거래가 제출되었습니다"
+  "transactionHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "status": "submitted",
+  "message": "Gasless 거래가 실행되었습니다"
 }
 ```
 
@@ -290,36 +305,85 @@ Content-Type: application/json
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | `success` | boolean | 요청 성공 여부 |
-| `relayRequestId` | string | 릴레이 요청 ID |
-| `status` | string | 릴레이 상태 (pending, mined, failed) |
+| `transactionHash` | string | 실행된 거래 해시 |
+| `status` | string | 거래 상태 (submitted, confirmed, failed) |
 | `message` | string | 응답 메시지 |
 
-#### 사용 예제
+#### EIP-712 서명 생성 예제
 
-**JavaScript**
+**JavaScript/TypeScript (viem)**
 ```typescript
-const signature = await signer.signMessage({
-  message: 'Approve payment transfer',
+import { createWalletClient, http } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { hardhat } from 'viem/chains';
+
+// EIP-712 Domain
+const domain = {
+  name: "MSQPayForwarder",
+  version: "1",
+  chainId: 31337, // 또는 80002 (Polygon Amoy)
+  verifyingContract: "0x5FbDB2315678afecb367f032d93F642f64180aa3" // Forwarder 주소
+};
+
+// ForwardRequest Types
+const types = {
+  ForwardRequest: [
+    { name: "from", type: "address" },
+    { name: "to", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "gas", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "deadline", type: "uint48" },
+    { name: "data", type: "bytes" }
+  ]
+};
+
+// ForwardRequest 생성
+const forwardRequest = {
+  from: userAddress,
+  to: gatewayAddress,
+  value: 0n,
+  gas: 200000n,
+  nonce: await forwarderContract.read.nonces([userAddress]),
+  deadline: BigInt(Math.floor(Date.now() / 1000) + 3600), // 1시간 후 만료
+  data: encodedPayFunctionCall
+};
+
+// EIP-712 서명
+const signature = await walletClient.signTypedData({
+  domain,
+  types,
+  primaryType: "ForwardRequest",
+  message: forwardRequest
 });
 
+// API 호출
 const response = await fetch('http://localhost:3000/payments/payment_123/gasless', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    forwarderAddress: '0x1234567890123456789012345678901234567890',
-    signature,
+    forwardRequest: {
+      from: forwardRequest.from,
+      to: forwardRequest.to,
+      value: forwardRequest.value.toString(),
+      gas: forwardRequest.gas.toString(),
+      nonce: forwardRequest.nonce.toString(),
+      deadline: forwardRequest.deadline.toString(),
+      data: forwardRequest.data
+    },
+    signature
   }),
 });
 
 const data = await response.json();
-console.log(data.relayRequestId);
+console.log(data.transactionHash);
 ```
 
 ---
 
 ### 4. 릴레이 거래 실행 (Execute Relay Transaction)
 
-메타 트랜잭션을 사용하여 릴레이를 통해 거래를 실행합니다.
+ERC2771Forwarder를 통해 Meta-Transaction을 실행합니다. Gasless 거래 제출 API와 동일한 방식으로 ForwardRequest와 서명을 제출합니다.
 
 ```http
 POST /payments/{id}/relay
@@ -336,8 +400,16 @@ Content-Type: application/json
 
 ```json
 {
-  "transactionData": "0x...",
-  "gasEstimate": 200000
+  "forwardRequest": {
+    "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "to": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "value": "0",
+    "gas": "200000",
+    "nonce": "0",
+    "deadline": "1735689600",
+    "data": "0x..."
+  },
+  "signature": "0x..."
 }
 ```
 
@@ -345,8 +417,15 @@ Content-Type: application/json
 
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `transactionData` | string | ✅ | 인코딩된 거래 데이터 (Hex) |
-| `gasEstimate` | number | ✅ | 가스 추정치 (양수) |
+| `forwardRequest` | object | ✅ | EIP-712 ForwardRequest 구조 |
+| `forwardRequest.from` | string | ✅ | 원래 서명자 주소 (사용자) |
+| `forwardRequest.to` | string | ✅ | 대상 컨트랙트 (PaymentGateway) |
+| `forwardRequest.value` | string | ✅ | ETH 값 (일반적으로 "0") |
+| `forwardRequest.gas` | string | ✅ | 가스 한도 |
+| `forwardRequest.nonce` | string | ✅ | 재생 공격 방지용 nonce |
+| `forwardRequest.deadline` | string | ✅ | 요청 만료 시간 (Unix timestamp) |
+| `forwardRequest.data` | string | ✅ | 인코딩된 함수 호출 데이터 |
+| `signature` | string | ✅ | EIP-712 서명 |
 
 #### 응답 (Response)
 
@@ -355,9 +434,8 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "relayRequestId": "relay_request_456",
   "transactionHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-  "status": "mined",
+  "status": "submitted",
   "message": "릴레이 거래가 실행되었습니다"
 }
 ```
@@ -367,21 +445,29 @@ Content-Type: application/json
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | `success` | boolean | 요청 성공 여부 |
-| `relayRequestId` | string | 릴레이 요청 ID |
 | `transactionHash` | string | 실행된 거래 해시 |
-| `status` | string | 거래 상태 |
+| `status` | string | 거래 상태 (submitted, confirmed, failed) |
 | `message` | string | 응답 메시지 |
 
 #### 사용 예제
 
-**JavaScript**
+**JavaScript/TypeScript**
 ```typescript
+// EIP-712 서명 생성은 Gasless API 예제와 동일
 const response = await fetch('http://localhost:3000/payments/payment_123/relay', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    transactionData: '0x...',
-    gasEstimate: 200000,
+    forwardRequest: {
+      from: forwardRequest.from,
+      to: forwardRequest.to,
+      value: forwardRequest.value.toString(),
+      gas: forwardRequest.gas.toString(),
+      nonce: forwardRequest.nonce.toString(),
+      deadline: forwardRequest.deadline.toString(),
+      data: forwardRequest.data
+    },
+    signature
   }),
 });
 

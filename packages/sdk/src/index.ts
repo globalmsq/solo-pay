@@ -6,6 +6,7 @@ export type {
   CreatePaymentParams,
   CreatePaymentResponse,
   PaymentStatusResponse,
+  ForwardRequest,
   GaslessParams,
   GaslessResponse,
   RelayParams,

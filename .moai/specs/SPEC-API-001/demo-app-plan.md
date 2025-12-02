@@ -12,10 +12,10 @@ priority: "high"
 ## 1. 현황 분석
 
 ### 1.1 완료된 작업 (Server + SDK)
-- `packages/server/src/config/chains.ts` - ChainConfig, SUPPORTED_CHAINS 구현
-- `packages/server/src/services/blockchain.service.ts` - getTokenAddress, getChainContracts, getDecimals 메서드
-- `packages/server/src/schemas/payment.schema.ts` - chainId, currency 필드 추가
-- `packages/server/src/routes/payments/create.ts` - 체인/토큰 검증 로직
+- `packages/pay-server/src/config/chains.ts` - ChainConfig, SUPPORTED_CHAINS 구현
+- `packages/pay-server/src/services/blockchain.service.ts` - getTokenAddress, getChainContracts, getDecimals 메서드
+- `packages/pay-server/src/schemas/payment.schema.ts` - chainId, currency 필드 추가
+- `packages/pay-server/src/routes/payments/create.ts` - 체인/토큰 검증 로직
 - `packages/sdk` - 타입 및 클라이언트 업데이트
 - **테스트**: 154개 PASS
 
