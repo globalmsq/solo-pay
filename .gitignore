@@ -198,3 +198,4 @@ env/
 !.moai/config/
 !.moai/specs/
 !.moai/memory/
+.moai/memory/

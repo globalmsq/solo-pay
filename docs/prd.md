@@ -49,7 +49,7 @@ flowchart TB
 
     subgraph Payment["결제 시스템"]
         PaymentServer[결제서버<br/>API]
-        OZRelay[OZ Defender Relay]
+        Forwarder[ERC2771Forwarder<br/>Meta-TX]
     end
 
     subgraph Blockchain["블록체인"]
@@ -60,8 +60,8 @@ flowchart TB
     Frontend --> Metamask
     Metamask -->|Direct TX| Contract
     StoreServer -->|API Key 인증| PaymentServer
-    PaymentServer --> OZRelay
-    OZRelay -->|Gasless Relay| Contract
+    PaymentServer --> Forwarder
+    Forwarder -->|Meta-TX<br/>_msgSender=User| Contract
     PaymentServer -->|상태 조회| Contract
 ```
 
@@ -71,8 +71,8 @@ flowchart TB
 |----------|------|
 | **프론트엔드** | 사용자 UI, 지갑 연동, 결제 트랜잭션 전송 |
 | **상점서버** | 상품 관리, SDK 통해 결제서버 API 호출 |
-| **결제서버** | paymentId 발급, Contract 상태 조회, Gasless Relay |
-| **OZ Defender Relay** | Gasless 결제 시 가스비 대납 TX 전송 |
+| **결제서버** | paymentId 발급, Contract 상태 조회, Meta-TX 실행 |
+| **ERC2771Forwarder** | Meta-Transaction 처리, EIP-712 서명 검증 |
 | **스마트 컨트랙트** | 토큰 전송, 결제 완료 기록 (Source of Truth) |
 
 ### 2.3 접근 제어
@@ -144,7 +144,7 @@ flowchart TB
 7. 프론트 → Metamask: EIP-712 서명 (가스비 없음)
 8. 프론트 → 상점서버: signature
 9. 상점서버 → 결제서버: POST /payments/:id/relay
-10. 결제서버 → OZ Defender → Contract: 가스비 대납 TX
+10. 결제서버 → Forwarder → Contract: Meta-TX (_msgSender=User)
 11. 상점서버: getPaymentStatus() polling
 12. 완료 확인 → 상품 지급
 ```
@@ -233,9 +233,9 @@ const isProcessed = await contract.read.processedPayments([paymentId]);
 | Blockchain | Polygon Amoy (Testnet) | - |
 | Smart Contract | Solidity | 0.8.24 |
 | Contract Framework | Hardhat + OpenZeppelin | 2.22+ / 5.0+ |
-| 결제서버 | Node.js + Express/Fastify | - |
-| SDK | TypeScript + axios | - |
-| Relay | OpenZeppelin Defender | - |
+| 결제서버 | Node.js + Fastify | v5.0+ |
+| SDK | TypeScript + native fetch | - |
+| Meta-TX | ERC2771Forwarder + EIP-712 | OZ v5.0+ |
 | Demo Frontend | Next.js 14 + wagmi | 14+ / 2.5+ |
 | Package Manager | pnpm | 8.0+ |
 
@@ -248,7 +248,7 @@ const isProcessed = await contract.read.processedPayments([paymentId]);
 | 지원 네트워크 | Polygon Amoy Testnet |
 | 지원 토큰 | SUT (0xE4C687167705Abf55d709395f92e254bdF5825a2) |
 | 결제 한도 | 없음 (Testnet) |
-| OZ Defender | 50 TX/분 (단일 Relayer) |
+| Forwarder | ERC2771Forwarder (자체 호스팅) |
 | 데이터베이스 | 없음 (Stateless) |
 | 금액 검증 | 없음 (Contract 기록만 확인) |
 
@@ -333,9 +333,10 @@ const isProcessed = await contract.read.processedPayments([paymentId]);
 | EIP-2771 | Meta Transaction을 위한 Ethereum 표준 (Trusted Forwarder) |
 | EIP-712 | 구조화된 데이터 서명을 위한 Ethereum 표준 |
 | UUPS Proxy | Universal Upgradeable Proxy Standard |
-| OZ Defender | OpenZeppelin의 보안 운영 플랫폼 |
+| ERC2771Forwarder | OpenZeppelin의 Meta-Transaction Forwarder 컨트랙트 |
+| ForwardRequest | EIP-712 서명을 위한 구조화된 요청 데이터 |
 
 ---
 
 **필요 리소스**: 개발자 1명
-**예산**: Testnet only (무료, OZ Defender Testnet 무료)
+**예산**: Testnet only (무료, 자체 호스팅 Forwarder)

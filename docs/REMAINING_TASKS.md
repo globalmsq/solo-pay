@@ -199,58 +199,59 @@ Frontend (React) → Next.js API Routes (SDK) → 결제서버 → Smart Contrac
 
 ---
 
-### 🔄 Priority 5: Mock OZ Defender 구현 - IN PROGRESS (SPEC-RELAY-001)
+### ✅ Priority 5: Forwarder 기반 아키텍처 전환 - COMPLETED (SPEC-RELAY-001)
 
-**Location**: `packages/mock-defender/`
+**Location**: `packages/server/src/services/forwarder.service.ts`
 **SPEC**: `.moai/specs/SPEC-RELAY-001/`
 
-**목적**: Docker Compose 로컬 개발 환경에서 OZ Defender SDK와 동일한 인터페이스로 동작
+**아키텍처 변경 요약**:
+- OZ Defender Direct Relay 방식에서 ERC2771Forwarder 기반으로 전환
+- 외부 서비스 의존성 제거 (자체 호스팅)
+- EIP-712 구조화된 서명으로 사용자 의도 암호학적 증명
 
-**핵심 설계**:
-- OZ Defender SDK 100% 호환 인터페이스
-- viem 기반 실제 트랜잭션 (Hardhat 노드)
-- Import 문 변경만으로 환경 전환 (환경변수 불필요)
+**핵심 특징**:
+- `_msgSender()` = 원래 서명자 (사용자 주소, Relayer 아님)
+- EIP-712 ForwardRequest 구조로 재생 공격 방지
+- nonce + deadline으로 보안 강화
 
-**환경별 Import**:
-```typescript
-// 로컬 개발 환경
-import { MockDefender as Defender } from 'mock-defender';
-
-// 프로덕션 환경
-import { Defender } from '@openzeppelin/defender-sdk';
+**컨트랙트 주소 (로컬 Hardhat)**:
+```
+Forwarder: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+Gateway:   0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
 ```
 
-**구현 예정 항목**:
-- [ ] packages/mock-defender 패키지 생성
-- [ ] MockDefender 클래스 구현
-- [ ] MockRelaySigner 클래스 구현
-- [ ] Docker Compose 환경 변수 설정
-- [ ] 테스트 작성 (커버리지 80% 이상)
+**완료된 항목**:
+- [x] ForwarderService 클래스 구현 (DefenderService 대체)
+- [x] EIP-712 서명 검증 로직
+- [x] Meta-TX 실행 로직
+- [x] 문서 업데이트
 
-**필요한 환경 변수 (로컬)**:
+**필요한 환경 변수**:
 ```
-RELAYER_PRIVATE_KEY=<Hardhat Account #0 키>
-RELAYER_ADDRESS=<Hardhat Account #0 주소>
-RPC_URL=http://hardhat:8545
+FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+GATEWAY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+RELAYER_PRIVATE_KEY=<Relayer 개인키>
+BLOCKCHAIN_RPC_URL=http://localhost:8545
 ```
 
 ---
 
-### Priority 6: OZ Defender Relay 설정 (프로덕션)
+### Priority 6: Polygon Amoy 배포 및 릴레이어 설정 (프로덕션)
 
 **Steps**:
-1. OZ Defender 계정 생성
-2. Relayer 생성 (Polygon Amoy)
-3. MATIC 충전
-4. API Key/Secret 발급
-5. 결제서버에 환경변수 설정
-6. DefenderService import 문을 `@openzeppelin/defender-sdk`로 변경
+1. ERC2771Forwarder 컨트랙트 배포 (Polygon Amoy)
+2. PaymentGateway 컨트랙트 배포 (Forwarder를 trustedForwarder로 설정)
+3. 릴레이어 지갑 생성 및 POL 충전
+4. 결제서버에 환경변수 설정
+5. Polygonscan에서 컨트랙트 검증
 
 **환경 변수 (프로덕션)**:
 ```
-OZ_DEFENDER_API_KEY=xxx
-OZ_DEFENDER_API_SECRET=xxx
-OZ_DEFENDER_RELAYER_ID=xxx
+FORWARDER_ADDRESS=0x... (배포된 Forwarder 주소)
+GATEWAY_ADDRESS=0x... (배포된 Gateway 주소)
+RELAYER_PRIVATE_KEY=xxx (릴레이어 개인키)
+RELAYER_ADDRESS=0x... (릴레이어 주소)
+BLOCKCHAIN_RPC_URL=https://rpc-amoy.polygon.technology
 ```
 
 ---
@@ -336,14 +337,13 @@ msqpay-monorepo/
 STORE_API_KEYS='{"sk_test_xxx": {"storeId": "store_001", "name": "Demo"}}'
 
 # Blockchain
-POLYGON_AMOY_RPC=https://rpc-amoy.polygon.technology
-GATEWAY_ADDRESS=0x...
-FORWARDER_ADDRESS=0x...
+BLOCKCHAIN_RPC_URL=https://rpc-amoy.polygon.technology
+GATEWAY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
 
-# OZ Defender (Gasless)
-OZ_DEFENDER_API_KEY=xxx
-OZ_DEFENDER_API_SECRET=xxx
-OZ_DEFENDER_RELAYER_ID=xxx
+# ERC2771 Forwarder (Gasless)
+FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+RELAYER_PRIVATE_KEY=xxx
+RELAYER_ADDRESS=0x...
 ```
 
 ### Demo App
