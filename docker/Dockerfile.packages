@@ -23,7 +23,7 @@ FROM base AS deps
 # Copy all package.json files
 COPY contracts/package.json ./contracts/
 COPY packages/sdk/package.json ./packages/sdk/
-COPY packages/server/package.json ./packages/server/
+COPY packages/pay-server/package.json ./packages/pay-server/
 COPY apps/demo/package.json ./apps/demo/
 
 # Install all dependencies with frozen lockfile for reproducible builds
@@ -51,9 +51,9 @@ CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
 FROM deps AS server-builder
 
 # Copy server source
-COPY packages/server ./packages/server
+COPY packages/pay-server ./packages/pay-server
 
-WORKDIR /app/packages/server
+WORKDIR /app/packages/pay-server
 
 # Build server
 RUN pnpm build
@@ -65,13 +65,13 @@ FROM base AS server
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/server/node_modules ./packages/server/node_modules
+COPY --from=deps /app/packages/pay-server/node_modules ./packages/pay-server/node_modules
 
 # Copy built server
-COPY --from=server-builder /app/packages/server/dist ./packages/server/dist
-COPY --from=server-builder /app/packages/server/package.json ./packages/server/
+COPY --from=server-builder /app/packages/pay-server/dist ./packages/pay-server/dist
+COPY --from=server-builder /app/packages/pay-server/package.json ./packages/pay-server/
 
-WORKDIR /app/packages/server
+WORKDIR /app/packages/pay-server
 
 # Expose server port
 EXPOSE 3001
@@ -129,3 +129,57 @@ EXPOSE 3000
 
 # Run demo app
 CMD ["pnpm", "start"]
+
+# ============================================
+# Mock Defender Dependencies Stage
+# ============================================
+FROM base AS mock-defender-deps
+
+# Copy mock-defender package.json
+COPY packages/mock-defender/package.json ./packages/mock-defender/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --filter @msqpay/mock-defender
+
+# ============================================
+# Mock Defender Builder Stage
+# ============================================
+FROM mock-defender-deps AS mock-defender-builder
+
+# Copy mock-defender source
+COPY packages/mock-defender ./packages/mock-defender
+
+WORKDIR /app/packages/mock-defender
+
+# Build mock-defender
+RUN pnpm build
+
+# ============================================
+# Mock Defender Runtime Stage
+# ============================================
+FROM base AS mock-defender
+
+# Copy dependencies from mock-defender-deps stage
+COPY --from=mock-defender-deps /app/node_modules ./node_modules
+COPY --from=mock-defender-deps /app/packages/mock-defender/node_modules ./packages/mock-defender/node_modules
+
+# Copy built mock-defender
+COPY --from=mock-defender-builder /app/packages/mock-defender/dist ./packages/mock-defender/dist
+COPY --from=mock-defender-builder /app/packages/mock-defender/package.json ./packages/mock-defender/
+
+WORKDIR /app/packages/mock-defender
+
+# Environment variables
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3001
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Run server
+CMD ["node", "dist/server.js"]

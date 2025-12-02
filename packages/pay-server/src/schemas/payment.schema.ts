@@ -29,11 +29,27 @@ export const PaymentStatusSchema = z.object({
 
 export type PaymentStatus = z.infer<typeof PaymentStatusSchema>;
 
+/**
+ * ERC2771 ForwardRequest 스키마
+ * OZ ERC2771Forwarder.execute()에 전달되는 파라미터
+ */
+export const ForwardRequestSchema = z.object({
+  from: z.string().startsWith('0x').length(42),
+  to: z.string().startsWith('0x').length(42),
+  value: z.string(),
+  gas: z.string(),
+  deadline: z.string(),
+  data: z.string().startsWith('0x'),
+  signature: z.string().startsWith('0x'),
+});
+
+export type ForwardRequest = z.infer<typeof ForwardRequestSchema>;
+
 // Gasless 요청 스키마
 export const GaslessRequestSchema = z.object({
   paymentId: z.string(),
   forwarderAddress: z.string().startsWith('0x').length(42),
-  signature: z.string().startsWith('0x'),
+  forwardRequest: ForwardRequestSchema,
 });
 
 export type GaslessRequest = z.infer<typeof GaslessRequestSchema>;

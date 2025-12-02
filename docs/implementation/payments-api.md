@@ -5,7 +5,7 @@
 ## 프로젝트 구조
 
 ```
-packages/server/
+packages/pay-server/
 ├── src/
 │   ├── routes/
 │   │   └── payments/
@@ -126,26 +126,32 @@ console.log('가스 추정치:', gasEstimate.toString()); // "200000"
 
 ## 2. ForwarderService 사용 가이드
 
-### 환경별 Relay 서비스 초기화
+### OZ Defender API 호환 Relay 아키텍처 (v4.0.0)
 
-MSQPay는 환경에 따라 다른 Relay 서비스를 사용합니다:
+MSQPay는 모든 환경에서 동일한 HTTP 클라이언트 기반 아키텍처를 사용합니다. `DEFENDER_API_URL` 환경변수만 변경하여 환경을 전환합니다:
 
-| 환경 | Relay 서비스 | 환경 변수 |
+| 환경 | Relay 서비스 | API URL |
 |------|-------------|----------|
-| **Local** | MockDefender | `USE_MOCK_DEFENDER=true` |
-| **Testnet/Mainnet** | OZ Defender SDK | `USE_MOCK_DEFENDER=false` |
+| **Local** | MockDefender HTTP 서비스 | `http://mock-defender:3001` |
+| **Testnet/Mainnet** | OZ Defender API | `https://api.defender.openzeppelin.com` |
 
 ```typescript
-import { RelayFactory } from '../services/relay.factory';
+import { DefenderService } from '../services/defender.service';
 
-// 환경에 따라 적절한 Relay 서비스 생성
-const relayService = RelayFactory.createRelayService();
+// DefenderService는 HTTP 클라이언트로 동작
+// 환경에 따라 DEFENDER_API_URL만 변경
+const defenderService = new DefenderService(
+  process.env.DEFENDER_API_URL!,       // http://mock-defender:3001 또는 OZ Defender URL
+  process.env.DEFENDER_API_KEY,         // Production에서만 필요
+  process.env.DEFENDER_API_SECRET,      // Production에서만 필요
+  process.env.RELAYER_ADDRESS!          // Relayer 주소
+);
 
-// Local 환경 (USE_MOCK_DEFENDER=true)
-// → MockDefender 인스턴스 반환
+// Local 환경: DEFENDER_API_URL=http://mock-defender:3001
+// → MockDefender HTTP 서비스로 요청
 
-// Testnet/Mainnet 환경 (USE_MOCK_DEFENDER=false)
-// → OZ Defender SDK 인스턴스 반환
+// Production 환경: DEFENDER_API_URL=https://api.defender.openzeppelin.com
+// → OZ Defender API로 요청
 ```
 
 ### ForwarderService 직접 사용 (선택사항)
@@ -416,8 +422,11 @@ describe('POST /payments/create', () => {
 #### Local 환경 (Docker Compose)
 
 ```bash
-# Relay Configuration (MockDefender)
-USE_MOCK_DEFENDER=true
+# Relay Configuration (MockDefender HTTP 서비스)
+DEFENDER_API_URL=http://mock-defender:3001
+DEFENDER_API_KEY=
+DEFENDER_API_SECRET=
+RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 # Blockchain Configuration
 BLOCKCHAIN_RPC_URL=http://hardhat:8545
@@ -426,22 +435,30 @@ CHAIN_ID=31337
 
 # ERC2771 Forwarder Configuration
 FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
-RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 # Server Configuration
 PORT=3000
 NODE_ENV=development
 ```
 
-#### Testnet/Mainnet 환경 (OZ Defender SDK)
+#### MockDefender 서비스 환경 변수
 
 ```bash
-# Relay Configuration (OZ Defender SDK)
-USE_MOCK_DEFENDER=false
+# MockDefender Docker 컨테이너 설정
+RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+RPC_URL=http://hardhat:8545
+CHAIN_ID=31337
+FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+
+#### Testnet/Mainnet 환경 (OZ Defender API)
+
+```bash
+# Relay Configuration (OZ Defender API)
+DEFENDER_API_URL=https://api.defender.openzeppelin.com
 DEFENDER_API_KEY=your_defender_api_key
 DEFENDER_API_SECRET=your_defender_api_secret
-DEFENDER_RELAYER_ADDRESS=0x...
+RELAYER_ADDRESS=0x...
 
 # Blockchain Configuration
 BLOCKCHAIN_RPC_URL=https://polygon-rpc.com

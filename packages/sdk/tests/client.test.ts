@@ -264,7 +264,15 @@ describe('MSQPayClient', () => {
     const validParams: GaslessParams = {
       paymentId: 'pay-123',
       forwarderAddress: '0x1234567890123456789012345678901234567890',
-      signature: '0x' + 'a'.repeat(128)
+      forwardRequest: {
+        from: '0x1234567890123456789012345678901234567890',
+        to: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+        value: '0',
+        gas: '300000',
+        deadline: '1735689600',
+        data: '0x' + 'ab'.repeat(68),
+        signature: '0x' + 'a'.repeat(130)
+      }
     };
 
     it('TC-005: should submit gasless transaction successfully', async () => {

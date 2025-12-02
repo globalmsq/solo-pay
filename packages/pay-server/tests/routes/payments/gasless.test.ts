@@ -4,6 +4,26 @@ import cors from '@fastify/cors';
 import { submitGaslessRoute } from '../../../src/routes/payments/gasless';
 import { DefenderService } from '../../../src/services/defender.service';
 
+// 유효한 ForwardRequest 객체 생성 헬퍼
+const createValidForwardRequest = (overrides = {}) => ({
+  from: '0x' + 'a'.repeat(40),
+  to: '0x' + 'b'.repeat(40),
+  value: '0',
+  gas: '100000',
+  deadline: String(Math.floor(Date.now() / 1000) + 3600),
+  data: '0x' + 'c'.repeat(64),
+  signature: '0x' + 'd'.repeat(130),
+  ...overrides,
+});
+
+// 유효한 Gasless 요청 생성 헬퍼
+const createValidGaslessRequest = (paymentId: string, overrides = {}) => ({
+  paymentId,
+  forwarderAddress: '0x' + 'e'.repeat(40),
+  forwardRequest: createValidForwardRequest(),
+  ...overrides,
+});
+
 describe('POST /payments/:id/gasless', () => {
   let app: FastifyInstance;
   let defenderService: DefenderService;
@@ -14,7 +34,7 @@ describe('POST /payments/:id/gasless', () => {
 
     // Mock DefenderService
     defenderService = {
-      submitGaslessTransaction: vi
+      submitForwardTransaction: vi
         .fn()
         .mockResolvedValue({
           relayRequestId: 'relay-123-' + Date.now(),
@@ -33,11 +53,7 @@ describe('POST /payments/:id/gasless', () => {
 
   describe('정상 케이스', () => {
     it('유효한 Gasless 요청을 받으면 202 상태 코드와 함께 릴레이 요청 ID를 반환해야 함', async () => {
-      const validRequest = {
-        paymentId: 'payment-123',
-        forwarderAddress: '0x' + 'a'.repeat(40),
-        signature: '0x' + 'b'.repeat(128),
-      };
+      const validRequest = createValidGaslessRequest('payment-123');
 
       const response = await app.inject({
         method: 'POST',
@@ -53,11 +69,7 @@ describe('POST /payments/:id/gasless', () => {
     });
 
     it('Gasless 거래 응답에 필요한 모든 필드가 포함되어야 함', async () => {
-      const validRequest = {
-        paymentId: 'payment-456',
-        forwarderAddress: '0x' + 'c'.repeat(40),
-        signature: '0x' + 'd'.repeat(128),
-      };
+      const validRequest = createValidGaslessRequest('payment-456');
 
       const response = await app.inject({
         method: 'POST',
@@ -78,11 +90,7 @@ describe('POST /payments/:id/gasless', () => {
     it('유효하지 않은 서명 형식일 때 400 상태 코드를 반환해야 함', async () => {
       defenderService.validateTransactionData = vi.fn().mockReturnValueOnce(false);
 
-      const invalidRequest = {
-        paymentId: 'payment-789',
-        forwarderAddress: '0x' + 'a'.repeat(40),
-        signature: '0x' + 'invalid'.padEnd(128, 'x'),
-      };
+      const invalidRequest = createValidGaslessRequest('payment-789');
 
       const response = await app.inject({
         method: 'POST',
@@ -99,7 +107,7 @@ describe('POST /payments/:id/gasless', () => {
       const invalidRequest = {
         paymentId: 'payment-101',
         forwarderAddress: 'invalid-address',
-        signature: '0x' + 'b'.repeat(128),
+        forwardRequest: createValidForwardRequest(),
       };
 
       const response = await app.inject({
@@ -117,7 +125,7 @@ describe('POST /payments/:id/gasless', () => {
       const incompleteRequest = {
         paymentId: 'payment-202',
         forwarderAddress: '0x' + 'a'.repeat(40),
-        // signature 누락
+        // forwardRequest 누락
       };
 
       const response = await app.inject({
@@ -132,11 +140,7 @@ describe('POST /payments/:id/gasless', () => {
     });
 
     it('결제 ID가 누락되었을 때 400 상태 코드를 반환해야 함', async () => {
-      const validRequest = {
-        paymentId: 'payment-303',
-        forwarderAddress: '0x' + 'a'.repeat(40),
-        signature: '0x' + 'b'.repeat(128),
-      };
+      const validRequest = createValidGaslessRequest('payment-303');
 
       const response = await app.inject({
         method: 'POST',
@@ -150,15 +154,11 @@ describe('POST /payments/:id/gasless', () => {
 
   describe('예외 케이스', () => {
     it('Defender 서비스 오류 발생 시 500 상태 코드를 반환해야 함', async () => {
-      defenderService.submitGaslessTransaction = vi
+      defenderService.submitForwardTransaction = vi
         .fn()
         .mockRejectedValueOnce(new Error('Defender API 오류'));
 
-      const validRequest = {
-        paymentId: 'payment-404',
-        forwarderAddress: '0x' + 'a'.repeat(40),
-        signature: '0x' + 'b'.repeat(128),
-      };
+      const validRequest = createValidGaslessRequest('payment-404');
 
       const response = await app.inject({
         method: 'POST',
@@ -175,7 +175,7 @@ describe('POST /payments/:id/gasless', () => {
       const invalidRequest = {
         paymentId: 'payment-505',
         forwarderAddress: '0x' + 'a'.repeat(40),
-        signature: '',
+        forwardRequest: createValidForwardRequest({ signature: '' }),
       };
 
       const response = await app.inject({
@@ -192,11 +192,7 @@ describe('POST /payments/:id/gasless', () => {
 
   describe('성능 요구사항', () => {
     it('Gasless 요청 응답 시간이 500ms 이내여야 함', async () => {
-      const validRequest = {
-        paymentId: 'payment-606',
-        forwarderAddress: '0x' + 'a'.repeat(40),
-        signature: '0x' + 'b'.repeat(128),
-      };
+      const validRequest = createValidGaslessRequest('payment-606');
 
       const startTime = performance.now();
 

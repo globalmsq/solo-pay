@@ -1,9 +1,11 @@
-export { MockDefender } from './mock-defender';
-export { MockRelaySigner } from './relay-signer';
+// HTTP Server exports
+export { buildServer, startServer } from './server';
+export type { ServerConfig } from './server';
+
+// Service exports
+export { RelayService } from './services/relay.service';
 export type {
-  ForwardRequest,
-  TransactionResponse,
-  MockDefenderConfig,
-  RelayerInfo,
-  SendTransactionParams,
-} from './types';
+  RelayRequest,
+  TransactionRecord,
+  RelayServiceConfig,
+} from './services/relay.service';

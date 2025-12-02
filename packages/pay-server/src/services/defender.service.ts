@@ -1,5 +1,5 @@
 import { Address } from 'viem';
-import { Defender } from '@openzeppelin/defender-sdk';
+import { ForwardRequest } from '../schemas/payment.schema';
 
 interface RelayerResponse {
   relayRequestId: string;
@@ -15,6 +15,23 @@ interface RelayerRequest {
   speed: 'safeLow' | 'average' | 'fast' | 'fastest';
 }
 
+/**
+ * ForwardRequest를 mock-defender에 전송하기 위한 요청 형식
+ */
+interface ForwardRelayRequest {
+  forwardRequest: {
+    from: string;
+    to: string;
+    value: string;
+    gas: string;
+    deadline: string;
+    data: string;
+    signature: string;
+  };
+  gasLimit?: string;
+  speed?: 'safeLow' | 'average' | 'fast' | 'fastest';
+}
+
 type DefenderTxStatus =
   | 'pending'
   | 'sent'
@@ -24,28 +41,63 @@ type DefenderTxStatus =
   | 'confirmed'
   | 'failed';
 
+interface DefenderApiResponse {
+  transactionId: string;
+  hash?: string;
+  status: DefenderTxStatus;
+}
+
+interface RelayerInfo {
+  address: string;
+  balance: string;
+}
+
 /**
  * OZ Defender 서비스 - Gasless 트랜잭션 릴레이
  *
- * OpenZeppelin Defender SDK를 사용하여 가스 없는 트랜잭션을 릴레이합니다.
- * 사용자는 가스비를 지불하지 않고, 릴레이어가 대신 트랜잭션을 제출합니다.
+ * HTTP 클라이언트를 통해 Defender API와 통신합니다.
+ * - Production: OZ Defender API (api.defender.openzeppelin.com)
+ * - Local: MockDefender HTTP 서비스 (mock-defender:3001)
+ *
+ * 환경변수 DEFENDER_API_URL만 변경하면 동일한 코드로 양쪽 환경에서 동작합니다.
  */
 export class DefenderService {
-  private readonly client: Defender;
+  private readonly baseUrl: string;
+  private readonly apiKey: string;
+  private readonly apiSecret: string;
   private readonly relayerAddress: Address;
 
-  constructor(apiKey: string, apiSecret: string, relayerAddress: string) {
-    if (!apiKey || !apiSecret) {
-      throw new Error('Defender API 자격증명이 필요합니다');
+  constructor(
+    apiUrl: string,
+    apiKey: string,
+    apiSecret: string,
+    relayerAddress: string
+  ) {
+    if (!apiUrl) {
+      throw new Error('Defender API URL이 필요합니다');
     }
 
-    // Defender SDK 클라이언트 초기화
-    this.client = new Defender({
-      relayerApiKey: apiKey,
-      relayerApiSecret: apiSecret,
-    });
-
+    this.baseUrl = apiUrl.replace(/\/$/, ''); // 끝의 슬래시 제거
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
     this.relayerAddress = relayerAddress as Address;
+  }
+
+  /**
+   * HTTP 요청 헤더 생성
+   */
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // API 키가 있는 경우 인증 헤더 추가 (Production OZ Defender)
+    if (this.apiKey && this.apiSecret) {
+      headers['X-Api-Key'] = this.apiKey;
+      headers['X-Api-Secret'] = this.apiSecret;
+    }
+
+    return headers;
   }
 
   /**
@@ -74,7 +126,7 @@ export class DefenderService {
   /**
    * Gasless 거래 요청 제출
    *
-   * Defender Relay를 통해 트랜잭션을 제출합니다.
+   * Defender API를 통해 트랜잭션을 제출합니다.
    * 릴레이어가 가스비를 대신 지불합니다.
    */
   async submitGaslessTransaction(
@@ -98,14 +150,24 @@ export class DefenderService {
     }
 
     try {
-      // Defender Relay를 통해 트랜잭션 제출
-      const tx = await this.client.relaySigner.sendTransaction({
-        to: targetAddress,
-        data: transactionData,
-        value: options?.value ?? '0',
-        gasLimit: options?.gasLimit ?? '200000',
-        speed: options?.speed ?? 'average',
+      const response = await fetch(`${this.baseUrl}/relay`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          to: targetAddress,
+          data: transactionData,
+          value: options?.value ?? '0',
+          gasLimit: options?.gasLimit ?? '200000',
+          speed: options?.speed ?? 'average',
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      const tx = (await response.json()) as DefenderApiResponse;
 
       console.log(
         `[DefenderService] 트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
@@ -114,7 +176,7 @@ export class DefenderService {
       return {
         relayRequestId: tx.transactionId,
         transactionHash: tx.hash,
-        status: this.mapStatus(tx.status as DefenderTxStatus),
+        status: this.mapStatus(tx.status),
       };
     } catch (error) {
       console.error('[DefenderService] Gasless 거래 제출 실패:', error);
@@ -125,14 +187,106 @@ export class DefenderService {
           throw new Error('릴레이어 잔액이 부족합니다');
         }
         if (error.message.includes('nonce')) {
-          throw new Error('트랜잭션 nonce 충돌이 발생했습니다. 잠시 후 다시 시도해주세요');
+          throw new Error(
+            '트랜잭션 nonce 충돌이 발생했습니다. 잠시 후 다시 시도해주세요'
+          );
         }
-        if (error.message.includes('unauthorized') || error.message.includes('401')) {
+        if (
+          error.message.includes('unauthorized') ||
+          error.message.includes('401')
+        ) {
           throw new Error('Defender API 인증에 실패했습니다');
         }
       }
 
       throw new Error('Gasless 거래를 제출할 수 없습니다');
+    }
+  }
+
+  /**
+   * ERC2771 ForwardRequest를 사용한 Gasless 거래 제출
+   *
+   * ForwardRequest 파라미터와 서명을 mock-defender의 /relay/forward 엔드포인트로 전송합니다.
+   * mock-defender는 Forwarder.execute(ForwardRequestData)를 호출합니다.
+   */
+  async submitForwardTransaction(
+    paymentId: string,
+    forwarderAddress: Address,
+    forwardRequest: ForwardRequest,
+    options?: {
+      gasLimit?: string;
+      speed?: 'safeLow' | 'average' | 'fast' | 'fastest';
+    }
+  ): Promise<RelayerResponse> {
+    // 필수 파라미터 검증
+    if (!paymentId || !forwarderAddress || !forwardRequest) {
+      throw new Error('필수 파라미터가 누락되었습니다');
+    }
+
+    // 서명 검증
+    if (!this.validateTransactionData(forwardRequest.signature)) {
+      throw new Error('잘못된 서명 형식입니다');
+    }
+
+    try {
+      const requestBody: ForwardRelayRequest = {
+        forwardRequest: {
+          from: forwardRequest.from,
+          to: forwardRequest.to,
+          value: forwardRequest.value,
+          gas: forwardRequest.gas,
+          deadline: forwardRequest.deadline,
+          data: forwardRequest.data,
+          signature: forwardRequest.signature,
+        },
+        gasLimit: options?.gasLimit ?? '500000',
+        speed: options?.speed ?? 'average',
+      };
+
+      const response = await fetch(`${this.baseUrl}/relay/forward`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      const tx = (await response.json()) as DefenderApiResponse;
+
+      console.log(
+        `[DefenderService] ForwardRequest 트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
+      );
+
+      return {
+        relayRequestId: tx.transactionId,
+        transactionHash: tx.hash,
+        status: this.mapStatus(tx.status),
+      };
+    } catch (error) {
+      console.error('[DefenderService] ForwardRequest 거래 제출 실패:', error);
+
+      // 에러 타입에 따른 처리
+      if (error instanceof Error) {
+        if (error.message.includes('insufficient funds')) {
+          throw new Error('릴레이어 잔액이 부족합니다');
+        }
+        if (error.message.includes('nonce')) {
+          throw new Error(
+            '트랜잭션 nonce 충돌이 발생했습니다. 잠시 후 다시 시도해주세요'
+          );
+        }
+        if (
+          error.message.includes('unauthorized') ||
+          error.message.includes('401')
+        ) {
+          throw new Error('Defender API 인증에 실패했습니다');
+        }
+      }
+
+      throw new Error('ForwardRequest 거래를 제출할 수 없습니다');
     }
   }
 
@@ -147,13 +301,27 @@ export class DefenderService {
     }
 
     try {
-      // Defender API에서 트랜잭션 상태 조회
-      const tx = await this.client.relaySigner.getTransaction(relayRequestId);
+      const response = await fetch(
+        `${this.baseUrl}/relay/${relayRequestId}`,
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('not found');
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const tx = (await response.json()) as DefenderApiResponse;
 
       return {
         relayRequestId: tx.transactionId,
         transactionHash: tx.hash,
-        status: this.mapStatus(tx.status as DefenderTxStatus),
+        status: this.mapStatus(tx.status),
       };
     } catch (error) {
       console.error('[DefenderService] 릴레이 상태 조회 실패:', error);
@@ -195,8 +363,6 @@ export class DefenderService {
       }
 
       // Defender SDK는 직접적인 취소 API를 제공하지 않음
-      // 대신 replacement transaction (0 value to self)을 사용해야 함
-      // 현재는 취소 불가능 상태로 반환
       console.warn(
         `[DefenderService] 트랜잭션 취소는 현재 지원되지 않습니다: ${relayRequestId}`
       );
@@ -266,18 +432,42 @@ export class DefenderService {
 
   /**
    * 가스 요금 추정 (네트워크 조회 기반)
-   *
-   * 현재는 고정 가스 가격을 사용하며, 추후 네트워크 조회로 개선 예정
    */
   async estimateGasFee(gasLimit: string): Promise<string> {
     try {
-      // TODO: 실제 네트워크 가스 가격 조회 구현
-      // 현재는 50 Gwei 기준으로 추정
+      // 50 Gwei 기준으로 추정
       const gasPrice = BigInt(gasLimit) * BigInt('50000000000');
       return gasPrice.toString();
     } catch (error) {
       console.error('[DefenderService] 가스 요금 추정 실패:', error);
       throw new Error('가스 요금을 추정할 수 없습니다');
+    }
+  }
+
+  /**
+   * Forwarder 컨트랙트에서 주소의 nonce 조회
+   * EIP-712 서명에 필요한 nonce를 반환합니다.
+   */
+  async getNonce(address: Address): Promise<string> {
+    if (!address) {
+      throw new Error('주소는 필수입니다');
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/nonce/${address}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = (await response.json()) as { nonce: string };
+      return data.nonce;
+    } catch (error) {
+      console.error('[DefenderService] Nonce 조회 실패:', error);
+      throw new Error('Nonce를 조회할 수 없습니다');
     }
   }
 
@@ -290,28 +480,26 @@ export class DefenderService {
 
   /**
    * 릴레이어 잔액 조회 (헬스 체크용)
-   *
-   * 릴레이어가 트랜잭션을 제출할 수 있는 충분한 잔액이 있는지 확인
    */
   async checkRelayerHealth(): Promise<{
     healthy: boolean;
     message: string;
   }> {
     try {
-      // 간단한 API 연결 테스트
-      // Defender SDK는 직접적인 health check API가 없으므로
-      // 릴레이어 정보 조회로 대체
-      const relayerInfo = await this.client.relaySigner.getRelayer();
+      const response = await fetch(`${this.baseUrl}/relayer`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
 
-      // RelayerGetResponse vs RelayerGroupResponse 처리
-      const address =
-        'address' in relayerInfo
-          ? relayerInfo.address
-          : relayerInfo.relayers?.[0]?.address ?? 'unknown';
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const info = (await response.json()) as RelayerInfo;
 
       return {
         healthy: true,
-        message: `릴레이어 연결 성공: ${address}`,
+        message: `릴레이어 연결 성공: ${info.address}`,
       };
     } catch (error) {
       console.error('[DefenderService] 릴레이어 헬스 체크 실패:', error);

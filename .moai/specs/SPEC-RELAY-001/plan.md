@@ -4,381 +4,275 @@
 
 - SPEC-ID: SPEC-RELAY-001
 - Document: Implementation Plan
-- Version: 3.0.0
+- Version: 4.1.0
 - Created: 2025-12-01
 - Updated: 2025-12-02
+- Status: Completed
 
 ## 구현 개요
 
-환경에 따라 Relay 서비스를 선택적으로 사용하되, 모든 환경에서 ERC2771Forwarder를 통해 트랜잭션을 실행하는 하이브리드 아키텍처를 구현합니다.
+OZ Defender API 호환 HTTP 서비스 기반의 Gasless 트랜잭션 시스템을 구현합니다. 모든 환경에서 동일한 HTTP 클라이언트 코드를 사용하며, `DEFENDER_API_URL` 환경변수만 변경하여 환경을 전환합니다.
 
-### 환경별 아키텍처
+### 핵심 아키텍처 변경 (v3.0.0 → v4.0.0)
 
-| 환경 | Relay 제출자 | Forwarder | 특징 |
-|------|-------------|-----------|------|
-| Local (Docker Compose) | MockDefender | ERC2771Forwarder | OZ SDK 호환, 자체 호스팅 |
-| Testnet/Mainnet | OZ Defender SDK | ERC2771Forwarder | 외부 서비스, 프로덕션 안정성 |
+이전 아키텍처 (v3.0.0):
+- USE_MOCK_DEFENDER 환경변수로 분기
+- RelayFactory를 통한 서비스 선택
+- MockDefender: 인프로세스 라이브러리
+- Production과 Local 코드 경로 분리
 
-## 마일스톤
+새로운 아키텍처 (v4.0.0):
+- DEFENDER_API_URL 환경변수로 통일
+- RelayFactory 제거
+- MockDefender: 독립 HTTP 서비스 (Docker 컨테이너)
+- Production과 Local 동일한 코드 경로
 
-### Milestone 1: MockDefender 패키지 구현 (Primary Goal)
+## 완료된 마일스톤
 
-목표: OZ Defender SDK와 100% 동일한 인터페이스를 가진 MockDefender 패키지 구현
+### Milestone 1: MockDefender HTTP 서비스 전환
 
-#### Task 1.1: MockDefender 패키지 생성
+목표: MockDefender를 인프로세스 라이브러리에서 독립 HTTP 서비스로 전환
 
-파일 위치: packages/mock-defender/
+완료된 작업:
 
-구현 내용:
-- package.json 생성 (name: @msqpay/mock-defender)
-- tsconfig.json 설정
-- vitest.config.ts 설정
-- 패키지 구조 설정
+Task 1.1: HTTP 서버 구현
+- 파일: packages/mock-defender/src/server.ts
+- Fastify 기반 HTTP 서버
+- 포트 3001에서 실행
 
-#### Task 1.2: 타입 정의
+Task 1.2: Relay 엔드포인트 구현
+- 파일: packages/mock-defender/src/routes/relay.routes.ts
+- POST /relay: 트랜잭션 제출
+- GET /relay/:id: 트랜잭션 상태 조회
+- GET /relayer: Relayer 정보 조회
+- GET /nonce/:address: Nonce 조회
 
-파일 위치: packages/mock-defender/src/types.ts
+Task 1.3: Health 엔드포인트 구현
+- 파일: packages/mock-defender/src/routes/health.routes.ts
+- GET /health: 헬스체크
+- GET /ready: 준비 상태 확인
 
-구현 내용:
-- MockDefenderConfig 인터페이스
-- ForwardRequest 인터페이스 (EIP-712 호환)
-- TransactionResponse 인터페이스 (OZ SDK 호환)
-- RelayerInfo 인터페이스
+Task 1.4: RelayService 구현
+- 파일: packages/mock-defender/src/services/relay.service.ts
+- viem walletClient/publicClient 사용
+- 트랜잭션 제출 및 상태 추적
 
-#### Task 1.3: MockRelaySigner 클래스 구현
+Task 1.5: Dockerfile 통합
+- 파일: docker/Dockerfile.packages (mock-defender target 추가)
+- Node.js 20 Alpine 기반
+- 통합 멀티스테이지 빌드
 
-파일 위치: packages/mock-defender/src/relay-signer.ts
+### Milestone 2: DefenderService HTTP 클라이언트 전환
 
-구현 내용:
-- viem walletClient 초기화
-- sendTransaction(request): Forwarder.execute() 호출
-- getTransaction(id): 트랜잭션 상태 조회
-- getRelayer(): Relayer 정보 반환
-- OZ Defender SDK와 동일한 응답 형식
+목표: DefenderService를 OZ SDK 기반에서 HTTP 클라이언트로 전환
 
-#### Task 1.4: MockDefender 클래스 구현
+완료된 작업:
 
-파일 위치: packages/mock-defender/src/mock-defender.ts
+Task 2.1: HTTP 클라이언트 구현
+- 파일: packages/pay-server/src/services/defender.service.ts
+- fetch API 사용
+- constructor(apiUrl, apiKey, apiSecret, relayerAddress)
 
-구현 내용:
-- constructor(config): OZ Defender SDK와 동일한 설정
-- relaySigner 속성: MockRelaySigner 인스턴스
-- OZ Defender 클래스와 동일한 인터페이스
+Task 2.2: API 메서드 구현
+- submitGaslessTransaction(): POST /relay
+- getRelayStatus(): GET /relay/:id
+- checkRelayerHealth(): GET /relayer
 
-### Milestone 2: EIP-712 서명 검증 서비스 (Secondary Goal)
+Task 2.3: 상태 매핑 구현
+- OZ Defender 상태를 내부 상태로 매핑
+- pending, sent, submitted → pending
+- mined, confirmed, failed → 그대로 유지
 
-목표: 모든 환경에서 공통으로 사용되는 EIP-712 서명 검증 로직 구현
+### Milestone 3: Docker Compose 설정 업데이트
 
-#### Task 2.1: 서명 검증 서비스
+목표: MockDefender를 별도 컨테이너로 실행하고 서비스 간 연결 설정
 
-파일 위치: packages/server/src/services/signature.service.ts
+완료된 작업:
 
-구현 내용:
-- EIP-712 도메인 및 타입 정의
-- verifySignature(request, signature): 서명 검증
-- getDomain(): 현재 네트워크의 도메인 반환
-- getForwardRequestTypes(): ForwardRequest 타입 정의 반환
+Task 3.1: mock-defender 서비스 추가
+- 파일: docker/docker-compose.yml
+- 포트: 3002:3001 (외부:내부)
+- 의존성: hardhat
+- 환경변수: RELAYER_PRIVATE_KEY, RPC_URL, CHAIN_ID, FORWARDER_ADDRESS
 
-#### Task 2.2: Nonce 관리 서비스
+Task 3.2: server 서비스 업데이트
+- DEFENDER_API_URL=http://mock-defender:3001
+- RELAYER_ADDRESS 환경변수 추가
+- mock-defender 의존성 추가
 
-파일 위치: packages/server/src/services/nonce.service.ts
+### Milestone 4: 불필요 코드 삭제
 
-구현 내용:
-- getNonce(address): Forwarder.nonces(address) 호출
-- 에러 처리 (RPC 연결 실패 등)
+목표: v3.0.0 아키텍처의 레거시 코드 제거
 
-#### Task 2.3: 트랜잭션 상태 서비스
+완료된 작업:
 
-파일 위치: packages/server/src/services/status.service.ts
+Task 4.1: RelayFactory 삭제
+- 삭제된 파일: packages/pay-server/src/services/relay.factory.ts
+- 삭제된 파일: packages/pay-server/src/services/__tests__/relay.factory.test.ts
 
-구현 내용:
-- getTransactionStatus(hash): 트랜잭션 상태 조회
-- 상태 매핑 (pending, mined, confirmed, failed)
+Task 4.2: MockDefender 라이브러리 파일 삭제
+- 삭제된 파일: packages/mock-defender/src/mock-defender.ts
+- 삭제된 파일: packages/mock-defender/src/relay-signer.ts
+- 삭제된 파일: packages/mock-defender/src/types.ts
+- 삭제된 파일: packages/mock-defender/src/mock-defender.test.ts
+- 삭제된 파일: packages/mock-defender/src/relay-signer.test.ts
 
-### Milestone 3: Relay 서비스 팩토리 (Tertiary Goal)
+Task 4.3: OZ Defender SDK 의존성 제거
+- 파일: packages/pay-server/package.json
+- @openzeppelin/defender-sdk 삭제
 
-목표: 환경에 따라 MockDefender 또는 OZ Defender SDK를 선택하는 팩토리 구현
+### Milestone 5: 테스트 및 검증
 
-#### Task 3.1: Relay 서비스 팩토리
+목표: 전환된 아키텍처의 정상 동작 확인
 
-파일 위치: packages/server/src/services/relay.factory.ts
+완료된 작업:
 
-구현 내용:
-- createRelayService(): 환경 변수에 따라 Relay 서비스 선택
-- USE_MOCK_DEFENDER=true: MockDefender 반환
-- USE_MOCK_DEFENDER=false: OZ Defender SDK 반환
-- 동일한 인터페이스 보장
+Task 5.1: MockDefender 테스트 작성
+- 파일: packages/mock-defender/tests/relay.service.test.ts
+- RelayService 단위 테스트
+- 10개 테스트 통과
 
-#### Task 3.2: DefenderService 수정
+Task 5.2: DefenderService 테스트 업데이트
+- 파일: packages/pay-server/tests/services/defender.service.test.ts
+- fetch mock 기반 테스트
+- HTTP 클라이언트 동작 검증
 
-파일 위치: packages/server/src/services/defender.service.ts
+Task 5.3: 전체 테스트 실행
+- packages/pay-server: 169개 테스트 통과
+- packages/mock-defender: 10개 테스트 통과
 
-구현 내용:
-- Forwarder를 통한 트랜잭션 제출 로직 추가
-- 기존 Direct Relay 로직 유지 (백워드 호환)
-- EIP-712 서명 검증 통합
+### Milestone 6: Nonce 직접 조회 리팩토링 (v4.1.0)
 
-### Milestone 4: API 엔드포인트 업데이트 (Integration)
+목표: Next.js API 캐싱 이슈 해결을 위해 프론트엔드에서 nonce를 컨트랙트에서 직접 조회
 
-목표: gasless 라우트를 환경별 Relay 서비스 기반으로 변경
+완료된 작업:
 
-#### Task 4.1: nonce 조회 엔드포인트 추가
+Task 6.1: PaymentModal에 wagmi useReadContract 추가
+- 파일: apps/demo/src/components/PaymentModal.tsx
+- FORWARDER_ABI 상수 추가 (nonces 함수)
+- useReadContract 훅으로 Forwarder nonce 조회
+- refetchNonce()로 결제 시 fresh nonce 보장
 
-파일 위치: packages/server/src/routes/gasless.routes.ts
+Task 6.2: API에서 nonce 조회 함수 제거
+- 파일: apps/demo/src/lib/api.ts
+- getForwarderNonce 함수 삭제
+- ForwarderNonceResponseSchema 삭제
 
-구현 내용:
-- GET /api/relay/nonce/:address 엔드포인트 추가
-- NonceService.getNonce() 호출
-- 응답 형식: { nonce: string }
+Task 6.3: Next.js API route 삭제
+- 삭제된 파일: apps/demo/src/app/api/forwarder/nonce/[address]/route.ts
+- 캐싱 이슈 원인 제거
 
-#### Task 4.2: gasless 결제 엔드포인트 수정
-
-파일 위치: packages/server/src/routes/gasless.routes.ts
-
-구현 내용:
-- POST /api/payments/gasless 요청 형식 변경
-- ForwardRequest와 signature를 요청 본문으로 수신
-- Relay 서비스 팩토리를 통해 적절한 서비스 사용
-- 응답 형식 업데이트
-
-#### Task 4.3: Docker Compose 환경 변수 업데이트
-
-파일 위치: docker/docker-compose.yml
-
-구현 내용:
-- USE_MOCK_DEFENDER=true 환경 변수 추가
-- FORWARDER_ADDRESS 환경 변수 추가
-- CHAIN_ID 환경 변수 추가
-- Local 환경용 RELAYER_PRIVATE_KEY 설정
-
-### Milestone 5: 테스트 (Quality Gate)
-
-목표: 환경별 Relay 서비스의 안정성 검증을 위한 테스트 코드 작성
-
-#### Task 5.1: MockDefender 단위 테스트
-
-파일 위치: packages/mock-defender/tests/mock-defender.test.ts
-
-테스트 케이스:
-- MockDefender 초기화 검증
-- MockRelaySigner.sendTransaction() 동작 검증
-- MockRelaySigner.getTransaction() 동작 검증
-- OZ Defender SDK 인터페이스 호환성 검증
-
-#### Task 5.2: 서명 검증 테스트
-
-파일 위치: packages/server/src/services/tests/signature.service.test.ts
-
-테스트 케이스:
-- 유효한 서명 검증 성공
-- 무효한 서명 검증 실패
-- 도메인 해시 일관성
-- ForwardRequest 타입 해시
-
-#### Task 5.3: 환경별 통합 테스트
-
-테스트 케이스:
-- Local 환경: MockDefender를 통한 전체 플로우
-- Testnet 환경: OZ Defender SDK를 통한 전체 플로우 (mock)
-- 환경 전환 테스트
-
-#### Task 5.4: Docker Compose E2E 테스트
-
-테스트 케이스:
-- 전체 플로우 E2E 테스트
-- Hardhat 노드와 MockDefender 통신 확인
-- Forwarder 컨트랙트 execute() 성공 확인
-- PaymentGatewayV1에서 _msgSender() 정상 동작 확인
+Task 6.4: pay-server nonce 엔드포인트 삭제
+- 삭제된 파일: packages/pay-server/src/routes/forwarder/nonce.ts
+- 파일: packages/pay-server/src/index.ts에서 nonce route 제거
 
 ## 아키텍처 설계
 
-### 패키지 구조
+### 최종 패키지 구조
 
 ```
 packages/
-├── mock-defender/                    # MockDefender 패키지 (신규)
+├── mock-defender/                    # MockDefender HTTP 서비스
 │   ├── package.json
-│   ├── tsconfig.json
+│   ├── Dockerfile
 │   ├── vitest.config.ts
 │   ├── src/
-│   │   ├── index.ts                  # MockDefender export
-│   │   ├── mock-defender.ts          # MockDefender 클래스
-│   │   ├── relay-signer.ts           # MockRelaySigner 클래스
-│   │   └── types.ts                  # 타입 정의
+│   │   ├── index.ts                  # Export
+│   │   ├── server.ts                 # Fastify 서버
+│   │   ├── services/
+│   │   │   └── relay.service.ts      # Relay 로직
+│   │   └── routes/
+│   │       ├── relay.routes.ts       # Relay 엔드포인트
+│   │       └── health.routes.ts      # Health 엔드포인트
 │   └── tests/
-│       └── mock-defender.test.ts
+│       └── relay.service.test.ts
 │
 └── server/src/services/
-    ├── defender.service.ts           # DefenderService (OZ Defender SDK)
-    ├── relay.factory.ts              # 환경별 Relay 서비스 팩토리 (신규)
-    ├── signature.service.ts          # EIP-712 서명 검증 (신규)
-    ├── nonce.service.ts              # Nonce 관리 (신규)
-    ├── status.service.ts             # 트랜잭션 상태 (신규)
+    ├── defender.service.ts           # HTTP 클라이언트
     └── tests/
-        ├── relay.factory.test.ts     # (신규)
-        └── signature.service.test.ts # (신규)
+        └── defender.service.test.ts
 ```
 
-### 데이터 흐름 (Local 환경)
-
-```
-클라이언트
-    │
-    │ 1. GET /api/relay/nonce/:address
-    ▼
-NonceService.getNonce()
-    │
-    │ 2. nonce 반환
-    ▼
-클라이언트 (EIP-712 서명 생성)
-    │
-    │ 3. POST /api/payments/gasless { request, signature }
-    ▼
-SignatureService.verifySignature()
-    │
-    │ 4. 서명 검증 성공
-    ▼
-RelayFactory.createRelayService() → MockDefender
-    │
-    │ 5. MockRelaySigner.sendTransaction()
-    ▼
-ERC2771Forwarder.execute(request, signature)
-    │
-    │ 6. PaymentGatewayV1.processPayment()
-    ▼
-PaymentGatewayV1 (_msgSender() = 사용자 주소)
-```
-
-### 데이터 흐름 (Testnet/Mainnet)
+### 데이터 흐름
 
 ```
 클라이언트
     │
-    │ 1. GET /api/relay/nonce/:address
+    │ POST /api/payments/gasless
     ▼
-NonceService.getNonce()
+Payment Server (DefenderService)
     │
-    │ 2. nonce 반환
+    │ HTTP POST /relay
     ▼
-클라이언트 (EIP-712 서명 생성)
+MockDefender (Local) 또는 OZ Defender API (Production)
     │
-    │ 3. POST /api/payments/gasless { request, signature }
+    │ Forwarder.execute() 또는 OZ Relay
     ▼
-SignatureService.verifySignature()
+ERC2771Forwarder
     │
-    │ 4. 서명 검증 성공
-    ▼
-RelayFactory.createRelayService() → OZ Defender SDK
-    │
-    │ 5. Defender.relaySigner.sendTransaction()
-    ▼
-OZ Defender Relay → ERC2771Forwarder.execute()
-    │
-    │ 6. PaymentGatewayV1.processPayment()
+    │ 트랜잭션 실행
     ▼
 PaymentGatewayV1 (_msgSender() = 사용자 주소)
 ```
 
-### 의존성 관계
+### 환경 변수
 
-```
-gasless.routes.ts
-    └── RelayFactory
-            ├── MockDefender (Local)
-            │       └── viem (walletClient, publicClient)
-            │
-            └── OZ Defender SDK (Testnet/Mainnet)
-                    └── @openzeppelin/defender-sdk
+Local 환경 (Docker Compose):
+- DEFENDER_API_URL=http://mock-defender:3001
+- DEFENDER_API_KEY= (빈 값)
+- DEFENDER_API_SECRET= (빈 값)
+- RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
-SignatureService
-    └── viem (verifyTypedData)
+Production 환경:
+- DEFENDER_API_URL=https://api.defender.openzeppelin.com
+- DEFENDER_API_KEY=<OZ Defender API 키>
+- DEFENDER_API_SECRET=<OZ Defender API 시크릿>
+- RELAYER_ADDRESS=<OZ Defender Relayer 주소>
 
-NonceService
-    └── viem (publicClient) + Forwarder ABI
-
-StatusService
-    └── viem (publicClient)
-```
-
-## 환경 변수
-
-### Local 환경 (Docker Compose)
-
-```
-USE_MOCK_DEFENDER=true
-FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
-RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-RPC_URL=http://hardhat:8545
-CHAIN_ID=31337
-```
-
-### Testnet/Mainnet
-
-```
-USE_MOCK_DEFENDER=false
-FORWARDER_ADDRESS=<배포된 Forwarder 주소>
-DEFENDER_API_KEY=<OZ Defender API 키>
-DEFENDER_API_SECRET=<OZ Defender API 시크릿>
-DEFENDER_RELAYER_ADDRESS=<OZ Defender Relayer 주소>
-RPC_URL=<Polygon RPC URL>
-CHAIN_ID=80002 (Amoy) 또는 137 (Mainnet)
-```
-
-## 리스크 및 대응 방안
-
-### 리스크 1: OZ SDK 인터페이스 변경
-
-위험: OZ Defender SDK 버전 업데이트 시 인터페이스 변경 가능
-대응:
-- MockDefender 인터페이스를 OZ SDK 타입에서 직접 추출
-- 버전 고정 및 정기적 호환성 테스트
-
-### 리스크 2: 환경 전환 오류
-
-위험: 환경 변수 설정 오류로 인한 잘못된 Relay 서비스 사용
-대응:
-- 서버 시작 시 환경 검증 로그 출력
-- 헬스체크 엔드포인트에 현재 Relay 서비스 타입 포함
-
-### 리스크 3: 가스 비용 증가
-
-위험: Forwarder를 통한 호출은 약 35,000-55,000 가스 추가
-대응:
-- 문서화를 통한 트레이드오프 명시
-- 향후 가스 최적화 SPEC 분리
-
-### 리스크 4: Testnet/Mainnet Forwarder 배포
-
-위험: 각 네트워크에 Forwarder 컨트랙트 배포 필요
-대응:
-- OpenZeppelin 공식 ERC2771Forwarder 사용
-- 배포 스크립트 및 가이드 제공
-
-## 구현 순서 권장사항
-
-권장 구현 순서:
-1. Task 1.1~1.4: MockDefender 패키지 생성 (기반 작업)
-2. Task 2.1~2.3: EIP-712 서명 및 공통 서비스 (핵심 기능)
-3. Task 3.1~3.2: Relay 서비스 팩토리 및 DefenderService 수정 (통합)
-4. Task 4.1~4.3: API 엔드포인트 및 환경 설정 (적용)
-5. Task 5.1~5.4: 테스트 작성 (품질 검증)
+MockDefender 서비스 환경 변수:
+- RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+- RPC_URL=http://hardhat:8545
+- CHAIN_ID=31337
+- FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 
 ## 검증 체크리스트
 
 기능 검증:
-- MockDefender가 OZ Defender SDK와 동일한 인터페이스 제공
-- 환경 변수에 따라 올바른 Relay 서비스 선택
-- EIP-712 서명 검증 정상 동작
-- Forwarder 컨트랙트를 통한 트랜잭션 제출 성공
-- PaymentGatewayV1에서 _msgSender()가 사용자 주소 반환
+- MockDefender HTTP 서비스 정상 시작 확인
+- POST /relay 트랜잭션 제출 성공
+- GET /relay/:id 상태 조회 성공
+- GET /relayer Relayer 정보 조회 성공
+- DefenderService HTTP 클라이언트 정상 동작
+- 상태 매핑 정확성 확인
 
 통합 검증:
-- Local 환경: MockDefender + Hardhat 노드 전체 플로우
-- Testnet 환경: OZ Defender SDK 전체 플로우 (mock)
-- 환경 전환 시 정상 동작
+- Docker Compose 환경에서 전체 플로우 동작
+- Payment Server → MockDefender 통신 성공
+- MockDefender → Hardhat 노드 통신 성공
 
-보안 검증:
-- 무효한 서명 거부 확인
-- 만료된 deadline 거부 확인
-- 잘못된 nonce 거부 확인
+테스트 검증:
+- packages/pay-server: 169개 테스트 통과
+- packages/mock-defender: 10개 테스트 통과
+- TypeScript 컴파일 에러 없음
+
+## 변경 이력
+
+### v4.1.0 (2025-12-02)
+- Milestone 6: Nonce 직접 조회 리팩토링 완료
+- wagmi useReadContract로 Forwarder nonce 직접 조회
+- Next.js API route 및 pay-server nonce 엔드포인트 제거
+- API 캐싱 이슈 해결 (stale nonce → fresh nonce)
+
+### v4.0.0 (2025-12-02)
+- MockDefender를 독립 HTTP 서비스로 전환
+- DefenderService를 HTTP 클라이언트로 변경
+- Docker Compose 설정 업데이트
+- USE_MOCK_DEFENDER 환경변수 제거
+- RelayFactory 제거
+- @openzeppelin/defender-sdk 의존성 제거
+- 전체 테스트 통과 확인
+
+### v3.0.0 (2025-12-01)
+- 환경별 하이브리드 아키텍처 구현
+- MockDefender 인프로세스 라이브러리 구현
+- RelayFactory를 통한 서비스 선택

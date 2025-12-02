@@ -61,7 +61,7 @@ status: draft
 ## 3. 파일 구조 (File Structure)
 
 ```
-packages/server/
+packages/pay-server/
 ├── src/
 │   ├── routes/
 │   │   ├── payments/

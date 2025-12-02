@@ -208,12 +208,27 @@ export async function waitForTransaction(
 // ============================================================
 
 /**
+ * ERC2771 ForwardRequest Schema
+ */
+export const ForwardRequestSchema = z.object({
+  from: z.string().startsWith('0x').length(42, 'Invalid from address'),
+  to: z.string().startsWith('0x').length(42, 'Invalid to address'),
+  value: z.string(),
+  gas: z.string(),
+  deadline: z.string(),
+  data: z.string().startsWith('0x', 'Data must start with 0x'),
+  signature: z.string().startsWith('0x', 'Signature must start with 0x'),
+});
+
+export type ForwardRequestType = z.infer<typeof ForwardRequestSchema>;
+
+/**
  * Gasless Payment Request Schema
  */
 export const GaslessPaymentRequestSchema = z.object({
   paymentId: z.string().min(1, 'Payment ID is required'),
   forwarderAddress: z.string().startsWith('0x').length(42, 'Invalid forwarder address'),
-  signature: z.string().startsWith('0x', 'Signature must start with 0x'),
+  forwardRequest: ForwardRequestSchema,
 });
 
 export type GaslessPaymentRequest = z.infer<typeof GaslessPaymentRequestSchema>;
@@ -246,18 +261,18 @@ export type RelayStatusResponse = z.infer<typeof RelayStatusResponseSchema>;
  * Submit gasless payment via OZ Defender relay
  * @param paymentId Payment ID (from checkout)
  * @param forwarderAddress Forwarder contract address (from checkout response)
- * @param signature User's EIP-712 signature
+ * @param forwardRequest Full ERC2771 ForwardRequest with signature
  */
 export async function submitGaslessPayment(
   paymentId: string,
   forwarderAddress: string,
-  signature: string
+  forwardRequest: ForwardRequestType
 ): Promise<ApiResponse<GaslessPaymentResponse>> {
   // Validate input
   const validation = GaslessPaymentRequestSchema.safeParse({
     paymentId,
     forwarderAddress,
-    signature,
+    forwardRequest,
   });
 
   if (!validation.success) {
@@ -277,7 +292,7 @@ export async function submitGaslessPayment(
       body: JSON.stringify({
         paymentId,
         forwarderAddress,
-        signature,
+        forwardRequest,
       }),
     });
 

@@ -1,11 +1,13 @@
 {
   "name": "@msqpay/mock-defender",
-  "version": "0.1.0",
-  "description": "Mock OpenZeppelin Defender SDK for local gasless transaction testing",
+  "version": "1.0.0",
+  "description": "Mock OpenZeppelin Defender HTTP service for local gasless transaction relay",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:coverage": "vitest --run --coverage",
@@ -14,11 +16,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "fastify": "^5.0.0",
+    "pino-pretty": "^11.0.0",
     "viem": "^2.21.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^2.0.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0",
     "eslint": "^8.0.0"
@@ -28,7 +33,8 @@
     "mock",
     "gasless",
     "blockchain",
-    "testing"
+    "relay",
+    "http-service"
   ],
   "author": "MSQ Team",
   "license": "MIT"

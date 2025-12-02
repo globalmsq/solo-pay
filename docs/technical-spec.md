@@ -158,20 +158,22 @@ const types = {
 };
 ```
 
-### 2.4 환경별 하이브리드 Relay Integration (ERC2771)
+### 2.4 OZ Defender API 호환 Relay Integration (ERC2771) - v4.0.0
 
-환경에 따라 다른 Relay 서비스를 사용하는 하이브리드 아키텍처를 채택합니다. 모든 환경에서 ERC2771Forwarder 컨트랙트를 사용하지만, 트랜잭션 제출자는 환경에 따라 달라집니다.
+모든 환경에서 동일한 HTTP 클라이언트 기반 아키텍처를 사용합니다. ERC2771Forwarder 컨트랙트를 통해 트랜잭션을 실행하며, `DEFENDER_API_URL` 환경변수만 변경하여 환경을 전환합니다.
 
 **환경별 구성**:
 
-| 환경 | Relay 제출자 | 환경 변수 |
+| 환경 | Relay 서비스 | API URL |
 |------|-------------|----------|
-| Local (Docker Compose) | MockDefender | `USE_MOCK_DEFENDER=true` |
-| Testnet/Mainnet | OZ Defender SDK | `USE_MOCK_DEFENDER=false` |
+| Local (Docker Compose) | MockDefender HTTP 서비스 | `http://mock-defender:3001` |
+| Testnet/Mainnet | OZ Defender API | `https://api.defender.openzeppelin.com` |
 
-**MockDefender**: OZ Defender SDK와 100% 동일한 인터페이스를 제공하는 자체 호스팅 패키지로, Local 개발 환경에서 사용됩니다.
+**MockDefender HTTP 서비스**: OZ Defender API와 100% 호환되는 HTTP 엔드포인트를 제공하는 독립 Docker 컨테이너입니다. Local 개발 환경에서 사용됩니다.
 
-**OZ Defender SDK**: Testnet 및 Mainnet 환경에서 프로덕션 안정성을 위해 OpenZeppelin Defender 서비스를 사용합니다.
+**OZ Defender API**: Testnet 및 Mainnet 환경에서 프로덕션 안정성을 위해 OpenZeppelin Defender 서비스를 사용합니다.
+
+**핵심 장점**: Production과 Local 환경이 동일한 코드 경로를 사용하여 테스트와 프로덕션 동작의 일관성을 보장합니다.
 
 ```typescript
 // ForwarderService - Meta-TX 제출

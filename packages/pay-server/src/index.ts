@@ -29,10 +29,13 @@ if (!gatewayAddress) {
 const blockchainService = new BlockchainService(rpcUrl, gatewayAddress);
 
 // Initialize Defender service for gasless transactions
-const defenderApiKey = process.env.DEFENDER_API_KEY || 'dummy-api-key';
-const defenderApiSecret = process.env.DEFENDER_API_SECRET || 'dummy-api-secret';
+// Production: https://api.defender.openzeppelin.com
+// Local: http://mock-defender:3001
+const defenderApiUrl = process.env.DEFENDER_API_URL || 'http://localhost:3001';
+const defenderApiKey = process.env.DEFENDER_API_KEY || '';
+const defenderApiSecret = process.env.DEFENDER_API_SECRET || '';
 const relayerAddress = process.env.RELAYER_ADDRESS || '0x0000000000000000000000000000000000000000';
-const defenderService = new DefenderService(defenderApiKey, defenderApiSecret, relayerAddress);
+const defenderService = new DefenderService(defenderApiUrl, defenderApiKey, defenderApiSecret, relayerAddress);
 
 // Register CORS
 server.register(cors, {

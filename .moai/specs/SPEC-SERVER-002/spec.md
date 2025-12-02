@@ -442,7 +442,7 @@ class PaymentError extends Error {
 
 ### 구현된 파일
 ```
-packages/server/
+packages/pay-server/
 ├── src/
 │   ├── app.ts
 │   ├── routes/payments/

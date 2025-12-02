@@ -239,7 +239,7 @@ cat packages/sdk/BREAKING_CHANGES.md
 **검증 방법**:
 ```bash
 # Server tests
-cd packages/server
+cd packages/pay-server
 pnpm test --coverage
 
 # SDK tests
@@ -278,7 +278,7 @@ cd packages/contracts
 pnpm hardhat node
 
 # 2. 결제 서버 시작
-cd packages/server
+cd packages/pay-server
 pnpm dev
 
 # 3. Demo App 시작

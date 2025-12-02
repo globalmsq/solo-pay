@@ -387,26 +387,33 @@ graph LR
 | **테스트** | Vitest | v1.0+ | 고속 단위 테스트 |
 | **네트워크** | Polygon | - | EVM 호환 블록체인 |
 
-### 환경별 하이브리드 Relay 아키텍처
+### OZ Defender API 호환 Relay 아키텍처 (v4.0.0)
 
-ERC2771Forwarder 컨트랙트를 사용하여 사용자 대신 가스비를 대납합니다. 사용자는 EIP-712 형식으로 서명만 하고, 환경에 따라 선택된 Relay 서비스가 Forwarder 컨트랙트를 통해 트랜잭션을 제출합니다.
+ERC2771Forwarder 컨트랙트를 사용하여 사용자 대신 가스비를 대납합니다. 사용자는 EIP-712 형식으로 서명만 하고, HTTP 기반 Relay 서비스가 Forwarder 컨트랙트를 통해 트랜잭션을 제출합니다.
+
+**핵심 설계 원칙**:
+
+Production과 Local 환경이 동일한 아키텍처를 유지합니다:
+- 동일한 HTTP API 인터페이스
+- 동일한 Payment Server 코드
+- `DEFENDER_API_URL` 환경변수만 변경하여 환경 전환
 
 **환경별 구성**:
 
-| 환경 | Relay 제출자 | Forwarder | 특징 |
-|------|-------------|-----------|------|
-| **Local (Docker Compose)** | MockDefender | ERC2771Forwarder | OZ SDK 호환, 자체 호스팅 |
-| **Testnet/Mainnet** | OZ Defender SDK | ERC2771Forwarder | 외부 서비스, 프로덕션 안정성 |
+| 환경 | Relay 서비스 | API URL | Forwarder |
+|------|-------------|---------|-----------|
+| **Local (Docker Compose)** | MockDefender HTTP 서비스 | http://mock-defender:3001 | ERC2771Forwarder |
+| **Testnet/Mainnet** | OZ Defender API | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 
-**환경 선택 로직**:
-- `USE_MOCK_DEFENDER=true` → MockDefender (Local 개발용)
-- `USE_MOCK_DEFENDER=false` 또는 미설정 → OZ Defender SDK (프로덕션용)
+**환경 전환 방식**:
+- `DEFENDER_API_URL=http://mock-defender:3001` → Local 개발 환경
+- `DEFENDER_API_URL=https://api.defender.openzeppelin.com` → Production 환경
 
 **핵심 특징**:
 
 - `_msgSender()` = 원래 서명자 (사용자 주소)
 - EIP-712 구조화된 서명으로 사용자 의도 암호학적 증명
-- 환경별 Relay 서비스 선택으로 개발/프로덕션 분리
+- HTTP 기반 통일된 API로 환경별 코드 분기 제거
 - nonce + deadline으로 재생 공격 방지
 - 모든 환경에서 동일한 Forwarder 컨트랙트 사용
 
@@ -422,17 +429,15 @@ Forwarder: <배포된 주소>
 Gateway:   <배포된 주소>
 ```
 
-**데이터 흐름 (Local - MockDefender)**:
+**데이터 흐름 (통합)**:
 ```
-User (EIP-712 서명) → API Server → MockDefender → Forwarder.execute() → PaymentGateway
-```
-
-**데이터 흐름 (Testnet/Mainnet - OZ Defender)**:
-```
-User (EIP-712 서명) → API Server → OZ Defender SDK → Forwarder.execute() → PaymentGateway
+User (EIP-712 서명) → Payment Server (DefenderService HTTP Client) → Relay API → Forwarder.execute() → PaymentGateway
 ```
 
-**상세 사양**: `.moai/specs/SPEC-RELAY-001/` 참조
+- Local: Relay API = MockDefender HTTP 서비스 (Docker 컨테이너)
+- Production: Relay API = OZ Defender API
+
+**상세 사양**: `.moai/specs/SPEC-RELAY-001/` 참조 (v4.0.0)
 
 ---
 

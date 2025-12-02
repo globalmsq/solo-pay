@@ -242,7 +242,7 @@ docker inspect msqpay-server
 
 1. **결제서버 API 개발**
    ```bash
-   cd ../packages/server
+   cd ../packages/pay-server
    pnpm dev
    ```
 

@@ -455,7 +455,7 @@ cd contracts
 pnpm hardhat node
 
 # Terminal 2: Payment server
-cd packages/server
+cd packages/pay-server
 pnpm dev
 
 # Terminal 3: Demo app
@@ -545,7 +545,7 @@ echo "NEXT_PUBLIC_SERVER_URL=http://localhost:3001" >> apps/demo/.env.local
 curl http://localhost:3001/health
 
 # If failed, restart server
-cd packages/server
+cd packages/pay-server
 pnpm dev
 ```
 

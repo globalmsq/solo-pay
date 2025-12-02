@@ -14,10 +14,24 @@ export interface CreatePaymentParams {
   recipientAddress: string;
 }
 
+/**
+ * ERC2771 ForwardRequest for gasless meta-transactions
+ * Matches OZ ERC2771Forwarder.execute() parameters
+ */
+export interface ForwardRequest {
+  from: string;
+  to: string;
+  value: string;
+  gas: string;
+  deadline: string;
+  data: string;
+  signature: string;
+}
+
 export interface GaslessParams {
   paymentId: string;
   forwarderAddress: string;
-  signature: string;
+  forwardRequest: ForwardRequest;
 }
 
 export interface RelayParams {

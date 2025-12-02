@@ -86,7 +86,7 @@ Status: Payment API & SDK Implementation Complete (SPEC-SERVER-002 ✅ SPEC-SDK-
 
 **생성된 파일 구조**:
 ```
-packages/server/
+packages/pay-server/
 ├── src/
 │   ├── app.ts                 # Fastify 앱
 │   ├── routes/
@@ -201,7 +201,7 @@ Frontend (React) → Next.js API Routes (SDK) → 결제서버 → Smart Contrac
 
 ### ✅ Priority 5: Forwarder 기반 아키텍처 전환 - COMPLETED (SPEC-RELAY-001)
 
-**Location**: `packages/server/src/services/forwarder.service.ts`
+**Location**: `packages/pay-server/src/services/forwarder.service.ts`
 **SPEC**: `.moai/specs/SPEC-RELAY-001/`
 
 **아키텍처 변경 요약**:

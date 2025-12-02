@@ -121,7 +121,7 @@ cd contracts
 pnpm deploy:local
 
 # Terminal 3: Start Payment Server
-cd packages/server
+cd packages/pay-server
 pnpm dev
 
 # Terminal 4: Start Demo App

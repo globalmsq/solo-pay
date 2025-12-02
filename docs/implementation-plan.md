@@ -22,7 +22,7 @@
 
 ### 1.2 구현 우선순위
 
-1. **결제서버** (packages/server/) - 신규 개발
+1. **결제서버** (packages/pay-server/) - 신규 개발
 2. **SDK** (packages/sdk/) - 완전 재작성
 3. **Demo App** (apps/demo/) - 전면 재작성
 
@@ -576,7 +576,7 @@ function usePaymentStatusPolling(paymentId: string | null) {
 
 | 일차 | 작업 내용 |
 |------|----------|
-| Day 1 | `packages/server/` 디렉토리 생성, Fastify 앱 초기화 |
+| Day 1 | `packages/pay-server/` 디렉토리 생성, Fastify 앱 초기화 |
 | Day 2 | 환경변수 설정, API Key 인증 미들웨어 |
 | Day 3 | 4개 API 엔드포인트 구현 (create, status, gasless, relay) |
 | Day 4 | SDK 완전 재작성 - MSQPayClient, HttpClient |
@@ -608,14 +608,14 @@ function usePaymentStatusPolling(paymentId: string | null) {
 
 | 파일 | 설명 |
 |------|------|
-| `packages/server/package.json` | 프로젝트 초기화, 의존성 |
-| `packages/server/src/app.ts` | Fastify 앱 초기화 |
-| `packages/server/src/routes/payments.ts` | 4개 결제 API |
-| `packages/server/src/services/payment.service.ts` | paymentId 생성 |
-| `packages/server/src/services/contract.service.ts` | Contract 조회 |
-| `packages/server/src/services/gasless.service.ts` | typedData 생성 |
-| `packages/server/src/services/relay.service.ts` | OZ Defender 연동 |
-| `packages/server/src/middleware/apiKey.ts` | API Key 인증 |
+| `packages/pay-server/package.json` | 프로젝트 초기화, 의존성 |
+| `packages/pay-server/src/app.ts` | Fastify 앱 초기화 |
+| `packages/pay-server/src/routes/payments.ts` | 4개 결제 API |
+| `packages/pay-server/src/services/payment.service.ts` | paymentId 생성 |
+| `packages/pay-server/src/services/contract.service.ts` | Contract 조회 |
+| `packages/pay-server/src/services/gasless.service.ts` | typedData 생성 |
+| `packages/pay-server/src/services/relay.service.ts` | OZ Defender 연동 |
+| `packages/pay-server/src/middleware/apiKey.ts` | API Key 인증 |
 
 ### Priority 2: SDK (재작성)
 

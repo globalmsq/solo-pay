@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { Address } from 'viem';
-import { GaslessRequestSchema } from '../../schemas/payment.schema';
+import { GaslessRequestSchema, ForwardRequest } from '../../schemas/payment.schema';
 import { DefenderService } from '../../services/defender.service';
 
 export interface SubmitGaslessRequest {
   paymentId: string;
   forwarderAddress: string;
-  signature: string;
+  forwardRequest: ForwardRequest;
 }
 
 export async function submitGaslessRoute(
@@ -41,19 +41,19 @@ export async function submitGaslessRoute(
           throw error;
         }
 
-        // 거래 데이터 검증
-        if (!defenderService.validateTransactionData(validatedData.signature)) {
+        // ForwardRequest 서명 검증
+        if (!defenderService.validateTransactionData(validatedData.forwardRequest.signature)) {
           return reply.code(400).send({
             code: 'INVALID_SIGNATURE',
             message: '유효하지 않은 서명 형식입니다',
           });
         }
 
-        // Gasless 거래 제출
-        const result = await defenderService.submitGaslessTransaction(
+        // Gasless 거래 제출 (ForwardRequest 포함)
+        const result = await defenderService.submitForwardTransaction(
           id,
           validatedData.forwarderAddress as Address,
-          validatedData.signature
+          validatedData.forwardRequest
         );
 
         return reply.code(202).send({
