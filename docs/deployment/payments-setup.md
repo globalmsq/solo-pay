@@ -1,11 +1,27 @@
 # 결제 API 배포 가이드
 
-MSQPay 결제 API를 프로덕션 환경에 배포하기 위한 단계별 가이드입니다. OpenZeppelin Defender, Polygon RPC, 환경 설정을 포함합니다.
+MSQPay 결제 API를 다양한 환경에 배포하기 위한 단계별 가이드입니다. 환경별 하이브리드 Relay 아키텍처, ERC2771Forwarder 기반 Meta-Transaction, Polygon RPC, 환경 설정을 포함합니다.
+
+## 환경별 아키텍처 개요
+
+MSQPay는 환경에 따라 다른 Relay 서비스를 사용하는 하이브리드 아키텍처를 채택합니다:
+
+| 환경 | Relay 제출자 | Forwarder | 설명 |
+|------|-------------|-----------|------|
+| **Local (Docker Compose)** | MockDefender | ERC2771Forwarder | OZ SDK 호환, 자체 호스팅 |
+| **Testnet (Polygon Amoy)** | OZ Defender SDK | ERC2771Forwarder | 외부 서비스, 테스트 검증 |
+| **Mainnet (Polygon)** | OZ Defender SDK | ERC2771Forwarder | 외부 서비스, 프로덕션 안정성 |
+
+**환경 선택 로직**: `USE_MOCK_DEFENDER` 환경 변수로 제어
+- `true` → MockDefender 사용 (Local 개발)
+- `false` 또는 미설정 → OZ Defender SDK 사용 (Testnet/Mainnet)
 
 ## 배포 전 체크리스트
 
 - [ ] Polygon 네트워크 스마트 컨트랙트 배포 완료
-- [ ] OpenZeppelin Defender 계정 생성 및 설정
+- [ ] ERC2771Forwarder 컨트랙트 배포 완료
+- [ ] PaymentGateway 컨트랙트 배포 완료 (Forwarder를 trustedForwarder로 설정)
+- [ ] 릴레이어 지갑 생성 및 가스비 충전
 - [ ] RPC 프로바이더 선택 및 엔드포인트 확보
 - [ ] 환경 변수 준비 (.env.production)
 - [ ] 테스트 커버리지 >= 85%
@@ -16,37 +32,75 @@ MSQPay 결제 API를 프로덕션 환경에 배포하기 위한 단계별 가이
 
 ## 1단계: 환경 설정
 
-### 1.1 필수 환경 변수
+### 1.1 환경별 환경 변수
 
-프로덕션 환경에 다음 변수를 설정하세요:
+#### Local 환경 (Docker Compose)
 
 ```bash
 # ============================================
+# Relay Configuration (MockDefender)
+# ============================================
+USE_MOCK_DEFENDER=true
+# MockDefender 사용 (Local 개발용)
+
+FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+# ERC2771Forwarder 컨트랙트 주소 (Hardhat 배포)
+
+RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+# Hardhat 기본 계정 #0 개인키
+
+RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+# Hardhat 기본 계정 #0 주소
+
+# ============================================
+# Blockchain Configuration
+# ============================================
+GATEWAY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+BLOCKCHAIN_RPC_URL=http://hardhat:8545
+CHAIN_ID=31337
+
+# ============================================
+# Server Configuration
+# ============================================
+PORT=3000
+NODE_ENV=development
+```
+
+#### Testnet/Mainnet 환경 (OZ Defender SDK)
+
+```bash
+# ============================================
+# Relay Configuration (OZ Defender SDK)
+# ============================================
+USE_MOCK_DEFENDER=false
+# 또는 이 변수를 설정하지 않음 → OZ Defender SDK 사용
+
+DEFENDER_API_KEY=your_defender_api_key_here
+# OZ Defender API 키
+
+DEFENDER_API_SECRET=your_defender_api_secret_here
+# OZ Defender API 시크릿
+
+DEFENDER_RELAYER_ADDRESS=0x...
+# OZ Defender에서 생성한 Relayer 주소
+
+# ============================================
 # Blockchain Configuration (Required)
 # ============================================
-
-# PaymentGateway 컨트랙트 주소 (필수)
-# 서버 시작 시 이 값이 없으면 에러 발생
 GATEWAY_ADDRESS=0x1234567890123456789012345678901234567890
+# PaymentGateway 컨트랙트 주소 (필수)
 
-# Blockchain RPC 엔드포인트 (선택, 기본값: https://polygon-rpc.com)
+FORWARDER_ADDRESS=0x...
+# ERC2771Forwarder 컨트랙트 주소 (Testnet/Mainnet 배포)
+
 BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
 # 또는 전용 RPC:
 # BLOCKCHAIN_RPC_URL=https://mainnet.infura.io/v3/YOUR-PROJECT-ID
-# BLOCKCHAIN_RPC_URL=https://polygon.llamarpc.com
-# BLOCKCHAIN_RPC_URL=https://rpc.ankr.com/polygon
+# BLOCKCHAIN_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR-API-KEY
 
-# ============================================
-# OpenZeppelin Defender Configuration
-# ============================================
-DEFENDER_API_KEY=your_defender_api_key_here
-# Defender 대시보드 > Settings > API Keys에서 생성
-
-DEFENDER_API_SECRET=your_defender_api_secret_here
-# 안전하게 보관하세요 (절대 커밋하지 마세요)
-
-DEFENDER_RELAYER_ADDRESS=0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
-# Defender에서 설정한 릴레이어 주소
+CHAIN_ID=80002
+# Polygon Amoy Testnet: 80002
+# Polygon Mainnet: 137
 
 # ============================================
 # Server Configuration
@@ -91,38 +145,48 @@ git commit -m "chore: add .env files to gitignore"
 
 ---
 
-## 2단계: OpenZeppelin Defender 설정
+## 2단계: Forwarder 및 릴레이어 설정
 
-### 2.1 Defender 계정 생성
+### 2.1 ERC2771Forwarder 컨트랙트 배포
 
-1. https://defender.openzeppelin.com 방문
-2. 계정 생성 또는 로그인
-3. Team 생성 (조직 단위)
+ERC2771Forwarder는 Meta-Transaction을 처리하는 핵심 컨트랙트입니다.
 
-### 2.2 릴레이어 생성
+**Hardhat Ignition으로 배포**:
+```bash
+cd contracts
+npx hardhat ignition deploy ignition/modules/Forwarder.ts --network amoy
+```
 
-**웹 콘솔에서**:
-1. Defender > Relayers 메뉴 접속
-2. "Create Relayer" 버튼 클릭
-3. 네트워크 선택: **Polygon**
-4. 릴레이어 이름 입력: `msqpay-relay` (예)
-5. "Create Relayer" 버튼 클릭
-6. **Relayer Address** 복사 (DEFENDER_RELAYER_ADDRESS)
+**배포 후 확인**:
+1. 배포된 Forwarder 주소 기록
+2. Polygonscan에서 컨트랙트 검증
+3. `FORWARDER_ADDRESS` 환경 변수 설정
 
-### 2.3 API 키 생성
+### 2.2 PaymentGateway 컨트랙트 배포
 
-**웹 콘솔에서**:
-1. Settings > API Keys 접속
-2. "Create API Key" 버튼 클릭
-3. 키 이름 입력: `msqpay-api` (예)
-4. **API Key** 복사 (DEFENDER_API_KEY)
-5. **Secret Key** 복사 (DEFENDER_API_SECRET) - 한 번만 표시됨!
+PaymentGateway는 Forwarder를 trustedForwarder로 설정해야 합니다.
 
-### 2.4 Relayer 자금 확인
+**배포 스크립트에서 Forwarder 주소 지정**:
+```typescript
+// ignition/modules/PaymentGateway.ts
+const forwarderAddress = "0x..."; // 2.1에서 배포한 주소
+await gateway.initialize(owner, forwarderAddress);
+```
 
-1. Relayers 메뉴에서 생성한 릴레이어 선택
-2. 지갑 주소와 POL 잔액 확인
-3. 필요시 POL 전송 (Gasless 거래용)
+### 2.3 릴레이어 지갑 설정
+
+릴레이어는 Meta-Transaction을 제출하는 서버 지갑입니다.
+
+**릴레이어 지갑 생성**:
+1. 새 이더리움 지갑 생성 (개인키 안전하게 보관)
+2. 지갑 주소 기록 (`RELAYER_ADDRESS`)
+3. 개인키를 환경 변수로 설정 (`RELAYER_PRIVATE_KEY`)
+
+### 2.4 릴레이어 자금 충전
+
+1. 릴레이어 지갑에 POL 전송 (가스비용)
+2. 권장 최소 잔액: 0.5 POL (테스트넷), 5 POL (메인넷)
+3. 잔액 모니터링 설정 (선택사항)
 
 ---
 
@@ -217,9 +281,9 @@ cat > check-env.js << 'EOF'
 const required = [
   'BLOCKCHAIN_RPC_URL',
   'GATEWAY_ADDRESS',
-  'DEFENDER_API_KEY',
-  'DEFENDER_API_SECRET',
-  'DEFENDER_RELAYER_ADDRESS',
+  'FORWARDER_ADDRESS',
+  'RELAYER_PRIVATE_KEY',
+  'RELAYER_ADDRESS',
   'PORT',
   'NODE_ENV'
 ];
@@ -227,11 +291,11 @@ const required = [
 const missing = required.filter(key => !process.env[key]);
 
 if (missing.length > 0) {
-  console.error('❌ Missing environment variables:', missing);
+  console.error('Missing environment variables:', missing);
   process.exit(1);
 }
 
-console.log('✅ All required environment variables are set');
+console.log('All required environment variables are set');
 EOF
 
 node check-env.js
@@ -280,9 +344,9 @@ docker build -t msqpay-api:latest .
 docker run -p 3000:3000 \
   -e BLOCKCHAIN_RPC_URL=https://polygon-rpc.com \
   -e GATEWAY_ADDRESS=0x... \
-  -e DEFENDER_API_KEY=xxx \
-  -e DEFENDER_API_SECRET=xxx \
-  -e DEFENDER_RELAYER_ADDRESS=0x... \
+  -e FORWARDER_ADDRESS=0x... \
+  -e RELAYER_PRIVATE_KEY=xxx \
+  -e RELAYER_ADDRESS=0x... \
   msqpay-api:latest
 
 # 연결 테스트
@@ -303,9 +367,9 @@ services:
     environment:
       BLOCKCHAIN_RPC_URL: https://polygon-rpc.com
       GATEWAY_ADDRESS: 0x...
-      DEFENDER_API_KEY: ${DEFENDER_API_KEY}
-      DEFENDER_API_SECRET: ${DEFENDER_API_SECRET}
-      DEFENDER_RELAYER_ADDRESS: 0x...
+      FORWARDER_ADDRESS: 0x...
+      RELAYER_PRIVATE_KEY: ${RELAYER_PRIVATE_KEY}
+      RELAYER_ADDRESS: 0x...
       NODE_ENV: production
     restart: unless-stopped
     healthcheck:
@@ -334,9 +398,9 @@ railway init
 # 4. 환경 변수 설정
 railway variable set BLOCKCHAIN_RPC_URL https://polygon-rpc.com
 railway variable set GATEWAY_ADDRESS 0x...
-railway variable set DEFENDER_API_KEY xxx
-railway variable set DEFENDER_API_SECRET xxx
-railway variable set DEFENDER_RELAYER_ADDRESS 0x...
+railway variable set FORWARDER_ADDRESS 0x...
+railway variable set RELAYER_PRIVATE_KEY xxx
+railway variable set RELAYER_ADDRESS 0x...
 
 # 5. 배포
 railway up
@@ -358,9 +422,9 @@ vercel
 # Vercel 대시보드 > Settings > Environment Variables에서 설정:
 # - BLOCKCHAIN_RPC_URL
 # - GATEWAY_ADDRESS
-# - DEFENDER_API_KEY
-# - DEFENDER_API_SECRET
-# - DEFENDER_RELAYER_ADDRESS
+# - FORWARDER_ADDRESS
+# - RELAYER_PRIVATE_KEY
+# - RELAYER_ADDRESS
 ```
 
 ### 6.3 AWS Lambda 배포
@@ -383,9 +447,9 @@ provider:
   environment:
     BLOCKCHAIN_RPC_URL: ${env:BLOCKCHAIN_RPC_URL}
     GATEWAY_ADDRESS: ${env:GATEWAY_ADDRESS}
-    DEFENDER_API_KEY: ${env:DEFENDER_API_KEY}
-    DEFENDER_API_SECRET: ${env:DEFENDER_API_SECRET}
-    DEFENDER_RELAYER_ADDRESS: ${env:DEFENDER_RELAYER_ADDRESS}
+    FORWARDER_ADDRESS: ${env:FORWARDER_ADDRESS}
+    RELAYER_PRIVATE_KEY: ${env:RELAYER_PRIVATE_KEY}
+    RELAYER_ADDRESS: ${env:RELAYER_ADDRESS}
 
 functions:
   api:
@@ -565,7 +629,9 @@ curl -X POST https://api.msqpay.io/payments/create \
 ## 프로덕션 체크리스트 (최종)
 
 - [ ] 모든 환경 변수 설정됨
-- [ ] OpenZeppelin Defender 릴레이어 자금 충전
+- [ ] ERC2771Forwarder 컨트랙트 배포 및 검증 완료
+- [ ] PaymentGateway 컨트랙트 배포 및 검증 완료
+- [ ] 릴레이어 지갑 가스비 충전
 - [ ] RPC 엔드포인트 테스트 완료
 - [ ] HTTPS 설정 완료
 - [ ] 로깅/모니터링 설정 완료
@@ -591,17 +657,18 @@ Error: Connection refused at POLYGON_RPC_URL
 3. 방화벽 설정 확인
 4. 다른 RPC 프로바이더로 시도
 
-### Defender 인증 오류
+### Forwarder 서명 검증 실패
 
 ```
-Error: Unauthorized - Invalid API key
+Error: Invalid signature - EIP-712 verification failed
 ```
 
 해결책:
-1. API Key/Secret 확인
-2. 만료되지 않았는지 확인
-3. 새 키 재생성
-4. 권한 확인
+1. EIP-712 domain이 Forwarder 컨트랙트와 일치하는지 확인
+2. chainId가 올바른지 확인
+3. verifyingContract 주소가 올바른지 확인
+4. ForwardRequest 구조가 정확한지 확인
+5. deadline이 만료되지 않았는지 확인
 
 ### 가스비 부족
 
@@ -610,9 +677,10 @@ Error: Insufficient balance for gas
 ```
 
 해결책:
-1. Relayer 지갑에 POL 전송
-2. 충분한 잔액 확인 (최소 0.1 POL)
+1. 릴레이어 지갑에 POL 전송
+2. 충분한 잔액 확인 (최소 0.5 POL 테스트넷, 5 POL 메인넷)
 3. 거래 볼륨 재평가
+4. 자동 잔액 알림 설정
 
 ---
 

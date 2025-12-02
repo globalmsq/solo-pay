@@ -13,13 +13,13 @@ C4Context
     Person(user, "사용자", "모바일/웹 클라이언트")
     System(msqpay, "MSQPay 결제 API", "Fastify 서버\nviem 클라이언트")
     System_Ext(polygon, "Polygon 네트워크", "EVM 기반 블록체인\n스마트 컨트랙트")
-    System_Ext(defender, "OpenZeppelin Defender", "릴레이 서비스\nGasless 트랜잭션")
+    System_Ext(forwarder, "ERC2771Forwarder", "Meta-Transaction 처리\nEIP-712 서명 검증")
     System_Ext(rpc, "RPC 프로바이더", "Polygon RPC\nArithmetic 프로바이더")
 
     Rel(user, msqpay, "REST API\nHTTP/HTTPS")
     Rel(msqpay, polygon, "읽기/쓰기\nviem")
-    Rel(msqpay, defender, "API 호출\nDefender SDK")
-    Rel(defender, polygon, "거래 제출\nRPC")
+    Rel(msqpay, forwarder, "ForwardRequest 제출\nEIP-712 서명")
+    Rel(forwarder, polygon, "Meta-TX 실행\n_msgSender() = User")
     Rel(msqpay, rpc, "RPC 호출\nviem Transport")
 ```
 
@@ -31,22 +31,24 @@ C4Container
 
     Container(fastify, "Fastify 서버", "Node.js", "HTTP 서버\nv5.0 이상")
     Container(routes, "라우트 계층", "TypeScript", "결제 API\n4개 엔드포인트")
-    Container(services, "서비스 계층", "TypeScript", "BlockchainService\nDefenderService")
+    Container(services, "서비스 계층", "TypeScript", "BlockchainService\nForwarderService")
     Container(validation, "검증 계층", "Zod", "요청/응답 스키마\n타입 안전성")
 
     Container(blockchain, "블록체인 클라이언트", "viem", "스마트 컨트랙트 상호작용\nread/write 함수")
-    Container(defender_sdk, "Defender SDK", "OpenZeppelin", "릴레이 서비스\nAPI 인증")
+    Container(forwarder_client, "Forwarder 클라이언트", "viem", "EIP-712 서명 검증\nMeta-TX 제출")
 
-    System_Ext(polygon_sc, "스마트 컨트랙트", "Solidity", "결제 저장소\nstruct PaymentData")
+    System_Ext(forwarder_contract, "ERC2771Forwarder", "Solidity", "서명 검증\n_msgSender 전달")
+    System_Ext(polygon_sc, "PaymentGateway", "Solidity", "결제 저장소\nERC2771Context")
     System_Ext(polygon_node, "Polygon 노드", "EVM", "거래 검증\n블록 생성")
 
     Rel(routes, services, "호출")
     Rel(services, blockchain, "사용")
-    Rel(services, defender_sdk, "사용")
+    Rel(services, forwarder_client, "사용")
     Rel(services, validation, "사용")
 
     Rel(blockchain, polygon_node, "RPC 호출")
-    Rel(defender_sdk, polygon_node, "릴레이 거래")
+    Rel(forwarder_client, forwarder_contract, "ForwardRequest 제출")
+    Rel(forwarder_contract, polygon_sc, "Meta-TX 실행")
     Rel(polygon_node, polygon_sc, "스마트 컨트랙트 실행")
 ```
 
@@ -140,7 +142,7 @@ sequenceDiagram
     Note over Client: status, blockNumber, createdAt 등
 ```
 
-### 3. Gasless 거래 플로우 (Gasless Transaction)
+### 3. Gasless 거래 플로우 (Forwarder-based Meta-Transaction)
 
 ```mermaid
 sequenceDiagram
@@ -148,96 +150,128 @@ sequenceDiagram
     participant Client as 클라이언트 (DApp)
     participant API as Fastify API
     participant Validation as Zod 검증
-    participant Defender as DefenderService
-    participant DefenderSDK as Defender SDK
-    participant Defender_API as OZ Defender API
-    participant Contract as 스마트 컨트랙트
+    participant Forwarder as ForwarderService
+    participant ForwarderContract as ERC2771Forwarder
+    participant Gateway as PaymentGateway
 
     User->>Client: Gasless 거래 시작
-    Note over Client: 지갑 연결, 메시지 서명
+    Note over Client: 지갑 연결
 
-    Client->>Client: 메시지 해싱 (EIP-191)
-    Client->>User: 서명 요청
+    Client->>API: GET /payments/:id/gasless/prepare
+    Note over API: userAddress 전송
+    API->>Forwarder: getNonce(userAddress)
+    Forwarder-->>API: nonce 반환
+    API->>API: EIP-712 TypedData 생성
+    Note over API: domain, types, ForwardRequest
+
+    API-->>Client: typedData 반환
+    Note over Client: EIP-712 서명 요청 데이터
+
+    Client->>User: EIP-712 서명 요청
+    Note over User: 구조화된 데이터 확인
     User->>Client: ✓ 서명 완료
-    Note over Client: signature = signMessage()
+    Note over Client: signature = signTypedData()
 
     Client->>API: POST /payments/:id/gasless
-    Note over API: forwarderAddress, signature 전송
+    Note over API: forwardRequest, signature 전송
 
     API->>Validation: GaslessRequestSchema.parse()
     Validation-->>API: ✓ 검증 성공
 
-    API->>Defender: validateTransactionData(signature)
-    Note over Defender: 서명 형식 검증 (0x...)
-    Defender-->>API: ✓ 유효함
+    API->>Forwarder: verifySignature(request, signature)
+    Note over Forwarder: EIP-712 서명 검증
+    Forwarder-->>API: ✓ 서명 유효
 
-    API->>Defender: submitGaslessTransaction()
-    Note over Defender: 릴레이 요청 생성
+    API->>Forwarder: executeForwardRequest(request, signature)
+    Note over Forwarder: Meta-TX 제출
 
-    Defender->>DefenderSDK: Defender SDK 초기화
-    Note over DefenderSDK: API 키/시크릿으로 인증
+    Forwarder->>ForwarderContract: execute(request, signature)
+    Note over ForwarderContract: 서명 검증<br/>nonce 확인<br/>deadline 확인
 
-    DefenderSDK->>Defender_API: /v1/relayer/relay-requests
-    Note over Defender_API: 거래 제출
+    ForwarderContract->>Gateway: pay(paymentId, token, amount, merchant)
+    Note over Gateway: _msgSender() = User<br/>(원래 서명자 주소)
 
-    Defender_API-->>DefenderSDK: relayRequestId 반환
-    DefenderSDK-->>Defender: 요청 ID 저장
+    Gateway-->>ForwarderContract: 결제 완료
+    ForwarderContract-->>Forwarder: 거래 영수증
 
-    Defender-->>API: { relayRequestId, status }
+    Forwarder-->>API: { transactionHash, status }
 
-    API-->>Client: 202 Accepted
-    Note over Client: relayRequestId로 폴링
-
-    Defender_API->>Defender_API: 거래 대기열 처리
-    Note over Defender_API: nonce 관리<br/>가스비 최적화<br/>배치 처리
-
-    Defender_API->>Contract: submitTransaction()
-    Note over Contract: 가스비 없이 실행
-
-    Contract-->>Defender_API: 거래 완료
-    Note over Contract: 블록 확정
-
-    Defender_API-->>Defender: 상태 업데이트
-    Note over Defender: status = "mined"
+    API-->>Client: 200 OK
+    Note over Client: transactionHash로 확인
 
     Client->>API: GET /payments/:id/status
     Note over Client: 상태 조회 폴링
     API-->>Client: status = "completed"
 ```
 
-### 4. 릴레이 거래 플로우 (Relay Transaction)
+**EIP-712 Domain 설정**:
+
+```typescript
+const domain = {
+  name: "MSQPayForwarder",
+  version: "1",
+  chainId: 31337, // 또는 80002 (Polygon Amoy)
+  verifyingContract: "0x5FbDB2315678afecb367f032d93F642f64180aa3" // Forwarder 주소
+};
+```
+
+**ForwardRequest 구조**:
+
+```typescript
+const types = {
+  ForwardRequest: [
+    { name: "from", type: "address" },      // 원래 서명자 (사용자)
+    { name: "to", type: "address" },        // 대상 컨트랙트 (Gateway)
+    { name: "value", type: "uint256" },     // ETH 값 (0)
+    { name: "gas", type: "uint256" },       // 가스 한도
+    { name: "nonce", type: "uint256" },     // 재생 공격 방지
+    { name: "deadline", type: "uint48" },   // 만료 시간
+    { name: "data", type: "bytes" }         // 인코딩된 함수 호출
+  ]
+};
+```
+
+### 4. 릴레이 거래 플로우 (Forwarder Relay)
 
 ```mermaid
 sequenceDiagram
     participant Client as 클라이언트
     participant API as Fastify API
     participant Validation as Zod 검증
-    participant Defender as DefenderService
-    participant Contract as 스마트 컨트랙트
+    participant Forwarder as ForwarderService
+    participant ForwarderContract as ERC2771Forwarder
+    participant Gateway as PaymentGateway
 
     Client->>API: POST /payments/:id/relay
-    Note over API: transactionData, gasEstimate 전송
+    Note over API: forwardRequest, signature 전송
 
     API->>Validation: RelayExecutionSchema.parse()
     Validation-->>API: ✓ 검증 성공
 
-    API->>Defender: validateTransactionData(txData)
-    Note over Defender: 거래 데이터 형식 검증 (0x...)
-    Defender-->>API: ✓ 유효함
+    API->>Forwarder: validateForwardRequest(request)
+    Note over Forwarder: ForwardRequest 구조 검증
+    Forwarder-->>API: ✓ 유효함
 
-    API->>API: 가스 추정치 검증
-    Note over API: gasEstimate > 0 확인
+    API->>Forwarder: verifySignature(request, signature)
+    Note over Forwarder: EIP-712 서명 검증
+    Forwarder-->>API: ✓ 서명 유효
 
-    API->>Defender: submitGaslessTransaction()
-    Note over Defender: 릴레이 요청 생성
-    Defender-->>API: { relayRequestId, transactionHash }
+    API->>Forwarder: executeForwardRequest(request, signature)
+    Note over Forwarder: Forwarder 컨트랙트 호출
+
+    Forwarder->>ForwarderContract: execute(request, signature)
+    Note over ForwarderContract: nonce 확인<br/>deadline 확인<br/>서명 검증
+
+    ForwarderContract->>Gateway: 인코딩된 함수 호출
+    Note over Gateway: _msgSender() = request.from
+
+    Gateway-->>ForwarderContract: 실행 완료
+    ForwarderContract-->>Forwarder: 거래 영수증
+
+    Forwarder-->>API: { transactionHash, status }
 
     API-->>Client: 200 OK
     Note over Client: 거래 완료
-
-    Defender->>Contract: 거래 실행
-    Note over Contract: meta-transaction
-    Contract-->>Defender: 완료
 ```
 
 ---
@@ -348,22 +382,54 @@ graph LR
 | **언어** | TypeScript | v5.3+ | 타입 안전성 |
 | **블록체인** | viem | v2.21+ | EVM 상호작용 (type-safe) |
 | **검증** | Zod | v3.22+ | 요청/응답 스키마 검증 |
-| **Gasless (프로덕션)** | OZ Defender | Latest | 릴레이 서비스 |
-| **Gasless (로컬)** | MockDefender | 0.1.0 | OZ Defender 호환 Mock (SPEC-RELAY-001) |
+| **Meta-Transaction** | ERC2771Forwarder | OZ v5.0+ | Forwarder 기반 Gasless 거래 |
+| **서명 표준** | EIP-712 | - | 구조화된 데이터 서명 |
 | **테스트** | Vitest | v1.0+ | 고속 단위 테스트 |
 | **네트워크** | Polygon | - | EVM 호환 블록체인 |
 
-### 로컬 개발 환경 (MockDefender)
+### 환경별 하이브리드 Relay 아키텍처
 
-Docker Compose 로컬 환경에서는 MockDefender를 사용하여 OZ Defender SDK와 동일한 인터페이스로 Hardhat 노드에 실제 트랜잭션을 제출합니다.
+ERC2771Forwarder 컨트랙트를 사용하여 사용자 대신 가스비를 대납합니다. 사용자는 EIP-712 형식으로 서명만 하고, 환경에 따라 선택된 Relay 서비스가 Forwarder 컨트랙트를 통해 트랜잭션을 제출합니다.
 
-**환경별 Import 전환**:
-```typescript
-// 로컬 개발 (Docker Compose)
-import { MockDefender as Defender } from 'mock-defender';
+**환경별 구성**:
 
-// 프로덕션/스테이징
-import { Defender } from '@openzeppelin/defender-sdk';
+| 환경 | Relay 제출자 | Forwarder | 특징 |
+|------|-------------|-----------|------|
+| **Local (Docker Compose)** | MockDefender | ERC2771Forwarder | OZ SDK 호환, 자체 호스팅 |
+| **Testnet/Mainnet** | OZ Defender SDK | ERC2771Forwarder | 외부 서비스, 프로덕션 안정성 |
+
+**환경 선택 로직**:
+- `USE_MOCK_DEFENDER=true` → MockDefender (Local 개발용)
+- `USE_MOCK_DEFENDER=false` 또는 미설정 → OZ Defender SDK (프로덕션용)
+
+**핵심 특징**:
+
+- `_msgSender()` = 원래 서명자 (사용자 주소)
+- EIP-712 구조화된 서명으로 사용자 의도 암호학적 증명
+- 환경별 Relay 서비스 선택으로 개발/프로덕션 분리
+- nonce + deadline으로 재생 공격 방지
+- 모든 환경에서 동일한 Forwarder 컨트랙트 사용
+
+**컨트랙트 주소**:
+
+```
+# Local (Hardhat)
+Forwarder: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+Gateway:   0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+
+# Testnet/Mainnet (배포 후 업데이트)
+Forwarder: <배포된 주소>
+Gateway:   <배포된 주소>
+```
+
+**데이터 흐름 (Local - MockDefender)**:
+```
+User (EIP-712 서명) → API Server → MockDefender → Forwarder.execute() → PaymentGateway
+```
+
+**데이터 흐름 (Testnet/Mainnet - OZ Defender)**:
+```
+User (EIP-712 서명) → API Server → OZ Defender SDK → Forwarder.execute() → PaymentGateway
 ```
 
 **상세 사양**: `.moai/specs/SPEC-RELAY-001/` 참조
@@ -455,12 +521,46 @@ const tokenAddress: Address = validatedData.tokenAddress as Address;
 // 컴파일 시 + 런타임 타입 안전성
 ```
 
-### 3. 서명 검증
+### 3. EIP-712 서명 검증
 
 ```typescript
-// Gasless 거래 서명 형식 검증
-validateTransactionData(signature: string): boolean {
-  return /^0x[a-fA-F0-9]{130}$/.test(signature);  // EIP-191 형식
+// Forwarder 기반 EIP-712 서명 검증
+async verifyForwardRequestSignature(
+  request: ForwardRequest,
+  signature: string
+): Promise<boolean> {
+  // EIP-712 domain
+  const domain = {
+    name: "MSQPayForwarder",
+    version: "1",
+    chainId: this.chainId,
+    verifyingContract: this.forwarderAddress
+  };
+
+  // ForwardRequest types
+  const types = {
+    ForwardRequest: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "gas", type: "uint256" },
+      { name: "nonce", type: "uint256" },
+      { name: "deadline", type: "uint48" },
+      { name: "data", type: "bytes" }
+    ]
+  };
+
+  // 서명자 주소 복구 및 검증
+  const recoveredAddress = await verifyTypedData({
+    address: request.from,
+    domain,
+    types,
+    primaryType: "ForwardRequest",
+    message: request,
+    signature
+  });
+
+  return recoveredAddress === request.from;
 }
 ```
 
@@ -496,10 +596,10 @@ const result = await publicClient.readContract({
 // 자동 ABI 타입 체크, 에러 처리
 ```
 
-### 3. Defender 릴레이 최적화
+### 3. Forwarder 최적화
 
-- **배치 처리**: 다중 거래 한 번에 처리
-- **Nonce 관리**: 자동 논스 관리
+- **Nonce 관리**: Forwarder 컨트랙트의 자동 nonce 관리
+- **Deadline 검증**: 만료된 요청 자동 거부
 - **가스비 최적화**: Polygon 네트워크 활용
 
 ---
@@ -520,7 +620,7 @@ logger.warn('High gas price detected', { gasPrice, threshold });
 - 결제 생성 수
 - API 응답 시간
 - RPC 오류율
-- Defender 릴레이 성공률
+- Forwarder 거래 성공률
 
 ---
 
@@ -543,12 +643,12 @@ flowchart TD
     K -->|publicClient.getTransactionReceipt| L["거래 이력 조회"]
     L -->|History Array| M["200 OK"]
 
-    N["POST /payments/:id/gasless"] -->|GaslessRequestSchema| O["DefenderService.submitGaslessTransaction"]
-    O -->|Defender API| P["릴레이 요청"]
-    P -->|relayRequestId| Q["202 Accepted"]
+    N["POST /payments/:id/gasless"] -->|GaslessRequestSchema| O["ForwarderService.executeForwardRequest"]
+    O -->|ERC2771Forwarder| P["Meta-TX 실행"]
+    P -->|transactionHash| Q["200 OK"]
 
-    R["POST /payments/:id/relay"] -->|RelayExecutionSchema| S["DefenderService.executeRelayTransaction"]
-    S -->|Defender API| T["릴레이 실행"]
+    R["POST /payments/:id/relay"] -->|RelayExecutionSchema| S["ForwarderService.executeForwardRequest"]
+    S -->|ERC2771Forwarder| T["Forwarder 실행"]
     T -->|transactionHash| U["200 OK"]
 
     style E fill:#4CAF50,color:#fff

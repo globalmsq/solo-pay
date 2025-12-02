@@ -1,6 +1,6 @@
 # 결제 API 구현 가이드
 
-개발자를 위한 MSQPay 결제 API 구현 및 테스트 가이드입니다. BlockchainService, DefenderService 사용 방법, 테스트 작성 패턴을 포함합니다.
+개발자를 위한 MSQPay 결제 API 구현 및 테스트 가이드입니다. BlockchainService, ForwarderService 사용 방법, 테스트 작성 패턴을 포함합니다.
 
 ## 프로젝트 구조
 
@@ -15,7 +15,7 @@ packages/server/
 │   │       └── relay.ts           # POST /payments/:id/relay
 │   ├── services/
 │   │   ├── blockchain.service.ts  # viem 클라이언트 래퍼
-│   │   └── defender.service.ts    # Defender SDK 래퍼
+│   │   └── forwarder.service.ts   # ERC2771 Forwarder 서비스
 │   └── schemas/
 │       └── payment.schema.ts       # Zod 검증 스키마
 ├── tests/
@@ -27,7 +27,7 @@ packages/server/
 │   │       └── relay.test.ts
 │   └── services/
 │       ├── blockchain.service.test.ts
-│       └── defender.service.test.ts
+│       └── forwarder.service.test.ts
 ├── vitest.config.ts              # 테스트 설정
 └── package.json                   # 의존성
 ```
@@ -124,57 +124,111 @@ console.log('가스 추정치:', gasEstimate.toString()); // "200000"
 
 ---
 
-## 2. DefenderService 사용 가이드
+## 2. ForwarderService 사용 가이드
 
-### 초기화
+### 환경별 Relay 서비스 초기화
+
+MSQPay는 환경에 따라 다른 Relay 서비스를 사용합니다:
+
+| 환경 | Relay 서비스 | 환경 변수 |
+|------|-------------|----------|
+| **Local** | MockDefender | `USE_MOCK_DEFENDER=true` |
+| **Testnet/Mainnet** | OZ Defender SDK | `USE_MOCK_DEFENDER=false` |
 
 ```typescript
-import { DefenderService } from '../services/defender.service';
+import { RelayFactory } from '../services/relay.factory';
 
-// DefenderService 인스턴스 생성
-const defenderService = new DefenderService(
-  process.env.DEFENDER_API_KEY!,      // Defender API 키
-  process.env.DEFENDER_API_SECRET!,   // Defender API 시크릿
-  process.env.DEFENDER_RELAYER_ADDRESS!  // 릴레이어 주소
+// 환경에 따라 적절한 Relay 서비스 생성
+const relayService = RelayFactory.createRelayService();
+
+// Local 환경 (USE_MOCK_DEFENDER=true)
+// → MockDefender 인스턴스 반환
+
+// Testnet/Mainnet 환경 (USE_MOCK_DEFENDER=false)
+// → OZ Defender SDK 인스턴스 반환
+```
+
+### ForwarderService 직접 사용 (선택사항)
+
+ForwarderService를 직접 사용할 수도 있습니다:
+
+```typescript
+import { ForwarderService } from '../services/forwarder.service';
+
+// ForwarderService 인스턴스 생성
+const forwarderService = new ForwarderService(
+  process.env.BLOCKCHAIN_RPC_URL!,        // RPC URL
+  process.env.FORWARDER_ADDRESS!,         // ERC2771Forwarder 컨트랙트 주소
+  process.env.RELAYER_PRIVATE_KEY!        // 릴레이어 개인키
 );
 ```
 
-### Gasless 거래 제출
+### ForwardRequest 생성
 
 ```typescript
-import { Address } from 'viem';
+import { Address, encodeFunctionData } from 'viem';
 
-const result = await defenderService.submitGaslessTransaction(
-  'payment_123',  // 결제 ID
-  '0x1234567890123456789012345678901234567890' as Address,  // Forwarder 주소
-  '0x...'  // EIP-191 형식의 서명
-);
+// pay() 함수 호출 데이터 인코딩
+const callData = encodeFunctionData({
+  abi: PaymentGatewayABI,
+  functionName: 'pay',
+  args: [paymentId, tokenAddress, amount, merchantAddress]
+});
 
-console.log(result);
+// ForwardRequest 생성
+const forwardRequest = await forwarderService.createForwardRequest({
+  from: userAddress,           // 사용자 주소
+  to: gatewayAddress,          // PaymentGateway 주소
+  value: 0n,                   // ETH 값 (0)
+  gas: 200000n,                // 가스 한도
+  data: callData               // 인코딩된 함수 호출
+});
+
+console.log(forwardRequest);
 // {
-//   relayRequestId: 'relay_request_123',
-//   transactionHash: '0xbbbb...',
-//   status: 'pending'  // 또는 'mined', 'failed'
+//   from: '0x...',
+//   to: '0x...',
+//   value: 0n,
+//   gas: 200000n,
+//   nonce: 0n,
+//   deadline: 1735689600n,
+//   data: '0x...'
 // }
 ```
 
-### 거래 데이터 검증
+### EIP-712 서명 검증
 
 ```typescript
-// 서명 형식 검증 (EIP-191)
-const isValid = defenderService.validateTransactionData(
-  '0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'
+// EIP-712 서명 검증
+const isValid = await forwarderService.verifySignature(
+  forwardRequest,
+  signature  // 사용자의 EIP-712 서명
 );
 
 console.log('검증 결과:', isValid); // true | false
 ```
 
-### 릴레이어 주소 조회
+### Meta-Transaction 실행
 
 ```typescript
-const relayerAddress = defenderService.getRelayerAddress();
-console.log('릴레이어 주소:', relayerAddress);
-// 0x1234567890123456789012345678901234567890
+const result = await forwarderService.executeForwardRequest(
+  forwardRequest,
+  signature
+);
+
+console.log(result);
+// {
+//   transactionHash: '0xbbbb...',
+//   status: 'submitted'
+// }
+```
+
+### Nonce 조회
+
+```typescript
+const nonce = await forwarderService.getNonce(userAddress);
+console.log('현재 nonce:', nonce);
+// 0n (또는 이전 거래 수)
 ```
 
 ---
@@ -357,21 +411,49 @@ describe('POST /payments/create', () => {
 
 ## 5. 로컬 개발 환경 구성
 
-### 필수 환경 변수 (.env)
+### 환경별 환경 변수 (.env)
+
+#### Local 환경 (Docker Compose)
 
 ```bash
-# Blockchain Configuration
-POLYGON_RPC_URL=https://polygon-rpc.com
-CONTRACT_ADDRESS=0x1234567890123456789012345678901234567890
+# Relay Configuration (MockDefender)
+USE_MOCK_DEFENDER=true
 
-# OpenZeppelin Defender
-DEFENDER_API_KEY=your_defender_api_key
-DEFENDER_API_SECRET=your_defender_api_secret
-DEFENDER_RELAYER_ADDRESS=0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
+# Blockchain Configuration
+BLOCKCHAIN_RPC_URL=http://hardhat:8545
+GATEWAY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+CHAIN_ID=31337
+
+# ERC2771 Forwarder Configuration
+FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 # Server Configuration
 PORT=3000
 NODE_ENV=development
+```
+
+#### Testnet/Mainnet 환경 (OZ Defender SDK)
+
+```bash
+# Relay Configuration (OZ Defender SDK)
+USE_MOCK_DEFENDER=false
+DEFENDER_API_KEY=your_defender_api_key
+DEFENDER_API_SECRET=your_defender_api_secret
+DEFENDER_RELAYER_ADDRESS=0x...
+
+# Blockchain Configuration
+BLOCKCHAIN_RPC_URL=https://polygon-rpc.com
+GATEWAY_ADDRESS=0x...
+CHAIN_ID=80002  # Amoy Testnet (또는 137 Mainnet)
+
+# ERC2771 Forwarder Configuration
+FORWARDER_ADDRESS=0x...
+
+# Server Configuration
+PORT=3000
+NODE_ENV=production
 ```
 
 ### 로컬 실행

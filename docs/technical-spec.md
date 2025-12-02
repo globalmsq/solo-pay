@@ -135,10 +135,10 @@ function generatePaymentId(orderId: string): bytes32 {
 
 ```typescript
 const domain = {
-    name: "ERC2771Forwarder",
+    name: "MSQPayForwarder",
     version: "1",
-    chainId: 80002,  // Polygon Amoy
-    verifyingContract: FORWARDER_ADDRESS
+    chainId: 80002,  // Polygon Amoy (또는 31337 로컬 Hardhat)
+    verifyingContract: FORWARDER_ADDRESS  // 0x5FbDB2315678afecb367f032d93F642f64180aa3 (로컬)
 };
 ```
 
@@ -158,27 +158,72 @@ const types = {
 };
 ```
 
-### 2.4 OpenZeppelin Defender Integration
+### 2.4 환경별 하이브리드 Relay Integration (ERC2771)
+
+환경에 따라 다른 Relay 서비스를 사용하는 하이브리드 아키텍처를 채택합니다. 모든 환경에서 ERC2771Forwarder 컨트랙트를 사용하지만, 트랜잭션 제출자는 환경에 따라 달라집니다.
+
+**환경별 구성**:
+
+| 환경 | Relay 제출자 | 환경 변수 |
+|------|-------------|----------|
+| Local (Docker Compose) | MockDefender | `USE_MOCK_DEFENDER=true` |
+| Testnet/Mainnet | OZ Defender SDK | `USE_MOCK_DEFENDER=false` |
+
+**MockDefender**: OZ Defender SDK와 100% 동일한 인터페이스를 제공하는 자체 호스팅 패키지로, Local 개발 환경에서 사용됩니다.
+
+**OZ Defender SDK**: Testnet 및 Mainnet 환경에서 프로덕션 안정성을 위해 OpenZeppelin Defender 서비스를 사용합니다.
 
 ```typescript
-// Defender Relay Webhook URL
-const DEFENDER_RELAY_URL = "https://api.defender.openzeppelin.com/actions/xxx/webhook/yyy";
+// ForwarderService - Meta-TX 제출
+async function executeForwardRequest(
+    request: ForwardRequest,
+    signature: string
+): Promise<{ transactionHash: string }> {
+    // EIP-712 서명 검증
+    const isValid = await verifyTypedDataSignature(request, signature);
+    if (!isValid) {
+        throw new Error('Invalid signature');
+    }
 
-// Submit meta-tx
-async function submitToDefender(signedRequest: SignedForwardRequest) {
-    const response = await fetch(DEFENDER_RELAY_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Api-Key': DEFENDER_API_KEY
-        },
-        body: JSON.stringify({
-            request: signedRequest.request,
-            signature: signedRequest.signature
-        })
+    // Forwarder 컨트랙트 호출
+    const txHash = await forwarderContract.write.execute([request, signature], {
+        account: relayerAccount,
+        gas: request.gas + 50000n // 여유 가스
     });
 
-    return response.json(); // { txHash: "0x..." }
+    return { transactionHash: txHash };
+}
+
+// EIP-712 서명 검증
+async function verifyTypedDataSignature(
+    request: ForwardRequest,
+    signature: string
+): Promise<boolean> {
+    const recoveredAddress = await verifyTypedData({
+        address: request.from,
+        domain: {
+            name: "MSQPayForwarder",
+            version: "1",
+            chainId: chainId,
+            verifyingContract: forwarderAddress
+        },
+        types: {
+            ForwardRequest: [
+                { name: "from", type: "address" },
+                { name: "to", type: "address" },
+                { name: "value", type: "uint256" },
+                { name: "gas", type: "uint256" },
+                { name: "nonce", type: "uint256" },
+                { name: "deadline", type: "uint48" },
+                { name: "data", type: "bytes" }
+            ]
+        },
+        primaryType: "ForwardRequest",
+        message: request,
+        signature
+    });
+
+    return recoveredAddress === request.from;
 }
 ```
 
