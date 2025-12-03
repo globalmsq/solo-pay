@@ -1,0 +1,65 @@
+{
+  "chains": [
+    {
+      "chainId": 80002,
+      "name": "Polygon Amoy",
+      "rpcUrl": "https://rpc-amoy.polygon.technology",
+      "subgraphUrl": "https://api.studio.thegraph.com/query/.../msqpay-amoy/...",
+      "nativeCurrency": {
+        "name": "POL",
+        "symbol": "POL",
+        "decimals": 18
+      },
+      "contracts": {
+        "gateway": "0x0000000000000000000000000000000000000000",
+        "forwarder": "0x0000000000000000000000000000000000000000"
+      },
+      "tokens": {
+        "SUT": {
+          "address": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
+          "decimals": 18
+        }
+      }
+    },
+    {
+      "chainId": 97,
+      "name": "BSC Testnet",
+      "rpcUrl": "https://data-seed-prebsc-1-s1.binance.org:8545",
+      "nativeCurrency": {
+        "name": "tBNB",
+        "symbol": "tBNB",
+        "decimals": 18
+      },
+      "contracts": {
+        "gateway": "0x0000000000000000000000000000000000000000",
+        "forwarder": "0x0000000000000000000000000000000000000000"
+      },
+      "tokens": {
+        "USDT": {
+          "address": "0x0000000000000000000000000000000000000000",
+          "decimals": 18
+        }
+      }
+    },
+    {
+      "chainId": 11155111,
+      "name": "Sepolia",
+      "rpcUrl": "https://rpc.sepolia.org",
+      "nativeCurrency": {
+        "name": "Sepolia Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "contracts": {
+        "gateway": "0x0000000000000000000000000000000000000000",
+        "forwarder": "0x0000000000000000000000000000000000000000"
+      },
+      "tokens": {
+        "USDC": {
+          "address": "0x0000000000000000000000000000000000000000",
+          "decimals": 6
+        }
+      }
+    }
+  ]
+}

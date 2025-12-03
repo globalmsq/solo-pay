@@ -11,5 +11,6 @@ export type {
   GaslessResponse,
   RelayParams,
   RelayResponse,
+  RelayStatusResponse,
   ErrorResponse
 } from './types';

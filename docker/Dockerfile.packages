@@ -71,6 +71,11 @@ COPY --from=deps /app/packages/pay-server/node_modules ./packages/pay-server/nod
 COPY --from=server-builder /app/packages/pay-server/dist ./packages/pay-server/dist
 COPY --from=server-builder /app/packages/pay-server/package.json ./packages/pay-server/
 
+# Copy chain configuration files
+COPY --from=server-builder /app/packages/pay-server/chains.json ./packages/pay-server/
+COPY --from=server-builder /app/packages/pay-server/chains.testnet.json ./packages/pay-server/
+COPY --from=server-builder /app/packages/pay-server/chains.production.json ./packages/pay-server/
+
 WORKDIR /app/packages/pay-server
 
 # Expose server port

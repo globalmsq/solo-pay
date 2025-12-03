@@ -6,8 +6,7 @@ import { useAccount, useChainId } from "wagmi";
 import { ProductCard } from "@/components/ProductCard";
 import { PaymentHistory, PaymentHistoryRef } from "@/components/PaymentHistory";
 import { Toast } from "@/components/Toast";
-import { DEFAULT_TOKEN_SYMBOL, TOKENS } from "@/lib/wagmi";
-import { PAYMENT_HISTORY_REFRESH_DELAY } from "@/lib/constants";
+import { PAYMENT_HISTORY_REFRESH_DELAY, DEFAULT_TOKEN_SYMBOL, TOKENS } from "@/lib/constants";
 import { PRODUCTS } from "@/lib/products";
 
 export default function Home() {

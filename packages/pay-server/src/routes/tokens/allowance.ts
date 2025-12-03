@@ -7,11 +7,35 @@ export async function getTokenAllowanceRoute(
 ) {
   app.get<{
     Params: { tokenAddress: string };
-    Querystring: { owner: string; spender: string };
+    Querystring: { chainId: string; owner: string; spender: string };
   }>('/tokens/:tokenAddress/allowance', async (request, reply) => {
     try {
       const { tokenAddress } = request.params;
-      const { owner, spender } = request.query;
+      const { chainId, owner, spender } = request.query;
+
+      // chainId 필수 검증
+      if (!chainId) {
+        return reply.code(400).send({
+          code: 'INVALID_REQUEST',
+          message: 'chainId는 필수입니다',
+        });
+      }
+
+      const chainIdNum = Number(chainId);
+      if (isNaN(chainIdNum)) {
+        return reply.code(400).send({
+          code: 'INVALID_REQUEST',
+          message: '유효한 chainId가 아닙니다',
+        });
+      }
+
+      // 체인 지원 여부 확인
+      if (!blockchainService.isChainSupported(chainIdNum)) {
+        return reply.code(400).send({
+          code: 'UNSUPPORTED_CHAIN',
+          message: 'Unsupported chain',
+        });
+      }
 
       // 토큰 주소 검증
       if (!tokenAddress || !tokenAddress.startsWith('0x') || tokenAddress.length !== 42) {
@@ -37,7 +61,7 @@ export async function getTokenAllowanceRoute(
         });
       }
 
-      const allowance = await blockchainService.getTokenAllowance(tokenAddress, owner, spender);
+      const allowance = await blockchainService.getTokenAllowance(chainIdNum, tokenAddress, owner, spender);
 
       return reply.code(200).send({
         success: true,

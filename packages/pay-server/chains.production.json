@@ -1,0 +1,50 @@
+{
+  "chains": [
+    {
+      "chainId": 137,
+      "name": "Polygon",
+      "rpcUrl": "https://polygon-rpc.com",
+      "subgraphUrl": "https://api.thegraph.com/subgraphs/name/msqpay/polygon",
+      "nativeCurrency": {
+        "name": "POL",
+        "symbol": "POL",
+        "decimals": 18
+      },
+      "contracts": {
+        "gateway": "0x0000000000000000000000000000000000000000",
+        "forwarder": "0x0000000000000000000000000000000000000000"
+      },
+      "tokens": {
+        "USDC": {
+          "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+          "decimals": 6
+        },
+        "USDT": {
+          "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+          "decimals": 6
+        }
+      }
+    },
+    {
+      "chainId": 56,
+      "name": "BSC",
+      "rpcUrl": "https://bsc-dataseed.binance.org",
+      "subgraphUrl": "https://api.thegraph.com/subgraphs/name/msqpay/bsc",
+      "nativeCurrency": {
+        "name": "BNB",
+        "symbol": "BNB",
+        "decimals": 18
+      },
+      "contracts": {
+        "gateway": "0x0000000000000000000000000000000000000000",
+        "forwarder": "0x0000000000000000000000000000000000000000"
+      },
+      "tokens": {
+        "USDT": {
+          "address": "0x55d398326f99059fF775485246999027B3197955",
+          "decimals": 18
+        }
+      }
+    }
+  ]
+}

@@ -5,11 +5,35 @@ export async function getPaymentHistoryRoute(
   app: FastifyInstance,
   blockchainService: BlockchainService
 ) {
-  app.get<{ Querystring: { payer: string; limit?: string } }>(
+  app.get<{ Querystring: { chainId: string; payer: string; limit?: string } }>(
     '/payments/history',
     async (request, reply) => {
       try {
-        const { payer, limit } = request.query;
+        const { chainId, payer, limit } = request.query;
+
+        // chainId 필수 검증
+        if (!chainId) {
+          return reply.code(400).send({
+            code: 'INVALID_REQUEST',
+            message: 'chainId는 필수입니다',
+          });
+        }
+
+        const chainIdNum = Number(chainId);
+        if (isNaN(chainIdNum)) {
+          return reply.code(400).send({
+            code: 'INVALID_REQUEST',
+            message: '유효한 chainId가 아닙니다',
+          });
+        }
+
+        // 체인 지원 여부 확인
+        if (!blockchainService.isChainSupported(chainIdNum)) {
+          return reply.code(400).send({
+            code: 'UNSUPPORTED_CHAIN',
+            message: 'Unsupported chain',
+          });
+        }
 
         if (!payer || typeof payer !== 'string') {
           return reply.code(400).send({
@@ -27,7 +51,7 @@ export async function getPaymentHistoryRoute(
         }
 
         const blockRange = limit ? parseInt(limit, 10) : 1000;
-        const payments = await blockchainService.getPaymentHistory(payer, blockRange);
+        const payments = await blockchainService.getPaymentHistory(chainIdNum, payer, blockRange);
 
         return reply.code(200).send({
           success: true,

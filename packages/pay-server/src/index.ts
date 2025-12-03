@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import path from 'path';
 
+import { loadChainsConfig } from './config/chains.config';
 import { BlockchainService } from './services/blockchain.service';
 import { DefenderService } from './services/defender.service';
 import { createPaymentRoute } from './routes/payments/create';
@@ -17,16 +19,23 @@ const server = Fastify({
   logger: true,
 });
 
-// Initialize services
-// Environment variables: BLOCKCHAIN_RPC_URL, GATEWAY_ADDRESS (see .env.example)
-const rpcUrl = process.env.BLOCKCHAIN_RPC_URL || 'https://polygon-rpc.com';
-const gatewayAddress = process.env.GATEWAY_ADDRESS;
+// Load chain configuration from JSON file
+// Environment variables: CHAINS_CONFIG_PATH (default: ./chains.json)
+const configPath = process.env.CHAINS_CONFIG_PATH || path.join(process.cwd(), 'chains.json');
+console.log(`📋 Loading chain config from: ${configPath}`);
 
-if (!gatewayAddress) {
-  console.error('❌ GATEWAY_ADDRESS environment variable is required');
+let chainsConfig;
+try {
+  chainsConfig = loadChainsConfig(configPath);
+  console.log(`🔗 Supported chains: ${chainsConfig.chains.map(c => `${c.name}(${c.chainId})`).join(', ')}`);
+} catch (error) {
+  console.error(`❌ Failed to load chain configuration from ${configPath}`);
+  console.error(error);
   process.exit(1);
 }
-const blockchainService = new BlockchainService(rpcUrl, gatewayAddress);
+
+// Initialize BlockchainService with multi-chain config
+const blockchainService = new BlockchainService(chainsConfig);
 
 // Initialize Defender service for gasless transactions
 // Production: https://api.defender.openzeppelin.com
@@ -53,6 +62,7 @@ server.get('/', async (_request, _reply) => {
     service: 'MSQ Pay Server',
     version: '0.1.0',
     status: 'running',
+    supportedChains: blockchainService.getSupportedChainIds(),
   };
 });
 

@@ -1,13 +1,15 @@
 import { FastifyInstance } from 'fastify';
-import { parseUnits } from 'viem';
+import { parseUnits, keccak256, toHex } from 'viem';
 import { CreatePaymentSchema } from '../../schemas/payment.schema';
 import { BlockchainService } from '../../services/blockchain.service';
-import { SUPPORTED_CHAINS } from '../../config/chains';
 
 export interface CreatePaymentRequest {
+  merchantId: string;
+  orderId: string;
   amount: number;
   currency: string;
   chainId: number;
+  tokenAddress: string;
   recipientAddress: string;
 }
 
@@ -20,42 +22,57 @@ export async function createPaymentRoute(
       // 입력 검증
       const validatedData = CreatePaymentSchema.parse(request.body);
 
-      // 체인 검증 - 지원하는 체인인지 확인
-      const chain = SUPPORTED_CHAINS.find(c => c.id === validatedData.chainId);
-      if (!chain) {
+      // 1. 체인 지원 여부 확인
+      if (!blockchainService.isChainSupported(validatedData.chainId)) {
         return reply.code(400).send({
           code: 'UNSUPPORTED_CHAIN',
-          message: `Chain ID ${validatedData.chainId} is not supported`,
+          message: 'Unsupported chain',
         });
       }
 
-      // 토큰 주소 조회
-      const tokenAddress = blockchainService.getTokenAddress(validatedData.chainId, validatedData.currency);
+      // 2. 토큰 검증: 심볼 존재 + 주소 일치 확인
+      const tokenAddress = validatedData.tokenAddress;
       if (!tokenAddress) {
         return reply.code(400).send({
-          code: 'UNSUPPORTED_TOKEN',
-          message: `Token ${validatedData.currency} is not supported on chain ${validatedData.chainId}`,
+          code: 'INVALID_REQUEST',
+          message: 'tokenAddress is required',
         });
       }
 
-      // decimals 조회 (fallback: 18)
-      const decimals = await blockchainService.getDecimals(
-        validatedData.chainId,
-        tokenAddress
+      if (!blockchainService.validateToken(validatedData.chainId, validatedData.currency, tokenAddress)) {
+        return reply.code(400).send({
+          code: 'UNSUPPORTED_TOKEN',
+          message: 'Unsupported token',
+        });
+      }
+
+      // 3. 토큰 설정 가져오기 (decimals 등)
+      const tokenConfig = blockchainService.getTokenConfig(validatedData.chainId, validatedData.currency);
+      if (!tokenConfig) {
+        return reply.code(400).send({
+          code: 'UNSUPPORTED_TOKEN',
+          message: 'Unsupported token',
+        });
+      }
+
+      // amount를 wei로 변환 (설정된 decimals 사용)
+      const amountInWei = parseUnits(validatedData.amount.toString(), tokenConfig.decimals);
+
+      // 체인 컨트랙트 정보 조회
+      const contracts = blockchainService.getChainContracts(validatedData.chainId);
+
+      // 결제 생성: merchantId + orderId + timestamp 기반 bytes32 해시 생성
+      const paymentId = keccak256(
+        toHex(`${validatedData.merchantId}:${validatedData.orderId}:${Date.now()}`)
       );
-
-      // amount를 wei로 변환
-      const amountInWei = parseUnits(validatedData.amount.toString(), decimals);
-
-      // 결제 생성
-      const paymentId = `pay_${Date.now()}`;
 
       return reply.code(201).send({
         success: true,
         paymentId,
-        tokenAddress,
-        gatewayAddress: chain.contracts.gateway,
-        forwarderAddress: chain.contracts.forwarder,
+        chainId: validatedData.chainId,
+        tokenAddress: tokenConfig.address,
+        gatewayAddress: contracts?.gateway,
+        forwarderAddress: contracts?.forwarder,
         amount: amountInWei.toString(),
         status: 'pending',
       });

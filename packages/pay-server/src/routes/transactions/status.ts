@@ -7,9 +7,35 @@ export async function getTransactionStatusRoute(
 ) {
   app.get<{
     Params: { txHash: string };
+    Querystring: { chainId: string };
   }>('/transactions/:txHash/status', async (request, reply) => {
     try {
       const { txHash } = request.params;
+      const { chainId } = request.query;
+
+      // chainId 필수 검증
+      if (!chainId) {
+        return reply.code(400).send({
+          code: 'INVALID_REQUEST',
+          message: 'chainId는 필수입니다',
+        });
+      }
+
+      const chainIdNum = Number(chainId);
+      if (isNaN(chainIdNum)) {
+        return reply.code(400).send({
+          code: 'INVALID_REQUEST',
+          message: '유효한 chainId가 아닙니다',
+        });
+      }
+
+      // 체인 지원 여부 확인
+      if (!blockchainService.isChainSupported(chainIdNum)) {
+        return reply.code(400).send({
+          code: 'UNSUPPORTED_CHAIN',
+          message: 'Unsupported chain',
+        });
+      }
 
       // 트랜잭션 해시 검증
       if (!txHash || !txHash.startsWith('0x') || txHash.length !== 66) {
@@ -19,7 +45,7 @@ export async function getTransactionStatusRoute(
         });
       }
 
-      const status = await blockchainService.getTransactionStatus(txHash);
+      const status = await blockchainService.getTransactionStatus(chainIdNum, txHash);
 
       return reply.code(200).send({
         success: true,

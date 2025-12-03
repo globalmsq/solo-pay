@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const payer = request.nextUrl.searchParams.get('payer');
+    const chainId = request.nextUrl.searchParams.get('chainId');
 
     if (!payer) {
       return NextResponse.json(
@@ -11,8 +12,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (!chainId) {
+      return NextResponse.json(
+        { success: false, message: 'chainId parameter required' },
+        { status: 400 }
+      );
+    }
+
     const apiUrl = process.env.MSQPAY_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/payments/history?payer=${payer}`);
+    const response = await fetch(`${apiUrl}/payments/history?chainId=${chainId}&payer=${payer}`);
     const data = await response.json();
 
     return NextResponse.json(data);

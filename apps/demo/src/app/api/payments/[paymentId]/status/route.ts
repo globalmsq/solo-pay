@@ -7,6 +7,7 @@ export async function GET(
 ) {
   try {
     const client = getMSQPayClient();
+    // chainId는 Pay Server에서 paymentId 기반으로 조회
     const result = await client.getPaymentStatus(params.paymentId);
     return NextResponse.json(result);
   } catch (error: any) {

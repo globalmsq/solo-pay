@@ -1,7 +1,6 @@
-import { createPublicClient, http, PublicClient, Address, parseAbiItem } from 'viem';
-import { polygon } from 'viem/chains';
+import { createPublicClient, http, defineChain, PublicClient, Address, parseAbiItem } from 'viem';
 import { PaymentStatus } from '../schemas/payment.schema';
-import { SUPPORTED_CHAINS } from '../config/chains';
+import { ChainConfig, ChainsConfig, TokenConfig } from '../config/chains.config';
 
 /**
  * 결제 이력 아이템 인터페이스
@@ -34,7 +33,7 @@ const PAYMENT_GATEWAY_ABI = [
   },
 ] as const;
 
-// ERC20 ABI (balanceOf, allowance, symbol)
+// ERC20 ABI (balanceOf, allowance, symbol, decimals)
 const ERC20_ABI = [
   {
     type: 'function',
@@ -60,6 +59,13 @@ const ERC20_ABI = [
     outputs: [{ name: '', type: 'string' }],
     stateMutability: 'view',
   },
+  {
+    type: 'function',
+    name: 'decimals',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint8' }],
+    stateMutability: 'view',
+  },
 ] as const;
 
 /**
@@ -73,30 +79,139 @@ export interface TransactionStatus {
 
 /**
  * 블록체인 서비스 - viem을 통한 스마트 컨트랙트 상호작용
- * 무상태 아키텍처: 모든 데이터는 스마트 컨트랙트에서 조회
+ * 멀티체인 + 멀티토큰 아키텍처: JSON 설정 기반 동적 체인 관리
  */
 export class BlockchainService {
-  private publicClient: PublicClient;
-  private contractAddress: Address;
+  private clients: Map<number, PublicClient> = new Map();
+  private chainConfigs: Map<number, ChainConfig> = new Map();
 
-  constructor(rpcUrl: string = 'https://polygon-rpc.com', contractAddress: string) {
-    this.publicClient = createPublicClient({
-      chain: polygon,
-      transport: http(rpcUrl),
-    });
+  constructor(config: ChainsConfig) {
+    for (const chainConfig of config.chains) {
+      // viem defineChain으로 동적 체인 정의
+      const chain = defineChain({
+        id: chainConfig.chainId,
+        name: chainConfig.name,
+        nativeCurrency: chainConfig.nativeCurrency,
+        rpcUrls: {
+          default: { http: [chainConfig.rpcUrl] },
+        },
+      });
 
-    this.contractAddress = contractAddress as Address;
+      const client = createPublicClient({
+        chain,
+        transport: http(chainConfig.rpcUrl),
+      });
+
+      this.clients.set(chainConfig.chainId, client);
+      this.chainConfigs.set(chainConfig.chainId, chainConfig);
+
+      console.log(`🔗 Chain ${chainConfig.name} (${chainConfig.chainId}) initialized: ${chainConfig.rpcUrl}`);
+    }
+  }
+
+  /**
+   * 체인 지원 여부 확인
+   */
+  isChainSupported(chainId: number): boolean {
+    return this.clients.has(chainId);
+  }
+
+  /**
+   * 지원하는 체인 ID 목록 반환
+   */
+  getSupportedChainIds(): number[] {
+    return Array.from(this.clients.keys());
+  }
+
+  /**
+   * 체인 설정 조회
+   */
+  getChainConfig(chainId: number): ChainConfig {
+    const config = this.chainConfigs.get(chainId);
+    if (!config) {
+      throw new Error(`Unsupported chain: ${chainId}`);
+    }
+    return config;
+  }
+
+  /**
+   * 체인별 PublicClient 조회
+   */
+  private getClient(chainId: number): PublicClient {
+    const client = this.clients.get(chainId);
+    if (!client) {
+      throw new Error(`Unsupported chain: ${chainId}`);
+    }
+    return client;
+  }
+
+  /**
+   * 토큰 검증: 심볼 존재 + 주소 일치 확인
+   * @param chainId 체인 ID
+   * @param tokenSymbol 토큰 심볼
+   * @param tokenAddress 토큰 주소
+   * @returns 유효한 토큰이면 true
+   */
+  validateToken(chainId: number, tokenSymbol: string, tokenAddress: string): boolean {
+    const config = this.chainConfigs.get(chainId);
+    if (!config) {
+      return false;
+    }
+
+    const token = config.tokens[tokenSymbol];
+    if (!token) {
+      return false; // 심볼 미존재
+    }
+
+    if (token.address.toLowerCase() !== tokenAddress.toLowerCase()) {
+      return false; // 주소 불일치
+    }
+
+    return true;
+  }
+
+  /**
+   * 토큰 설정 조회
+   * @param chainId 체인 ID
+   * @param tokenSymbol 토큰 심볼
+   * @returns 토큰 설정 또는 null
+   */
+  getTokenConfig(chainId: number, tokenSymbol: string): TokenConfig | null {
+    const config = this.chainConfigs.get(chainId);
+    if (!config) return null;
+    return config.tokens[tokenSymbol] || null;
+  }
+
+  /**
+   * 특정 체인과 토큰 심볼로 토큰 주소 조회
+   */
+  getTokenAddress(chainId: number, symbol: string): string | undefined {
+    const config = this.chainConfigs.get(chainId);
+    return config?.tokens[symbol]?.address;
+  }
+
+  /**
+   * 특정 체인의 컨트랙트 주소 조회
+   */
+  getChainContracts(chainId: number): { gateway: string; forwarder: string } | undefined {
+    const config = this.chainConfigs.get(chainId);
+    return config?.contracts;
   }
 
   /**
    * 결제 상태를 스마트 컨트랙트에서 조회
-   * Contract의 processedPayments(paymentId) mapping과 PaymentCompleted 이벤트를 조회
+   * @param chainId 체인 ID
+   * @param paymentId 결제 ID
    */
-  async getPaymentStatus(paymentId: string): Promise<PaymentStatus | null> {
+  async getPaymentStatus(chainId: number, paymentId: string): Promise<PaymentStatus | null> {
     try {
+      const client = this.getClient(chainId);
+      const config = this.getChainConfig(chainId);
+      const contractAddress = config.contracts.gateway as Address;
+
       // Contract의 processedPayments mapping 조회 (bool 반환)
-      const isProcessed = await this.publicClient.readContract({
-        address: this.contractAddress,
+      const isProcessed = await client.readContract({
+        address: contractAddress,
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'processedPayments',
         args: [paymentId as `0x${string}`],
@@ -106,7 +221,7 @@ export class BlockchainService {
 
       // 결제가 완료된 경우, 이벤트 로그에서 실제 결제 정보 조회
       if (isProcessed) {
-        const paymentDetails = await this.getPaymentDetailsByPaymentId(paymentId);
+        const paymentDetails = await this.getPaymentDetailsByPaymentId(chainId, paymentId);
         if (paymentDetails) {
           return {
             paymentId,
@@ -155,9 +270,8 @@ export class BlockchainService {
 
   /**
    * paymentId로 PaymentCompleted 이벤트 조회
-   * @param paymentId 결제 ID (bytes32)
    */
-  private async getPaymentDetailsByPaymentId(paymentId: string): Promise<{
+  private async getPaymentDetailsByPaymentId(chainId: number, paymentId: string): Promise<{
     payer: string;
     merchant: string;
     token: string;
@@ -167,14 +281,18 @@ export class BlockchainService {
     transactionHash: string;
   } | null> {
     try {
-      const currentBlock = await this.publicClient.getBlockNumber();
+      const client = this.getClient(chainId);
+      const config = this.getChainConfig(chainId);
+      const contractAddress = config.contracts.gateway as Address;
+
+      const currentBlock = await client.getBlockNumber();
       // 최근 10000블록 범위에서 검색 (약 5-6시간)
       const fromBlock = currentBlock > BigInt(10000)
         ? currentBlock - BigInt(10000)
         : BigInt(0);
 
-      const logs = await this.publicClient.getLogs({
-        address: this.contractAddress,
+      const logs = await client.getLogs({
+        address: contractAddress,
         event: PAYMENT_COMPLETED_EVENT,
         args: {
           paymentId: paymentId as `0x${string}`,
@@ -188,11 +306,11 @@ export class BlockchainService {
       }
 
       const log = logs[0];
-      const block = await this.publicClient.getBlock({ blockHash: log.blockHash! });
+      const block = await client.getBlock({ blockHash: log.blockHash! });
       const tokenAddress = (log.args as any).token || '';
 
       // 온체인에서 토큰 심볼 조회
-      const tokenSymbol = tokenAddress ? await this.getTokenSymbol(tokenAddress) : 'UNKNOWN';
+      const tokenSymbol = tokenAddress ? await this.getTokenSymbolOnChain(chainId, tokenAddress) : 'UNKNOWN';
 
       return {
         payer: (log.args as any).payer || '',
@@ -243,11 +361,13 @@ export class BlockchainService {
    * 트랜잭션 수신 확인 확인
    */
   async waitForConfirmation(
+    chainId: number,
     transactionHash: string,
     _confirmations: number = 1
   ): Promise<{ status: string; blockNumber: bigint; transactionHash: string } | null> {
     try {
-      const receipt = await this.publicClient.waitForTransactionReceipt({
+      const client = this.getClient(chainId);
+      const receipt = await client.waitForTransactionReceipt({
         hash: transactionHash as `0x${string}`,
         confirmations: _confirmations,
       });
@@ -266,6 +386,7 @@ export class BlockchainService {
    * 가스 비용 추정
    */
   async estimateGasCost(
+    _chainId: number,
     _tokenAddress: Address,
     _amount: bigint,
     _recipientAddress: Address
@@ -282,12 +403,11 @@ export class BlockchainService {
 
   /**
    * 토큰 잔액 조회
-   * @param tokenAddress ERC20 토큰 주소
-   * @param walletAddress 지갑 주소
    */
-  async getTokenBalance(tokenAddress: string, walletAddress: string): Promise<string> {
+  async getTokenBalance(chainId: number, tokenAddress: string, walletAddress: string): Promise<string> {
     try {
-      const balance = await this.publicClient.readContract({
+      const client = this.getClient(chainId);
+      const balance = await client.readContract({
         address: tokenAddress as Address,
         abi: ERC20_ABI,
         functionName: 'balanceOf',
@@ -303,17 +423,16 @@ export class BlockchainService {
 
   /**
    * 토큰 승인액 조회
-   * @param tokenAddress ERC20 토큰 주소
-   * @param owner 소유자 주소
-   * @param spender 승인받은 주소 (보통 gateway contract)
    */
   async getTokenAllowance(
+    chainId: number,
     tokenAddress: string,
     owner: string,
     spender: string
   ): Promise<string> {
     try {
-      const allowance = await this.publicClient.readContract({
+      const client = this.getClient(chainId);
+      const allowance = await client.readContract({
         address: tokenAddress as Address,
         abi: ERC20_ABI,
         functionName: 'allowance',
@@ -329,12 +448,11 @@ export class BlockchainService {
 
   /**
    * 토큰 심볼 조회 (온체인 ERC20.symbol())
-   * @param tokenAddress ERC20 토큰 주소
-   * @returns 토큰 심볼 (예: "USDC", "USDT")
    */
-  async getTokenSymbol(tokenAddress: string): Promise<string> {
+  async getTokenSymbolOnChain(chainId: number, tokenAddress: string): Promise<string> {
     try {
-      const symbol = await this.publicClient.readContract({
+      const client = this.getClient(chainId);
+      const symbol = await client.readContract({
         address: tokenAddress as Address,
         abi: ERC20_ABI,
         functionName: 'symbol',
@@ -350,15 +468,15 @@ export class BlockchainService {
 
   /**
    * 트랜잭션 상태 조회
-   * @param txHash 트랜잭션 해시
    */
-  async getTransactionStatus(txHash: string): Promise<TransactionStatus> {
+  async getTransactionStatus(chainId: number, txHash: string): Promise<TransactionStatus> {
     try {
-      const receipt = await this.publicClient.getTransactionReceipt({
+      const client = this.getClient(chainId);
+      const receipt = await client.getTransactionReceipt({
         hash: txHash as `0x${string}`,
       });
 
-      const currentBlock = await this.publicClient.getBlockNumber();
+      const currentBlock = await client.getBlockNumber();
       const confirmations = Number(currentBlock - receipt.blockNumber);
 
       return {
@@ -376,21 +494,24 @@ export class BlockchainService {
 
   /**
    * 사용자의 결제 이력 조회 (PaymentCompleted 이벤트 로그)
-   * @param payerAddress 사용자 지갑 주소
-   * @param blockRange 조회할 블록 범위 (기본값: 최근 1000블록)
    */
   async getPaymentHistory(
+    chainId: number,
     payerAddress: string,
     blockRange: number = 1000
   ): Promise<PaymentHistoryItem[]> {
     try {
-      const currentBlock = await this.publicClient.getBlockNumber();
+      const client = this.getClient(chainId);
+      const config = this.getChainConfig(chainId);
+      const contractAddress = config.contracts.gateway as Address;
+
+      const currentBlock = await client.getBlockNumber();
       const fromBlock = currentBlock > BigInt(blockRange)
         ? currentBlock - BigInt(blockRange)
         : BigInt(0);
 
-      const logs = await this.publicClient.getLogs({
-        address: this.contractAddress,
+      const logs = await client.getLogs({
+        address: contractAddress,
         event: PAYMENT_COMPLETED_EVENT,
         args: {
           payer: payerAddress as Address,
@@ -401,10 +522,10 @@ export class BlockchainService {
 
       const payments: PaymentHistoryItem[] = await Promise.all(
         logs.map(async (log) => {
-          const block = await this.publicClient.getBlock({ blockHash: log.blockHash! });
+          const block = await client.getBlock({ blockHash: log.blockHash! });
           const tokenAddress = (log.args as any).token || '';
           // 온체인에서 토큰 심볼 조회
-          const tokenSymbol = tokenAddress ? await this.getTokenSymbol(tokenAddress) : 'UNKNOWN';
+          const tokenSymbol = tokenAddress ? await this.getTokenSymbolOnChain(chainId, tokenAddress) : 'UNKNOWN';
 
           return {
             paymentId: (log.args as any).paymentId || '',
@@ -431,45 +552,12 @@ export class BlockchainService {
   }
 
   /**
-   * 특정 체인과 토큰 심볼로 토큰 주소 조회
-   * @param chainId 네트워크 체인 ID
-   * @param symbol 토큰 심볼 (예: "SUT", "TEST")
-   * @returns 토큰 주소 또는 undefined (지원하지 않는 체인/토큰)
-   */
-  getTokenAddress(chainId: number, symbol: string): string | undefined {
-    const chain = SUPPORTED_CHAINS.find(c => c.id === chainId);
-    return chain?.tokens[symbol];
-  }
-
-  /**
-   * 특정 체인의 컨트랙트 주소 조회
-   * @param chainId 네트워크 체인 ID
-   * @returns 컨트랙트 정보 (gateway, forwarder) 또는 undefined
-   */
-  getChainContracts(chainId: number): { gateway: string; forwarder: string } | undefined {
-    const chain = SUPPORTED_CHAINS.find(c => c.id === chainId);
-    return chain?.contracts;
-  }
-
-  /**
    * ERC20 토큰의 decimals 조회
-   * decimals() 호출 실패 시 기본값 18로 fallback
-   * @param tokenAddress ERC20 토큰 주소
-   * @returns decimals 값 (기본: 18)
    */
-  async getDecimals(_chainId: number, tokenAddress: string): Promise<number> {
+  async getDecimals(chainId: number, tokenAddress: string): Promise<number> {
     try {
-      const ERC20_ABI = [
-        {
-          type: 'function',
-          name: 'decimals',
-          inputs: [],
-          outputs: [{ name: '', type: 'uint8' }],
-          stateMutability: 'view',
-        },
-      ] as const;
-
-      const decimals = await this.publicClient.readContract({
+      const client = this.getClient(chainId);
+      const decimals = await client.readContract({
         address: tokenAddress as Address,
         abi: ERC20_ABI,
         functionName: 'decimals',

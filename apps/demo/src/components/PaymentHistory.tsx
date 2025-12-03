@@ -3,7 +3,7 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { formatUnits } from "viem";
-import { getTokenForChain } from "@/lib/wagmi";
+import { DEFAULT_TOKEN_SYMBOL } from "@/lib/constants";
 import { getPaymentHistory, PaymentHistoryItem } from "@/lib/api";
 import { truncateAddress, truncateHash, formatTimestamp } from "@/lib/utils";
 
@@ -19,25 +19,26 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const token = getTokenForChain(chainId);
+  const tokenSymbol = DEFAULT_TOKEN_SYMBOL[chainId] || "TOKEN";
 
   // Fetch payments from Payment API
   const fetchPayments = async () => {
-    if (!address) return;
+    if (!address || !chainId) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await getPaymentHistory(address);
+      const response = await getPaymentHistory(address, chainId);
 
       if (response.success && response.data) {
         setPayments(response.data);
       } else {
         setError(response.message || "Failed to fetch payments");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch payments");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to fetch payments";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <span className="font-semibold">
-                      {formatUnits(BigInt(payment.amount), 18)} {token?.symbol || "TOKEN"}
+                      {formatUnits(BigInt(payment.amount), 18)} {tokenSymbol}
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">

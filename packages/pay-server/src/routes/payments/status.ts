@@ -1,11 +1,16 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
 
+// TODO: DB 추가 후 paymentId로 chainId 동적 조회로 변경
+const DEFAULT_CHAIN_ID = 31337;
+
 export async function getPaymentStatusRoute(
   app: FastifyInstance,
   blockchainService: BlockchainService
 ) {
-  app.get<{ Params: { id: string } }>('/payments/:id/status', async (request, reply) => {
+  app.get<{
+    Params: { id: string };
+  }>('/payments/:id/status', async (request, reply) => {
     try {
       const { id } = request.params;
 
@@ -16,7 +21,19 @@ export async function getPaymentStatusRoute(
         });
       }
 
-      const paymentStatus = await blockchainService.getPaymentStatus(id);
+      // TODO: DB에서 paymentId로 chainId 조회
+      // 현재는 Hardhat 개발 환경용 하드코딩
+      const chainIdNum = DEFAULT_CHAIN_ID;
+
+      // 체인 지원 여부 확인
+      if (!blockchainService.isChainSupported(chainIdNum)) {
+        return reply.code(400).send({
+          code: 'UNSUPPORTED_CHAIN',
+          message: 'Unsupported chain',
+        });
+      }
+
+      const paymentStatus = await blockchainService.getPaymentStatus(chainIdNum, id);
 
       if (!paymentStatus) {
         return reply.code(404).send({

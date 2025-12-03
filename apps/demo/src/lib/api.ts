@@ -52,6 +52,7 @@ export interface PaymentHistoryItem {
 /**
  * 결제 상태 조회
  * @param paymentId 결제 ID (bytes32 형식)
+ * chainId는 서버에서 paymentId 기반으로 조회
  */
 export async function getPaymentStatus(paymentId: string): Promise<ApiResponse<PaymentStatus>> {
   const response = await fetch(`${API_URL}/payments/${paymentId}/status`);
@@ -71,9 +72,10 @@ export async function getPaymentStatus(paymentId: string): Promise<ApiResponse<P
 /**
  * 사용자의 결제 이력 조회
  * @param userAddress 사용자 지갑 주소
+ * @param chainId 체인 ID
  */
-export async function getPaymentHistory(userAddress: string): Promise<ApiResponse<PaymentHistoryItem[]>> {
-  const response = await fetch(`${API_URL}/payments/history?payer=${userAddress}`);
+export async function getPaymentHistory(userAddress: string, chainId: number): Promise<ApiResponse<PaymentHistoryItem[]>> {
+  const response = await fetch(`${API_URL}/payments/history?chainId=${chainId}&payer=${userAddress}`);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch payment history' }));
@@ -103,15 +105,17 @@ export interface TransactionStatus {
 
 /**
  * 토큰 잔액 조회
+ * @param chainId 체인 ID
  * @param tokenAddress ERC20 토큰 주소
  * @param walletAddress 지갑 주소
  */
 export async function getTokenBalance(
+  chainId: number,
   tokenAddress: string,
   walletAddress: string
 ): Promise<ApiResponse<{ balance: string }>> {
   const response = await fetch(
-    `${API_URL}/tokens/${tokenAddress}/balance?address=${walletAddress}`
+    `${API_URL}/tokens/${tokenAddress}/balance?chainId=${chainId}&address=${walletAddress}`
   );
 
   if (!response.ok) {
@@ -128,17 +132,19 @@ export async function getTokenBalance(
 
 /**
  * 토큰 승인액 조회
+ * @param chainId 체인 ID
  * @param tokenAddress ERC20 토큰 주소
  * @param owner 소유자 주소
  * @param spender 승인받은 주소 (gateway contract)
  */
 export async function getTokenAllowance(
+  chainId: number,
   tokenAddress: string,
   owner: string,
   spender: string
 ): Promise<ApiResponse<{ allowance: string }>> {
   const response = await fetch(
-    `${API_URL}/tokens/${tokenAddress}/allowance?owner=${owner}&spender=${spender}`
+    `${API_URL}/tokens/${tokenAddress}/allowance?chainId=${chainId}&owner=${owner}&spender=${spender}`
   );
 
   if (!response.ok) {
@@ -155,12 +161,14 @@ export async function getTokenAllowance(
 
 /**
  * 트랜잭션 상태 조회
+ * @param chainId 체인 ID
  * @param txHash 트랜잭션 해시
  */
 export async function getTransactionStatus(
+  chainId: number,
   txHash: string
 ): Promise<ApiResponse<TransactionStatus>> {
-  const response = await fetch(`${API_URL}/transactions/${txHash}/status`);
+  const response = await fetch(`${API_URL}/transactions/${txHash}/status?chainId=${chainId}`);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch transaction status' }));
@@ -176,10 +184,12 @@ export async function getTransactionStatus(
 
 /**
  * 트랜잭션 확인 대기 (polling)
+ * @param chainId 체인 ID
  * @param txHash 트랜잭션 해시
  * @param options 타임아웃 및 폴링 간격 설정
  */
 export async function waitForTransaction(
+  chainId: number,
   txHash: string,
   options: { timeout?: number; interval?: number } = {}
 ): Promise<TransactionStatus> {
@@ -187,7 +197,7 @@ export async function waitForTransaction(
   const startTime = Date.now();
 
   while (Date.now() - startTime < timeout) {
-    const response = await getTransactionStatus(txHash);
+    const response = await getTransactionStatus(chainId, txHash);
 
     if (response.success && response.data) {
       if (response.data.status === 'confirmed' || response.data.status === 'failed') {
@@ -545,33 +555,65 @@ export async function createPayment(
 // ============================================================
 
 /**
+ * Checkout Item Schema
+ * 개별 상품 항목
+ */
+export const CheckoutItemSchema = z.object({
+  productId: z.string().min(1, 'Product ID is required'),
+  quantity: z.number().int().positive('Quantity must be positive').default(1),
+});
+
+export type CheckoutItem = z.infer<typeof CheckoutItemSchema>;
+
+/**
  * Checkout Request Schema
- * ⚠️ SECURITY: Only productId is sent, NOT amount, NOT chainId!
+ * ⚠️ SECURITY: Only products array is sent, NOT amount, NOT chainId!
  * Server looks up both price and chainId from product config
  */
 export const CheckoutRequestSchema = z.object({
-  productId: z.string().min(1, 'Product ID is required'),
-  // ⚠️ chainId is NOT sent - server determines it from product config
+  products: z.array(CheckoutItemSchema).min(1, 'At least one product is required'),
+  // ⚠️ chainId is NOT sent - server determines it from merchant config
+  // ⚠️ amount is NOT sent - server calculates from product prices
 });
 
 export type CheckoutRequest = z.infer<typeof CheckoutRequestSchema>;
 
 /**
+ * Checkout Response Item Schema
+ * 개별 상품 응답 정보
+ */
+export const CheckoutResponseItemSchema = z.object({
+  productId: z.string(),
+  productName: z.string(),
+  quantity: z.number(),
+  unitPrice: z.string(), // 개별 상품 가격
+  subtotal: z.string(), // quantity * unitPrice
+});
+
+export type CheckoutResponseItem = z.infer<typeof CheckoutResponseItemSchema>;
+
+/**
  * Checkout Response Schema
- * Amount, chainId, and decimals are returned from server (server-verified)
+ * Amount, chainId, decimals, and tokenSymbol are returned from server (server-verified)
  */
 export const CheckoutResponseSchema = z.object({
   success: z.boolean(),
-  productId: z.string(),
-  productName: z.string(),
-  amount: z.string(), // Server-verified price (human-readable, e.g., "10")
+  // 결제 서버에서 생성된 paymentId
+  paymentId: z.string(),
+  // 상점 서버에서 생성된 orderId
+  orderId: z.string(),
+  // 상품 정보 (배열)
+  products: z.array(CheckoutResponseItemSchema),
+  // 결제 정보 (상점 설정 기반)
+  totalAmount: z.string(), // 총 금액 (human-readable, e.g., "30")
   decimals: z.number(), // Token decimals (e.g., 18, 6)
   chainId: z.number(), // Server-verified chainId
-  paymentId: z.string(),
+  tokenSymbol: z.string(), // Server-verified token symbol (e.g., 'SUT', 'TEST')
   tokenAddress: z.string(),
+  // 결제 컨트랙트 정보
   gatewayAddress: z.string(),
   forwarderAddress: z.string(),
-  status: z.string(),
+  recipientAddress: z.string(),
 });
 
 export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
@@ -580,11 +622,11 @@ export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
  * Checkout - Secure payment initiation
  *
  * ⚠️ SECURITY: This function prevents amount and chain manipulation by:
- * 1. Sending ONLY productId to server (NOT amount, NOT chainId)
- * 2. Server looks up product price and chainId from constants/DB
+ * 1. Sending ONLY products array to server (NOT amount, NOT chainId)
+ * 2. Server looks up product prices and chainId from constants/DB
  * 3. Server creates payment with verified values
  *
- * @param request Checkout request with productId only
+ * @param request Checkout request with products array
  * @returns Promise with checkout response including server-verified amount and chainId
  */
 export async function checkout(
@@ -604,7 +646,7 @@ export async function checkout(
 
   try {
     // Make request with retry logic
-    // ⚠️ SECURITY: Only productId is sent, NOT amount, NOT chainId!
+    // ⚠️ SECURITY: Only products array is sent, NOT amount, NOT chainId!
     const response = await retryWithDelay(
       async () => {
         return fetch(`${API_URL}/checkout`, {
@@ -613,8 +655,8 @@ export async function checkout(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            productId: validatedRequest.productId,
-            // ❌ amount is NOT sent - server looks it up!
+            products: validatedRequest.products,
+            // ❌ amount is NOT sent - server calculates it!
             // ❌ chainId is NOT sent - server looks it up!
           }),
         });

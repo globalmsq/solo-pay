@@ -1,5 +1,5 @@
 import { API_URLS, DEFAULT_HEADERS } from './constants';
-import { MSQPayError, ERROR_CODES } from './errors';
+import { MSQPayError } from './errors';
 import type {
   Environment,
   MSQPayConfig,
@@ -74,7 +74,8 @@ export class MSQPayClient {
     const response = await fetch(`${this.apiUrl}${path}`, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined
+      body: body ? JSON.stringify(body) : undefined,
+      cache: 'no-store'
     });
 
     const data = (await response.json()) as T | ErrorResponse;

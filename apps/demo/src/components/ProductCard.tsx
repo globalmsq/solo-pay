@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useChainId } from "wagmi";
 import { PaymentModal } from "./PaymentModal";
-import { DEFAULT_TOKEN_SYMBOL } from "@/lib/wagmi";
 
+/**
+ * 상품 인터페이스
+ * 체인/토큰 정보는 상점 설정에서 관리 (products.ts 참조)
+ */
 interface Product {
   id: string;
   name: string;
@@ -19,10 +21,16 @@ interface ProductCardProps {
   onPaymentSuccess?: (txHash: string) => void;
 }
 
+/**
+ * 상품 카드 컴포넌트
+ *
+ * 가격 표시:
+ * - 상품 가격은 상점 토큰 단위로 표시
+ * - 실제 토큰 심볼은 checkout 시점에 서버에서 제공
+ * - 여기서는 단순히 숫자만 표시 (단위 없음)
+ */
 export function ProductCard({ product, disabled, onPaymentSuccess }: ProductCardProps) {
   const [showPayment, setShowPayment] = useState(false);
-  const chainId = useChainId();
-  const tokenSymbol = DEFAULT_TOKEN_SYMBOL[chainId] || "TOKEN";
 
   return (
     <>
@@ -46,7 +54,7 @@ export function ProductCard({ product, disabled, onPaymentSuccess }: ProductCard
 
           <div className="flex justify-between items-center">
             <div className="text-xl font-bold text-primary-600">
-              {product.price} {tokenSymbol}
+              {product.price} tokens
             </div>
             <button
               onClick={() => setShowPayment(true)}

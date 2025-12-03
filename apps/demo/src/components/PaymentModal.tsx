@@ -4,13 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import {
   useAccount,
   useWalletClient,
-  useChainId,
   useReadContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { parseUnits, formatUnits, keccak256, toHex, encodeFunctionData, type Address } from "viem";
-import { getTokenForChain } from "@/lib/wagmi";
-import { DEMO_MERCHANT_ADDRESS } from "@/lib/constants";
+import { parseUnits, formatUnits, encodeFunctionData, maxUint256, type Address } from "viem";
 import { getPaymentStatus, checkout, submitGaslessPayment, waitForRelayTransaction } from "@/lib/api";
 import type { CheckoutResponse } from "@/lib/api";
 
@@ -101,7 +98,6 @@ export function PaymentModal({
 }: PaymentModalProps) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
-  const chainId = useChainId();
 
   const [gasMode, setGasMode] = useState<GasMode>("direct");
   const [status, setStatus] = useState<PaymentStatus>("idle");
@@ -119,11 +115,13 @@ export function PaymentModal({
   const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(false);
   const [configError, setConfigError] = useState<string | null>(null);
 
-  // ⚠️ SECURITY: Use server-verified amount and decimals, NOT product.price from client
-  // The amount is set after checkout API returns server-verified price and decimals
+  // ⚠️ SECURITY: Use server-verified totalAmount, decimals, tokenAddress, and tokenSymbol
+  // All values are set after checkout API returns server-verified data
   const decimals = serverConfig?.decimals ?? 18; // Default to 18 if not yet loaded
-  const amount = serverConfig ? parseUnits(serverConfig.amount, decimals) : parseUnits(product.price, decimals);
-  const token = getTokenForChain(chainId);
+  const amount = serverConfig ? parseUnits(serverConfig.totalAmount, decimals) : parseUnits(product.price, decimals);
+  // Token address and symbol from server (no more client-side lookup)
+  const tokenAddress = serverConfig?.tokenAddress as Address | undefined;
+  const tokenSymbol = serverConfig?.tokenSymbol ?? "TOKEN";
 
   // Load server configuration on mount
   // ⚠️ SECURITY: Only productId is sent, NOT amount, NOT chainId!
@@ -136,11 +134,11 @@ export function PaymentModal({
       setConfigError(null);
 
       try {
-        // ⚠️ SECURITY: Call checkout with productId only
-        // Server will look up price and chainId from product config
+        // ⚠️ SECURITY: Call checkout with products array only
+        // Server will look up prices and chainId from product config
         const response = await checkout({
-          productId: product.id,  // ✅ Only productId sent
-          // ❌ amount is NOT sent - server looks it up!
+          products: [{ productId: product.id, quantity: 1 }],  // ✅ Only products array sent
+          // ❌ amount is NOT sent - server calculates it!
           // ❌ chainId is NOT sent - server looks it up!
         });
 
@@ -161,25 +159,33 @@ export function PaymentModal({
 
   // Read token balance using wagmi hook (MetaMask handles RPC)
   const { data: balance, isLoading: balanceLoading } = useReadContract({
-    address: token?.address as Address,
+    address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address && !!token,
+      enabled: !!address && !!tokenAddress,
     },
   });
 
   // Read token allowance using wagmi hook (MetaMask handles RPC)
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: token?.address as Address,
+    address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "allowance",
     args: address && serverConfig ? [address, serverConfig.gatewayAddress as Address] : undefined,
     query: {
-      enabled: !!address && !!token && !!serverConfig,
+      enabled: !!address && !!tokenAddress && !!serverConfig,
     },
   });
+
+  // Refetch allowance when modal opens (after serverConfig loads)
+  // This ensures we have fresh allowance data, not stale cache
+  useEffect(() => {
+    if (serverConfig && address && tokenAddress) {
+      refetchAllowance();
+    }
+  }, [serverConfig, address, tokenAddress, refetchAllowance]);
 
   // Read user's nonce from Forwarder contract for gasless payments (MetaMask handles RPC)
   const { data: forwarderNonce, refetch: refetchNonce } = useReadContract({
@@ -201,6 +207,10 @@ export function PaymentModal({
 
   // Poll server for payment status (Contract = Source of Truth)
   const pollPaymentStatus = useCallback(async (paymentId: string): Promise<void> => {
+    if (!serverConfig) {
+      throw new Error('Server configuration not loaded');
+    }
+
     const maxAttempts = 30;
     const interval = 2000; // 2 seconds
 
@@ -220,7 +230,7 @@ export function PaymentModal({
     }
 
     throw new Error('Payment confirmation timeout');
-  }, []);
+  }, [serverConfig]);
 
   // Handle APPROVE transaction success
   useEffect(() => {
@@ -238,25 +248,22 @@ export function PaymentModal({
     }
   }, [allowance, amount, status]);
 
-  // Generate unique payment ID
-  const generatePaymentId = () => {
-    const orderId = `${product.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    return keccak256(toHex(orderId));
-  };
+  // paymentId는 이제 결제 서버에서 생성됨
+  // serverConfig.paymentId를 사용
 
   // Handle token approval
   const handleApprove = async () => {
-    if (!walletClient || !address || !token || !serverConfig) return;
+    if (!walletClient || !address || !tokenAddress || !serverConfig) return;
 
     try {
       setStatus("approving");
       setError(null);
 
       const hash = await walletClient.writeContract({
-        address: token.address as Address,
+        address: tokenAddress,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [serverConfig.gatewayAddress as Address, amount],
+        args: [serverConfig.gatewayAddress as Address, maxUint256],
       });
 
       setApproveTxHash(hash);
@@ -270,13 +277,14 @@ export function PaymentModal({
 
   // Handle direct payment
   const handleDirectPayment = async () => {
-    if (!walletClient || !address || !token || !serverConfig) return;
+    if (!walletClient || !address || !tokenAddress || !serverConfig) return;
 
     try {
       setStatus("paying");
       setError(null);
 
-      const paymentId = generatePaymentId();
+      // paymentId는 결제 서버에서 생성된 값 사용
+      const paymentId = serverConfig.paymentId as `0x${string}`;
       setCurrentPaymentId(paymentId);
 
       // 1. Send payment TX to Contract
@@ -286,9 +294,9 @@ export function PaymentModal({
         functionName: "pay",
         args: [
           paymentId,
-          token.address as Address,
+          tokenAddress,
           amount,
-          DEMO_MERCHANT_ADDRESS as Address,
+          serverConfig.recipientAddress as Address,
         ],
       });
 
@@ -316,7 +324,7 @@ export function PaymentModal({
 
   // Handle gasless payment (meta-transaction)
   const handleGaslessPayment = async () => {
-    if (!walletClient || !address || !token || !serverConfig) return;
+    if (!walletClient || !address || !tokenAddress || !serverConfig) return;
 
     try {
       setStatus("paying");
@@ -329,7 +337,8 @@ export function PaymentModal({
       }
       const nonce = freshNonce;
 
-      const paymentId = generatePaymentId();
+      // paymentId는 결제 서버에서 생성된 값 사용
+      const paymentId = serverConfig.paymentId as `0x${string}`;
       setCurrentPaymentId(paymentId);
 
       // 1. Encode the PaymentGateway.pay() function call
@@ -337,10 +346,10 @@ export function PaymentModal({
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'pay',
         args: [
-          paymentId as `0x${string}`,
-          token.address as Address,
+          paymentId,
+          tokenAddress,
           amount,
-          DEMO_MERCHANT_ADDRESS as Address,
+          serverConfig.recipientAddress as Address,
         ],
       });
 
@@ -417,7 +426,11 @@ export function PaymentModal({
         throw new Error('Gasless payment relay failed');
       }
 
-      // 7. Payment confirmed
+      // 7. Verify payment via server (Contract = Source of Truth)
+      // Server queries contract.processedPayments[paymentId] or PaymentProcessed event
+      await pollPaymentStatus(paymentId);
+
+      // 8. Payment confirmed by server
       setPendingTxHash(relayResult.transactionHash as Address | undefined);
       setStatus("success");
 
@@ -488,7 +501,7 @@ export function PaymentModal({
                 {product.name}
               </span>
               <span className="font-semibold">
-                {product.price} {token?.symbol || "TOKEN"}
+                {product.price} {tokenSymbol}
               </span>
             </div>
           </div>
@@ -496,9 +509,9 @@ export function PaymentModal({
           {/* Balance info */}
           <div className="text-sm">
             <div className="flex justify-between text-gray-600 dark:text-gray-400">
-              <span>Your {token?.symbol || "TOKEN"} Balance:</span>
+              <span>Your {tokenSymbol} Balance:</span>
               <span className={hasInsufficientBalance ? "text-red-500" : ""}>
-                {formatUnits(currentBalance, decimals)} {token?.symbol || "TOKEN"}
+                {formatUnits(currentBalance, decimals)} {tokenSymbol}
               </span>
             </div>
             {hasInsufficientBalance && (
@@ -577,7 +590,7 @@ export function PaymentModal({
                 >
                   {status === "approving"
                     ? "Approving..."
-                    : `Approve ${product.price} ${token?.symbol || "TOKEN"}`}
+                    : `Approve ${tokenSymbol}`}
                 </button>
               )}
 
@@ -594,7 +607,7 @@ export function PaymentModal({
               >
                 {status === "paying"
                   ? "Processing..."
-                  : `Pay ${product.price} ${token?.symbol || "TOKEN"}`}
+                  : `Pay ${product.price} ${tokenSymbol}`}
               </button>
             </div>
           )}
