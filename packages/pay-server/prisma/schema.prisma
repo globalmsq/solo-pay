@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  CONFIRMED
+  FAILED
+  EXPIRED
+}
+
+enum RelayStatus {
+  QUEUED
+  SUBMITTED
+  CONFIRMED
+  FAILED
+}
+
+enum EventType {
+  CREATED
+  STATUS_CHANGED
+  RELAY_SUBMITTED
+  RELAY_CONFIRMED
+  EXPIRED
+}
+
+model Chain {
+  id         String   @id @default(cuid())
+  network_id Int      @unique  // EIP-155 chain ID
+  name       String
+  rpc_url    String
+  is_testnet Boolean  @default(false)
+  is_enabled Boolean  @default(true)
+  is_deleted Boolean  @default(false)
+  deleted_at DateTime?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("chains")
+}
+
+model Token {
+  id              String   @id @default(cuid())
+  chain_id        String   // logical reference to chains.id
+  address         String
+  symbol          String
+  decimals        Int
+  is_enabled      Boolean  @default(true)
+  is_deleted      Boolean  @default(false)
+  deleted_at      DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@unique([chain_id, address])
+  @@map("tokens")
+}
+
+model Merchant {
+  id              String   @id @default(cuid())
+  merchant_key    String   @unique
+  name            String
+  api_key_hash    String   // SHA-256 hash
+  webhook_url     String?
+  is_enabled      Boolean  @default(true)
+  is_deleted      Boolean  @default(false)
+  deleted_at      DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@map("merchants")
+}
+
+model MerchantPaymentMethod {
+  id                String   @id @default(cuid())
+  merchant_id       String   // logical reference
+  token_id          String   // logical reference
+  recipient_address String
+  is_enabled        Boolean  @default(true)
+  is_deleted        Boolean  @default(false)
+  deleted_at        DateTime?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([merchant_id, token_id])
+  @@map("merchant_payment_methods")
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  payment_hash          String        @unique @db.VarChar(66)  // bytes32
+  merchant_id           String
+  payment_method_id     String
+  amount                Decimal       @db.Decimal(65, 0)  // wei (max uint256)
+  token_decimals        Int           // snapshot
+  token_symbol          String        // snapshot
+  network_id            Int           // snapshot of chain's network_id
+  status                PaymentStatus @default(CREATED)
+  tx_hash               String?       @db.VarChar(66)
+  expires_at            DateTime
+  confirmed_at          DateTime?
+  created_at            DateTime      @default(now())
+  updated_at            DateTime      @updatedAt
+
+  @@index([merchant_id])
+  @@index([status])
+  @@map("payments")
+}
+
+model RelayRequest {
+  id              String      @id @default(cuid())
+  relay_ref       String      @unique
+  payment_id      String
+  status          RelayStatus @default(QUEUED)
+  gas_estimate    Decimal?    @db.Decimal(65, 0)
+  gas_used        Decimal?    @db.Decimal(65, 0)
+  tx_hash         String?     @db.VarChar(66)
+  error_message   String?     @db.Text
+  submitted_at    DateTime?
+  confirmed_at    DateTime?
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+
+  @@index([payment_id])
+  @@map("relay_requests")
+}
+
+model PaymentEvent {
+  id          String    @id @default(cuid())
+  payment_id  String
+  event_type  EventType
+  old_status  String?
+  new_status  String?
+  metadata    Json?
+  created_at  DateTime  @default(now())
+
+  @@index([payment_id])
+  @@map("payment_events")
+}
