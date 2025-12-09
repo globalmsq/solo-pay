@@ -97,7 +97,7 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 | PaymentGatewayProxy | `0x2256bedB57869AF4fadF16e1ebD534A7d47513d7` |
 | PaymentGatewayV1 | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
 | ERC2771Forwarder | `0x0d9A0fAf9a8101368aa01B88442B38f82180520E` |
-| MockERC20 | `0xf4947D9048baa59D6eB044D50e8F15930f36DdD0` |
+| SUT Token | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
 > [Polygonscan에서 확인](https://amoy.polygonscan.com/address/0x2256bedB57869AF4fadF16e1ebD534A7d47513d7)
 
