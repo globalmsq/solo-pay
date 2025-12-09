@@ -5,6 +5,9 @@
 
 import { readFileSync } from 'fs';
 import { z } from 'zod';
+import { createLogger } from '../lib/logger';
+
+const logger = createLogger('ChainsConfig');
 
 // 토큰 설정 스키마
 const TokenConfigSchema = z.object({
@@ -57,8 +60,7 @@ export function loadChainsConfig(configPath: string): ChainsConfig {
     return ChainsConfigSchema.parse(parsed);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('❌ Chain configuration validation failed:');
-      console.error(error.errors);
+      logger.error({ err: error }, '❌ Chain configuration validation failed');
       throw new Error(`Invalid chain configuration: ${error.message}`);
     }
     throw error;

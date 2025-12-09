@@ -1,6 +1,7 @@
 import { createPublicClient, http, defineChain, PublicClient, Address, parseAbiItem } from 'viem';
 import { PaymentStatus } from '../schemas/payment.schema';
 import { ChainConfig, ChainsConfig, TokenConfig } from '../config/chains.config';
+import { createLogger } from '../lib/logger';
 
 /**
  * 결제 이력 아이템 인터페이스
@@ -87,6 +88,7 @@ export interface TransactionStatus {
 export class BlockchainService {
   private clients: Map<number, PublicClient> = new Map();
   private chainConfigs: Map<number, ChainConfig> = new Map();
+  private readonly logger = createLogger('BlockchainService');
 
   constructor(config: ChainsConfig) {
     for (const chainConfig of config.chains) {
@@ -108,7 +110,7 @@ export class BlockchainService {
       this.clients.set(chainConfig.chainId, client);
       this.chainConfigs.set(chainConfig.chainId, chainConfig);
 
-      console.log(`🔗 Chain ${chainConfig.name} (${chainConfig.chainId}) initialized: ${chainConfig.rpcUrl}`);
+      this.logger.info(`🔗 Chain ${chainConfig.name} (${chainConfig.chainId}) initialized: ${chainConfig.rpcUrl}`);
     }
   }
 
@@ -254,7 +256,7 @@ export class BlockchainService {
         updatedAt: now,
       };
     } catch (error) {
-      console.error('결제 상태 조회 실패:', error);
+      this.logger.error({ err: error }, '결제 상태 조회 실패');
       // 네트워크 오류나 RPC 오류 시에도 pending 반환 (polling 계속 가능하도록)
       const now = new Date().toISOString();
       return {
@@ -325,7 +327,7 @@ export class BlockchainService {
         transactionHash: log.transactionHash,
       };
     } catch (error) {
-      console.error('결제 상세 정보 조회 실패:', error);
+      this.logger.error({ err: error }, '결제 상세 정보 조회 실패');
       return null;
     }
   }
@@ -351,7 +353,7 @@ export class BlockchainService {
       // 트랜잭션 해시 반환 (실제로는 sendTransaction 결과)
       return '0x' + 'a'.repeat(64);
     } catch (error) {
-      console.error('스마트 컨트랙트에 결제 기록 실패:', error);
+      this.logger.error({ err: error }, '스마트 컨트랙트에 결제 기록 실패');
       // 원본 에러 메시지를 그대로 전파하지 않고, 구체적인 메시지는 보존
       if (error instanceof Error && error.message === '필수 결제 정보가 누락되었습니다') {
         throw error;
@@ -380,7 +382,7 @@ export class BlockchainService {
         transactionHash: receipt.transactionHash,
       };
     } catch (error) {
-      console.error('트랜잭션 확인 대기 실패:', error);
+      this.logger.error({ err: error }, '트랜잭션 확인 대기 실패');
       return null;
     }
   }
@@ -399,7 +401,7 @@ export class BlockchainService {
       // 여기서는 고정 값 반환 (파라미터는 향후 실제 추정에 사용)
       return BigInt('200000');
     } catch (error) {
-      console.error('가스 비용 추정 실패:', error);
+      this.logger.error({ err: error }, '가스 비용 추정 실패');
       throw new Error('가스 비용을 추정할 수 없습니다');
     }
   }
@@ -419,7 +421,7 @@ export class BlockchainService {
 
       return balance.toString();
     } catch (error) {
-      console.error('토큰 잔액 조회 실패:', error);
+      this.logger.error({ err: error }, '토큰 잔액 조회 실패');
       throw new Error('토큰 잔액을 조회할 수 없습니다');
     }
   }
@@ -444,7 +446,7 @@ export class BlockchainService {
 
       return allowance.toString();
     } catch (error) {
-      console.error('토큰 승인액 조회 실패:', error);
+      this.logger.error({ err: error }, '토큰 승인액 조회 실패');
       throw new Error('토큰 승인액을 조회할 수 없습니다');
     }
   }
@@ -463,7 +465,7 @@ export class BlockchainService {
 
       return symbol;
     } catch (error) {
-      console.error('토큰 심볼 조회 실패:', error);
+      this.logger.error({ err: error }, '토큰 심볼 조회 실패');
       // 조회 실패 시 기본값 반환 (알 수 없는 토큰)
       return 'UNKNOWN';
     }
@@ -553,7 +555,7 @@ export class BlockchainService {
 
       return payments;
     } catch (error) {
-      console.error('결제 이력 조회 실패:', error);
+      this.logger.error({ err: error }, '결제 이력 조회 실패');
       throw new Error('결제 이력을 조회할 수 없습니다');
     }
   }
@@ -572,7 +574,7 @@ export class BlockchainService {
 
       return Number(decimals);
     } catch (error) {
-      console.warn(`Failed to get decimals for ${tokenAddress}, using fallback 18`);
+      this.logger.warn(`Failed to get decimals for ${tokenAddress}, using fallback 18`);
       return 18;
     }
   }
