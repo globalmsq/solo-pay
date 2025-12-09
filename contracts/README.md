@@ -35,18 +35,13 @@ cp .env.example .env
 # 배포용 개인키 (실제 키 사용 시 절대 커밋하지 마세요!)
 PRIVATE_KEY=0x...
 
-# RPC URLs (선택사항 - 기본값은 Public RPC 사용)
-POLYGON_AMOY_RPC=https://your-alchemy-or-infura-url
-POLYGON_RPC=https://your-alchemy-or-infura-url
-ETHEREUM_SEPOLIA_RPC=https://your-alchemy-or-infura-url
-ETHEREUM_RPC=https://your-alchemy-or-infura-url
-BNB_TESTNET_RPC=https://your-rpc-url
-BNB_RPC=https://your-rpc-url
+# 네트워크 설정 (배포할 체인에 맞게 설정)
+RPC_URL=https://rpc-amoy.polygon.technology
+CHAIN_ID=80002
 
-# Block Explorer API Keys (컨트랙트 검증용)
-POLYGONSCAN_API_KEY=your-polygonscan-api-key
+# Block Explorer API Key (Etherscan API v2)
+# 단일 API 키로 60개 이상의 체인 지원
 ETHERSCAN_API_KEY=your-etherscan-api-key
-BSCSCAN_API_KEY=your-bscscan-api-key
 ```
 
 ## 컴파일
@@ -74,33 +69,15 @@ pnpm test:coverage
 npx hardhat node
 
 # 로컬 배포
-pnpm deploy:local
+npx hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network localhost
 ```
 
-### Testnet 배포
+### 네트워크 배포
+
+`.env` 파일에 `RPC_URL`과 `CHAIN_ID`를 설정한 후 배포합니다:
 
 ```bash
-# Polygon Amoy (권장 - 가장 빠름)
-pnpm deploy:amoy
-
-# Ethereum Sepolia
-pnpm deploy:sepolia
-
-# BNB Testnet
-pnpm deploy:bnb-testnet
-```
-
-### Mainnet 배포
-
-```bash
-# Polygon Mainnet
-pnpm deploy:polygon
-
-# Ethereum Mainnet
-pnpm deploy:ethereum
-
-# BNB Mainnet
-pnpm deploy:bnb
+npx hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network default
 ```
 
 ## 컨트랙트 검증
@@ -108,49 +85,25 @@ pnpm deploy:bnb
 배포 후 Block Explorer에서 소스 코드를 검증합니다:
 
 ```bash
-# Polygon Amoy
-pnpm verify:amoy
-
-# Polygon Mainnet
-pnpm verify:polygon
-
-# Ethereum Sepolia
-pnpm verify:sepolia
-
-# Ethereum Mainnet
-pnpm verify:ethereum
-
-# BNB Testnet
-pnpm verify:bnb-testnet
-
-# BNB Mainnet
-pnpm verify:bnb
+npx hardhat ignition verify chain-{CHAIN_ID}
 ```
+
+## 배포된 컨트랙트
+
+### Polygon Amoy (Testnet)
+
+| Contract | Address |
+|----------|---------|
+| PaymentGatewayProxy | `0x2256bedB57869AF4fadF16e1ebD534A7d47513d7` |
+| PaymentGatewayV1 | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
+| ERC2771Forwarder | `0x0d9A0fAf9a8101368aa01B88442B38f82180520E` |
+| MockERC20 | `0xf4947D9048baa59D6eB044D50e8F15930f36DdD0` |
+
+> [Polygonscan에서 확인](https://amoy.polygonscan.com/address/0x2256bedB57869AF4fadF16e1ebD534A7d47513d7)
 
 ## 배포 결과 확인
 
-배포된 컨트랙트 주소는 Hardhat Ignition이 자동으로 저장합니다:
-
-```
-contracts/ignition/deployments/
-├── chain-31337/           # Hardhat Local
-├── chain-80002/           # Polygon Amoy
-├── chain-137/             # Polygon Mainnet
-├── chain-11155111/        # Ethereum Sepolia
-├── chain-1/               # Ethereum Mainnet
-├── chain-97/              # BNB Testnet
-└── chain-56/              # BNB Mainnet
-```
-
-각 디렉토리 내 `deployed_addresses.json` 파일에서 배포된 주소를 확인할 수 있습니다:
-
-```json
-{
-  "PaymentGateway#ERC2771Forwarder": "0x...",
-  "PaymentGateway#PaymentGatewayV1": "0x...",
-  "PaymentGateway#PaymentGatewayProxy": "0x..."
-}
-```
+배포된 컨트랙트 주소는 `ignition/deployments/chain-{CHAIN_ID}/deployed_addresses.json`에 저장됩니다.
 
 ## 배포 체크리스트
 
