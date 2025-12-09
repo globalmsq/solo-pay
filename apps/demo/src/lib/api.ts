@@ -427,13 +427,6 @@ export const CreatePaymentResponseSchema = z.object({
 
 export type CreatePaymentResponse = z.infer<typeof CreatePaymentResponseSchema>;
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  code?: ApiErrorCode | string;
-  message?: string;
-}
-
 // Helper: Retry with delay
 async function retryWithDelay(
   fn: () => Promise<Response>,
