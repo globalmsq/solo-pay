@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import path from 'path';
 
 import { loadChainsConfig } from './config/chains.config';
+import { createLogger } from './lib/logger';
 import { BlockchainService } from './services/blockchain.service';
 import { DefenderService } from './services/defender.service';
 import { PaymentService } from './services/payment.service';
@@ -27,18 +28,19 @@ const server = Fastify({
   logger: true,
 });
 
+const logger = createLogger('Server');
+
 // Load chain configuration from JSON file
 // Environment variables: CHAINS_CONFIG_PATH (default: ./chains.json)
 const configPath = process.env.CHAINS_CONFIG_PATH || path.join(process.cwd(), 'chains.json');
-console.log(`📋 Loading chain config from: ${configPath}`);
+logger.info(`📋 Loading chain config from: ${configPath}`);
 
 let chainsConfig;
 try {
   chainsConfig = loadChainsConfig(configPath);
-  console.log(`🔗 Supported chains: ${chainsConfig.chains.map(c => `${c.name}(${c.chainId})`).join(', ')}`);
+  logger.info(`🔗 Supported chains: ${chainsConfig.chains.map(c => `${c.name}(${c.chainId})`).join(', ')}`);
 } catch (error) {
-  console.error(`❌ Failed to load chain configuration from ${configPath}`);
-  console.error(error);
+  logger.error({ err: error }, `❌ Failed to load chain configuration from ${configPath}`);
   process.exit(1);
 }
 
@@ -109,15 +111,15 @@ const registerRoutes = async () => {
 
 // Graceful shutdown
 const gracefulShutdown = async (signal: string) => {
-  console.log(`\n📢 Received ${signal}, shutting down gracefully...`);
+  logger.info(`\n📢 Received ${signal}, shutting down gracefully...`);
   try {
     await server.close();
     await disconnectPrisma();
     await disconnectRedis();
-    console.log('✅ Server closed successfully');
+    logger.info('✅ Server closed successfully');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error during shutdown:', err);
+    logger.error({ err }, '❌ Error during shutdown');
     process.exit(1);
   }
 };
@@ -134,7 +136,7 @@ const start = async () => {
     const host = process.env.HOST || '0.0.0.0';
 
     await server.listen({ port, host });
-    console.log(`🚀 Server running on http://${host}:${port}`);
+    logger.info(`🚀 Server running on http://${host}:${port}`);
   } catch (err) {
     server.log.error(err);
     await disconnectPrisma();

@@ -1,7 +1,9 @@
 import Redis, { RedisOptions } from 'ioredis';
+import { createLogger } from '../lib/logger';
 
 let redisInstance: Redis | null = null;
 let redisAvailable = false;
+const logger = createLogger('RedisClient');
 
 function createRedisClient(): Redis {
   // REDIS_URL 우선, 없으면 REDIS_HOST/REDIS_PORT 개별 사용
@@ -26,7 +28,7 @@ function createRedisClient(): Redis {
   }
 
   client.on('error', (err) => {
-    console.warn('Redis connection error:', err.message || err);
+    logger.warn({ err }, 'Redis connection error');
     redisAvailable = false;
   });
 
@@ -61,7 +63,7 @@ export async function setCache(key: string, value: string, ttl: number = 300): P
     const client = getRedisClient();
     await client.setex(key, ttl, value);
   } catch (error) {
-    console.warn(`Failed to set cache for key ${key}:`, error);
+    logger.warn({ err: error }, `Failed to set cache for key ${key}`);
   }
 }
 
@@ -74,7 +76,7 @@ export async function getCache(key: string): Promise<string | null> {
     const client = getRedisClient();
     return await client.get(key);
   } catch (error) {
-    console.warn(`Failed to get cache for key ${key}:`, error);
+    logger.warn({ err: error }, `Failed to get cache for key ${key}`);
     return null;
   }
 }
@@ -88,7 +90,7 @@ export async function deleteCache(key: string): Promise<void> {
     const client = getRedisClient();
     await client.del(key);
   } catch (error) {
-    console.warn(`Failed to delete cache for key ${key}:`, error);
+    logger.warn({ err: error }, `Failed to delete cache for key ${key}`);
   }
 }
 

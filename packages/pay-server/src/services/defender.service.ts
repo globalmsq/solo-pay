@@ -1,5 +1,6 @@
 import { Address } from 'viem';
 import { ForwardRequest } from '../schemas/payment.schema';
+import { createLogger } from '../lib/logger';
 
 interface RelayerResponse {
   relayRequestId: string;
@@ -66,6 +67,7 @@ export class DefenderService {
   private readonly apiKey: string;
   private readonly apiSecret: string;
   private readonly relayerAddress: Address;
+  private readonly logger = createLogger('DefenderService');
 
   constructor(
     apiUrl: string,
@@ -169,8 +171,8 @@ export class DefenderService {
 
       const tx = (await response.json()) as DefenderApiResponse;
 
-      console.log(
-        `[DefenderService] 트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
+      this.logger.info(
+        `트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
       );
 
       return {
@@ -179,7 +181,7 @@ export class DefenderService {
         status: this.mapStatus(tx.status),
       };
     } catch (error) {
-      console.error('[DefenderService] Gasless 거래 제출 실패:', error);
+      this.logger.error({ err: error }, 'Gasless 거래 제출 실패');
 
       // 에러 타입에 따른 처리
       if (error instanceof Error) {
@@ -256,8 +258,8 @@ export class DefenderService {
 
       const tx = (await response.json()) as DefenderApiResponse;
 
-      console.log(
-        `[DefenderService] ForwardRequest 트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
+      this.logger.info(
+        `ForwardRequest 트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
       );
 
       return {
@@ -266,7 +268,7 @@ export class DefenderService {
         status: this.mapStatus(tx.status),
       };
     } catch (error) {
-      console.error('[DefenderService] ForwardRequest 거래 제출 실패:', error);
+      this.logger.error({ err: error }, 'ForwardRequest 거래 제출 실패');
 
       // 에러 타입에 따른 처리
       if (error instanceof Error) {
@@ -324,7 +326,7 @@ export class DefenderService {
         status: this.mapStatus(tx.status),
       };
     } catch (error) {
-      console.error('[DefenderService] 릴레이 상태 조회 실패:', error);
+      this.logger.error({ err: error }, '릴레이 상태 조회 실패');
 
       // 트랜잭션을 찾을 수 없는 경우
       if (error instanceof Error && error.message.includes('not found')) {
@@ -351,8 +353,8 @@ export class DefenderService {
 
       // 이미 채굴되었거나 확정된 트랜잭션은 취소 불가
       if (status.status === 'mined' || status.status === 'confirmed') {
-        console.warn(
-          `[DefenderService] 트랜잭션이 이미 처리됨: ${relayRequestId}`
+        this.logger.warn(
+          `트랜잭션이 이미 처리됨: ${relayRequestId}`
         );
         return false;
       }
@@ -363,12 +365,12 @@ export class DefenderService {
       }
 
       // Defender SDK는 직접적인 취소 API를 제공하지 않음
-      console.warn(
-        `[DefenderService] 트랜잭션 취소는 현재 지원되지 않습니다: ${relayRequestId}`
+      this.logger.warn(
+        `트랜잭션 취소는 현재 지원되지 않습니다: ${relayRequestId}`
       );
       return false;
     } catch (error) {
-      console.error('[DefenderService] 릴레이 거래 취소 실패:', error);
+      this.logger.error({ err: error }, '릴레이 거래 취소 실패');
       throw new Error('릴레이 거래를 취소할 수 없습니다');
     }
   }
@@ -439,7 +441,7 @@ export class DefenderService {
       const gasPrice = BigInt(gasLimit) * BigInt('50000000000');
       return gasPrice.toString();
     } catch (error) {
-      console.error('[DefenderService] 가스 요금 추정 실패:', error);
+      this.logger.error({ err: error }, '가스 요금 추정 실패');
       throw new Error('가스 요금을 추정할 수 없습니다');
     }
   }
@@ -466,7 +468,7 @@ export class DefenderService {
       const data = (await response.json()) as { nonce: string };
       return data.nonce;
     } catch (error) {
-      console.error('[DefenderService] Nonce 조회 실패:', error);
+      this.logger.error({ err: error }, 'Nonce 조회 실패');
       throw new Error('Nonce를 조회할 수 없습니다');
     }
   }
@@ -502,7 +504,7 @@ export class DefenderService {
         message: `릴레이어 연결 성공: ${info.address}`,
       };
     } catch (error) {
-      console.error('[DefenderService] 릴레이어 헬스 체크 실패:', error);
+      this.logger.error({ err: error }, '릴레이어 헬스 체크 실패');
       return {
         healthy: false,
         message: '릴레이어 연결에 실패했습니다',
