@@ -12,5 +12,8 @@ export type {
   RelayParams,
   RelayResponse,
   RelayStatusResponse,
+  GetPaymentHistoryParams,
+  PaymentHistoryItem,
+  PaymentHistoryResponse,
   ErrorResponse
 } from './types';

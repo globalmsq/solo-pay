@@ -3,7 +3,8 @@ import { MSQPayClient, MSQPayError } from '../src/index';
 import type {
   CreatePaymentParams,
   GaslessParams,
-  RelayParams
+  RelayParams,
+  GetPaymentHistoryParams
 } from '../src/index';
 
 // Mock fetch globally
@@ -497,6 +498,161 @@ describe('MSQPayClient', () => {
           recipientAddress: '0x0987654321098765432109876543210987654321'
         })
       ).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('getPaymentHistory', () => {
+    const validParams: GetPaymentHistoryParams = {
+      chainId: 31337,
+      payer: '0x1234567890123456789012345678901234567890'
+    };
+
+    it('TC-009.1: should get payment history successfully', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [
+            {
+              paymentId: '0xabc123',
+              payer: '0x1234567890123456789012345678901234567890',
+              merchant: '0x0987654321098765432109876543210987654321',
+              token: '0xTokenAddress1234567890123456789012345678',
+              tokenSymbol: 'USDC',
+              decimals: 6,
+              amount: '1000000',
+              timestamp: '1735689600',
+              transactionHash: '0xtxhash123',
+              status: 'completed',
+              isGasless: false
+            }
+          ]
+        })
+      });
+
+      const result = await client.getPaymentHistory(validParams);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].paymentId).toBe('0xabc123');
+      expect(result.data[0].tokenSymbol).toBe('USDC');
+      expect(result.data[0].isGasless).toBe(false);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3001/payments/history?chainId=31337&payer=0x1234567890123456789012345678901234567890',
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'X-API-Key': 'test-api-key'
+          })
+        })
+      );
+    });
+
+    it('TC-009.2: should include gasless payment with relayId', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [
+            {
+              paymentId: '0xdef456',
+              payer: '0x1234567890123456789012345678901234567890',
+              merchant: '0x0987654321098765432109876543210987654321',
+              token: '0xTokenAddress1234567890123456789012345678',
+              tokenSymbol: 'TEST',
+              decimals: 18,
+              amount: '1000000000000000000',
+              timestamp: '1735689700',
+              transactionHash: '0xtxhash456',
+              status: 'completed',
+              isGasless: true,
+              relayId: 'relay-789'
+            }
+          ]
+        })
+      });
+
+      const result = await client.getPaymentHistory(validParams);
+
+      expect(result.success).toBe(true);
+      expect(result.data[0].isGasless).toBe(true);
+      expect(result.data[0].relayId).toBe('relay-789');
+    });
+
+    it('TC-009.3: should return empty array when no history', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: []
+        })
+      });
+
+      const result = await client.getPaymentHistory(validParams);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(0);
+    });
+
+    it('TC-009.4: should include limit parameter when provided', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: []
+        })
+      });
+
+      await client.getPaymentHistory({
+        ...validParams,
+        limit: 50
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3001/payments/history?chainId=31337&payer=0x1234567890123456789012345678901234567890&limit=50',
+        expect.any(Object)
+      );
+    });
+
+    it('TC-009.5: should throw MSQPayError on invalid chainId', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          success: false,
+          code: 'INVALID_CHAIN_ID',
+          message: '지원하지 않는 체인 ID입니다'
+        })
+      });
+
+      await expect(client.getPaymentHistory(validParams)).rejects.toMatchObject({
+        code: 'INVALID_CHAIN_ID',
+        statusCode: 400
+      });
+    });
+
+    it('TC-009.6: should throw MSQPayError on invalid payer address', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          success: false,
+          code: 'INVALID_ADDRESS',
+          message: '유효하지 않은 지갑 주소입니다'
+        })
+      });
+
+      await expect(client.getPaymentHistory({
+        chainId: 31337,
+        payer: 'invalid-address'
+      })).rejects.toMatchObject({
+        code: 'INVALID_ADDRESS',
+        statusCode: 400
+      });
     });
   });
 

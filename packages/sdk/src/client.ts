@@ -11,6 +11,8 @@ import type {
   RelayParams,
   RelayResponse,
   RelayStatusResponse,
+  GetPaymentHistoryParams,
+  PaymentHistoryResponse,
   ErrorResponse
 } from './types';
 
@@ -59,6 +61,17 @@ export class MSQPayClient {
 
   async getRelayStatus(relayRequestId: string): Promise<RelayStatusResponse> {
     return this.request<RelayStatusResponse>('GET', `/payments/relay/${relayRequestId}/status`);
+  }
+
+  async getPaymentHistory(params: GetPaymentHistoryParams): Promise<PaymentHistoryResponse> {
+    const queryParams = new URLSearchParams({
+      chainId: params.chainId.toString(),
+      payer: params.payer,
+    });
+    if (params.limit !== undefined) {
+      queryParams.set('limit', params.limit.toString());
+    }
+    return this.request<PaymentHistoryResponse>('GET', `/payments/history?${queryParams}`);
   }
 
   private async request<T>(
