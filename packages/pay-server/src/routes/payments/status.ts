@@ -1,12 +1,11 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
-
-// TODO: DB 추가 후 paymentId로 chainId 동적 조회로 변경
-const DEFAULT_CHAIN_ID = 31337;
+import { PaymentService } from '../../services/payment.service';
 
 export async function getPaymentStatusRoute(
   app: FastifyInstance,
-  blockchainService: BlockchainService
+  blockchainService: BlockchainService,
+  paymentService: PaymentService
 ) {
   app.get<{
     Params: { id: string };
@@ -21,11 +20,20 @@ export async function getPaymentStatusRoute(
         });
       }
 
-      // TODO: DB에서 paymentId로 chainId 조회
-      // 현재는 Hardhat 개발 환경용 하드코딩
-      const chainIdNum = DEFAULT_CHAIN_ID;
+      // Lookup payment by hash from database
+      const paymentData = await paymentService.findByHash(id);
 
-      // 체인 지원 여부 확인
+      if (!paymentData) {
+        return reply.code(404).send({
+          code: 'NOT_FOUND',
+          message: '결제 정보를 찾을 수 없습니다',
+        });
+      }
+
+      // Get chain ID from database snapshot
+      const chainIdNum = paymentData.network_id;
+
+      // Check if chain is supported
       if (!blockchainService.isChainSupported(chainIdNum)) {
         return reply.code(400).send({
           code: 'UNSUPPORTED_CHAIN',
@@ -42,9 +50,30 @@ export async function getPaymentStatusRoute(
         });
       }
 
+      // Sync DB status with on-chain status
+      // If on-chain payment is completed but DB still shows CREATED/PENDING, update DB
+      let finalStatus = paymentData.status;
+      if (
+        paymentStatus.status === 'completed' &&
+        ['CREATED', 'PENDING'].includes(paymentData.status)
+      ) {
+        await paymentService.updateStatusByHash(
+          paymentData.payment_hash,
+          'CONFIRMED',
+          paymentStatus.transactionHash
+        );
+        finalStatus = 'CONFIRMED';
+      }
+
       return reply.code(200).send({
         success: true,
-        data: paymentStatus,
+        data: {
+          ...paymentStatus,
+          payment_hash: paymentData.payment_hash,
+          network_id: paymentData.network_id,
+          token_symbol: paymentData.token_symbol,
+          status: finalStatus,
+        },
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : '결제 상태를 조회할 수 없습니다';

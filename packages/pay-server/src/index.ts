@@ -5,6 +5,14 @@ import path from 'path';
 import { loadChainsConfig } from './config/chains.config';
 import { BlockchainService } from './services/blockchain.service';
 import { DefenderService } from './services/defender.service';
+import { PaymentService } from './services/payment.service';
+import { MerchantService } from './services/merchant.service';
+import { ChainService } from './services/chain.service';
+import { TokenService } from './services/token.service';
+import { PaymentMethodService } from './services/payment-method.service';
+import { RelayService } from './services/relay.service';
+import { getPrismaClient, disconnectPrisma } from './db/client';
+import { getRedisClient, disconnectRedis } from './db/redis';
 import { createPaymentRoute } from './routes/payments/create';
 import { getPaymentStatusRoute } from './routes/payments/status';
 import { submitGaslessRoute } from './routes/payments/gasless';
@@ -34,6 +42,10 @@ try {
   process.exit(1);
 }
 
+// Initialize database clients
+const prisma = getPrismaClient();
+getRedisClient();
+
 // Initialize BlockchainService with multi-chain config
 const blockchainService = new BlockchainService(chainsConfig);
 
@@ -45,6 +57,14 @@ const defenderApiKey = process.env.DEFENDER_API_KEY || '';
 const defenderApiSecret = process.env.DEFENDER_API_SECRET || '';
 const relayerAddress = process.env.RELAYER_ADDRESS || '0x0000000000000000000000000000000000000000';
 const defenderService = new DefenderService(defenderApiUrl, defenderApiKey, defenderApiSecret, relayerAddress);
+
+// Initialize database services
+const paymentService = new PaymentService(prisma);
+const merchantService = new MerchantService(prisma);
+const chainService = new ChainService(prisma);
+const tokenService = new TokenService(prisma);
+const paymentMethodService = new PaymentMethodService(prisma);
+const relayService = new RelayService(prisma);
 
 // Register CORS
 server.register(cors, {
@@ -68,16 +88,42 @@ server.get('/', async (_request, _reply) => {
 
 // Register routes
 const registerRoutes = async () => {
-  await createPaymentRoute(server, blockchainService);
-  await getPaymentStatusRoute(server, blockchainService);
-  await submitGaslessRoute(server, defenderService);
+  await createPaymentRoute(
+    server,
+    blockchainService,
+    merchantService,
+    chainService,
+    tokenService,
+    paymentMethodService,
+    paymentService
+  );
+  await getPaymentStatusRoute(server, blockchainService, paymentService);
+  await submitGaslessRoute(server, defenderService, relayService, paymentService);
   await executeRelayRoute(server, defenderService);
   await getRelayStatusRoute(server, defenderService);
-  await getPaymentHistoryRoute(server, blockchainService);
+  await getPaymentHistoryRoute(server, blockchainService, paymentService, relayService);
   await getTokenBalanceRoute(server, blockchainService);
   await getTokenAllowanceRoute(server, blockchainService);
   await getTransactionStatusRoute(server, blockchainService);
 };
+
+// Graceful shutdown
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n📢 Received ${signal}, shutting down gracefully...`);
+  try {
+    await server.close();
+    await disconnectPrisma();
+    await disconnectRedis();
+    console.log('✅ Server closed successfully');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error during shutdown:', err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Start server
 const start = async () => {
@@ -91,6 +137,8 @@ const start = async () => {
     console.log(`🚀 Server running on http://${host}:${port}`);
   } catch (err) {
     server.log.error(err);
+    await disconnectPrisma();
+    await disconnectRedis();
     process.exit(1);
   }
 };
