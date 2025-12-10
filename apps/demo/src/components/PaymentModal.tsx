@@ -6,6 +6,9 @@ import {
   useWalletClient,
   useReadContract,
   useWaitForTransactionReceipt,
+  useWriteContract,
+  useSwitchChain,
+  useChainId,
 } from "wagmi";
 import { parseUnits, formatUnits, encodeFunctionData, maxUint256, type Address } from "viem";
 import { getPaymentStatus, checkout, submitGaslessPayment, waitForRelayTransaction } from "@/lib/api";
@@ -99,6 +102,9 @@ export function PaymentModal({
 }: PaymentModalProps) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const { writeContractAsync } = useWriteContract();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
 
   const [gasMode, setGasMode] = useState<GasMode>("direct");
   const [status, setStatus] = useState<PaymentStatus>("idle");
@@ -158,25 +164,47 @@ export function PaymentModal({
     loadServerConfig();
   }, [address, product.id]);  // ✅ Depend on product.id only
 
+  // Auto-switch chain when serverConfig loads and wallet is on different chain
+  // If switch fails, show error asking user to add network manually
+  useEffect(() => {
+    const switchToCorrectChain = async () => {
+      if (!serverConfig || !walletClient || chainId === serverConfig.chainId) return;
+
+      const targetChainId = serverConfig.chainId;
+
+      try {
+        await switchChainAsync({ chainId: targetChainId });
+      } catch (switchError) {
+        console.error("Switch chain failed:", switchError);
+        setConfigError(`Please add network (Chain ID: ${targetChainId}) to your wallet and switch to it manually.`);
+      }
+    };
+    switchToCorrectChain();
+  }, [serverConfig, chainId, switchChainAsync, walletClient]);
+
   // Read token balance using wagmi hook (MetaMask handles RPC)
-  const { data: balance, isLoading: balanceLoading } = useReadContract({
+  // chainId from serverConfig ensures we query the correct chain
+  const { data: balance, isLoading: balanceLoading, error: balanceError } = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
+    chainId: serverConfig?.chainId,
     query: {
-      enabled: !!address && !!tokenAddress,
+      enabled: !!address && !!tokenAddress && !!serverConfig?.chainId,
     },
   });
 
   // Read token allowance using wagmi hook (MetaMask handles RPC)
+  // chainId from serverConfig ensures we query the correct chain
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "allowance",
     args: address && serverConfig ? [address, serverConfig.gatewayAddress as Address] : undefined,
+    chainId: serverConfig?.chainId,
     query: {
-      enabled: !!address && !!tokenAddress && !!serverConfig,
+      enabled: !!address && !!tokenAddress && !!serverConfig?.chainId,
     },
   });
 
@@ -189,13 +217,15 @@ export function PaymentModal({
   }, [serverConfig, address, tokenAddress, refetchAllowance]);
 
   // Read user's nonce from Forwarder contract for gasless payments (MetaMask handles RPC)
+  // chainId from serverConfig ensures we query the correct chain
   const { data: forwarderNonce, refetch: refetchNonce } = useReadContract({
     address: serverConfig?.forwarderAddress as Address,
     abi: FORWARDER_ABI,
     functionName: "nonces",
     args: address ? [address] : undefined,
+    chainId: serverConfig?.chainId,
     query: {
-      enabled: !!address && !!serverConfig?.forwarderAddress,
+      enabled: !!address && !!serverConfig?.forwarderAddress && !!serverConfig?.chainId,
     },
   });
 
@@ -254,13 +284,15 @@ export function PaymentModal({
 
   // Handle token approval
   const handleApprove = async () => {
-    if (!walletClient || !address || !tokenAddress || !serverConfig) return;
+    if (!address || !tokenAddress || !serverConfig) return;
 
     try {
       setStatus("approving");
       setError(null);
 
-      const hash = await walletClient.writeContract({
+      // wagmi's writeContractAsync handles chain switching internally when chainId is provided
+      const hash = await writeContractAsync({
+        chainId: serverConfig.chainId,
         address: tokenAddress,
         abi: ERC20_ABI,
         functionName: "approve",
@@ -278,7 +310,7 @@ export function PaymentModal({
 
   // Handle direct payment
   const handleDirectPayment = async () => {
-    if (!walletClient || !address || !tokenAddress || !serverConfig) return;
+    if (!address || !tokenAddress || !serverConfig) return;
 
     try {
       setStatus("paying");
@@ -288,8 +320,10 @@ export function PaymentModal({
       const paymentId = serverConfig.paymentId as `0x${string}`;
       setCurrentPaymentId(paymentId);
 
-      // 1. Send payment TX to Contract
-      const hash = await walletClient.writeContract({
+      // 1. Send payment TX to Contract using wagmi's writeContractAsync
+      // wagmi handles chain switching internally when chainId is provided
+      const hash = await writeContractAsync({
+        chainId: serverConfig.chainId,
         address: serverConfig.gatewayAddress as Address,
         abi: PAYMENT_GATEWAY_ABI,
         functionName: "pay",
@@ -455,7 +489,9 @@ export function PaymentModal({
 
   const currentBalance = balance ?? BigInt(0);
   const currentAllowance = allowance ?? BigInt(0);
-  const hasInsufficientBalance = currentBalance < amount;
+
+  // Only check insufficient balance after balance is actually loaded
+  const hasInsufficientBalance = balance !== undefined && currentBalance < amount;
   const needsApproval = currentAllowance < amount;
   const isLoading = balanceLoading || approveTxLoading || isLoadingConfig;
 

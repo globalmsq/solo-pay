@@ -2,19 +2,15 @@
 
 import { useState, useRef, useCallback } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount } from "wagmi";
 import { ProductCard } from "@/components/ProductCard";
 import { PaymentHistory, PaymentHistoryRef } from "@/components/PaymentHistory";
 import { Toast } from "@/components/Toast";
-import { PAYMENT_HISTORY_REFRESH_DELAY, DEFAULT_TOKEN_SYMBOL, TOKENS } from "@/lib/constants";
+import { PAYMENT_HISTORY_REFRESH_DELAY } from "@/lib/constants";
 import { PRODUCTS } from "@/lib/products";
 
 export default function Home() {
   const { isConnected } = useAccount();
-  const chainId = useChainId();
-  const tokenSymbol = DEFAULT_TOKEN_SYMBOL[chainId] || "TOKEN";
-  const tokenAddress = TOKENS[chainId]?.[tokenSymbol];
-  const isLocalhost = chainId === 31337;
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -47,7 +43,7 @@ export default function Home() {
         <div>
           <h1 className="text-3xl font-bold text-primary-600">MSQ Pay Demo</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Blockchain Payment Gateway - {isLocalhost ? "Localhost (Hardhat)" : "Polygon Amoy Testnet"}
+            Blockchain Payment Gateway
           </p>
         </div>
         <ConnectButton />
@@ -62,13 +58,13 @@ export default function Home() {
           </h2>
           <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
             <li>
-              • <strong>Direct Payment:</strong> You pay gas fees with {isLocalhost ? "ETH" : "MATIC"}
+              • <strong>Direct Payment:</strong> You pay gas fees
             </li>
             <li>
               • <strong>Gasless Payment:</strong> Service covers gas - just sign!
             </li>
             <li>
-              • <strong>Token:</strong> {tokenSymbol} ({isLocalhost ? "Test Token on Localhost" : "Test Token on Polygon Amoy"})
+              • <strong>Token:</strong> Payment token configured by merchant
             </li>
           </ul>
         </div>
@@ -83,7 +79,6 @@ export default function Home() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  tokenSymbol={tokenSymbol}
                   disabled={!isConnected}
                   onPaymentSuccess={handlePaymentSuccess}
                 />
@@ -113,22 +108,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
-        <p>MSQ Pay Demo - {isLocalhost ? "Localhost (Hardhat)" : "Polygon Amoy Testnet"}</p>
-        <p className="mt-1">
-          {tokenSymbol} Token:{" "}
-          {isLocalhost ? (
-            <span className="text-primary-600">{tokenAddress}</span>
-          ) : (
-            <a
-              href={`https://amoy.polygonscan.com/address/${tokenAddress}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary-600 hover:underline"
-            >
-              {tokenAddress?.slice(0, 6)}...{tokenAddress?.slice(-4)}
-            </a>
-          )}
-        </p>
+        <p>MSQ Pay Demo</p>
       </footer>
     </main>
   );

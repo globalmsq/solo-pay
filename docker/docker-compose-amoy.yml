@@ -109,12 +109,11 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: development
-      # Polygon Amoy Contract Addresses
-      NEXT_PUBLIC_FORWARDER_ADDRESS: "0x0d9A0fAf9a8101368aa01B88442B38f82180520E"
-      NEXT_PUBLIC_GATEWAY_ADDRESS: "0x2256bedB57869AF4fadF16e1ebD534A7d47513d7"
-      NEXT_PUBLIC_TOKEN_ADDRESS: "0xE4C687167705Abf55d709395f92e254bdF5825a2"
+      # Chain ID (서버 런타임 환경변수 - docker-compose 전환에 사용)
+      # ⚠️ CHAIN_ID는 NEXT_PUBLIC_ 접두사 없이 사용 (빌드타임 인라인 방지)
+      CHAIN_ID: 80002
+      # Legacy: NEXT_PUBLIC_CHAIN_ID는 유지하되 CHAIN_ID가 우선 적용됨
       NEXT_PUBLIC_CHAIN_ID: 80002
-      NEXT_PUBLIC_RPC_URL: https://rpc-amoy.polygon.technology
       NEXT_PUBLIC_API_URL: http://localhost:3001
       # Server-side API URL (Docker internal network)
       MSQPAY_API_URL: http://server:3001
