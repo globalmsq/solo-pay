@@ -184,7 +184,7 @@ export function PaymentModal({
 
   // Read token balance using wagmi hook (MetaMask handles RPC)
   // chainId from serverConfig ensures we query the correct chain
-  const { data: balance, isLoading: balanceLoading, error: balanceError } = useReadContract({
+  const { data: balance, isLoading: balanceLoading, error: balanceError, refetch: refetchBalance } = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "balanceOf",
@@ -192,6 +192,7 @@ export function PaymentModal({
     chainId: serverConfig?.chainId,
     query: {
       enabled: !!address && !!tokenAddress && !!serverConfig?.chainId,
+      staleTime: 0, // Always fetch fresh balance, ignore global cache
     },
   });
 
@@ -208,13 +209,14 @@ export function PaymentModal({
     },
   });
 
-  // Refetch allowance when modal opens (after serverConfig loads)
-  // This ensures we have fresh allowance data, not stale cache
+  // Refetch balance and allowance when modal opens (after serverConfig loads)
+  // This ensures we have fresh data, not stale cache
   useEffect(() => {
     if (serverConfig && address && tokenAddress) {
+      refetchBalance();
       refetchAllowance();
     }
-  }, [serverConfig, address, tokenAddress, refetchAllowance]);
+  }, [serverConfig, address, tokenAddress, refetchBalance, refetchAllowance]);
 
   // Read user's nonce from Forwarder contract for gasless payments (MetaMask handles RPC)
   // chainId from serverConfig ensures we query the correct chain
@@ -342,6 +344,7 @@ export function PaymentModal({
       await pollPaymentStatus(paymentId);
 
       // 3. Payment confirmed by server
+      await refetchBalance(); // Update balance to show deducted amount
       setStatus("success");
       if (onSuccess) {
         onSuccess(hash);
@@ -464,6 +467,7 @@ export function PaymentModal({
       await pollPaymentStatus(paymentId);
 
       // 8. Payment confirmed by server
+      await refetchBalance(); // Update balance to show deducted amount
       setPendingTxHash(relayResult.transactionHash as Address | undefined);
       setStatus("success");
 
