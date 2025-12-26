@@ -1,7 +1,7 @@
 {
-  "name": "@msqpay/simple-defender",
+  "name": "@msqpay/simple-relayer",
   "version": "1.0.0",
-  "description": "Simple OpenZeppelin Defender HTTP service for local gasless transaction relay",
+  "description": "Simple HTTP service for gasless transaction relay (Defender/msq-relayer compatible)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {

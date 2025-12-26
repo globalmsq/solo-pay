@@ -3,7 +3,7 @@ import cors from '@fastify/cors';
 
 import { createLogger } from './lib/logger';
 import { BlockchainService } from './services/blockchain.service';
-import { DefenderService } from './services/defender.service';
+import { RelayerService } from './services/relayer.service';
 import { PaymentService } from './services/payment.service';
 import { MerchantService } from './services/merchant.service';
 import { ChainService } from './services/chain.service';
@@ -38,14 +38,14 @@ const chainService = new ChainService(prisma);
 // BlockchainService will be initialized after loading chains from DB
 let blockchainService: BlockchainService;
 
-// Initialize Defender service for gasless transactions
-// Production: https://api.defender.openzeppelin.com
-// Local: http://simple-defender:3001
-const defenderApiUrl = process.env.DEFENDER_API_URL || 'http://localhost:3001';
-const defenderApiKey = process.env.DEFENDER_API_KEY || '';
-const defenderApiSecret = process.env.DEFENDER_API_SECRET || '';
+// Initialize Relayer service for gasless transactions
+// Production: msq-relayer-service API
+// Local: http://simple-relayer:3001
+const relayerApiUrl = process.env.RELAYER_API_URL || 'http://localhost:3001';
+const relayerApiKey = process.env.RELAYER_API_KEY || '';
+const relayerApiSecret = process.env.RELAYER_API_SECRET || '';
 const relayerAddress = process.env.RELAYER_ADDRESS || '0x0000000000000000000000000000000000000000';
-const defenderService = new DefenderService(defenderApiUrl, defenderApiKey, defenderApiSecret, relayerAddress);
+const relayerService = new RelayerService(relayerApiUrl, relayerApiKey, relayerApiSecret, relayerAddress);
 
 // Initialize other database services
 const paymentService = new PaymentService(prisma);
@@ -86,9 +86,9 @@ const registerRoutes = async () => {
     paymentService
   );
   await getPaymentStatusRoute(server, blockchainService, paymentService);
-  await submitGaslessRoute(server, defenderService, relayService, paymentService);
-  await executeRelayRoute(server, defenderService);
-  await getRelayStatusRoute(server, defenderService);
+  await submitGaslessRoute(server, relayerService, relayService, paymentService);
+  await executeRelayRoute(server, relayerService);
+  await getRelayStatusRoute(server, relayerService);
   await getPaymentHistoryRoute(server, blockchainService, paymentService, relayService);
   await getTokenBalanceRoute(server, blockchainService);
   await getTokenAllowanceRoute(server, blockchainService);

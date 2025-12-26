@@ -33,13 +33,13 @@ services:
     networks:
       - msqpay-network
 
-  # Simple OZ Defender Relay Service (Gasless transaction relay for Amoy)
-  simple-defender:
+  # Simple Relayer Service (Gasless transaction relay for Amoy)
+  simple-relayer:
     build:
       context: ..
       dockerfile: docker/Dockerfile.packages
-      target: simple-defender
-    container_name: msqpay-simple-defender
+      target: simple-relayer
+    container_name: msqpay-simple-relayer
     ports:
       - "3002:3001"
     environment:
@@ -80,8 +80,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: https://rpc-amoy.polygon.technology
-      # Simple Defender API URL (Local gasless relay)
-      DEFENDER_API_URL: http://simple-defender:3001
+      # Simple Relayer API URL (Local gasless relay)
+      RELAYER_API_URL: http://simple-relayer:3001
       # TODO: Set your relayer address
       RELAYER_ADDRESS: "${RELAYER_ADDRESS}"
       # Polygon Amoy Contract Addresses
@@ -93,7 +93,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      simple-defender:
+      simple-relayer:
         condition: service_healthy
     networks:
       - msqpay-network

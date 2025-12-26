@@ -52,13 +52,13 @@ services:
     networks:
       - msqpay-network
 
-  # Simple OZ Defender Relay Service (Local gasless transaction relay)
-  simple-defender:
+  # Simple Relayer Service (Local gasless transaction relay)
+  simple-relayer:
     build:
       context: ..
       dockerfile: docker/Dockerfile.packages
-      target: simple-defender
-    container_name: msqpay-simple-defender
+      target: simple-relayer
+    container_name: msqpay-simple-relayer
     ports:
       - "3002:3001"
     environment:
@@ -103,9 +103,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: http://hardhat:8545
-      # Simple Defender API URL (Local gasless relay)
-      # Production: https://api.defender.openzeppelin.com
-      DEFENDER_API_URL: http://simple-defender:3001
+      # Simple Relayer API URL (Local gasless relay)
+      # Production: msq-relayer-service
+      RELAYER_API_URL: http://simple-relayer:3001
       # Relayer address (Hardhat Account #2)
       RELAYER_ADDRESS: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
       # Contract addresses (Hardhat deterministic)
@@ -120,7 +120,7 @@ services:
         condition: service_started
       hardhat:
         condition: service_started
-      simple-defender:
+      simple-relayer:
         condition: service_healthy
     networks:
       - msqpay-network

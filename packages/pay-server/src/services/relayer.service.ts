@@ -33,7 +33,7 @@ interface ForwardRelayRequest {
   speed?: 'safeLow' | 'average' | 'fast' | 'fastest';
 }
 
-type DefenderTxStatus =
+type RelayerTxStatus =
   | 'pending'
   | 'sent'
   | 'submitted'
@@ -42,10 +42,10 @@ type DefenderTxStatus =
   | 'confirmed'
   | 'failed';
 
-interface DefenderApiResponse {
+interface RelayerApiResponse {
   transactionId: string;
   hash?: string;
-  status: DefenderTxStatus;
+  status: RelayerTxStatus;
 }
 
 interface RelayerInfo {
@@ -54,20 +54,20 @@ interface RelayerInfo {
 }
 
 /**
- * OZ Defender 서비스 - Gasless 트랜잭션 릴레이
+ * Relayer 서비스 - Gasless 트랜잭션 릴레이
  *
- * HTTP 클라이언트를 통해 Defender API와 통신합니다.
- * - Production: OZ Defender API (api.defender.openzeppelin.com)
- * - Local: SimpleDefender HTTP 서비스 (simple-defender:3001)
+ * HTTP 클라이언트를 통해 Relayer API와 통신합니다.
+ * - Production: msq-relayer-service API
+ * - Local: simple-relayer HTTP 서비스 (simple-relayer:3001)
  *
- * 환경변수 DEFENDER_API_URL만 변경하면 동일한 코드로 양쪽 환경에서 동작합니다.
+ * 환경변수 RELAYER_API_URL만 변경하면 동일한 코드로 양쪽 환경에서 동작합니다.
  */
-export class DefenderService {
+export class RelayerService {
   private readonly baseUrl: string;
   private readonly apiKey: string;
   private readonly apiSecret: string;
   private readonly relayerAddress: Address;
-  private readonly logger = createLogger('DefenderService');
+  private readonly logger = createLogger('RelayerService');
 
   constructor(
     apiUrl: string,
@@ -76,7 +76,7 @@ export class DefenderService {
     relayerAddress: string
   ) {
     if (!apiUrl) {
-      throw new Error('Defender API URL이 필요합니다');
+      throw new Error('Relayer API URL이 필요합니다');
     }
 
     this.baseUrl = apiUrl.replace(/\/$/, ''); // 끝의 슬래시 제거
@@ -103,12 +103,12 @@ export class DefenderService {
   }
 
   /**
-   * Defender 트랜잭션 상태를 내부 상태로 매핑
+   * Relayer 트랜잭션 상태를 내부 상태로 매핑
    */
   private mapStatus(
-    defenderStatus: DefenderTxStatus
+    relayerStatus: RelayerTxStatus
   ): RelayerResponse['status'] {
-    switch (defenderStatus) {
+    switch (relayerStatus) {
       case 'pending':
       case 'sent':
       case 'submitted':
@@ -169,7 +169,7 @@ export class DefenderService {
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
-      const tx = (await response.json()) as DefenderApiResponse;
+      const tx = (await response.json()) as RelayerApiResponse;
 
       this.logger.info(
         `트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
@@ -256,7 +256,7 @@ export class DefenderService {
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
-      const tx = (await response.json()) as DefenderApiResponse;
+      const tx = (await response.json()) as RelayerApiResponse;
 
       this.logger.info(
         `ForwardRequest 트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
@@ -318,7 +318,7 @@ export class DefenderService {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const tx = (await response.json()) as DefenderApiResponse;
+      const tx = (await response.json()) as RelayerApiResponse;
 
       return {
         relayRequestId: tx.transactionId,
