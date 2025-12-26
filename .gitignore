@@ -184,6 +184,9 @@ env/
 !.moai/config/
 .coverage
 
+# Serena MCP
+.serena/
+
 # Claude Code - 필수 파일만 포함
 .claude/*
 !.claude/commands/
