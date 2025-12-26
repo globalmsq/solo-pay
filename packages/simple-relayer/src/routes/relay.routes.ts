@@ -25,10 +25,6 @@ interface GaslessRelayRequestBody {
   signature: string;
 }
 
-interface GetTransactionParams {
-  transactionId: string;
-}
-
 interface GetNonceParams {
   address: string;
 }

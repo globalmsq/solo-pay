@@ -16,22 +16,6 @@ interface RelayerRequest {
   speed: 'safeLow' | 'average' | 'fast' | 'fastest';
 }
 
-/**
- * ForwardRequest를 simple-defender에 전송하기 위한 요청 형식
- */
-interface ForwardRelayRequest {
-  forwardRequest: {
-    from: string;
-    to: string;
-    value: string;
-    gas: string;
-    deadline: string;
-    data: string;
-    signature: string;
-  };
-  gasLimit?: string;
-  speed?: 'safeLow' | 'average' | 'fast' | 'fastest';
-}
 
 type RelayerTxStatus =
   | 'pending'
@@ -214,11 +198,7 @@ export class RelayerService {
   async submitForwardTransaction(
     paymentId: string,
     forwarderAddress: Address,
-    forwardRequest: ForwardRequest,
-    options?: {
-      gasLimit?: string;
-      speed?: 'safeLow' | 'average' | 'fast' | 'fastest';
-    }
+    forwardRequest: ForwardRequest
   ): Promise<RelayerResponse> {
     // 필수 파라미터 검증
     if (!paymentId || !forwarderAddress || !forwardRequest) {
