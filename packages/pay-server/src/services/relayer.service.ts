@@ -152,7 +152,7 @@ export class RelayerService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/relay`, {
+      const response = await fetch(`${this.baseUrl}/api/v1/relay/direct`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
@@ -231,21 +231,23 @@ export class RelayerService {
     }
 
     try {
-      const requestBody: ForwardRelayRequest = {
-        forwardRequest: {
+      // nonce 조회
+      const nonce = await this.getNonce(forwardRequest.from as Address);
+
+      const requestBody = {
+        request: {
           from: forwardRequest.from,
           to: forwardRequest.to,
           value: forwardRequest.value,
           gas: forwardRequest.gas,
-          deadline: forwardRequest.deadline,
+          nonce: nonce,
+          deadline: parseInt(forwardRequest.deadline, 10),
           data: forwardRequest.data,
-          signature: forwardRequest.signature,
         },
-        gasLimit: options?.gasLimit ?? '500000',
-        speed: options?.speed ?? 'average',
+        signature: forwardRequest.signature,
       };
 
-      const response = await fetch(`${this.baseUrl}/relay/forward`, {
+      const response = await fetch(`${this.baseUrl}/api/v1/relay/gasless`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(requestBody),
@@ -304,7 +306,7 @@ export class RelayerService {
 
     try {
       const response = await fetch(
-        `${this.baseUrl}/relay/${relayRequestId}`,
+        `${this.baseUrl}/api/v1/relay/status/${relayRequestId}`,
         {
           method: 'GET',
           headers: this.getHeaders(),
@@ -456,7 +458,7 @@ export class RelayerService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/nonce/${address}`, {
+      const response = await fetch(`${this.baseUrl}/api/v1/relay/gasless/nonce/${address}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });
@@ -488,7 +490,7 @@ export class RelayerService {
     message: string;
   }> {
     try {
-      const response = await fetch(`${this.baseUrl}/relayer`, {
+      const response = await fetch(`${this.baseUrl}/api/v1/health`, {
         method: 'GET',
         headers: this.getHeaders(),
       });

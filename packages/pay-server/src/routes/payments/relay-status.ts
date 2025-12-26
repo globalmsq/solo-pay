@@ -1,14 +1,14 @@
 import { FastifyInstance } from 'fastify';
-import { DefenderService } from '../../services/defender.service';
+import { RelayerService } from '../../services/relayer.service';
 
 /**
  * Get relay transaction status
  *
- * Polls the OZ Defender relay for transaction status
+ * Polls the relayer for transaction status
  */
 export async function getRelayStatusRoute(
   app: FastifyInstance,
-  defenderService: DefenderService
+  relayerService: RelayerService
 ) {
   app.get<{ Params: { relayRequestId: string } }>(
     '/payments/relay/:relayRequestId/status',
@@ -25,7 +25,7 @@ export async function getRelayStatusRoute(
         }
 
         // Query Defender for relay status
-        const result = await defenderService.getRelayStatus(relayRequestId);
+        const result = await relayerService.getRelayStatus(relayRequestId);
 
         return reply.code(200).send({
           success: true,

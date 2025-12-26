@@ -10,20 +10,19 @@ interface RelayRequestBody {
 }
 
 /**
- * ERC2771 ForwardRequest를 포함한 릴레이 요청 바디
+ * ERC2771 Gasless Request (msq-relayer-service 호환)
  */
-interface ForwardRelayRequestBody {
-  forwardRequest: {
+interface GaslessRelayRequestBody {
+  request: {
     from: string;
     to: string;
     value: string;
     gas: string;
-    deadline: string;
+    nonce: string;
+    deadline: number;
     data: string;
-    signature: string;
   };
-  gasLimit?: string;
-  speed?: 'safeLow' | 'average' | 'fast' | 'fastest';
+  signature: string;
 }
 
 interface GetTransactionParams {
@@ -41,11 +40,11 @@ export async function relayRoutes(
   const { relayService } = options;
 
   /**
-   * POST /relay
-   * Submit a relay transaction (OZ Defender compatible)
+   * POST /api/v1/relay/direct
+   * Submit a relay transaction (Direct relay)
    */
   fastify.post<{ Body: RelayRequestBody }>(
-    '/relay',
+    '/api/v1/relay/direct',
     {
       schema: {
         body: {
@@ -103,38 +102,34 @@ export async function relayRoutes(
   );
 
   /**
-   * POST /relay/forward
-   * Submit ERC2771 ForwardRequest (Meta-transaction)
+   * POST /api/v1/relay/gasless
+   * Submit ERC2771 Gasless Request (Meta-transaction)
    *
-   * This endpoint receives a ForwardRequest with signature and calls
+   * This endpoint receives a Gasless request with signature and calls
    * Forwarder.execute(ForwardRequestData) on the blockchain.
    */
-  fastify.post<{ Body: ForwardRelayRequestBody }>(
-    '/relay/forward',
+  fastify.post<{ Body: GaslessRelayRequestBody }>(
+    '/api/v1/relay/gasless',
     {
       schema: {
         body: {
           type: 'object',
-          required: ['forwardRequest'],
+          required: ['request', 'signature'],
           properties: {
-            forwardRequest: {
+            request: {
               type: 'object',
-              required: ['from', 'to', 'value', 'gas', 'deadline', 'data', 'signature'],
+              required: ['from', 'to', 'value', 'gas', 'nonce', 'deadline', 'data'],
               properties: {
                 from: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' },
                 to: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' },
                 value: { type: 'string' },
                 gas: { type: 'string' },
-                deadline: { type: 'string' },
+                nonce: { type: 'string' },
+                deadline: { type: 'number' },
                 data: { type: 'string', pattern: '^0x[a-fA-F0-9]*$' },
-                signature: { type: 'string', pattern: '^0x[a-fA-F0-9]+$' },
               },
             },
-            gasLimit: { type: 'string' },
-            speed: {
-              type: 'string',
-              enum: ['safeLow', 'average', 'fast', 'fastest'],
-            },
+            signature: { type: 'string', pattern: '^0x[a-fA-F0-9]+$' },
           },
         },
         response: {
@@ -142,8 +137,9 @@ export async function relayRoutes(
             type: 'object',
             properties: {
               transactionId: { type: 'string' },
-              hash: { type: 'string' },
+              hash: { type: ['string', 'null'] },
               status: { type: 'string' },
+              createdAt: { type: 'string' },
             },
           },
         },
@@ -151,34 +147,33 @@ export async function relayRoutes(
     },
     async (request, reply) => {
       try {
-        const { forwardRequest, gasLimit, speed } = request.body;
+        const { request: gaslessReq, signature } = request.body;
 
         const forwardRelayRequest: ForwardRelayRequest = {
           forwardRequest: {
-            from: forwardRequest.from as `0x${string}`,
-            to: forwardRequest.to as `0x${string}`,
-            value: forwardRequest.value,
-            gas: forwardRequest.gas,
-            deadline: forwardRequest.deadline,
-            data: forwardRequest.data as `0x${string}`,
-            signature: forwardRequest.signature as `0x${string}`,
+            from: gaslessReq.from as `0x${string}`,
+            to: gaslessReq.to as `0x${string}`,
+            value: gaslessReq.value,
+            gas: gaslessReq.gas,
+            deadline: gaslessReq.deadline.toString(),
+            data: gaslessReq.data as `0x${string}`,
+            signature: signature as `0x${string}`,
           },
-          gasLimit,
-          speed,
         };
 
         const result = await relayService.submitForwardRequest(forwardRelayRequest);
 
         return {
           transactionId: result.transactionId,
-          hash: result.hash,
+          hash: result.hash ?? null,
           status: result.status,
+          createdAt: new Date(result.createdAt).toISOString(),
         };
       } catch (error) {
-        fastify.log.error(error, 'Failed to submit forward relay transaction');
+        fastify.log.error(error, 'Failed to submit gasless relay transaction');
         reply.status(500);
         return {
-          error: 'Failed to submit forward transaction',
+          error: 'Failed to submit gasless transaction',
           message: error instanceof Error ? error.message : 'Unknown error',
         };
       }
@@ -186,18 +181,18 @@ export async function relayRoutes(
   );
 
   /**
-   * GET /relay/:transactionId
-   * Get transaction status (OZ Defender compatible)
+   * GET /api/v1/relay/status/:txId
+   * Get transaction status
    */
-  fastify.get<{ Params: GetTransactionParams }>(
-    '/relay/:transactionId',
+  fastify.get<{ Params: { txId: string } }>(
+    '/api/v1/relay/status/:txId',
     {
       schema: {
         params: {
           type: 'object',
-          required: ['transactionId'],
+          required: ['txId'],
           properties: {
-            transactionId: { type: 'string' },
+            txId: { type: 'string' },
           },
         },
         response: {
@@ -205,8 +200,9 @@ export async function relayRoutes(
             type: 'object',
             properties: {
               transactionId: { type: 'string' },
-              hash: { type: 'string' },
+              hash: { type: ['string', 'null'] },
               status: { type: 'string' },
+              createdAt: { type: 'string' },
             },
           },
           404: {
@@ -220,13 +216,14 @@ export async function relayRoutes(
     },
     async (request, reply) => {
       try {
-        const { transactionId } = request.params;
-        const result = await relayService.getTransaction(transactionId);
+        const { txId } = request.params;
+        const result = await relayService.getTransaction(txId);
 
         return {
           transactionId: result.transactionId,
-          hash: result.hash,
+          hash: result.hash ?? null,
           status: result.status,
+          createdAt: new Date(result.createdAt).toISOString(),
         };
       } catch (error) {
         reply.status(404);
@@ -238,11 +235,11 @@ export async function relayRoutes(
   );
 
   /**
-   * GET /relayer
-   * Get relayer info (OZ Defender compatible)
+   * GET /api/v1/health
+   * Get relayer health info
    */
   fastify.get(
-    '/relayer',
+    '/api/v1/health',
     {
       schema: {
         response: {
@@ -263,11 +260,11 @@ export async function relayRoutes(
   );
 
   /**
-   * GET /nonce/:address
+   * GET /api/v1/relay/gasless/nonce/:address
    * Get current nonce for address from Forwarder contract
    */
   fastify.get<{ Params: GetNonceParams }>(
-    '/nonce/:address',
+    '/api/v1/relay/gasless/nonce/:address',
     {
       schema: {
         params: {
