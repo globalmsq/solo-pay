@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Address } from 'viem';
 import { GaslessRequestSchema, ForwardRequest } from '../../schemas/payment.schema';
-import { DefenderService } from '../../services/defender.service';
+import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
 
@@ -13,7 +13,7 @@ export interface SubmitGaslessRequest {
 
 export async function submitGaslessRoute(
   app: FastifyInstance,
-  defenderService: DefenderService,
+  relayerService: RelayerService,
   relayService: RelayService,
   paymentService: PaymentService
 ) {
@@ -63,7 +63,7 @@ export async function submitGaslessRoute(
         }
 
         // ForwardRequest 서명 검증
-        if (!defenderService.validateTransactionData(validatedData.forwardRequest.signature)) {
+        if (!relayerService.validateTransactionData(validatedData.forwardRequest.signature)) {
           return reply.code(400).send({
             code: 'INVALID_SIGNATURE',
             message: '유효하지 않은 서명 형식입니다',
@@ -71,7 +71,7 @@ export async function submitGaslessRoute(
         }
 
         // Gasless 거래 제출 (ForwardRequest 포함)
-        const result = await defenderService.submitForwardTransaction(
+        const result = await relayerService.submitForwardTransaction(
           id,
           validatedData.forwarderAddress as Address,
           validatedData.forwardRequest

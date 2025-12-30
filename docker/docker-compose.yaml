@@ -1,0 +1,160 @@
+name: msqpay
+
+services:
+  # MySQL 8.0 - Payment Data
+  mysql:
+    image: mysql:8.0
+    container_name: msqpay-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: msqpay
+      MYSQL_USER: msqpay
+      MYSQL_PASSWORD: pass
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - msqpay-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Redis 7 Alpine - Caching
+  redis:
+    image: redis:7-alpine
+    container_name: msqpay-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - msqpay-network
+
+  # Hardhat Local Blockchain + Contract Deployment
+  hardhat-node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: hardhat
+    container_name: msqpay-hardhat-node
+    ports:
+      - "8545:8545"
+    command: >
+      sh -c "npx hardhat node --hostname 0.0.0.0 &
+             sleep 5 &&
+             npx hardhat run scripts/check-and-deploy.ts --network localhost &&
+             wait"
+    networks:
+      - msqpay-network
+
+  # Simple Relayer Service (Local gasless transaction relay)
+  simple-relayer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: simple-relayer
+    container_name: msqpay-simple-relayer
+    ports:
+      - "3002:3001"
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3001
+      # Hardhat private key #2 (Account #2, deterministic - for local dev only)
+      # Address: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+      RELAYER_PRIVATE_KEY: "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+      RPC_URL: http://hardhat-node:8545
+      CHAIN_ID: 31337
+      # ERC2771Forwarder address (first contract deployed at nonce 0)
+      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+    depends_on:
+      - hardhat-node
+    networks:
+      - msqpay-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Payment Server (Fastify)
+  server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: server
+    container_name: msqpay-server
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: msqpay
+      MYSQL_PASSWORD: pass
+      MYSQL_DATABASE: msqpay
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      BLOCKCHAIN_RPC_URL: http://hardhat-node:8545
+      # Simple Relayer API URL (Local gasless relay)
+      # Production: msq-relayer-service
+      RELAYER_API_URL: http://simple-relayer:3001
+      # Relayer address (Hardhat Account #2)
+      RELAYER_ADDRESS: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+      # Contract addresses (Hardhat deterministic)
+      # Deployment order: Forwarder (nonce 0) → Token (nonce 1) → Gateway (nonce 2-3)
+      # Same addresses as msq-relayer-service for consistency
+      TOKEN_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      GATEWAY_ADDRESS: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      hardhat-node:
+        condition: service_started
+      simple-relayer:
+        condition: service_healthy
+    networks:
+      - msqpay-network
+
+  # Demo App (Next.js)
+  demo:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: demo
+    container_name: msqpay-demo
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      # Chain Configuration (서버 런타임 환경변수 - /api/config에서 클라이언트에 전달)
+      # RPC_URL은 브라우저에서 접근 가능한 URL 사용 (Docker 내부 이름 아님)
+      CHAIN_ID: 31337
+      RPC_URL: http://localhost:8545
+      CHAIN_NAME: Hardhat
+      # API URLs
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      # Server-side API URL (Docker internal network)
+      MSQPAY_API_URL: http://server:3001
+    depends_on:
+      - server
+    networks:
+      - msqpay-network
+
+networks:
+  msqpay-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:

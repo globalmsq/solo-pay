@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { RelayExecutionSchema } from '../../schemas/payment.schema';
-import { DefenderService } from '../../services/defender.service';
+import { RelayerService } from '../../services/relayer.service';
 
 export interface ExecuteRelayRequest {
   paymentId: string;
@@ -10,7 +10,7 @@ export interface ExecuteRelayRequest {
 
 export async function executeRelayRoute(
   app: FastifyInstance,
-  defenderService: DefenderService
+  relayerService: RelayerService
 ) {
   app.post<{ Params: { id: string }; Body: ExecuteRelayRequest }>(
     '/payments/:id/relay',
@@ -41,7 +41,7 @@ export async function executeRelayRoute(
         }
 
         // 거래 데이터 검증
-        if (!defenderService.validateTransactionData(validatedData.transactionData)) {
+        if (!relayerService.validateTransactionData(validatedData.transactionData)) {
           return reply.code(400).send({
             code: 'INVALID_TRANSACTION_DATA',
             message: '유효하지 않은 거래 데이터 형식입니다',
@@ -57,9 +57,9 @@ export async function executeRelayRoute(
         }
 
         // 릴레이 실행
-        const result = await defenderService.submitGaslessTransaction(
+        const result = await relayerService.submitGaslessTransaction(
           id,
-          defenderService.getRelayerAddress(),
+          relayerService.getRelayerAddress(),
           validatedData.transactionData
         );
 

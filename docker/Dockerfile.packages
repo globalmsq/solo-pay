@@ -120,43 +120,43 @@ EXPOSE 3000
 CMD ["pnpm", "start"]
 
 # ============================================
-# Simple Defender Dependencies Stage
+# Simple Relayer Dependencies Stage
 # ============================================
-FROM base AS simple-defender-deps
+FROM base AS simple-relayer-deps
 
-# Copy simple-defender package.json
-COPY packages/simple-defender/package.json ./packages/simple-defender/
+# Copy simple-relayer package.json
+COPY packages/simple-relayer/package.json ./packages/simple-relayer/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile --filter @msqpay/simple-defender
+RUN pnpm install --frozen-lockfile --filter @msqpay/simple-relayer
 
 # ============================================
-# Simple Defender Builder Stage
+# Simple Relayer Builder Stage
 # ============================================
-FROM simple-defender-deps AS simple-defender-builder
+FROM simple-relayer-deps AS simple-relayer-builder
 
-# Copy simple-defender source
-COPY packages/simple-defender ./packages/simple-defender
+# Copy simple-relayer source
+COPY packages/simple-relayer ./packages/simple-relayer
 
-WORKDIR /app/packages/simple-defender
+WORKDIR /app/packages/simple-relayer
 
-# Build simple-defender
+# Build simple-relayer
 RUN pnpm build
 
 # ============================================
-# Simple Defender Runtime Stage
+# Simple Relayer Runtime Stage
 # ============================================
-FROM base AS simple-defender
+FROM base AS simple-relayer
 
-# Copy dependencies from simple-defender-deps stage
-COPY --from=simple-defender-deps /app/node_modules ./node_modules
-COPY --from=simple-defender-deps /app/packages/simple-defender/node_modules ./packages/simple-defender/node_modules
+# Copy dependencies from simple-relayer-deps stage
+COPY --from=simple-relayer-deps /app/node_modules ./node_modules
+COPY --from=simple-relayer-deps /app/packages/simple-relayer/node_modules ./packages/simple-relayer/node_modules
 
-# Copy built simple-defender
-COPY --from=simple-defender-builder /app/packages/simple-defender/dist ./packages/simple-defender/dist
-COPY --from=simple-defender-builder /app/packages/simple-defender/package.json ./packages/simple-defender/
+# Copy built simple-relayer
+COPY --from=simple-relayer-builder /app/packages/simple-relayer/dist ./packages/simple-relayer/dist
+COPY --from=simple-relayer-builder /app/packages/simple-relayer/package.json ./packages/simple-relayer/
 
-WORKDIR /app/packages/simple-defender
+WORKDIR /app/packages/simple-relayer
 
 # Environment variables
 ENV NODE_ENV=production

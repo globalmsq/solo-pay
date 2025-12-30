@@ -12,6 +12,7 @@ out/
 cache/
 artifacts/
 typechain-types/
+ignition/deployments/
 
 # Environment
 .env
@@ -183,6 +184,9 @@ env/
 # Mac
 !.moai/config/
 .coverage
+
+# Serena MCP
+.serena/
 
 # Claude Code - 필수 파일만 포함
 .claude/*
