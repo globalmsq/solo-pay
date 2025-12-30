@@ -121,7 +121,7 @@ export async function relayRoutes(
                 value: { type: 'string' },
                 gas: { type: 'string' },
                 nonce: { type: 'string' },
-                deadline: { type: 'number' },
+                deadline: { type: 'string' },
                 data: { type: 'string', pattern: '^0x[a-fA-F0-9]*$' },
               },
             },

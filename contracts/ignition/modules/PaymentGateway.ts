@@ -12,7 +12,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
  * - owner: Address of the PaymentGateway owner (default: Account #0)
  * - forwarderAddress: Optional existing ERC2771Forwarder address to reuse
  *   - If provided: Uses existing forwarder (e.g., from msq-relayer-service)
- *   - If not provided: Deploys new MSQPayForwarder
+ *   - If not provided: Deploys new MSQForwarder
  *
  * Note: MockERC20 is deployed separately via MockERC20.ts module
  */
@@ -33,7 +33,7 @@ const PaymentGatewayModule = buildModule("PaymentGateway", (m) => {
     });
   } else {
     // Deploy new forwarder
-    forwarder = m.contract("ERC2771Forwarder", ["MSQPayForwarder"]);
+    forwarder = m.contract("ERC2771Forwarder", ["MSQForwarder"]);
   }
 
   // Deploy PaymentGatewayV1 implementation (with trustedForwarder in constructor)
