@@ -6,7 +6,8 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "prisma:generate": "prisma generate",
+    "build": "prisma:generate && tsc",
     "start": "tsx src/index.ts",
     "test": "vitest --run",
     "test:coverage": "vitest --run --coverage",

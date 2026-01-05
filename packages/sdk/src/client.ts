@@ -81,7 +81,7 @@ export class MSQPayClient {
   ): Promise<T> {
     const headers = {
       ...DEFAULT_HEADERS,
-      'X-API-Key': this.apiKey
+      'x-api-key': this.apiKey
     };
 
     const response = await fetch(`${this.apiUrl}${path}`, {
