@@ -142,7 +142,7 @@ Response example:
 - `GET /tokens/balance` - Query token balance
 - `GET /tokens/allowance` - Query token allowance
 
-For detailed API documentation, refer to [docs/api/payments.md](../../docs/api/payments.md).
+For detailed API documentation, refer to [docs/reference/api.md](../../docs/reference/api.md).
 
 ## Project Structure
 
@@ -391,9 +391,9 @@ curl https://rpc-amoy.polygon.technology
 
 ## Documentation
 
-- [API Reference](../../docs/api/payments.md) - Complete API documentation
-- [Architecture Guide](../../docs/architecture-payments.md) - System architecture
-- [Deployment Guide](../../docs/deployment/payments-setup.md) - Production deployment
+- [API Reference](../../docs/reference/api.md) - Complete API documentation
+- [Architecture Guide](../../docs/reference/architecture.md) - System architecture
+- [Deployment Guide](../../docs/guides/deploy-server.md) - Production deployment
 
 ## License
 

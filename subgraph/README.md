@@ -416,7 +416,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
 
 - [The Graph Documentation](https://thegraph.com/docs/)
 - [AssemblyScript API](https://thegraph.com/docs/en/developing/assemblyscript-api/)
-- [Architecture Documentation](../docs/architecture-payments.md)
+- [Architecture Documentation](../docs/reference/architecture.md)
 
 ## License
 

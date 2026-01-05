@@ -416,7 +416,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
 
 - [The Graph 문서](https://thegraph.com/docs/)
 - [AssemblyScript API](https://thegraph.com/docs/en/developing/assemblyscript-api/)
-- [아키텍처 문서](../docs/architecture-payments.md)
+- [아키텍처 문서](../docs/reference/architecture.md)
 
 ## 라이선스
 

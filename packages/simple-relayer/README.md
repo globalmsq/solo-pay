@@ -266,8 +266,8 @@ In production, always use professional **Relayer services** (e.g., OpenZeppelin 
 
 ## Documentation
 
-- [Architecture Documentation](../../docs/architecture-payments.md)
-- [Deployment Guide](../../docs/deployment/payments-setup.md)
+- [Architecture Documentation](../../docs/reference/architecture.md)
+- [Deployment Guide](../../docs/guides/deploy-server.md)
 - [OpenZeppelin Defender Documentation](https://docs.openzeppelin.com/defender/)
 
 ## License

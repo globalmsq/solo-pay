@@ -397,31 +397,6 @@ MSQPay가 가스비를 대납하는 방식입니다.
 6. 결제 상태 폴링으로 완료 확인
 ```
 
-```typescript
-// Gasless 결제 전체 플로우 예시
-import { getContractsForChain } from '@/lib/wagmi';
-
-async function processGaslessPayment(paymentId: string, chainId: number) {
-  const contracts = getContractsForChain(chainId);
-  if (!contracts) throw new Error('지원하지 않는 체인입니다');
-
-  // 1. 메타 트랜잭션 서명 생성 (지갑에서)
-  const signature = await signMetaTransaction(/* ... */);
-
-  // 2. 상점 서버로 서명 제출
-  const submitResult = await submitGaslessPayment(
-    paymentId,
-    contracts.forwarder,
-    signature
-  );
-
-  // 3. 결제 완료 대기
-  const confirmedPayment = await waitForPaymentConfirmation(paymentId);
-
-  return confirmedPayment;
-}
-```
-
 ---
 
 ## 에러 처리
