@@ -259,7 +259,7 @@ test('should process payment', async ({ page }) => {
 docs/
 ├── getting-started.md              # 시작하기
 ├── guides/                         # 사용 가이드
-│   ├── integrate-payment.md
+│   ├── integrate-payment.ko.md
 │   ├── deploy-server.md
 │   └── contribute.md (이 문서)
 ├── reference/                      # 참고 자료
@@ -287,6 +287,6 @@ docs/
 
 ## 관련 문서
 
-- [시작하기](../getting-started.md) - 로컬 환경 셋업
-- [결제 통합하기](integrate-payment.md) - SDK 사용법
-- [API 레퍼런스](../reference/api.md) - API 문서
+- [시작하기](../getting-started.ko.md) - 로컬 환경 셋업
+- [결제 통합하기](integrate-payment.ko.md) - SDK 사용법
+- [API 레퍼런스](../reference/api.ko.md) - API 문서

@@ -347,7 +347,7 @@ Production 환경에서는 API Server와 Status Worker를 분리:
 
 ## 관련 문서
 
-- [API 레퍼런스](api.md) - 모든 API 엔드포인트
-- [SDK 레퍼런스](sdk.md) - MSQPayClient 메서드
-- [결제 통합하기](../guides/integrate-payment.md) - SDK 사용법
-- [서버 배포하기](../guides/deploy-server.md) - 배포 가이드
+- [API 레퍼런스](api.ko.md) - 모든 API 엔드포인트
+- [SDK 레퍼런스](sdk.ko.md) - MSQPayClient 메서드
+- [결제 통합하기](../guides/integrate-payment.ko.md) - SDK 사용법
+- [서버 배포하기](../guides/deploy-server.ko.md) - 배포 가이드

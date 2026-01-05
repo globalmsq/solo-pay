@@ -266,8 +266,8 @@ pnpm typecheck
 
 ## 문서
 
-- [아키텍처 문서](../../docs/reference/architecture.md)
-- [배포 가이드](../../docs/guides/deploy-server.md)
+- [아키텍처 문서](../../docs/reference/architecture.ko.md)
+- [배포 가이드](../../docs/guides/deploy-server.ko.md)
 - [OpenZeppelin Defender 문서](https://docs.openzeppelin.com/defender/)
 
 ## 라이선스

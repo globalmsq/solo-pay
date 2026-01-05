@@ -195,7 +195,7 @@ const relayResult = await client.executeRelay({
 });
 ```
 
-**상세 문서**: [SDK README](./packages/sdk/README.md)
+**상세 문서**: [SDK README](./packages/sdk/README.ko.md)
 
 ## Payment Server API
 
@@ -252,23 +252,23 @@ ERC-20 토큰의 지갑 상태를 조회합니다:
 ### 상세 문서
 
 - **[시작하기](./docs/getting-started.ko.md)** - Docker를 사용한 5분 설치 가이드
-- **[API 레퍼런스](./docs/reference/api.md)** - 모든 API 엔드포인트, 요청/응답 포맷
-- **[SDK 레퍼런스](./docs/reference/sdk.md)** - MSQPayClient 메서드, 전체 TypeScript 타입
-- **[아키텍처 가이드](./docs/reference/architecture.md)** - 시스템 설계, 보안, 결제 흐름
-- **[통합 가이드](./docs/guides/integrate-payment.md)** - SDK 사용법, Direct/Gasless 결제
-- **[배포 가이드](./docs/guides/deploy-server.md)** - 프로덕션 배포, 환경 설정
-- **[에러 코드](./docs/reference/errors.md)** - 모든 에러 코드 및 해결 방법
+- **[API 레퍼런스](./docs/reference/api.ko.md)** - 모든 API 엔드포인트, 요청/응답 포맷
+- **[SDK 레퍼런스](./docs/reference/sdk.ko.md)** - MSQPayClient 메서드, 전체 TypeScript 타입
+- **[아키텍처 가이드](./docs/reference/architecture.ko.md)** - 시스템 설계, 보안, 결제 흐름
+- **[통합 가이드](./docs/guides/integrate-payment.ko.md)** - SDK 사용법, Direct/Gasless 결제
+- **[배포 가이드](./docs/guides/deploy-server.ko.md)** - 프로덕션 배포, 환경 설정
+- **[에러 코드](./docs/reference/errors.ko.md)** - 모든 에러 코드 및 해결 방법
 
 ## Documentation
 
 - [시작하기](./docs/getting-started.ko.md) - 빠른 설치 가이드
-- [결제 통합하기](./docs/guides/integrate-payment.md) - 상점에 결제 기능 통합
-- [서버 배포하기](./docs/guides/deploy-server.md) - 결제 서버 배포
-- [기여하기](./docs/guides/contribute.md) - 프로젝트에 기여하기
-- [API 레퍼런스](./docs/reference/api.md) - 전체 API 문서
-- [SDK 레퍼런스](./docs/reference/sdk.md) - SDK 사용법 및 타입
-- [에러 코드](./docs/reference/errors.md) - 모든 에러 코드 및 해결 방법
-- [아키텍처](./docs/reference/architecture.md) - 시스템 아키텍처
+- [결제 통합하기](./docs/guides/integrate-payment.ko.md) - 상점에 결제 기능 통합
+- [서버 배포하기](./docs/guides/deploy-server.ko.md) - 결제 서버 배포
+- [기여하기](./docs/guides/contribute.ko.md) - 프로젝트에 기여하기
+- [API 레퍼런스](./docs/reference/api.ko.md) - 전체 API 문서
+- [SDK 레퍼런스](./docs/reference/sdk.ko.md) - SDK 사용법 및 타입
+- [에러 코드](./docs/reference/errors.ko.md) - 모든 에러 코드 및 해결 방법
+- [아키텍처](./docs/reference/architecture.ko.md) - 시스템 아키텍처
 
 ## Tech Stack
 

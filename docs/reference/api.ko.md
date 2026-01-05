@@ -349,7 +349,7 @@ ERC-20 토큰 잔액을 조회합니다.
 | NOT_FOUND | 404 | 리소스 없음 |
 | INTERNAL_ERROR | 500 | 서버 오류 |
 
-전체 에러 코드 목록은 [에러 코드 레퍼런스](errors.md)를 참고하세요.
+전체 에러 코드 목록은 [에러 코드 레퍼런스](errors.ko.md)를 참고하세요.
 
 ---
 
@@ -403,7 +403,7 @@ const status = await client.getPaymentStatus(payment.paymentId);
 
 ## 관련 문서
 
-- [결제 통합하기](../guides/integrate-payment.md) - SDK 사용 가이드
-- [SDK 레퍼런스](sdk.md) - MSQPayClient 전체 메서드
-- [에러 코드](errors.md) - 전체 에러 코드 목록
-- [시스템 구조](architecture.md) - 아키텍처 다이어그램
+- [결제 통합하기](../guides/integrate-payment.ko.md) - SDK 사용 가이드
+- [SDK 레퍼런스](sdk.ko.md) - MSQPayClient 전체 메서드
+- [에러 코드](errors.ko.md) - 전체 에러 코드 목록
+- [시스템 구조](architecture.ko.md) - 아키텍처 다이어그램

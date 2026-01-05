@@ -19,8 +19,8 @@ MSQPay는 ERC-20 토큰 기반 블록체인 결제 시스템입니다. 상점서
 ### 1. Docker로 로컬 데모 실행
 
 ```bash
-# Docker Desktop 실행
-open /Applications/Docker.app
+# Docker Desktop 실행 (실행 중이 아닌 경우)
+# Docker Desktop이 설치되어 있고 실행 중이어야 합니다
 
 # Docker Compose 시작
 cd docker
@@ -52,25 +52,25 @@ curl http://localhost:3001/health
 #### 상점 개발자
 
 결제 기능을 상점에 통합하려면:
-- [결제 통합하기](guides/integrate-payment.md) - SDK 사용법, Direct/Gasless 결제 구현
+- [결제 통합하기](guides/integrate-payment.ko.md) - SDK 사용법, Direct/Gasless 결제 구현
 
 #### 운영자
 
 결제 서버를 배포하려면:
-- [서버 배포하기](guides/deploy-server.md) - Docker, 환경 변수, 프로덕션 체크리스트
+- [서버 배포하기](guides/deploy-server.ko.md) - Docker, 환경 변수, 프로덕션 체크리스트
 
 #### 개발자
 
 프로젝트에 기여하려면:
-- [코드 기여하기](guides/contribute.md) - 로컬 개발 환경, PR 프로세스
+- [코드 기여하기](guides/contribute.ko.md) - 로컬 개발 환경, PR 프로세스
 
 #### 참고 자료
 
 자세한 내용은:
-- [API 레퍼런스](reference/api.md) - 모든 API 엔드포인트
-- [SDK 레퍼런스](reference/sdk.md) - MSQPayClient 메서드
-- [시스템 구조](reference/architecture.md) - 전체 시스템 다이어그램
-- [에러 코드](reference/errors.md) - 에러 코드 및 해결 방법
+- [API 레퍼런스](reference/api.ko.md) - 모든 API 엔드포인트
+- [SDK 레퍼런스](reference/sdk.ko.md) - MSQPayClient 메서드
+- [시스템 구조](reference/architecture.ko.md) - 전체 시스템 다이어그램
+- [에러 코드](reference/errors.ko.md) - 에러 코드 및 해결 방법
 
 ## 시스템 구조
 

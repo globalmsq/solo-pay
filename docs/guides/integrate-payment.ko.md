@@ -333,7 +333,7 @@ const checkPayment = setInterval(async () => {
 
 ## 다음 단계
 
-- [API 레퍼런스](../reference/api.md) - 모든 API 엔드포인트 상세
-- [SDK 레퍼런스](../reference/sdk.md) - MSQPayClient 전체 메서드
-- [에러 코드](../reference/errors.md) - 전체 에러 코드 목록
-- [서버 배포하기](deploy-server.md) - 결제 서버 배포 가이드
+- [API 레퍼런스](../reference/api.ko.md) - 모든 API 엔드포인트 상세
+- [SDK 레퍼런스](../reference/sdk.ko.md) - MSQPayClient 전체 메서드
+- [에러 코드](../reference/errors.ko.md) - 전체 에러 코드 목록
+- [서버 배포하기](deploy-server.ko.md) - 결제 서버 배포 가이드

@@ -225,6 +225,6 @@ curl -X POST http://localhost:8545 \
 
 ## 관련 문서
 
-- [API 레퍼런스](api.md) - 모든 API 엔드포인트
-- [결제 통합하기](../guides/integrate-payment.md) - 에러 처리 예제
-- [SDK 레퍼런스](sdk.md) - MSQPayError 클래스
+- [API 레퍼런스](api.ko.md) - 모든 API 엔드포인트
+- [결제 통합하기](../guides/integrate-payment.ko.md) - 에러 처리 예제
+- [SDK 레퍼런스](sdk.ko.md) - MSQPayError 클래스

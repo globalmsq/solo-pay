@@ -19,8 +19,8 @@ MSQPay is an ERC-20 token-based blockchain payment system. Store servers can cre
 ### 1. Run Local Demo with Docker
 
 ```bash
-# Start Docker Desktop
-open /Applications/Docker.app
+# Start Docker Desktop (if not running)
+# Docker Desktop must be installed and running
 
 # Start Docker Compose
 cd docker

@@ -61,7 +61,7 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 | `MSQPAY_API_URL` | ❌ | Server | Payment server URL (default: localhost:3001) |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅ | Client | Issued from [WalletConnect](https://cloud.walletconnect.com/) |
 
-> **Note**: Supported chains and contract addresses are configured in `src/lib/wagmi.ts`. RPC connects through MetaMask wallet.
+> **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the payment server's database. Wallet connection is handled through RainbowKit.
 
 ### 2. Install Dependencies
 
@@ -154,23 +154,28 @@ export async function GET(
 ```typescript
 // app/api/payments/history/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { getMSQPayClient } from '@/lib/msqpay-server';
 
 export async function GET(request: NextRequest) {
   try {
     const payer = request.nextUrl.searchParams.get('payer');
+    const chainId = request.nextUrl.searchParams.get('chainId');
 
-    if (!payer) {
+    if (!payer || !chainId) {
       return NextResponse.json(
-        { success: false, message: 'payer parameter required' },
+        { success: false, message: 'payer and chainId parameters required' },
         { status: 400 }
       );
     }
 
-    const apiUrl = process.env.MSQPAY_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/payments/history?payer=${payer}`);
-    const data = await response.json();
+    const client = getMSQPayClient();
+    const history = await client.getPaymentHistory({
+      chainId: parseInt(chainId),
+      payer,
+      limit: 100
+    });
 
-    return NextResponse.json(data);
+    return NextResponse.json(history);
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },

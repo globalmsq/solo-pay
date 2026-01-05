@@ -141,7 +141,7 @@ curl http://localhost:3001/health
 - `GET /tokens/balance` - 토큰 잔액 조회
 - `GET /tokens/allowance` - 토큰 승인량 조회
 
-자세한 API 문서는 [docs/reference/api.md](../../docs/reference/api.md)를 참고하세요.
+자세한 API 문서는 [docs/reference/api.md](../../docs/reference/api.ko.md)를 참고하세요.
 
 ## 프로젝트 구조
 
@@ -298,13 +298,13 @@ Docker 환경에서는 다음 서비스와 연동됩니다:
 6. 로드 밸런서 및 모니터링 설정
 7. 서버 실행
 
-배포 가이드: [docs/guides/deploy-server.md](../../docs/guides/deploy-server.md)
+배포 가이드: [docs/guides/deploy-server.md](../../docs/guides/deploy-server.ko.md)
 
 ## 문서
 
-- [API 레퍼런스](../../docs/reference/api.md)
-- [아키텍처 문서](../../docs/reference/architecture.md)
-- [배포 가이드](../../docs/guides/deploy-server.md)
+- [API 레퍼런스](../../docs/reference/api.ko.md)
+- [아키텍처 문서](../../docs/reference/architecture.ko.md)
+- [배포 가이드](../../docs/guides/deploy-server.ko.md)
 
 ## 라이선스
 

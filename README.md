@@ -249,16 +249,6 @@ Key environment variables for the payment server:
 
 > **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the database `chains` table, not environment variables. See [Pay Server README](./packages/pay-server/README.md#multi-chain-configuration) for details.
 
-### Detailed Documentation
-
-- **[Getting Started](./docs/getting-started.md)** - Quick start with Docker, 5-minute setup
-- **[API Reference](./docs/reference/api.md)** - All API endpoints, request/response formats
-- **[SDK Reference](./docs/reference/sdk.md)** - MSQPayClient methods, full TypeScript types
-- **[Architecture Guide](./docs/reference/architecture.md)** - System design, security, payment flows
-- **[Integration Guide](./docs/guides/integrate-payment.md)** - SDK usage, Direct/Gasless payments
-- **[Deployment Guide](./docs/guides/deploy-server.md)** - Production deployment, environment setup
-- **[Error Codes](./docs/reference/errors.md)** - All error codes and solutions
-
 ## Documentation
 
 - [Getting Started](./docs/getting-started.md) - Quick setup guide

@@ -739,6 +739,5 @@ Error: Insufficient balance for gas
 
 ## 관련 문서
 
-- [API 레퍼런스](../api/payments.md)
-- [아키텍처 가이드](../architecture-payments.md)
-- [구현 가이드](../implementation/payments-api.md)
+- [API 레퍼런스](../reference/api.ko.md)
+- [아키텍처 가이드](../reference/architecture.ko.md)

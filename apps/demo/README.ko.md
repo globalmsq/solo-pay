@@ -61,7 +61,7 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 | `MSQPAY_API_URL` | ❌ | Server | 결제서버 URL (기본: localhost:3001) |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅ | Client | [WalletConnect](https://cloud.walletconnect.com/)에서 발급 |
 
-> **참고**: 지원 체인과 컨트랙트 주소는 `src/lib/wagmi.ts`에 설정되어 있습니다. RPC는 MetaMask 지갑을 통해 연결됩니다.
+> **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 결제 서버의 데이터베이스에서 관리됩니다. 지갑 연결은 RainbowKit을 통해 처리됩니다.
 
 ### 2. 의존성 설치
 
@@ -174,23 +174,28 @@ export async function GET(
 ```typescript
 // app/api/payments/history/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { getMSQPayClient } from '@/lib/msqpay-server';
 
 export async function GET(request: NextRequest) {
   try {
     const payer = request.nextUrl.searchParams.get('payer');
+    const chainId = request.nextUrl.searchParams.get('chainId');
 
-    if (!payer) {
+    if (!payer || !chainId) {
       return NextResponse.json(
-        { success: false, message: 'payer parameter required' },
+        { success: false, message: 'payer and chainId parameters required' },
         { status: 400 }
       );
     }
 
-    const apiUrl = process.env.MSQPAY_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/payments/history?payer=${payer}`);
-    const data = await response.json();
+    const client = getMSQPayClient();
+    const history = await client.getPaymentHistory({
+      chainId: parseInt(chainId),
+      payer,
+      limit: 100
+    });
 
-    return NextResponse.json(data);
+    return NextResponse.json(history);
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
@@ -442,10 +447,10 @@ try {
 
 ## 추가 리소스
 
-- [MSQPay SDK 문서](/packages/sdk/README.md)
-- [API 명세서](/docs/reference/api.md)
-- [아키텍처 문서](/docs/reference/architecture.md)
-- [스마트 컨트랙트 문서](/contracts/README.md)
+- [MSQPay SDK 문서](/packages/sdk/README.ko.md)
+- [API 명세서](/docs/reference/api.ko.md)
+- [아키텍처 문서](/docs/reference/architecture.ko.md)
+- [스마트 컨트랙트 문서](/contracts/README.ko.md)
 
 ---
 
