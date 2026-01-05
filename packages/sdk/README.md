@@ -1,5 +1,7 @@
 # MSQPay SDK (`@globalmsq/msqpay`)
 
+[English](README.md) | [한국어](README.ko.md)
+
 A lightweight TypeScript SDK for store servers to interact with the MSQPay payment API. Built with Node.js 18+ native `fetch` and zero external dependencies.
 
 ## Installation

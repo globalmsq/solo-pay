@@ -1,95 +1,97 @@
-# MSQPay Demo App - 상점 통합 가이드
+# MSQPay Demo App - Merchant Integration Guide
 
-이 문서는 MSQPay 결제 시스템을 상점에 통합하는 방법을 설명합니다.
+[English](README.md) | [한국어](README.ko.md)
 
-## 목차
+This document explains how to integrate the MSQPay payment system into your merchant application.
 
-- [아키텍처 개요](#아키텍처-개요)
-- [시작하기](#시작하기)
-- [SDK 설치 및 설정](#sdk-설치-및-설정)
-- [API 엔드포인트 구현](#api-엔드포인트-구현)
-- [프론트엔드 통합](#프론트엔드-통합)
-- [결제 플로우](#결제-플로우)
-- [에러 처리](#에러-처리)
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Getting Started](#getting-started)
+- [SDK Installation and Setup](#sdk-installation-and-setup)
+- [API Endpoint Implementation](#api-endpoint-implementation)
+- [Frontend Integration](#frontend-integration)
+- [Payment Flows](#payment-flows)
+- [Error Handling](#error-handling)
 
 ---
 
-## 아키텍처 개요
+## Architecture Overview
 
-MSQPay는 3계층 아키텍처를 사용합니다:
+MSQPay uses a 3-tier architecture:
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   프론트엔드     │────▶│   상점 서버      │────▶│  MSQPay 서버    │────▶│   블록체인       │
-│   (브라우저)     │     │   (Next.js)     │     │   (결제 서버)    │     │   (Ethereum)    │
+│   Frontend      │────▶│  Merchant Server │────▶│  MSQPay Server  │────▶│   Blockchain    │
+│   (Browser)     │     │   (Next.js)     │     │  (Payment API)  │     │   (Ethereum)    │
 └─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
-     fetch API            MSQPay SDK           REST API              스마트 컨트랙트
+     fetch API            MSQPay SDK           REST API              Smart Contract
 ```
 
-**핵심 원칙:**
-- 프론트엔드는 직접 MSQPay 서버와 통신하지 않습니다
-- 모든 API 호출은 상점 서버를 통해 프록시됩니다
-- API 키는 서버 사이드에서만 사용됩니다 (보안)
+**Core Principles:**
+- Frontend never communicates directly with MSQPay server
+- All API calls are proxied through merchant server
+- API keys are used server-side only (security)
 
 ---
 
-## 시작하기
+## Getting Started
 
-### 1. 환경변수 설정
+### 1. Environment Variables
 
 ```bash
-# .env.example을 .env.local로 복사
+# Copy .env.example to .env.local
 cp .env.example .env.local
 ```
 
-`.env.local` 파일을 열고 값을 설정합니다:
+Open `.env.local` and set values:
 
 ```bash
-# 서버 사이드 (프론트엔드 노출 안됨)
+# Server-side (not exposed to frontend)
 MSQPAY_API_KEY=your-api-key-here
 MSQPAY_API_URL=http://localhost:3001
 
-# 클라이언트 사이드
+# Client-side
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 ```
 
-| 변수 | 필수 | 위치 | 설명 |
-|------|------|------|------|
-| `MSQPAY_API_KEY` | ✅ | Server | MSQPay 결제서버 인증 키 |
-| `MSQPAY_API_URL` | ❌ | Server | 결제서버 URL (기본: localhost:3001) |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅ | Client | [WalletConnect](https://cloud.walletconnect.com/)에서 발급 |
+| Variable | Required | Location | Description |
+|----------|----------|----------|-------------|
+| `MSQPAY_API_KEY` | ✅ | Server | MSQPay server authentication key |
+| `MSQPAY_API_URL` | ❌ | Server | Payment server URL (default: localhost:3001) |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅ | Client | Issued from [WalletConnect](https://cloud.walletconnect.com/) |
 
-> **참고**: 지원 체인과 컨트랙트 주소는 `src/lib/wagmi.ts`에 설정되어 있습니다. RPC는 MetaMask 지갑을 통해 연결됩니다.
+> **Note**: Supported chains and contract addresses are configured in `src/lib/wagmi.ts`. RPC connects through MetaMask wallet.
 
-### 2. 의존성 설치
+### 2. Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3. 개발 서버 실행
+### 3. Run Development Server
 
 ```bash
-# 로컬 개발
+# Local development
 pnpm dev
 
-# Docker 환경 (전체 스택)
+# Docker environment (full stack)
 cd docker && docker-compose up
 ```
 
 ---
 
-## SDK 설치 및 설정
+## SDK Installation and Setup
 
-### 설치
+### Installation
 
 ```bash
 pnpm add @globalmsq/msqpay
 ```
 
-### 클라이언트 초기화
+### Client Initialization
 
-상점 서버에서 MSQPay SDK를 싱글톤으로 초기화합니다:
+Initialize MSQPay SDK as singleton on merchant server:
 
 ```typescript
 // lib/msqpay-server.ts
@@ -111,19 +113,19 @@ export function getMSQPayClient(): MSQPayClient {
 }
 ```
 
-**환경 옵션:**
-- `development`: 개발 서버 (기본 URL 사용)
-- `staging`: 스테이징 서버
-- `production`: 프로덕션 서버
-- `custom`: 커스텀 URL 직접 지정 (Docker 환경 등)
+**Environment Options:**
+- `development`: Development server (uses default URL)
+- `staging`: Staging server
+- `production`: Production server
+- `custom`: Specify custom URL directly (for Docker environment, etc.)
 
 ---
 
-## API 엔드포인트 구현
+## API Endpoint Implementation
 
-상점 서버에서 구현해야 할 API 엔드포인트입니다.
+API endpoints to implement on merchant server.
 
-### 1. 결제 상태 조회
+### 1. Check Payment Status
 
 ```typescript
 // app/api/payments/[paymentId]/status/route.ts
@@ -147,27 +149,7 @@ export async function GET(
 }
 ```
 
-**응답 예시:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "pay_abc123",
-    "userId": "user_001",
-    "amount": 100,
-    "currency": "USD",
-    "tokenAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    "status": "confirmed",
-    "transactionHash": "0x...",
-    "blockNumber": 12345,
-    "createdAt": "2024-01-15T10:30:00Z",
-    "updatedAt": "2024-01-15T10:31:00Z"
-  }
-}
-```
-
-### 2. 결제 내역 조회
+### 2. Query Payment History
 
 ```typescript
 // app/api/payments/history/route.ts
@@ -198,7 +180,7 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-### 3. Gasless 결제 제출
+### 3. Submit Gasless Payment
 
 ```typescript
 // app/api/payments/[paymentId]/gasless/route.ts
@@ -229,7 +211,7 @@ export async function POST(
 }
 ```
 
-### 4. Relay 트랜잭션 실행
+### 4. Execute Relay Transaction
 
 ```typescript
 // app/api/payments/[paymentId]/relay/route.ts
@@ -262,14 +244,14 @@ export async function POST(
 
 ---
 
-## 프론트엔드 통합
+## Frontend Integration
 
-프론트엔드에서 상점 서버 API를 호출하는 방법입니다.
+How to call merchant server API from frontend.
 
-### 결제 상태 조회
+### Check Payment Status
 
 ```typescript
-// 프론트엔드 코드
+// Frontend code
 async function checkPaymentStatus(paymentId: string) {
   const response = await fetch(`/api/payments/${paymentId}/status`);
   const result = await response.json();
@@ -281,13 +263,13 @@ async function checkPaymentStatus(paymentId: string) {
   return result.data;
 }
 
-// 사용 예시
+// Usage example
 const payment = await checkPaymentStatus('pay_abc123');
-console.log('결제 상태:', payment.status);
+console.log('Payment status:', payment.status);
 // 'pending' | 'confirmed' | 'failed' | 'completed'
 ```
 
-### 결제 내역 조회
+### Query Payment History
 
 ```typescript
 async function getPaymentHistory(walletAddress: string) {
@@ -302,7 +284,7 @@ async function getPaymentHistory(walletAddress: string) {
 }
 ```
 
-### Gasless 결제 제출
+### Submit Gasless Payment
 
 ```typescript
 async function submitGaslessPayment(
@@ -329,9 +311,9 @@ async function submitGaslessPayment(
 }
 ```
 
-### 상태 폴링
+### Status Polling
 
-결제 완료를 기다리는 폴링 패턴:
+Polling pattern to wait for payment completion:
 
 ```typescript
 async function waitForPaymentConfirmation(
@@ -347,94 +329,69 @@ async function waitForPaymentConfirmation(
     }
 
     if (payment.status === 'failed') {
-      throw new Error('결제가 실패했습니다');
+      throw new Error('Payment failed');
     }
 
-    // pending 상태면 대기 후 재시도
+    // Wait then retry if pending
     await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
 
-  throw new Error('결제 확인 시간이 초과되었습니다');
+  throw new Error('Payment confirmation timeout');
 }
 
-// 사용 예시
+// Usage example
 try {
   const confirmedPayment = await waitForPaymentConfirmation('pay_abc123');
-  console.log('결제 확인됨:', confirmedPayment.transactionHash);
+  console.log('Payment confirmed:', confirmedPayment.transactionHash);
 } catch (error) {
-  console.error('결제 확인 실패:', error.message);
+  console.error('Payment confirmation failed:', error.message);
 }
 ```
 
 ---
 
-## 결제 플로우
+## Payment Flows
 
-### 1. 직접 결제 (Direct Payment)
+### 1. Direct Payment
 
-사용자가 직접 가스비를 지불하는 일반적인 결제 방식입니다.
-
-```
-1. 사용자가 지갑 연결
-2. 프론트엔드에서 결제 트랜잭션 생성
-3. 사용자가 지갑에서 트랜잭션 승인 (가스비 지불)
-4. 트랜잭션 해시로 결제 상태 조회
-5. 결제 확인 완료
-```
-
-### 2. Gasless 결제 (Meta Transaction)
-
-MSQPay가 가스비를 대납하는 방식입니다.
+Standard payment method where users pay gas fees directly.
 
 ```
-1. 사용자가 지갑 연결
-2. 프론트엔드에서 메타 트랜잭션 데이터 생성
-3. 사용자가 서명만 진행 (가스비 없음)
-4. 상점 서버 → MSQPay 서버로 서명 제출
-5. MSQPay가 트랜잭션 실행 및 가스비 대납
-6. 결제 상태 폴링으로 완료 확인
+1. User connects wallet
+2. Frontend creates payment transaction
+3. User approves transaction in wallet (pays gas)
+4. Query payment status by transaction hash
+5. Payment confirmation complete
 ```
 
-```typescript
-// Gasless 결제 전체 플로우 예시
-import { getContractsForChain } from '@/lib/wagmi';
+### 2. Gasless Payment (Meta Transaction)
 
-async function processGaslessPayment(paymentId: string, chainId: number) {
-  const contracts = getContractsForChain(chainId);
-  if (!contracts) throw new Error('지원하지 않는 체인입니다');
+MSQPay covers gas fees.
 
-  // 1. 메타 트랜잭션 서명 생성 (지갑에서)
-  const signature = await signMetaTransaction(/* ... */);
-
-  // 2. 상점 서버로 서명 제출
-  const submitResult = await submitGaslessPayment(
-    paymentId,
-    contracts.forwarder,
-    signature
-  );
-
-  // 3. 결제 완료 대기
-  const confirmedPayment = await waitForPaymentConfirmation(paymentId);
-
-  return confirmedPayment;
-}
+```
+1. User connects wallet
+2. Frontend creates meta-transaction data
+3. User signs only (no gas payment)
+4. Merchant server → MSQPay server submits signature
+5. MSQPay executes transaction and covers gas
+6. Confirm completion via status polling
 ```
 
 ---
 
-## 에러 처리
+## Error Handling
 
-### SDK 에러 코드
+### SDK Error Codes
 
-| 코드 | 설명 | 해결 방법 |
-|------|------|----------|
-| `INVALID_API_KEY` | API 키가 유효하지 않음 | API 키 확인 |
-| `PAYMENT_NOT_FOUND` | 결제를 찾을 수 없음 | paymentId 확인 |
-| `INSUFFICIENT_BALANCE` | 잔액 부족 | 토큰 잔액 확인 |
-| `NETWORK_ERROR` | 네트워크 오류 | 연결 상태 확인 |
-| `TRANSACTION_FAILED` | 트랜잭션 실패 | 트랜잭션 로그 확인 |
+| Code | Description | Solution |
+|------|-------------|----------|
+| `INVALID_API_KEY` | Invalid API key | Check API key |
+| `PAYMENT_NOT_FOUND` | Payment not found | Verify paymentId |
+| `INSUFFICIENT_BALANCE` | Insufficient balance | Check token balance |
+| `NETWORK_ERROR` | Network error | Check connection status |
+| `TRANSACTION_FAILED` | Transaction failed | Check transaction logs |
 
-### 에러 처리 패턴
+### Error Handling Pattern
 
 ```typescript
 import { MSQPayError } from '@globalmsq/msqpay';
@@ -443,35 +400,35 @@ try {
   const result = await client.getPaymentStatus(paymentId);
 } catch (error) {
   if (error instanceof MSQPayError) {
-    console.error('MSQPay 에러:', error.code, error.message);
+    console.error('MSQPay error:', error.code, error.message);
 
     switch (error.code) {
       case 'PAYMENT_NOT_FOUND':
-        // 결제 ID 확인 필요
+        // Need to verify payment ID
         break;
       case 'INVALID_API_KEY':
-        // API 키 설정 확인
+        // Check API key configuration
         break;
       default:
-        // 일반 에러 처리
+        // General error handling
     }
   } else {
-    console.error('알 수 없는 에러:', error);
+    console.error('Unknown error:', error);
   }
 }
 ```
 
 ---
 
-## 추가 리소스
+## Additional Resources
 
-- [MSQPay SDK 문서](/packages/sdk/README.md)
-- [API 명세서](/docs/api/payments.md)
-- [아키텍처 문서](/docs/architecture.md)
-- [스마트 컨트랙트 문서](/contracts/README.md)
+- [MSQPay SDK Documentation](/packages/sdk/README.md)
+- [API Specification](/docs/api/payments.md)
+- [Architecture Documentation](/docs/architecture.md)
+- [Smart Contract Documentation](/contracts/README.md)
 
 ---
 
-## 지원
+## Support
 
-문제가 발생하면 이슈를 등록해 주세요.
+If you encounter any issues, please open an issue.
