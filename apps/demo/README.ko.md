@@ -468,8 +468,8 @@ try {
 ## 추가 리소스
 
 - [MSQPay SDK 문서](/packages/sdk/README.md)
-- [API 명세서](/docs/api/payments.md)
-- [아키텍처 문서](/docs/architecture.md)
+- [API 명세서](/docs/reference/api.md)
+- [아키텍처 문서](/docs/reference/architecture.md)
 - [스마트 컨트랙트 문서](/contracts/README.md)
 
 ---
