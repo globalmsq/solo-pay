@@ -427,10 +427,10 @@ try {
 
 ## Additional Resources
 
-- [MSQPay SDK Documentation](/packages/sdk/README.md)
-- [API Specification](/docs/reference/api.md)
-- [Architecture Documentation](/docs/reference/architecture.md)
-- [Smart Contract Documentation](/contracts/README.md)
+- [MSQPay SDK Documentation](../../packages/sdk/README.md)
+- [API Specification](../../docs/reference/api.md)
+- [Architecture Documentation](../../docs/reference/architecture.md)
+- [Smart Contract Documentation](../../contracts/README.md)
 
 ---
 
