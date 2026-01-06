@@ -154,28 +154,31 @@ export async function GET(
 ```typescript
 // app/api/payments/history/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getMSQPayClient } from '@/lib/msqpay-server';
 
 export async function GET(request: NextRequest) {
   try {
     const payer = request.nextUrl.searchParams.get('payer');
     const chainId = request.nextUrl.searchParams.get('chainId');
 
-    if (!payer || !chainId) {
+    if (!payer) {
       return NextResponse.json(
-        { success: false, message: 'payer and chainId parameters required' },
+        { success: false, message: 'payer parameter required' },
         { status: 400 }
       );
     }
 
-    const client = getMSQPayClient();
-    const history = await client.getPaymentHistory({
-      chainId: parseInt(chainId),
-      payer,
-      limit: 100
-    });
+    if (!chainId) {
+      return NextResponse.json(
+        { success: false, message: 'chainId parameter required' },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json(history);
+    const apiUrl = process.env.MSQPAY_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/payments/history?chainId=${chainId}&payer=${payer}`);
+    const data = await response.json();
+
+    return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
@@ -203,7 +206,7 @@ export async function POST(
     const result = await client.submitGasless({
       paymentId: params.paymentId,
       forwarderAddress: body.forwarderAddress,
-      signature: body.signature
+      forwardRequest: body.forwardRequest
     });
 
     return NextResponse.json(result);
@@ -244,6 +247,204 @@ export async function POST(
       { status: error.statusCode || 500 }
     );
   }
+}
+```
+
+### 5. Check Relay Status
+
+```typescript
+// app/api/payments/relay/[relayRequestId]/status/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { getMSQPayClient } from '@/lib/msqpay-server';
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { relayRequestId: string } }
+) {
+  try {
+    const client = getMSQPayClient();
+
+    const result = await client.getRelayStatus(params.relayRequestId);
+
+    return NextResponse.json(result);
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: error.statusCode || 500 }
+    );
+  }
+}
+```
+
+### 6. Create Checkout Payment
+
+```typescript
+// app/api/checkout/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { MSQPayClient } from '@globalmsq/msqpay';
+import { getProductById } from '@/lib/products';
+import { getMerchantConfig, generateOrderId } from '@/lib/merchant';
+
+const client = new MSQPayClient({
+  environment: 'custom',
+  apiKey: process.env.MSQ_PAY_API_KEY || 'demo-key',
+  apiUrl: process.env.MSQPAY_API_URL || 'http://127.0.0.1:3001',
+});
+
+interface CheckoutItem {
+  productId: string;
+  quantity?: number;
+}
+
+interface CheckoutRequest {
+  products: CheckoutItem[];
+}
+
+interface ProductInfo {
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: string;
+  subtotal: string;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: CheckoutRequest = await request.json();
+    const { products } = body;
+
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'VALIDATION_ERROR',
+          message: 'Missing or invalid required field: products (array)',
+        },
+        { status: 400 }
+      );
+    }
+
+    const merchantConfig = getMerchantConfig();
+
+    const productInfos: ProductInfo[] = [];
+    let totalAmount = 0;
+
+    for (const item of products) {
+      const { productId, quantity = 1 } = item;
+
+      if (!productId) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'VALIDATION_ERROR',
+            message: 'Product ID is required for each item',
+          },
+          { status: 400 }
+        );
+      }
+
+      const product = getProductById(productId);
+      if (!product) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'PRODUCT_NOT_FOUND',
+            message: `Product not found: ${productId}`,
+          },
+          { status: 404 }
+        );
+      }
+
+      const unitPrice = parseFloat(product.price);
+      const subtotal = unitPrice * quantity;
+      totalAmount += subtotal;
+
+      productInfos.push({
+        productId: product.id,
+        productName: product.name,
+        quantity,
+        unitPrice: product.price,
+        subtotal: subtotal.toString(),
+      });
+    }
+
+    const orderId = generateOrderId();
+
+    const payment = await client.createPayment({
+      merchantId: merchantConfig.merchantId,
+      orderId: orderId,
+      amount: totalAmount,
+      currency: merchantConfig.tokenSymbol,
+      chainId: merchantConfig.chainId,
+      recipientAddress: merchantConfig.recipientAddress,
+      tokenAddress: merchantConfig.tokenAddress,
+      tokenDecimals: merchantConfig.tokenDecimals,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        paymentId: payment.paymentId,
+        orderId: orderId,
+        products: productInfos,
+        totalAmount: totalAmount.toString(),
+        chainId: merchantConfig.chainId,
+        tokenSymbol: merchantConfig.tokenSymbol,
+        tokenAddress: merchantConfig.tokenAddress,
+        decimals: merchantConfig.tokenDecimals,
+        gatewayAddress: payment.gatewayAddress,
+        forwarderAddress: payment.forwarderAddress,
+        recipientAddress: merchantConfig.recipientAddress,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorCode = (error as Record<string, unknown>)?.code || 'INTERNAL_ERROR';
+
+    if (errorCode === 'UNSUPPORTED_CHAIN' || errorCode === 'UNSUPPORTED_TOKEN') {
+      return NextResponse.json(
+        {
+          success: false,
+          code: errorCode,
+          message: errorMessage,
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: false,
+        code: 'INTERNAL_ERROR',
+        message: errorMessage,
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### 7. Get Chain Configuration
+
+```typescript
+// app/api/config/route.ts
+import { NextResponse } from 'next/server';
+
+export interface ChainConfig {
+  chainId: number;
+  rpcUrl: string;
+  chainName: string;
+}
+
+export async function GET() {
+  const config: ChainConfig = {
+    chainId: Number(process.env.CHAIN_ID) || 31337,
+    rpcUrl: process.env.RPC_URL || 'http://localhost:8545',
+    chainName: process.env.CHAIN_NAME || 'Hardhat',
+  };
+
+  return NextResponse.json(config);
 }
 ```
 
@@ -295,14 +496,14 @@ async function getPaymentHistory(walletAddress: string) {
 async function submitGaslessPayment(
   paymentId: string,
   forwarderAddress: string,
-  signature: string
+  forwardRequest: any
 ) {
   const response = await fetch(`/api/payments/${paymentId}/gasless`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       forwarderAddress,
-      signature
+      forwardRequest
     })
   });
 
