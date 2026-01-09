@@ -183,15 +183,15 @@ console.log(status.data.status); // "pending" | "completed"
 // Submit gasless transaction (EIP-712 signature required)
 const gaslessResult = await client.submitGasless({
   paymentId: payment.paymentId,
-  forwardRequest: { from, to, value, gas, nonce, deadline, data },
-  signature: '0x...'
+  forwarderAddress: '0x...',  // ERC2771Forwarder contract address
+  forwardRequest: { from, to, value, gas, deadline, data, signature: '0x...' }
 });
 
 // Execute relay transaction
 const relayResult = await client.executeRelay({
   paymentId: payment.paymentId,
-  forwardRequest: { from, to, value, gas, nonce, deadline, data },
-  signature: '0x...'
+  transactionData: '0x...',
+  gasEstimate: 100000
 });
 ```
 

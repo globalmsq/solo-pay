@@ -114,7 +114,15 @@ const payment = await client.createPayment({
 const gaslessResult = await client.submitGasless({
   paymentId: payment.paymentId,
   forwarderAddress: '0x...',  // ERC2771Forwarder address
-  signature: '0x...'           // EIP-712 signature
+  forwardRequest: {           // ForwardRequest object
+    from: userAddress,
+    to: gatewayAddress,
+    value: '0',
+    gas: '200000',
+    deadline: Math.floor(Date.now() / 1000) + 3600,
+    data: '0x...',
+    signature: '0x...'        // EIP-712 signature
+  }
 });
 
 console.log(gaslessResult.relayRequestId); // "relay-123"

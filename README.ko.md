@@ -183,15 +183,15 @@ console.log(status.data.status); // "pending" | "completed"
 // Gasless 거래 제출 (EIP-712 서명 필요)
 const gaslessResult = await client.submitGasless({
   paymentId: payment.paymentId,
-  forwardRequest: { from, to, value, gas, nonce, deadline, data },
-  signature: '0x...'
+  forwarderAddress: '0x...',  // ERC2771Forwarder 컨트랙트 주소
+  forwardRequest: { from, to, value, gas, deadline, data, signature: '0x...' }
 });
 
 // Relay 거래 실행
 const relayResult = await client.executeRelay({
   paymentId: payment.paymentId,
-  forwardRequest: { from, to, value, gas, nonce, deadline, data },
-  signature: '0x...'
+  transactionData: '0x...',
+  gasEstimate: 100000
 });
 ```
 

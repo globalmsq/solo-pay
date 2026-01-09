@@ -121,7 +121,15 @@ Submit a gasless (meta-transaction) request.
 const response = await client.submitGasless({
   paymentId: string;
   forwarderAddress: string;
-  signature: string;
+  forwardRequest: {
+    from: string;
+    to: string;
+    value: string;
+    gas: string;
+    deadline: string;
+    data: string;
+    signature: string;
+  };
 });
 
 // Response
@@ -345,7 +353,10 @@ async function processPayment() {
       const gaslessResult = await client.submitGasless({
         paymentId: payment.paymentId,
         forwarderAddress: '0x9e5b65f2d0ca4541925d7c4cc5367cbeca076f82',
-        signature: '0x' + 'a'.repeat(130)
+        forwardRequest: {
+          from: '0x...', to: '0x...', value: '0', gas: '200000',
+          deadline: '1234567890', data: '0x...', signature: '0x...'
+        }
       });
       console.log(`Relay request: ${gaslessResult.relayRequestId}`);
     }

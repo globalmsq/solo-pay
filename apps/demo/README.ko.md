@@ -287,7 +287,7 @@ import { getMerchantConfig, generateOrderId } from '@/lib/merchant';
 
 const client = new MSQPayClient({
   environment: 'custom',
-  apiKey: process.env.MSQ_PAY_API_KEY || 'demo-key',
+  apiKey: process.env.MSQPAY_API_KEY || 'demo-key',
   apiUrl: process.env.MSQPAY_API_URL || 'http://127.0.0.1:3001',
 });
 
