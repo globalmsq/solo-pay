@@ -2,9 +2,9 @@
 
 [English](README.md) | [한국어](README.ko.md)
 
-Smart contract package for the MSQ Pay payment system.
+MSQ Pay 결제 시스템의 스마트 컨트랙트 패키지입니다.
 
-## Supported Networks
+## 지원 네트워크
 
 | Network | Chain ID | Type | RPC Fallback |
 |---------|----------|------|--------------|
@@ -16,81 +16,81 @@ Smart contract package for the MSQ Pay payment system.
 | BNB Testnet | 97 | Testnet | data-seed-prebsc-1-s1.binance.org |
 | BNB | 56 | Mainnet | bsc-dataseed.binance.org |
 
-## Installation
+## 설치
 
 ```bash
 cd contracts
 pnpm install
 ```
 
-## Environment Setup
+## 환경 설정
 
-1. Copy `.env.example` to create `.env` file:
+1. `.env.example`을 복사하여 `.env` 파일 생성:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Set required values in `.env` file:
+2. `.env` 파일에 필요한 값 설정:
 
 ```bash
-# Private key for deployment (Never commit real keys!)
+# 배포용 개인키 (실제 키 사용 시 절대 커밋하지 마세요!)
 PRIVATE_KEY=0x...
 
-# Network configuration (Set according to deployment chain)
+# 네트워크 설정 (배포할 체인에 맞게 설정)
 RPC_URL=https://rpc-amoy.polygon.technology
 CHAIN_ID=80002
 
 # Block Explorer API Key (Etherscan API v2)
-# Single API key supports 60+ chains
+# 단일 API 키로 60개 이상의 체인 지원
 ETHERSCAN_API_KEY=your-etherscan-api-key
 ```
 
-## Compilation
+## 컴파일
 
 ```bash
 pnpm compile
 ```
 
-## Testing
+## 테스트
 
 ```bash
-# Run all tests
+# 전체 테스트
 pnpm test
 
-# Coverage report
+# 커버리지 리포트
 pnpm test:coverage
 ```
 
-## Deployment
+## 배포
 
-### Local Development Environment
+### 로컬 개발 환경
 
 ```bash
-# Start Hardhat node (separate terminal)
+# Hardhat 노드 시작 (별도 터미널)
 npx hardhat node
 
-# Local deployment
+# 로컬 배포
 npx hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network localhost
 ```
 
-### Network Deployment
+### 네트워크 배포
 
-Set `RPC_URL` and `CHAIN_ID` in `.env` file, then deploy:
+`.env` 파일에 `RPC_URL`과 `CHAIN_ID`를 설정한 후 배포합니다:
 
 ```bash
 npx hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network default
 ```
 
-## Contract Verification
+## 컨트랙트 검증
 
-Verify source code on Block Explorer after deployment:
+배포 후 Block Explorer에서 소스 코드를 검증합니다:
 
 ```bash
 npx hardhat ignition verify chain-{CHAIN_ID}
 ```
 
-## Deployed Contracts
+## 배포된 컨트랙트
 
 ### Polygon Amoy (Testnet)
 
@@ -101,40 +101,40 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 | ERC2771Forwarder | `0x0d9A0fAf9a8101368aa01B88442B38f82180520E` |
 | SUT Token | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
-> [View on Polygonscan](https://amoy.polygonscan.com/address/0x2256bedB57869AF4fadF16e1ebD534A7d47513d7)
+> [Polygonscan에서 확인](https://amoy.polygonscan.com/address/0x2256bedB57869AF4fadF16e1ebD534A7d47513d7)
 
-## Deployment Results
+## 배포 결과 확인
 
-Deployed contract addresses are saved in `ignition/deployments/chain-{CHAIN_ID}/deployed_addresses.json`.
+배포된 컨트랙트 주소는 `ignition/deployments/chain-{CHAIN_ID}/deployed_addresses.json`에 저장됩니다.
 
-## Deployment Checklist
+## 배포 체크리스트
 
-### Before Testnet Deployment
+### Testnet 배포 전
 
-- [ ] Set `PRIVATE_KEY` in `.env` file
-- [ ] Ensure deployment wallet has test tokens (use Faucet)
+- [ ] `.env` 파일에 `PRIVATE_KEY` 설정
+- [ ] 배포 지갑에 테스트 토큰 보유 (Faucet 사용)
   - Polygon Amoy: [Polygon Faucet](https://faucet.polygon.technology/)
   - Sepolia: [Sepolia Faucet](https://sepoliafaucet.com/)
   - BNB Testnet: [BNB Faucet](https://testnet.bnbchain.org/faucet-smart)
-- [ ] Set Explorer API key for contract verification
+- [ ] 컨트랙트 검증을 위한 Explorer API 키 설정
 
-### Before Mainnet Deployment
+### Mainnet 배포 전
 
-- [ ] Complete sufficient testing on Testnet
-- [ ] Ensure deployment wallet has sufficient native tokens
-- [ ] Complete security audit (recommended)
-- [ ] Set up multi-sig wallet (recommended)
+- [ ] Testnet에서 충분한 테스트 완료
+- [ ] 배포 지갑에 충분한 네이티브 토큰 보유
+- [ ] 보안 감사 완료 (권장)
+- [ ] 멀티시그 지갑 설정 (권장)
 
-## Contract Structure
+## 컨트랙트 구조
 
 ```
 src/
-├── PaymentGatewayV1.sol      # Payment Gateway (Upgradeable)
-├── PaymentGatewayProxy.sol   # Proxy Contract
+├── PaymentGatewayV1.sol      # 결제 게이트웨이 (Upgradeable)
+├── PaymentGatewayProxy.sol   # 프록시 컨트랙트
 └── mocks/
-    └── MockERC20.sol         # ERC20 Token for Testing
+    └── MockERC20.sol         # 테스트용 ERC20 토큰
 ```
 
-## License
+## 라이선스
 
 MIT License

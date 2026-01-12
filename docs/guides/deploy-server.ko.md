@@ -1,19 +1,21 @@
+[English](deploy-server.md) | [한국어](deploy-server.ko.md)
+
 # 결제 API 배포 가이드
 
 MSQPay 결제 API를 다양한 환경에 배포하기 위한 단계별 가이드입니다. 환경별 하이브리드 Relay 아키텍처, ERC2771Forwarder 기반 Meta-Transaction, Polygon RPC, 환경 설정을 포함합니다.
 
 ## 환경별 아키텍처 개요 (v4.0.0)
 
-MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용합니다. `DEFENDER_API_URL` 환경변수만 변경하여 환경을 전환합니다:
+MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용합니다. `RELAYER_API_URL` 환경변수만 변경하여 환경을 전환합니다:
 
 | 환경 | Relay 서비스 | API URL | Forwarder |
 |------|-------------|---------|-----------|
-| **Local (Docker Compose)** | SimpleDefender HTTP 서비스 | http://simple-defender:3001 | ERC2771Forwarder |
+| **Local (Docker Compose)** | Simple Relayer HTTP 서비스 | http://simple-relayer:3001 | ERC2771Forwarder |
 | **Testnet (Polygon Amoy)** | OZ Defender API | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 | **Mainnet (Polygon)** | OZ Defender API | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 
-**환경 전환 방식**: `DEFENDER_API_URL` 환경 변수로 제어
-- `http://simple-defender:3001` → Local 개발 환경 (SimpleDefender Docker 컨테이너)
+**환경 전환 방식**: `RELAYER_API_URL` 환경 변수로 제어
+- `http://simple-relayer:3001` → Local 개발 환경 (Simple Relayer Docker 컨테이너)
 - `https://api.defender.openzeppelin.com` → Production 환경 (OZ Defender API)
 
 ## 배포 전 체크리스트
@@ -38,10 +40,10 @@ MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용�
 
 ```bash
 # ============================================
-# Relay Configuration (SimpleDefender HTTP 서비스)
+# Relay Configuration (Simple Relayer HTTP 서비스)
 # ============================================
-DEFENDER_API_URL=http://simple-defender:3001
-# SimpleDefender HTTP 서비스 URL (Docker 컨테이너)
+RELAYER_API_URL=http://simple-relayer:3001
+# Simple Relayer HTTP 서비스 URL (Docker 컨테이너)
 
 RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 # Relayer 지갑 주소 (Hardhat 기본 계정 #0)
@@ -63,7 +65,7 @@ PORT=3000
 NODE_ENV=development
 ```
 
-**SimpleDefender 서비스 환경 변수** (simple-defender 컨테이너):
+**Simple Relayer 서비스 환경 변수** (simple-relayer 컨테이너):
 ```bash
 RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 # Hardhat 기본 계정 #0 개인키
@@ -79,13 +81,13 @@ FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 # ============================================
 # Relay Configuration (OZ Defender API)
 # ============================================
-DEFENDER_API_URL=https://api.defender.openzeppelin.com
+RELAYER_API_URL=https://api.defender.openzeppelin.com
 # OZ Defender API URL
 
-DEFENDER_API_KEY=your_defender_api_key_here
+RELAYER_API_KEY=your_defender_api_key_here
 # OZ Defender API 키
 
-DEFENDER_API_SECRET=your_defender_api_secret_here
+RELAYER_API_SECRET=your_defender_api_secret_here
 # OZ Defender API 시크릿
 
 RELAYER_ADDRESS=0x...
@@ -699,11 +701,11 @@ curl -X POST https://api.msqpay.io/payments/create \
 ### RPC 연결 오류
 
 ```
-Error: Connection refused at POLYGON_RPC_URL
+Error: Connection refused at BLOCKCHAIN_RPC_URL
 ```
 
 해결책:
-1. RPC URL 확인
+1. RPC URL 확인 (`BLOCKCHAIN_RPC_URL` 환경 변수)
 2. 네트워크 연결 확인
 3. 방화벽 설정 확인
 4. 다른 RPC 프로바이더로 시도
@@ -737,6 +739,5 @@ Error: Insufficient balance for gas
 
 ## 관련 문서
 
-- [API 레퍼런스](../api/payments.md)
-- [아키텍처 가이드](../architecture-payments.md)
-- [구현 가이드](../implementation/payments-api.md)
+- [API 레퍼런스](../reference/api.ko.md)
+- [아키텍처 가이드](../reference/architecture.ko.md)
