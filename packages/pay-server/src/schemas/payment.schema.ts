@@ -71,7 +71,7 @@ export type GaslessRequest = z.infer<typeof GaslessRequestSchema>;
  * amount matches the expected DB amount.
  * This prevents frontend manipulation and gas waste.
  */
-export function getAmountValidationSchema(
+export function createAmountValidationSchema(
   expectedAmount: bigint
 ): z.ZodType<GaslessRequest> {
   return GaslessRequestSchema.superRefine((data, ctx) => {

@@ -3,7 +3,7 @@ import { Address } from 'viem';
 import {
   GaslessRequestSchema,
   ForwardRequest,
-  getAmountValidationSchema,
+  createAmountValidationSchema,
 } from '../../schemas/payment.schema';
 import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
@@ -61,7 +61,7 @@ export async function submitGaslessRoute(
         // Validate forwardRequest.data amount matches DB amount prevent frontend manipulation
         const dbAmount = BigInt(payment.amount.toString());
         try {
-          validatedData = getAmountValidationSchema(dbAmount).parse(validatedData);
+          validatedData = createAmountValidationSchema(dbAmount).parse(validatedData);
         } catch (error) {
           if (error instanceof Error && error.name === 'ZodError') {
             return reply.code(400).send({
