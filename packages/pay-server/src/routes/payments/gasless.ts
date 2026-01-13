@@ -1,10 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import { Address } from 'viem';
-import { GaslessRequestSchema, ForwardRequest } from '../../schemas/payment.schema';
+import {
+  GaslessRequestSchema,
+  ForwardRequest,
+  getAmountValidationSchema,
+} from '../../schemas/payment.schema';
 import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
-import { validateForwardRequestAmount } from '../../utils/payment-validation';
 
 export interface SubmitGaslessRequest {
   paymentId: string;
@@ -55,19 +58,19 @@ export async function submitGaslessRoute(
           });
         }
 
-        // Validate forwardRequest.data amount matches DB amount
+        // Validate forwardRequest.data amount matches DB amount prevent frontend manipulation
         const dbAmount = BigInt(payment.amount.toString());
-        const validationResult = validateForwardRequestAmount(
-          validatedData.forwardRequest.data,
-          dbAmount
-        );
-
-        if (!validationResult.success) {
-          return reply.code(400).send({
-            code: validationResult.code,
-            message: validationResult.message,
-            ...(validationResult.details && { details: validationResult.details }),
-          });
+        try {
+          validatedData = getAmountValidationSchema(dbAmount).parse(validatedData);
+        } catch (error) {
+          if (error instanceof Error && error.name === 'ZodError') {
+            return reply.code(400).send({
+              code: 'VALIDATION_ERROR',
+              message: '입력 검증 실패',
+              details: (error as { errors?: unknown[] }).errors,
+            });
+          }
+          throw error;
         }
 
         // 이미 처리된 결제인지 확인

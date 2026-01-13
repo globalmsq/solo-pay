@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { decodeFunctionData } from 'viem';
+import PaymentGatewayV1Artifact from '@msq/pay-contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 // 결제 생성 요청 스키마
 export const CreatePaymentSchema = z.object({
@@ -63,6 +65,53 @@ export const GaslessRequestSchema = z.object({
 });
 
 export type GaslessRequest = z.infer<typeof GaslessRequestSchema>;
+
+/**
+ * Creates a refined GaslessRequestSchema that validates the forwardRequest.data
+ * amount matches the expected DB amount.
+ * This prevents frontend manipulation and gas waste.
+ */
+export function getAmountValidationSchema(
+  expectedAmount: bigint
+): z.ZodType<GaslessRequest> {
+  return GaslessRequestSchema.superRefine((data, ctx) => {
+    try {
+      const decoded = decodeFunctionData({
+        abi: PaymentGatewayV1Artifact.abi,
+        data: data.forwardRequest.data as `0x${string}`,
+      });
+
+      // Verify it's a pay() function call
+      if (decoded.functionName !== 'pay') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'forwardRequest.data는 pay() 함수 호출이어야 합니다',
+          path: ['forwardRequest', 'data'],
+        });
+        return;
+      }
+
+      // Extract amount from decoded function arguments (3rd parameter, index 2)
+      const decodedAmount = decoded?.args?.[2] as bigint;
+
+      // Compare amounts - reject if mismatch
+      if (decodedAmount !== expectedAmount) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `결제 금액이 일치하지 않습니다. DB: ${expectedAmount.toString()}, 요청: ${decodedAmount.toString()}`,
+          path: ['forwardRequest', 'data'],
+        });
+      }
+    } catch (error) {
+      // If decoding fails, the data is invalid
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'forwardRequest.data를 파싱할 수 없습니다. 유효한 pay() 함수 호출 데이터여야 합니다.',
+        path: ['forwardRequest', 'data'],
+      });
+    }
+  });
+}
 
 // 릴레이 실행 요청 스키마
 export const RelayExecutionSchema = z.object({
