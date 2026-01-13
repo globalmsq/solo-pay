@@ -3,10 +3,39 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { executeRelayRoute } from '../../../src/routes/payments/relay';
 import { DefenderService } from '../../../src/services/defender.service';
+import { MerchantService } from '../../../src/services/merchant.service';
+import { PaymentService } from '../../../src/services/payment.service';
+
+// Test API key for authentication
+const TEST_API_KEY = 'test-api-key-123';
+
+// Mock merchant data for auth
+const mockMerchant = {
+  id: 1,
+  merchant_key: 'merchant_demo_001',
+  name: 'Demo Store',
+  api_key_hash: 'hashed',
+  webhook_url: null,
+  is_enabled: true,
+  is_deleted: false,
+  created_at: new Date(),
+  updated_at: new Date(),
+  deleted_at: null,
+};
+
+// Mock payment data - merchant_id must match mockMerchant.id
+const mockPaymentData = {
+  id: 'payment-db-id',
+  payment_hash: 'payment-123',
+  merchant_id: 1, // matches mockMerchant.id
+  status: 'CREATED',
+};
 
 describe('POST /payments/:id/relay', () => {
   let app: FastifyInstance;
   let defenderService: DefenderService;
+  let merchantService: MerchantService;
+  let paymentService: PaymentService;
 
   beforeEach(async () => {
     app = Fastify({ logger: false });
@@ -32,8 +61,18 @@ describe('POST /payments/:id/relay', () => {
       getRelayerAddress: vi.fn().mockReturnValue('0x' + 'f'.repeat(40)),
     } as any;
 
+    // Mock MerchantService for authentication
+    merchantService = {
+      findByApiKey: vi.fn().mockResolvedValue(mockMerchant),
+    } as any;
+
+    // Mock PaymentService for payment ownership validation
+    paymentService = {
+      findByHash: vi.fn().mockResolvedValue(mockPaymentData),
+    } as any;
+
     // 실제 라우트 등록
-    await executeRelayRoute(app, defenderService);
+    await executeRelayRoute(app, defenderService, merchantService, paymentService);
   });
 
   describe('정상 케이스', () => {
@@ -47,6 +86,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-123/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -67,6 +107,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-456/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -88,6 +129,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-789/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -110,6 +152,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-101/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
 
@@ -128,6 +171,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-202/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
 
@@ -146,6 +190,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-303/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
 
@@ -164,6 +209,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-404/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: incompleteRequest,
       });
 
@@ -184,6 +230,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-505/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
 
@@ -208,6 +255,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-606/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -226,6 +274,7 @@ describe('POST /payments/:id/relay', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-707/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: largeRequest,
       });
 
@@ -246,6 +295,7 @@ describe('POST /payments/:id/relay', () => {
       await app.inject({
         method: 'POST',
         url: '/payments/payment-808/relay',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 

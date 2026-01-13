@@ -4,6 +4,8 @@ import { GaslessRequestSchema, ForwardRequest } from '../../schemas/payment.sche
 import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
+import { MerchantService } from '../../services/merchant.service';
+import { createPaymentAuthMiddleware } from '../../middleware/auth.middleware';
 
 export interface SubmitGaslessRequest {
   paymentId: string;
@@ -15,10 +17,15 @@ export async function submitGaslessRoute(
   app: FastifyInstance,
   relayerService: RelayerService,
   relayService: RelayService,
-  paymentService: PaymentService
+  paymentService: PaymentService,
+  merchantService: MerchantService
 ) {
+  // Auth + payment ownership middleware
+  const authMiddleware = createPaymentAuthMiddleware(merchantService, paymentService);
+
   app.post<{ Params: { id: string }; Body: SubmitGaslessRequest }>(
     '/payments/:id/gasless',
+    { preHandler: authMiddleware },
     async (request, reply) => {
       try {
         const { id } = request.params;

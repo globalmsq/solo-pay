@@ -1,6 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { RelayExecutionSchema } from '../../schemas/payment.schema';
 import { RelayerService } from '../../services/relayer.service';
+import { MerchantService } from '../../services/merchant.service';
+import { PaymentService } from '../../services/payment.service';
+import { createPaymentAuthMiddleware } from '../../middleware/auth.middleware';
 
 export interface ExecuteRelayRequest {
   paymentId: string;
@@ -10,10 +13,16 @@ export interface ExecuteRelayRequest {
 
 export async function executeRelayRoute(
   app: FastifyInstance,
-  relayerService: RelayerService
+  relayerService: RelayerService,
+  merchantService: MerchantService,
+  paymentService: PaymentService
 ) {
+  // Auth + payment ownership middleware
+  const authMiddleware = createPaymentAuthMiddleware(merchantService, paymentService);
+
   app.post<{ Params: { id: string }; Body: ExecuteRelayRequest }>(
     '/payments/:id/relay',
+    { preHandler: authMiddleware },
     async (request, reply) => {
       try {
         const { id } = request.params;

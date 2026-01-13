@@ -10,6 +10,9 @@ import { PaymentMethodService } from '../../../src/services/payment-method.servi
 import { PaymentService } from '../../../src/services/payment.service';
 import { ChainsConfig } from '../../../src/config/chains.config';
 
+// Test API key for authentication
+const TEST_API_KEY = 'test-api-key-123';
+
 // 테스트용 ChainsConfig mock
 const mockChainsConfig: ChainsConfig = {
   chains: [
@@ -110,6 +113,8 @@ describe('POST /payments/create', () => {
         }
         return Promise.resolve(null);
       }),
+      // Add findByApiKey for auth middleware
+      findByApiKey: vi.fn().mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_001' }),
     } as any;
 
     chainService = {
@@ -163,6 +168,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validPayment,
       });
 
@@ -178,6 +184,9 @@ describe('POST /payments/create', () => {
     });
 
     it('Hardhat 체인 (chainId 31337)으로 최소 필수 정보만으로 결제를 생성할 수 있어야 함', async () => {
+      // Update mock to return merchant_002 for this test
+      merchantService.findByApiKey = vi.fn().mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_002' });
+
       const minimalPayment = {
         merchantId: 'merchant_002',
         orderId: 'order_002',
@@ -191,6 +200,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: minimalPayment,
       });
 
@@ -216,6 +226,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidPayment,
       });
 
@@ -238,6 +249,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidPayment,
       });
 
@@ -260,6 +272,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidPayment,
       });
 
@@ -284,6 +297,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: incompletePayment,
       });
 
@@ -306,6 +320,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidPayment,
       });
 
@@ -329,6 +344,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidPayment,
       });
 
@@ -355,6 +371,7 @@ describe('POST /payments/create', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/create',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validPayment,
       });
 

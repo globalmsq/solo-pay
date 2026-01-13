@@ -86,8 +86,8 @@ const registerRoutes = async () => {
     paymentService
   );
   await getPaymentStatusRoute(server, blockchainService, paymentService);
-  await submitGaslessRoute(server, relayerService, relayService, paymentService);
-  await executeRelayRoute(server, relayerService);
+  await submitGaslessRoute(server, relayerService, relayService, paymentService, merchantService);
+  await executeRelayRoute(server, relayerService, merchantService, paymentService);
   await getRelayStatusRoute(server, relayerService);
   await getPaymentHistoryRoute(server, blockchainService, paymentService, relayService);
   await getTokenBalanceRoute(server, blockchainService);
