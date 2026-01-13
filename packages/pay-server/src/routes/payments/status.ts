@@ -56,7 +56,7 @@ export async function getPaymentStatusRoute(
         const eventAmount = BigInt(paymentStatus.amount);
         const dbAmount = BigInt(paymentData.amount.toString());
 
-        if (eventAmount == dbAmount) {
+        if (eventAmount !== dbAmount) {
           return reply.code(400).send({
             code: 'AMOUNT_MISMATCH',
             message: `결제 금액이 일치하지 않습니다. DB: ${dbAmount.toString()}, 온체인: ${eventAmount.toString()}`,
