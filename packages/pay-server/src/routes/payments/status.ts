@@ -50,6 +50,26 @@ export async function getPaymentStatusRoute(
         });
       }
 
+      // Validate amount from PaymentCompleted event matches DB amount
+      // This detects amount manipulation for all payments (Direct + Gasless)
+      if (paymentStatus.status === 'completed' && paymentStatus.amount) {
+        const eventAmount = BigInt(paymentStatus.amount);
+        const dbAmount = BigInt(paymentData.amount.toString());
+
+        if (eventAmount == dbAmount) {
+          return reply.code(400).send({
+            code: 'AMOUNT_MISMATCH',
+            message: `결제 금액이 일치하지 않습니다. DB: ${dbAmount.toString()}, 온체인: ${eventAmount.toString()}`,
+            details: {
+              dbAmount: dbAmount.toString(),
+              onChainAmount: eventAmount.toString(),
+              paymentId: id,
+              transactionHash: paymentStatus.transactionHash,
+            },
+          });
+        }
+      }
+
       // Sync DB status with on-chain status
       // If on-chain payment is completed but DB still shows CREATED/PENDING, update DB
       let finalStatus = paymentData.status;

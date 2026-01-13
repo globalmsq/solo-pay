@@ -4,6 +4,7 @@ import { GaslessRequestSchema, ForwardRequest } from '../../schemas/payment.sche
 import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
+import { validateForwardRequestAmount } from '../../utils/payment-validation';
 
 export interface SubmitGaslessRequest {
   paymentId: string;
@@ -51,6 +52,21 @@ export async function submitGaslessRoute(
           return reply.code(404).send({
             code: 'PAYMENT_NOT_FOUND',
             message: '결제를 찾을 수 없습니다',
+          });
+        }
+
+        // Validate forwardRequest.data amount matches DB amount
+        const dbAmount = BigInt(payment.amount.toString());
+        const validationResult = validateForwardRequestAmount(
+          validatedData.forwardRequest.data,
+          dbAmount
+        );
+
+        if (!validationResult.success) {
+          return reply.code(400).send({
+            code: validationResult.code,
+            message: validationResult.message,
+            ...(validationResult.details && { details: validationResult.details }),
           });
         }
 
