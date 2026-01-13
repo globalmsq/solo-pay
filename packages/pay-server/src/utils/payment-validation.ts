@@ -1,20 +1,5 @@
 import { decodeFunctionData } from 'viem';
-
-// PaymentGateway pay() function ABI for decoding forwardRequest.data
-export const PAYMENT_GATEWAY_PAY_ABI = [
-  {
-    type: 'function',
-    name: 'pay',
-    inputs: [
-      { name: 'paymentId', type: 'bytes32' },
-      { name: 'token', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'merchant', type: 'address' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-] as const;
+import PaymentGatewayV1Artifact from '@msq/pay-contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 export type ValidationResult =
   | { success: true }
@@ -37,7 +22,7 @@ export function validateForwardRequestAmount(
 ): ValidationResult {
   try {
     const decoded = decodeFunctionData({
-      abi: PAYMENT_GATEWAY_PAY_ABI,
+      abi: PaymentGatewayV1Artifact.abi,
       data: encodedData as `0x${string}`,
     });
 
@@ -51,7 +36,7 @@ export function validateForwardRequestAmount(
     }
 
     // Extract amount from decoded function arguments (3rd parameter, index 2)
-    const decodedAmount = decoded.args[2] as bigint;
+    const decodedAmount = decoded?.args?.[2] as bigint;
 
     // Compare amounts - reject if mismatch (prevent gas waste from frontend manipulation)
     if (decodedAmount !== dbAmount) {

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "MSQ Pay Onchain Smart Contracts",
+  "exports": {
+    "./artifacts/*": "./artifacts/*"
+  },
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
