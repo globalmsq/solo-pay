@@ -78,6 +78,12 @@ const createMockRequest = (headers: Record<string, string> = {}, body: unknown =
   body,
   params,
   merchant: undefined,
+  log: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
 } as unknown as FastifyRequest);
 
 const createMockReply = () => {

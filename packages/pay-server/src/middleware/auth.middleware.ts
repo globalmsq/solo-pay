@@ -39,6 +39,7 @@ export function createAuthMiddleware(merchantService: MerchantService) {
 
       request.merchant = merchant;
     } catch (error) {
+      request.log.error(error, 'Authentication failed due to an internal error');
       return reply.code(500).send({
         code: 'INTERNAL_ERROR',
         message: 'Authentication failed',
@@ -65,7 +66,14 @@ export function createMerchantAuthMiddleware(merchantService: MerchantService) {
     // Step 2: Validate merchant ownership
     // Note: request.merchant is guaranteed to exist after baseAuth succeeds
     const merchant = request.merchant;
-    if (!merchant) return; // TypeScript guard - should never happen
+    if (!merchant) {
+      // This should not be reached if baseAuth is functioning correctly
+      request.log.error('Merchant object not found on request after base authentication in merchantAuthMiddleware');
+      return reply.code(500).send({
+        code: 'INTERNAL_ERROR',
+        message: 'Authentication context is missing',
+      });
+    }
 
     const body = request.body as { merchantId?: string };
     if (body?.merchantId && body.merchantId !== merchant.merchant_key) {
@@ -98,7 +106,14 @@ export function createPaymentAuthMiddleware(
     // Step 2: Validate payment ownership
     // Note: request.merchant is guaranteed to exist after baseAuth succeeds
     const merchant = request.merchant;
-    if (!merchant) return; // TypeScript guard - should never happen
+    if (!merchant) {
+      // This should not be reached if baseAuth is functioning correctly
+      request.log.error('Merchant object not found on request after base authentication in paymentAuthMiddleware');
+      return reply.code(500).send({
+        code: 'INTERNAL_ERROR',
+        message: 'Authentication context is missing',
+      });
+    }
 
     const params = request.params as { id?: string };
     if (params?.id) {
