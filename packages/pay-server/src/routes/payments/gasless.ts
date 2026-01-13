@@ -1,6 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { Address } from 'viem';
-import { GaslessRequestSchema, ForwardRequest } from '../../schemas/payment.schema';
+import {
+  GaslessRequestSchema,
+  ForwardRequest,
+  createAmountValidationSchema,
+} from '../../schemas/payment.schema';
 import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
@@ -52,6 +56,21 @@ export async function submitGaslessRoute(
             code: 'PAYMENT_NOT_FOUND',
             message: '결제를 찾을 수 없습니다',
           });
+        }
+
+        // Validate forwardRequest.data amount matches DB amount prevent frontend manipulation
+        const dbAmount = BigInt(payment.amount.toString());
+        try {
+          validatedData = createAmountValidationSchema(dbAmount).parse(validatedData);
+        } catch (error) {
+          if (error instanceof Error && error.name === 'ZodError') {
+            return reply.code(400).send({
+              code: 'VALIDATION_ERROR',
+              message: '입력 검증 실패',
+              details: (error as { errors?: unknown[] }).errors,
+            });
+          }
+          throw error;
         }
 
         // 이미 처리된 결제인지 확인
