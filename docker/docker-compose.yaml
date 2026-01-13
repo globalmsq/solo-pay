@@ -41,6 +41,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: hardhat
+    image: msqpay-hardhat-node
     container_name: msqpay-hardhat-node
     ports:
       - "8545:8545"
@@ -58,6 +59,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: simple-relayer
+    image: msqpay-simple-relayer
     container_name: msqpay-simple-relayer
     ports:
       - "3002:3001"
@@ -89,6 +91,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: server
+    image: msqpay-server
     container_name: msqpay-server
     ports:
       - "3001:3001"
@@ -132,6 +135,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: demo
+    image: msqpay-demo
     container_name: msqpay-demo
     ports:
       - "3000:3000"
