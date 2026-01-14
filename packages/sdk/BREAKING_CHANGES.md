@@ -73,19 +73,27 @@ client.createPayment({
 {
   "success": true,
   "paymentId": "pay_1732960000000",
+  "chainId": 80002,
   "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
+  "tokenSymbol": "SUT",
+  "tokenDecimals": 18,
   "gatewayAddress": "0x...",
   "forwarderAddress": "0x...",
   "amount": "100000000000000000000",
-  "status": "pending"
+  "status": "pending",
+  "expiresAt": "2024-01-01T00:30:00.000Z"
 }
 ```
 
 **New fields in v2.0.0:**
+- `chainId` - Blockchain chain ID
 - `tokenAddress` - Token address from server
+- `tokenSymbol` - Token symbol fetched from on-chain (source of truth)
+- `tokenDecimals` - Token decimals fetched from on-chain (source of truth)
 - `gatewayAddress` - Payment Gateway contract address
 - `forwarderAddress` - Forwarder contract address (for meta-transactions)
 - `amount` - Amount in wei (smallest unit)
+- `expiresAt` - Payment expiration time (ISO 8601)
 
 ---
 
@@ -155,8 +163,8 @@ const response = await client.createPayment({
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 
-// ✅ Use server-provided addresses instead of hardcoded values
-const { tokenAddress, gatewayAddress, amount } = response;
+// ✅ Use server-provided values instead of hardcoded config
+const { tokenAddress, tokenSymbol, tokenDecimals, gatewayAddress, amount } = response;
 
 // Send transaction using server-provided addresses
 await writeContract({

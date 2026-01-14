@@ -212,10 +212,13 @@ describe('POST /payments/create', () => {
       expect(body.success).toBe(true);
       expect(body.paymentId).toBeDefined();
       expect(body.tokenAddress).toBe('0xE4C687167705Abf55d709395f92e254bdF5825a2');
+      expect(body.tokenSymbol).toBe('SUT');       // From on-chain mock
+      expect(body.tokenDecimals).toBe(18);        // From on-chain mock
       expect(body.gatewayAddress).toBeDefined();
       expect(body.forwarderAddress).toBeDefined();
       expect(body.amount).toBe('100000000000000000000'); // 100 * 10^18
       expect(body.status).toBe('created');
+      expect(body.expiresAt).toBeDefined();
     });
 
     it('Hardhat 체인 (chainId 31337)으로 최소 필수 정보만으로 결제를 생성할 수 있어야 함', async () => {

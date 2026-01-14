@@ -376,16 +376,17 @@ export async function POST(request: NextRequest) {
       tokenAddress: merchantConfig.tokenAddress,
     });
 
+    // tokenSymbol, tokenDecimals from pay-server (on-chain source of truth)
     return NextResponse.json(
       {
         success: true,
         paymentId: payment.paymentId,
         products: productInfos,
         totalAmount: totalAmount.toString(),
-        chainId: merchantConfig.chainId,
-        tokenSymbol: merchantConfig.tokenSymbol,
-        tokenAddress: merchantConfig.tokenAddress,
-        decimals: merchantConfig.tokenDecimals,
+        chainId: payment.chainId,
+        tokenSymbol: payment.tokenSymbol,       // From on-chain via pay-server
+        tokenAddress: payment.tokenAddress,
+        decimals: payment.tokenDecimals,        // From on-chain via pay-server
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
         recipientAddress: merchantConfig.recipientAddress,

@@ -376,6 +376,7 @@ export async function POST(request: NextRequest) {
       tokenAddress: merchantConfig.tokenAddress,
     });
 
+    // tokenSymbol, tokenDecimals는 결제 서버에서 on-chain 조회한 값 사용 (source of truth)
     return NextResponse.json(
       {
         success: true,
@@ -384,10 +385,10 @@ export async function POST(request: NextRequest) {
         paymentId: payment.paymentId,
         products: productInfos,
         totalAmount: totalAmount.toString(),
-        chainId: merchantConfig.chainId,
-        tokenSymbol: merchantConfig.tokenSymbol,
-        tokenAddress: merchantConfig.tokenAddress,
-        decimals: merchantConfig.tokenDecimals,
+        chainId: payment.chainId,
+        tokenSymbol: payment.tokenSymbol,       // From on-chain via pay-server
+        tokenAddress: payment.tokenAddress,
+        decimals: payment.tokenDecimals,        // From on-chain via pay-server
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
         recipientAddress: merchantConfig.recipientAddress,

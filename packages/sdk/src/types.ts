@@ -59,11 +59,17 @@ export interface GetPaymentHistoryParams {
 export interface CreatePaymentResponse {
   success: boolean;
   paymentId: string;
+  chainId: number;
   tokenAddress: string;
+  /** Token symbol fetched from on-chain */
+  tokenSymbol: string;
+  /** Token decimals fetched from on-chain */
+  tokenDecimals: number;
   gatewayAddress: string;
   forwarderAddress: string;
   amount: string; // wei
   status: string;
+  expiresAt: string;
 }
 
 export interface PaymentStatusResponse {

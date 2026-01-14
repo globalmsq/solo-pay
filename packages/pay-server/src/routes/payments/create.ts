@@ -172,6 +172,8 @@ export async function createPaymentRoute(
         paymentId: paymentHash,
         chainId: validatedData.chainId,
         tokenAddress: tokenConfig.address,
+        tokenSymbol,      // From on-chain (or fallback from DB)
+        tokenDecimals,    // From on-chain (or fallback from DB)
         gatewayAddress: contracts?.gateway,
         forwarderAddress: contracts?.forwarder,
         amount: amountInWei.toString(),
