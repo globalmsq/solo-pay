@@ -6,7 +6,6 @@ import PaymentGatewayV1Artifact from '@msq/pay-contracts/artifacts/src/PaymentGa
 export const CreatePaymentSchema = z.object({
   merchantId: z.string().min(1, '상점 ID는 필수입니다'),
   amount: z.number().positive('금액은 양수여야 합니다'),
-  currency: z.string().min(1, '토큰 심볼은 필수입니다'),
   chainId: z.number().int().positive('지원하는 체인 ID여야 합니다'),
   tokenAddress: z
     .string()
@@ -14,7 +13,6 @@ export const CreatePaymentSchema = z.object({
   recipientAddress: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, '유효한 Ethereum 주소여야 합니다 (0x + 40자 hex)'),
-  tokenDecimals: z.number().int().min(0).max(18, '토큰 소수점은 0-18 사이여야 합니다'),
 });
 
 export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;

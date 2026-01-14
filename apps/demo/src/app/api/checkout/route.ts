@@ -114,7 +114,6 @@ export async function POST(request: NextRequest) {
       chainId: merchantConfig.chainId,
       recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
-      tokenDecimals: merchantConfig.tokenDecimals,
     });
 
     // 클라이언트에 결제 정보 반환

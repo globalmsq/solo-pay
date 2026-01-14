@@ -232,6 +232,47 @@ export class BlockchainService {
   }
 
   /**
+   * 토큰 검증: 주소만으로 확인 (symbol/decimals는 on-chain에서 조회)
+   * @param chainId 체인 ID
+   * @param tokenAddress 토큰 주소
+   * @returns 유효한 토큰이면 true
+   */
+  validateTokenByAddress(chainId: number, tokenAddress: string): boolean {
+    const config = this.chainConfigs.get(chainId);
+    if (!config) {
+      return false;
+    }
+
+    // tokens 맵에서 해당 주소를 가진 토큰이 있는지 확인
+    for (const symbol of Object.keys(config.tokens)) {
+      if (config.tokens[symbol].address.toLowerCase() === tokenAddress.toLowerCase()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * 토큰 주소로 토큰 설정 조회
+   * @param chainId 체인 ID
+   * @param tokenAddress 토큰 주소
+   * @returns 토큰 설정 또는 null
+   */
+  getTokenConfigByAddress(chainId: number, tokenAddress: string): (TokenConfig & { symbol: string }) | null {
+    const config = this.chainConfigs.get(chainId);
+    if (!config) return null;
+
+    for (const symbol of Object.keys(config.tokens)) {
+      if (config.tokens[symbol].address.toLowerCase() === tokenAddress.toLowerCase()) {
+        return { ...config.tokens[symbol], symbol };
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * 토큰 설정 조회
    * @param chainId 체인 ID
    * @param tokenSymbol 토큰 심볼

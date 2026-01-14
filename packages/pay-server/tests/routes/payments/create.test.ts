@@ -4,83 +4,110 @@ import cors from '@fastify/cors';
 import { createPaymentRoute } from '../../../src/routes/payments/create';
 import { BlockchainService } from '../../../src/services/blockchain.service';
 import { MerchantService } from '../../../src/services/merchant.service';
-import { ChainService } from '../../../src/services/chain.service';
+import { ChainService, ChainWithTokens } from '../../../src/services/chain.service';
 import { TokenService } from '../../../src/services/token.service';
 import { PaymentMethodService } from '../../../src/services/payment-method.service';
 import { PaymentService } from '../../../src/services/payment.service';
-import { ChainsConfig } from '../../../src/config/chains.config';
 
 // Test API key for authentication
 const TEST_API_KEY = 'test-api-key-123';
 
-// 테스트용 ChainsConfig mock
-const mockChainsConfig: ChainsConfig = {
-  chains: [
-    {
-      chainId: 80002,
-      name: 'Polygon Amoy',
-      rpcUrl: 'https://rpc-amoy.polygon.technology',
-      nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-      contracts: {
-        gateway: '0x0000000000000000000000000000000000000000',
-        forwarder: '0x0000000000000000000000000000000000000000',
+// Mock ChainWithTokens data (format yang diharapkan BlockchainService)
+const mockChainsWithTokens: ChainWithTokens[] = [
+  {
+    id: 1,
+    network_id: 80002,
+    name: 'Polygon Amoy',
+    rpc_url: 'https://rpc-amoy.polygon.technology',
+    gateway_address: '0x0000000000000000000000000000000000000000',
+    forwarder_address: '0x0000000000000000000000000000000000000000',
+    is_testnet: true,
+    is_enabled: true,
+    is_deleted: false,
+    created_at: new Date(),
+    updated_at: new Date(),
+    deleted_at: null,
+    tokens: [
+      {
+        id: 1,
+        chain_id: 1,
+        address: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+        symbol: 'SUT',
+        decimals: 18,
+        is_enabled: true,
+        is_deleted: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
       },
-      tokens: {
-        SUT: { address: '0xE4C687167705Abf55d709395f92e254bdF5825a2', decimals: 18 },
+    ],
+  },
+  {
+    id: 2,
+    network_id: 31337,
+    name: 'Hardhat',
+    rpc_url: 'http://127.0.0.1:8545',
+    gateway_address: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
+    forwarder_address: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    is_testnet: true,
+    is_enabled: true,
+    is_deleted: false,
+    created_at: new Date(),
+    updated_at: new Date(),
+    deleted_at: null,
+    tokens: [
+      {
+        id: 2,
+        chain_id: 2,
+        address: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+        symbol: 'TEST',
+        decimals: 18,
+        is_enabled: true,
+        is_deleted: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
       },
-    },
-    {
-      chainId: 31337,
-      name: 'Hardhat',
-      rpcUrl: 'http://127.0.0.1:8545',
-      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-      contracts: {
-        gateway: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
-        forwarder: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-      },
-      tokens: {
-        TEST: { address: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512', decimals: 18 },
-      },
-    },
-  ],
-};
+    ],
+  },
+];
 
 // Mock data
 const mockMerchant = {
-  id: 'merchant-db-id',
+  id: 1,
   merchant_key: 'merchant_001',
   is_enabled: true,
 };
 
 const mockChain = {
-  id: 'chain-db-id',
+  id: 1,
   network_id: 80002,
 };
 
 const mockChain31337 = {
-  id: 'chain-db-id-31337',
+  id: 2,
   network_id: 31337,
 };
 
 const mockToken = {
-  id: 'token-db-id',
+  id: 1,
   symbol: 'SUT',
   decimals: 18,
 };
 
 const mockToken31337 = {
-  id: 'token-db-id-31337',
+  id: 2,
   symbol: 'TEST',
   decimals: 18,
 };
 
 const mockPaymentMethod = {
-  id: 'pm-db-id',
+  id: 1,
   is_enabled: true,
 };
 
 const mockPayment = {
-  id: 'payment-db-id',
+  id: 1,
   payment_hash: '0x123',
   status: 'CREATED',
   expires_at: new Date(Date.now() + 30 * 60 * 1000),
@@ -100,20 +127,30 @@ describe('POST /payments/create', () => {
     await app.register(cors);
 
     // 실제 BlockchainService 인스턴스 생성
-    blockchainService = new BlockchainService(mockChainsConfig);
+    blockchainService = new BlockchainService(mockChainsWithTokens);
 
-    // Mock getDecimals to return 18
+    // Mock getDecimals and getTokenSymbolOnChain to return on-chain values
     blockchainService.getDecimals = vi.fn().mockResolvedValue(18);
+    blockchainService.getTokenSymbolOnChain = vi.fn().mockImplementation((_chainId: number, tokenAddress: string) => {
+      if (tokenAddress.toLowerCase() === '0xE4C687167705Abf55d709395f92e254bdF5825a2'.toLowerCase()) {
+        return Promise.resolve('SUT');
+      }
+      if (tokenAddress.toLowerCase() === '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'.toLowerCase()) {
+        return Promise.resolve('TEST');
+      }
+      return Promise.resolve('UNKNOWN');
+    });
 
     // Mock DB Services
     merchantService = {
       findByMerchantKey: vi.fn().mockImplementation((key: string) => {
-        if (key === 'merchant_001' || key === 'merchant_002') {
+        // Support all merchant keys used in tests
+        if (key.startsWith('merchant_')) {
           return Promise.resolve({ ...mockMerchant, merchant_key: key });
         }
         return Promise.resolve(null);
       }),
-      // Add findByApiKey for auth middleware
+      // Add findByApiKey for auth middleware - return merchant based on merchantId in request
       findByApiKey: vi.fn().mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_001' }),
     } as any;
 
@@ -126,9 +163,9 @@ describe('POST /payments/create', () => {
     } as any;
 
     tokenService = {
-      findByAddress: vi.fn().mockImplementation((chainId: string) => {
-        if (chainId === 'chain-db-id') return Promise.resolve(mockToken);
-        if (chainId === 'chain-db-id-31337') return Promise.resolve(mockToken31337);
+      findByAddress: vi.fn().mockImplementation((chainId: number) => {
+        if (chainId === 1) return Promise.resolve(mockToken);
+        if (chainId === 2) return Promise.resolve(mockToken31337);
         return Promise.resolve(null);
       }),
     } as any;
@@ -158,11 +195,9 @@ describe('POST /payments/create', () => {
       const validPayment = {
         merchantId: 'merchant_001',
         amount: 100,
-        currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -190,11 +225,9 @@ describe('POST /payments/create', () => {
       const minimalPayment = {
         merchantId: 'merchant_002',
         amount: 50,
-        currency: 'TEST',
         chainId: 31337,
         tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -214,13 +247,11 @@ describe('POST /payments/create', () => {
   describe('경계 케이스', () => {
     it('금액이 0일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        merchantId: 'merchant_003',
+        merchantId: 'merchant_001',
         amount: 0,
-        currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -237,13 +268,11 @@ describe('POST /payments/create', () => {
 
     it('음수 금액일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        merchantId: 'merchant_004',
+        merchantId: 'merchant_001',
         amount: -50,
-        currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -260,13 +289,11 @@ describe('POST /payments/create', () => {
 
     it('유효하지 않은 recipientAddress 형식일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        merchantId: 'merchant_005',
+        merchantId: 'merchant_001',
         amount: 100,
-        currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: 'invalid-address',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -285,13 +312,11 @@ describe('POST /payments/create', () => {
   describe('예외 케이스', () => {
     it('필수 필드가 누락되었을 때 400 상태 코드를 반환해야 함', async () => {
       const incompletePayment = {
-        merchantId: 'merchant_006',
+        merchantId: 'merchant_001',
         amount: 100,
-        currency: 'SUT',
         // chainId 누락
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -308,13 +333,11 @@ describe('POST /payments/create', () => {
 
     it('지원하지 않는 chainId일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        merchantId: 'merchant_007',
+        merchantId: 'merchant_001',
         amount: 100,
-        currency: 'SUT',
         chainId: 1, // Ethereum Mainnet (지원 안 함)
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -330,15 +353,13 @@ describe('POST /payments/create', () => {
       expect(body.message).toContain('Unsupported chain');
     });
 
-    it('지원하지 않는 currency일 때 400 상태 코드를 반환해야 함', async () => {
+    it('지원하지 않는 tokenAddress일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
-        merchantId: 'merchant_008',
+        merchantId: 'merchant_001',
         amount: 100,
-        currency: 'ETH', // Polygon Amoy에서 지원하지 않는 토큰
         chainId: 80002,
-        tokenAddress: '0x0000000000000000000000000000000000000000',
+        tokenAddress: '0x0000000000000000000000000000000000000000', // 지원하지 않는 토큰 주소
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -355,17 +376,15 @@ describe('POST /payments/create', () => {
     });
 
     it('decimals 조회 오류 발생 시에도 fallback으로 진행해야 함', async () => {
-      // getDecimals가 실패해도 fallback 18로 처리
-      blockchainService.getDecimals = vi.fn().mockResolvedValue(18);
+      // getDecimals가 실패하면 database fallback 사용
+      blockchainService.getDecimals = vi.fn().mockRejectedValue(new Error('RPC error'));
 
       const validPayment = {
         merchantId: 'merchant_001', // Use existing mock merchant
         amount: 100,
-        currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        tokenDecimals: 18,
       };
 
       const response = await app.inject({

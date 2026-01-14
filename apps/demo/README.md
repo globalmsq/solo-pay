@@ -375,7 +375,6 @@ export async function POST(request: NextRequest) {
       chainId: merchantConfig.chainId,
       recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
-      tokenDecimals: merchantConfig.tokenDecimals,
     });
 
     return NextResponse.json(

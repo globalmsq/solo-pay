@@ -14,11 +14,9 @@ import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
 export interface CreatePaymentRequest {
   merchantId: string;
   amount: number;
-  currency: string;
   chainId: number;
   tokenAddress: string;
   recipientAddress: string;
-  tokenDecimals: number;
 }
 
 export async function createPaymentRoute(
@@ -58,15 +56,15 @@ export async function createPaymentRoute(
         });
       }
 
-      if (!blockchainService.validateToken(validatedData.chainId, validatedData.currency, tokenAddress)) {
+      if (!blockchainService.validateTokenByAddress(validatedData.chainId, tokenAddress)) {
         return reply.code(400).send({
           code: 'UNSUPPORTED_TOKEN',
           message: 'Unsupported token',
         });
       }
 
-      // 3. 토큰 설정 가져오기 (decimals 등)
-      const tokenConfig = blockchainService.getTokenConfig(validatedData.chainId, validatedData.currency);
+      // 3. 토큰 설정 가져오기 (주소 기반)
+      const tokenConfig = blockchainService.getTokenConfigByAddress(validatedData.chainId, tokenAddress);
       if (!tokenConfig) {
         return reply.code(400).send({
           code: 'UNSUPPORTED_TOKEN',
@@ -124,8 +122,29 @@ export async function createPaymentRoute(
         });
       }
 
-      // amount를 wei로 변환 (상점서버가 보낸 tokenDecimals 사용)
-      const amountInWei = parseUnits(validatedData.amount.toString(), validatedData.tokenDecimals);
+      // Get token decimals and symbol from on-chain data (source of truth)
+      // Fallback to database if on-chain call fails
+      let tokenDecimals: number;
+      let tokenSymbol: string;
+
+      try {
+        tokenDecimals = await blockchainService.getDecimals(validatedData.chainId, tokenAddress);
+      } catch (error) {
+        // Fallback to database value if on-chain call fails
+        app.log.warn(`Failed to get decimals from on-chain for token ${tokenAddress}, using database value: ${token.decimals}`);
+        tokenDecimals = token.decimals;
+      }
+
+      try {
+        tokenSymbol = await blockchainService.getTokenSymbolOnChain(validatedData.chainId, tokenAddress);
+      } catch (error) {
+        // Fallback to database value if on-chain call fails
+        app.log.warn(`Failed to get symbol from on-chain for token ${tokenAddress}, using database value: ${token.symbol}`);
+        tokenSymbol = token.symbol;
+      }
+
+      // amount를 wei로 변환 (on-chain decimals 사용 - 보안 강화)
+      const amountInWei = parseUnits(validatedData.amount.toString(), tokenDecimals);
 
       // 체인 컨트랙트 정보 조회
       const contracts = blockchainService.getChainContracts(validatedData.chainId);
@@ -142,8 +161,8 @@ export async function createPaymentRoute(
         merchant_id: merchant.id,
         payment_method_id: paymentMethod.id,
         amount: new Decimal(amountInWei.toString()),
-        token_decimals: token.decimals,
-        token_symbol: token.symbol,
+        token_decimals: tokenDecimals, // Use on-chain decimals (or fallback from DB)
+        token_symbol: tokenSymbol,     // Use on-chain symbol (or fallback from DB)
         network_id: chain.network_id,
         expires_at: new Date(Date.now() + 30 * 60 * 1000), // 30분 후 만료
       });
