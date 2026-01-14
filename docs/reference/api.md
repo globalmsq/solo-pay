@@ -102,7 +102,6 @@ Create payment based on product array (internal store server API route only).
 {
   "success": true,
   "paymentId": "0x5aed4bae...",
-  "orderId": "ORD-1733235200000-abc123",
   "products": [
     {
       "productId": "prod_001",

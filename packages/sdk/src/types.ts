@@ -10,8 +10,6 @@ export interface MSQPayConfig {
 export interface CreatePaymentParams {
   /** 상점 고유 식별자 */
   merchantId: string;
-  /** 상점에서 생성한 주문 ID */
-  orderId: string;
   /** 결제 금액 (토큰 단위) */
   amount: number;
   /** 결제 토큰 심볼 (예: TEST, USDC) */

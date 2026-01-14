@@ -240,24 +240,23 @@ ERC2771Forwarder
 결제서버에서 Node.js로 생성 (스마트 컨트랙트 아님):
 
 ```typescript
-import { keccak256, toBytes, concat } from 'viem';
+import { keccak256, toHex } from 'viem';
 import { randomBytes } from 'crypto';
 
-function generatePaymentId(storeId: string, orderId: string): `0x${string}` {
+function generatePaymentId(merchantId: string): `0x${string}` {
+  const random = randomBytes(32);
   return keccak256(
-    concat([
-      toBytes(storeId),      // API Key에서 추출
-      toBytes(orderId),      // 상점서버 요청
-      randomBytes(32)        // 매번 다른 ID 보장
-    ])
+    toHex(`${merchantId}:${Date.now()}:${random.toString('hex')}`)
   );
 }
 ```
 
 **특징**:
-- 같은 상점 + 같은 orderId → 항상 다른 paymentId
-- storeId 포함 → 상점간 충돌 불가
-- randomBytes 포함 → 동일 요청도 매번 새로운 ID
+- merchantId + timestamp + random bytes 기반 생성
+- orderId는 server-to-server 아키텍처에서 불필요
+- 상점은 paymentId를 내부 주문과 매핑할 수 있음
+- merchantId 포함 → 상점간 충돌 불가
+- randomBytes 포함 → 항상 고유한 paymentId
 
 ## 보안 설계
 

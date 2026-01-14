@@ -157,12 +157,12 @@ describe('POST /payments/create', () => {
     it('유효한 결제 요청을 받으면 201 상태 코드와 함께 결제 ID를 반환해야 함', async () => {
       const validPayment = {
         merchantId: 'merchant_001',
-        orderId: 'order_001',
         amount: 100,
         currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -189,12 +189,12 @@ describe('POST /payments/create', () => {
 
       const minimalPayment = {
         merchantId: 'merchant_002',
-        orderId: 'order_002',
         amount: 50,
         currency: 'TEST',
         chainId: 31337,
         tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -215,12 +215,12 @@ describe('POST /payments/create', () => {
     it('금액이 0일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
         merchantId: 'merchant_003',
-        orderId: 'order_003',
         amount: 0,
         currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -238,12 +238,12 @@ describe('POST /payments/create', () => {
     it('음수 금액일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
         merchantId: 'merchant_004',
-        orderId: 'order_004',
         amount: -50,
         currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -261,12 +261,12 @@ describe('POST /payments/create', () => {
     it('유효하지 않은 recipientAddress 형식일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
         merchantId: 'merchant_005',
-        orderId: 'order_005',
         amount: 100,
         currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: 'invalid-address',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -286,12 +286,12 @@ describe('POST /payments/create', () => {
     it('필수 필드가 누락되었을 때 400 상태 코드를 반환해야 함', async () => {
       const incompletePayment = {
         merchantId: 'merchant_006',
-        orderId: 'order_006',
         amount: 100,
         currency: 'SUT',
         // chainId 누락
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -309,12 +309,12 @@ describe('POST /payments/create', () => {
     it('지원하지 않는 chainId일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
         merchantId: 'merchant_007',
-        orderId: 'order_007',
         amount: 100,
         currency: 'SUT',
         chainId: 1, // Ethereum Mainnet (지원 안 함)
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -333,12 +333,12 @@ describe('POST /payments/create', () => {
     it('지원하지 않는 currency일 때 400 상태 코드를 반환해야 함', async () => {
       const invalidPayment = {
         merchantId: 'merchant_008',
-        orderId: 'order_008',
         amount: 100,
         currency: 'ETH', // Polygon Amoy에서 지원하지 않는 토큰
         chainId: 80002,
         tokenAddress: '0x0000000000000000000000000000000000000000',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({
@@ -360,12 +360,12 @@ describe('POST /payments/create', () => {
 
       const validPayment = {
         merchantId: 'merchant_001', // Use existing mock merchant
-        orderId: 'order_009',
         amount: 100,
         currency: 'SUT',
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenDecimals: 18,
       };
 
       const response = await app.inject({

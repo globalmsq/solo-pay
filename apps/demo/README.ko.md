@@ -283,7 +283,7 @@ export async function GET(
 import { NextRequest, NextResponse } from 'next/server';
 import { MSQPayClient } from '@globalmsq/msqpay';
 import { getProductById } from '@/lib/products';
-import { getMerchantConfig, generateOrderId } from '@/lib/merchant';
+import { getMerchantConfig } from '@/lib/merchant';
 
 const client = new MSQPayClient({
   environment: 'custom',
@@ -368,11 +368,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const orderId = generateOrderId();
-
+    // 결제 생성 요청 (server-to-server)
+    // orderId는 불필요 - 상점은 paymentId를 내부 주문과 매핑할 수 있음
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
-      orderId: orderId,
       amount: totalAmount,
       currency: merchantConfig.tokenSymbol,
       chainId: merchantConfig.chainId,
@@ -384,8 +383,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
+        // 결제 서버에서 생성된 paymentId
+        // 상점은 이 paymentId를 저장하여 내부 주문과 매핑할 수 있음
         paymentId: payment.paymentId,
-        orderId: orderId,
         products: productInfos,
         totalAmount: totalAmount.toString(),
         chainId: merchantConfig.chainId,

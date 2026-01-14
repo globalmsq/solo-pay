@@ -54,7 +54,15 @@ CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
 # ============================================
 FROM deps AS server
 
+# Copy contracts source (needed for @msq/pay-contracts artifacts)
+COPY contracts ./contracts
+
+# Compile contracts to generate artifacts
+WORKDIR /app/contracts
+RUN npx hardhat compile
+
 # Copy server source
+WORKDIR /app
 COPY packages/pay-server ./packages/pay-server
 
 WORKDIR /app/packages/pay-server

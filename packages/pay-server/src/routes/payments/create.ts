@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { parseUnits, keccak256, toHex } from 'viem';
 import { Decimal } from '@prisma/client/runtime/library';
+import { randomBytes } from 'crypto';
 import { CreatePaymentSchema } from '../../schemas/payment.schema';
 import { BlockchainService } from '../../services/blockchain.service';
 import { MerchantService } from '../../services/merchant.service';
@@ -12,7 +13,6 @@ import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
 
 export interface CreatePaymentRequest {
   merchantId: string;
-  orderId: string;
   amount: number;
   currency: string;
   chainId: number;
@@ -130,9 +130,10 @@ export async function createPaymentRoute(
       // 체인 컨트랙트 정보 조회
       const contracts = blockchainService.getChainContracts(validatedData.chainId);
 
-      // 결제 생성: merchantId + orderId + timestamp 기반 bytes32 해시 생성
+      // Generate payment: create bytes32 hash based on merchantId + timestamp + random bytes
+      const random = randomBytes(32);
       const paymentHash = keccak256(
-        toHex(`${validatedData.merchantId}:${validatedData.orderId}:${Date.now()}`)
+        toHex(`${validatedData.merchantId}:${Date.now()}:${random.toString('hex')}`)
       );
 
       // 8. DB에 Payment 저장

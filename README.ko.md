@@ -166,14 +166,15 @@ const client = new MSQPayClient({
 });
 
 // 결제 생성 (상점서버에서 호출)
+// orderId는 불필요 - 상점은 paymentId를 내부 주문과 매핑할 수 있음
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
-  orderId: 'ORD-12345',
   amount: 100,
   currency: 'TEST',
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+  tokenDecimals: 18
 });
 
 // 상태 조회 (chainId 불필요 - 서버에서 자동 결정)

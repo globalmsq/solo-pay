@@ -5,7 +5,6 @@ import PaymentGatewayV1Artifact from '@msq/pay-contracts/artifacts/src/PaymentGa
 // 결제 생성 요청 스키마
 export const CreatePaymentSchema = z.object({
   merchantId: z.string().min(1, '상점 ID는 필수입니다'),
-  orderId: z.string().min(1, '주문 ID는 필수입니다'),
   amount: z.number().positive('금액은 양수여야 합니다'),
   currency: z.string().min(1, '토큰 심볼은 필수입니다'),
   chainId: z.number().int().positive('지원하는 체인 ID여야 합니다'),

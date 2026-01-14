@@ -4,12 +4,12 @@ import { CreatePaymentSchema } from '../payment.schema';
 describe('payment.schema.ts - CreatePaymentSchema', () => {
   const validPayload = {
     merchantId: 'merchant_001',
-    orderId: 'order_001',
     amount: 100,
     currency: 'SUT',
     chainId: 80002,
     tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    tokenDecimals: 18,
   };
 
   describe('Valid payloads', () => {
@@ -134,15 +134,15 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
   });
 
   describe('Schema field requirements', () => {
-    it('should have required fields: merchantId, orderId, amount, currency, chainId, tokenAddress, recipientAddress', () => {
+    it('should have required fields: merchantId, amount, currency, chainId, tokenAddress, recipientAddress, tokenDecimals', () => {
       const schema = CreatePaymentSchema.shape;
       expect(schema).toHaveProperty('merchantId');
-      expect(schema).toHaveProperty('orderId');
       expect(schema).toHaveProperty('amount');
       expect(schema).toHaveProperty('currency');
       expect(schema).toHaveProperty('chainId');
       expect(schema).toHaveProperty('tokenAddress');
       expect(schema).toHaveProperty('recipientAddress');
+      expect(schema).toHaveProperty('tokenDecimals');
     });
 
     it('should NOT require userId field (not in schema)', () => {

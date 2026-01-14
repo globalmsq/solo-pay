@@ -102,7 +102,6 @@ X-API-Key: sk_test_abc123
 {
   "success": true,
   "paymentId": "0x5aed4bae...",
-  "orderId": "ORD-1733235200000-abc123",
   "products": [
     {
       "productId": "prod_001",
