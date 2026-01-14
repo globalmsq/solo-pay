@@ -131,7 +131,7 @@ export async function createPaymentRoute(
         tokenDecimals = await blockchainService.getDecimals(validatedData.chainId, tokenAddress);
       } catch (error) {
         // Fallback to database value if on-chain call fails
-        app.log.warn(`Failed to get decimals from on-chain for token ${tokenAddress}, using database value: ${token.decimals}`);
+        app.log.warn({ err: error, tokenAddress }, `Failed to get decimals from on-chain for token ${tokenAddress}, using database value: ${token.decimals}`);
         tokenDecimals = token.decimals;
       }
 
@@ -139,7 +139,7 @@ export async function createPaymentRoute(
         tokenSymbol = await blockchainService.getTokenSymbolOnChain(validatedData.chainId, tokenAddress);
       } catch (error) {
         // Fallback to database value if on-chain call fails
-        app.log.warn(`Failed to get symbol from on-chain for token ${tokenAddress}, using database value: ${token.symbol}`);
+        app.log.warn({ err: error, tokenAddress }, `Failed to get symbol from on-chain for token ${tokenAddress}, using database value: ${token.symbol}`);
         tokenSymbol = token.symbol;
       }
 

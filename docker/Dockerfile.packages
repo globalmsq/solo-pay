@@ -30,9 +30,9 @@ COPY apps/demo/package.json ./apps/demo/
 RUN pnpm install --frozen-lockfile
 
 # ============================================
-# Hardhat Node Stage
+# Contracts Builder Stage
 # ============================================
-FROM deps AS hardhat
+FROM deps AS contracts-builder
 
 # Copy contracts source
 COPY contracts ./contracts
@@ -42,6 +42,11 @@ WORKDIR /app/contracts
 # Pre-download solidity compiler and compile contracts
 # This caches the compiler and artifacts in the image
 RUN npx hardhat compile
+
+# ============================================
+# Hardhat Node Stage
+# ============================================
+FROM contracts-builder AS hardhat
 
 # Expose Hardhat node port
 EXPOSE 8545
@@ -54,15 +59,14 @@ CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
 # ============================================
 FROM deps AS server
 
-# Copy contracts source (needed for @msq/pay-contracts artifacts)
-COPY contracts ./contracts
-
-# Compile contracts to generate artifacts
-WORKDIR /app/contracts
-RUN npx hardhat compile
+# Copy only compiled artifacts from contracts-builder (not source code)
+# This reduces final image size significantly
+WORKDIR /app
+COPY --from=contracts-builder /app/contracts/artifacts ./contracts/artifacts
+COPY --from=contracts-builder /app/contracts/typechain-types ./contracts/typechain-types
+COPY --from=contracts-builder /app/contracts/package.json ./contracts/
 
 # Copy server source
-WORKDIR /app
 COPY packages/pay-server ./packages/pay-server
 
 WORKDIR /app/packages/pay-server
