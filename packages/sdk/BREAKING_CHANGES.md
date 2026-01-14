@@ -27,10 +27,11 @@ client.createPayment({
 
 ```typescript
 client.createPayment({
+  merchantId: 'merchant_001',
   amount: 100,
-  currency: 'SUT',  // Token symbol instead of hardcoded address
-  chainId: 80002,   // NEW: Explicitly specify chain
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+  chainId: 80002,   // Explicitly specify chain
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 ```
 
@@ -43,12 +44,15 @@ client.createPayment({
 | Parameter | v1.x | v2.0.0 | Status |
 |-----------|------|--------|--------|
 | `userId` | Required | Removed | Breaking Change |
+| `merchantId` | N/A | Required (NEW) | New parameter |
 | `amount` | Required | Required | No change |
-| `currency` | Optional enum ('USD', 'EUR', 'KRW') | Required string | Breaking Change |
-| `tokenAddress` | Required (hardcoded) | Removed | Breaking Change |
+| `currency` | Optional enum | Removed (auto from on-chain) | Breaking Change |
+| `tokenAddress` | Required (hardcoded) | Required | No change |
 | `chainId` | N/A | Required (NEW) | New parameter |
 | `recipientAddress` | Required | Required | No change |
 | `description` | Optional | Removed | Breaking Change |
+
+**Note:** Token symbol and decimals are now fetched automatically from on-chain data.
 
 ### Response Fields
 
@@ -108,7 +112,7 @@ const client = new MSQPayClient({
 
 ### 3. Update createPayment Calls
 
-Remove `userId`, `tokenAddress`, and `description`. Add `chainId`:
+Remove `userId`, `currency`, and `description`. Add `merchantId`, `chainId`, and `tokenAddress`:
 
 ```typescript
 // Before (v1.x)
@@ -121,17 +125,18 @@ const response = await client.createPayment({
   description: 'Order #12345'
 });
 
-// After (v2.0.0)
+// After (v2.0.0) - symbol/decimals fetched from on-chain automatically
 import { useChainId } from 'wagmi';
 
 function MyComponent() {
   const chainId = useChainId();
 
   const response = await client.createPayment({
+    merchantId: 'merchant_001',
     amount: 100,
-    currency: 'SUT',
     chainId, // Use wagmi hook to get current chain
-    recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+    recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
   });
 }
 ```
@@ -141,11 +146,13 @@ function MyComponent() {
 The response now includes blockchain-specific information:
 
 ```typescript
+// symbol/decimals fetched from on-chain automatically
 const response = await client.createPayment({
+  merchantId: 'merchant_001',
   amount: 100,
-  currency: 'SUT',
   chainId: 80002,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 
 // ✅ Use server-provided addresses instead of hardcoded values
@@ -182,10 +189,11 @@ export const TOKENS = {
 
 // ✅ REPLACE: Get from server response
 const { tokenAddress, gatewayAddress } = await client.createPayment({
+  merchantId,
   amount,
-  currency,
   chainId,
-  recipientAddress
+  recipientAddress,
+  tokenAddress
 });
 ```
 
@@ -209,18 +217,19 @@ New error codes in v2.0.0:
 ```typescript
 try {
   await client.createPayment({
+    merchantId: 'merchant_001',
     amount: 100,
-    currency: 'UNKNOWN_TOKEN',
-    chainId: 1,
-    recipientAddress: '0x...'
+    chainId: 1,  // Unsupported chain
+    recipientAddress: '0x...',
+    tokenAddress: '0x0000000000000000000000000000000000000000'  // Unknown token
   });
 } catch (error) {
   if (error.code === 'UNSUPPORTED_CHAIN') {
     // Handle unsupported blockchain
     console.log(`Chain ${chainId} is not supported`);
   } else if (error.code === 'UNSUPPORTED_TOKEN') {
-    // Handle unsupported token
-    console.log(`Token ${currency} not supported on this chain`);
+    // Handle unsupported token address
+    console.log(`Token address not supported on this chain`);
   }
 }
 ```
@@ -247,10 +256,13 @@ if (sdkVersion === 'v1') {
   });
 } else {
   // Use v2.0.0 SDK with server-provided addresses
+  // symbol/decimals fetched from on-chain automatically
   const response = await clientV2.createPayment({
-    currency: 'SUT',
+    merchantId: 'merchant_001',
+    amount: 100,
     chainId: 80002,
-    // ...
+    recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
   });
 }
 ```

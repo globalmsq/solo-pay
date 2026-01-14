@@ -371,7 +371,6 @@ export async function POST(request: NextRequest) {
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
       amount: totalAmount,
-      currency: merchantConfig.tokenSymbol,
       chainId: merchantConfig.chainId,
       recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
