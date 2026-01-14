@@ -166,7 +166,6 @@ const client = new MSQPayClient({
 });
 
 // 결제 생성 (상점서버에서 호출)
-// orderId는 불필요 - 상점은 paymentId를 내부 주문과 매핑할 수 있음
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,

@@ -166,7 +166,6 @@ const client = new MSQPayClient({
 });
 
 // Create payment (called from merchant server)
-// orderId is not required - merchant can map paymentId to internal order
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,

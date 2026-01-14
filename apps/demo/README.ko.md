@@ -368,8 +368,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 결제 생성 요청 (server-to-server)
-    // orderId는 불필요 - 상점은 paymentId를 내부 주문과 매핑할 수 있음
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
       amount: totalAmount,
