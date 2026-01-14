@@ -80,6 +80,17 @@ export class MerchantService {
     });
   }
 
+  async findByApiKey(apiKey: string): Promise<Merchant | null> {
+    const apiKeyHash = this.hashApiKey(apiKey);
+    return this.prisma.merchant.findFirst({
+      where: {
+        api_key_hash: apiKeyHash,
+        is_deleted: false,
+        is_enabled: true,
+      },
+    });
+  }
+
   async verifyApiKey(merchantId: number, apiKey: string): Promise<boolean> {
     const merchant = await this.prisma.merchant.findUnique({
       where: { id: merchantId },

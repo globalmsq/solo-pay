@@ -150,6 +150,8 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:3001
       # Server-side API URL (Docker internal network)
       MSQPAY_API_URL: http://server:3001
+      # API Key for merchant_demo_001 (SHA-256 hash: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3)
+      MSQPAY_API_KEY: "123"
     depends_on:
       - server
     networks:

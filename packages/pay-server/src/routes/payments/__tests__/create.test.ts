@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { createPaymentRoute } from '../create';
 import { BlockchainService } from '../../../services/blockchain.service';
+import { MerchantService } from '../../../services/merchant.service';
+import { ChainService } from '../../../services/chain.service';
+import { TokenService } from '../../../services/token.service';
+import { PaymentMethodService } from '../../../services/payment-method.service';
+import { PaymentService } from '../../../services/payment.service';
 import { ChainsConfig } from '../../../config/chains.config';
 
 // 테스트용 ChainsConfig mock
@@ -41,6 +46,33 @@ const mockApp = {
   post: vi.fn(),
 } as unknown as FastifyInstance;
 
+// Mock services
+const mockMerchantService = {
+  findByApiKey: vi.fn().mockResolvedValue({ id: 1, merchant_key: 'test' }),
+  findByMerchantKey: vi.fn().mockResolvedValue({ id: 1, merchant_key: 'test', is_enabled: true }),
+} as unknown as MerchantService;
+
+const mockChainService = {
+  findByNetworkId: vi.fn().mockResolvedValue({ id: 1, network_id: 80002 }),
+} as unknown as ChainService;
+
+const mockTokenService = {
+  findByAddress: vi.fn().mockResolvedValue({ id: 1, symbol: 'SUT', decimals: 18 }),
+} as unknown as TokenService;
+
+const mockPaymentMethodService = {
+  findByMerchantAndToken: vi.fn().mockResolvedValue({ id: 1, is_enabled: true }),
+} as unknown as PaymentMethodService;
+
+const mockPaymentService = {
+  create: vi.fn().mockResolvedValue({
+    id: 1,
+    payment_hash: '0x123',
+    status: 'CREATED',
+    expires_at: new Date(),
+  }),
+} as unknown as PaymentService;
+
 describe('POST /payments/create', () => {
   let blockchainService: BlockchainService;
 
@@ -60,11 +92,19 @@ describe('POST /payments/create', () => {
 
       // Store the posted handler
       let handler: any;
-      (mockApp.post as any).mockImplementation((path: string, fn: any) => {
-        handler = fn;
+      (mockApp.post as any).mockImplementation((path: string, opts: any, fn: any) => {
+        handler = fn || opts; // fn if options provided, else opts is the handler
       });
 
-      await createPaymentRoute(mockApp, blockchainService);
+      await createPaymentRoute(
+        mockApp,
+        blockchainService,
+        mockMerchantService,
+        mockChainService,
+        mockTokenService,
+        mockPaymentMethodService,
+        mockPaymentService
+      );
 
       // Verify route was registered
       expect(mockApp.post).toHaveBeenCalled();

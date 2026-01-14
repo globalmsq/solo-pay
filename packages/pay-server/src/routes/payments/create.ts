@@ -8,6 +8,7 @@ import { ChainService } from '../../services/chain.service';
 import { TokenService } from '../../services/token.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { PaymentService } from '../../services/payment.service';
+import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
 
 export interface CreatePaymentRequest {
   merchantId: string;
@@ -29,7 +30,13 @@ export async function createPaymentRoute(
   paymentMethodService: PaymentMethodService,
   paymentService: PaymentService
 ) {
-  app.post<{ Body: CreatePaymentRequest }>('/payments/create', async (request, reply) => {
+  // Auth + merchant ownership middleware
+  const authMiddleware = createMerchantAuthMiddleware(merchantService);
+
+  app.post<{ Body: CreatePaymentRequest }>(
+    '/payments/create',
+    { preHandler: authMiddleware },
+    async (request, reply) => {
     try {
       // 입력 검증
       const validatedData = CreatePaymentSchema.parse(request.body);
@@ -165,5 +172,6 @@ export async function createPaymentRoute(
         message,
       });
     }
-  });
+  }
+  );
 }

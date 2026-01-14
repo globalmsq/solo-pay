@@ -2,9 +2,27 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { submitGaslessRoute } from '../../../src/routes/payments/gasless';
-import { DefenderService } from '../../../src/services/defender.service';
+import { RelayerService } from '../../../src/services/relayer.service';
 import { RelayService } from '../../../src/services/relay.service';
 import { PaymentService } from '../../../src/services/payment.service';
+import { MerchantService } from '../../../src/services/merchant.service';
+
+// Test API key for authentication
+const TEST_API_KEY = 'test-api-key-123';
+
+// Mock merchant data for auth
+const mockMerchant = {
+  id: 1,
+  merchant_key: 'merchant_demo_001',
+  name: 'Demo Store',
+  api_key_hash: 'hashed',
+  webhook_url: null,
+  is_enabled: true,
+  is_deleted: false,
+  created_at: new Date(),
+  updated_at: new Date(),
+  deleted_at: null,
+};
 
 // 유효한 ForwardRequest 객체 생성 헬퍼
 const createValidForwardRequest = (overrides = {}) => ({
@@ -12,6 +30,7 @@ const createValidForwardRequest = (overrides = {}) => ({
   to: '0x' + 'b'.repeat(40),
   value: '0',
   gas: '100000',
+  nonce: '1', // Required by ForwardRequestSchema
   deadline: String(Math.floor(Date.now() / 1000) + 3600),
   data: '0x' + 'c'.repeat(64),
   signature: '0x' + 'd'.repeat(130),
@@ -26,25 +45,27 @@ const createValidGaslessRequest = (paymentId: string, overrides = {}) => ({
   ...overrides,
 });
 
-// Mock payment data
+// Mock payment data - merchant_id must match mockMerchant.id
 const mockPaymentData = {
-  id: 'payment-db-id',
+  id: 1,
   payment_hash: 'payment-123',
+  merchant_id: 1, // matches mockMerchant.id
   status: 'CREATED',
 };
 
 describe('POST /payments/:id/gasless', () => {
   let app: FastifyInstance;
-  let defenderService: DefenderService;
+  let relayerService: RelayerService;
   let relayService: RelayService;
   let paymentService: PaymentService;
+  let merchantService: MerchantService;
 
   beforeEach(async () => {
     app = Fastify({ logger: false });
     await app.register(cors);
 
-    // Mock DefenderService
-    defenderService = {
+    // Mock RelayerService (was DefenderService)
+    relayerService = {
       submitForwardTransaction: vi
         .fn()
         .mockResolvedValue({
@@ -69,8 +90,13 @@ describe('POST /payments/:id/gasless', () => {
       updateStatus: vi.fn().mockResolvedValue(mockPaymentData),
     } as any;
 
-    // 실제 라우트 등록
-    await submitGaslessRoute(app, defenderService, relayService, paymentService);
+    // Mock MerchantService for authentication
+    merchantService = {
+      findByApiKey: vi.fn().mockResolvedValue(mockMerchant),
+    } as any;
+
+    // 실제 라우트 등록 - using RelayerService, not DefenderService
+    await submitGaslessRoute(app, relayerService, relayService, paymentService, merchantService);
   });
 
   describe('정상 케이스', () => {
@@ -80,6 +106,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-123/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -96,6 +123,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-456/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -110,13 +138,14 @@ describe('POST /payments/:id/gasless', () => {
 
   describe('경계 케이스', () => {
     it('유효하지 않은 서명 형식일 때 400 상태 코드를 반환해야 함', async () => {
-      defenderService.validateTransactionData = vi.fn().mockReturnValueOnce(false);
+      relayerService.validateTransactionData = vi.fn().mockReturnValueOnce(false);
 
       const invalidRequest = createValidGaslessRequest('payment-789');
 
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-789/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
 
@@ -135,6 +164,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-101/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
 
@@ -153,6 +183,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-202/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: incompleteRequest,
       });
 
@@ -167,6 +198,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments//gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -176,7 +208,7 @@ describe('POST /payments/:id/gasless', () => {
 
   describe('예외 케이스', () => {
     it('Defender 서비스 오류 발생 시 500 상태 코드를 반환해야 함', async () => {
-      defenderService.submitForwardTransaction = vi
+      relayerService.submitForwardTransaction = vi
         .fn()
         .mockRejectedValueOnce(new Error('Defender API 오류'));
 
@@ -185,6 +217,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-404/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 
@@ -203,6 +236,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-505/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
 
@@ -221,6 +255,7 @@ describe('POST /payments/:id/gasless', () => {
       await app.inject({
         method: 'POST',
         url: '/payments/payment-606/gasless',
+        headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
 

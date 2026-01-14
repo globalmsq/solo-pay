@@ -184,16 +184,25 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 (3, '0xE4C687167705Abf55d709395f92e254bdF5825a2', 'SUT', 18);
 
 -- Demo Merchant (id=1)
--- API Key: sk_test_demo123456 -> SHA-256 hash
+-- API Key: 123 -> SHA-256 hash
 INSERT INTO merchants (merchant_key, name, api_key_hash, webhook_url) VALUES
 ('merchant_demo_001', 'Demo Store', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo');
 
--- Demo Payment Methods
+-- MetaStar Merchant (id=2)
+-- API Key: msq_sk_metastar_123 -> SHA-256 hash
+INSERT INTO merchants (merchant_key, name, api_key_hash, webhook_url) VALUES
+('merchant_metastar_001', 'Metastar Global', '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL);
+
+-- Payment Methods
 -- id=1: Demo Merchant + TEST on Localhost (token_id=1)
 -- id=2: Demo Merchant + SUT on Amoy (token_id=3)
+-- id=3: MetaStar + TEST on Localhost (token_id=1) - recipient: Hardhat Account #3 (for testing)
+-- id=4: MetaStar + SUT on Amoy (token_id=3) - recipient: Hardhat Account #3 (update with real MetaStar wallet later)
 INSERT INTO merchant_payment_methods (merchant_id, token_id, recipient_address) VALUES
 (1, 1, '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'),
-(1, 3, '0x31d45F29071e73836F67ec9dFf53e8af67A74f39');
+(1, 3, '0x31d45F29071e73836F67ec9dFf53e8af67A74f39'),
+(2, 1, '0x90F79bf6EB2c4f870365E785982E1f101E93b906'),
+(2, 3, '0x90F79bf6EB2c4f870365E785982E1f101E93b906');
 
 -- Show created tables
 SHOW TABLES;
