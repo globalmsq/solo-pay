@@ -12,8 +12,6 @@ export interface CreatePaymentParams {
   merchantId: string;
   /** 결제 금액 (토큰 단위) */
   amount: number;
-  /** 결제 토큰 심볼 (예: TEST, USDC) */
-  currency: string;
   /** 블록체인 체인 ID */
   chainId: number;
   /** 결제 수령 주소 */
