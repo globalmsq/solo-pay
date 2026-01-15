@@ -42,7 +42,11 @@ export async function updateMerchantRoute(
         return reply.code(200).send({
           success: true,
           merchant: {
-            ...updatedMerchant,
+            id: updatedMerchant.id,
+            merchant_key: updatedMerchant.merchant_key,
+            name: updatedMerchant.name,
+            webhook_url: updatedMerchant.webhook_url,
+            is_enabled: updatedMerchant.is_enabled,
             created_at: updatedMerchant.created_at.toISOString(),
             updated_at: updatedMerchant.updated_at.toISOString(),
           },
