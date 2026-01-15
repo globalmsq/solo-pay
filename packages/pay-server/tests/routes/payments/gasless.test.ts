@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import { encodeFunctionData, keccak256, toHex } from 'viem';
 import { submitGaslessRoute } from '../../../src/routes/payments/gasless';
 import { RelayerService } from '../../../src/services/relayer.service';
 import { RelayService } from '../../../src/services/relay.service';
 import { PaymentService } from '../../../src/services/payment.service';
 import { MerchantService } from '../../../src/services/merchant.service';
+import PaymentGatewayV1Artifact from '@msq/pay-contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 // Test API key for authentication
 const TEST_API_KEY = 'test-api-key-123';
@@ -24,24 +26,44 @@ const mockMerchant = {
   deleted_at: null,
 };
 
+// 유효한 pay() calldata 생성 헬퍼
+const createValidPayCalldata = (paymentId: string, amount: string) => {
+  const paymentIdHash = keccak256(toHex(paymentId));
+  return encodeFunctionData({
+    abi: PaymentGatewayV1Artifact.abi,
+    functionName: 'pay',
+    args: [
+      paymentIdHash, // bytes32 paymentId
+      '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`, // address token
+      BigInt(amount), // uint256 amount
+      '0x70997970C51812dc3A010C7d01b50e0d17dc79C8' as `0x${string}`, // address merchant
+    ],
+  });
+};
+
 // 유효한 ForwardRequest 객체 생성 헬퍼
-const createValidForwardRequest = (overrides = {}) => ({
+const createValidForwardRequest = (paymentId: string, amount: string, overrides = {}) => ({
   from: '0x' + 'a'.repeat(40),
   to: '0x' + 'b'.repeat(40),
   value: '0',
   gas: '100000',
   nonce: '1', // Required by ForwardRequestSchema
   deadline: String(Math.floor(Date.now() / 1000) + 3600),
-  data: '0x' + 'c'.repeat(64),
+  data: createValidPayCalldata(paymentId, amount),
   signature: '0x' + 'd'.repeat(130),
   ...overrides,
 });
 
 // 유효한 Gasless 요청 생성 헬퍼
-const createValidGaslessRequest = (paymentId: string, overrides = {}) => ({
+// amount는 mockPaymentData.amount와 일치해야 함
+const createValidGaslessRequest = (
+  paymentId: string,
+  amount: string = '1000000000000000000',
+  overrides = {}
+) => ({
   paymentId,
   forwarderAddress: '0x' + 'e'.repeat(40),
-  forwardRequest: createValidForwardRequest(),
+  forwardRequest: createValidForwardRequest(paymentId, amount),
   ...overrides,
 });
 
@@ -161,7 +183,7 @@ describe('POST /payments/:id/gasless', () => {
       const invalidRequest = {
         paymentId: 'payment-101',
         forwarderAddress: 'invalid-address',
-        forwardRequest: createValidForwardRequest(),
+        forwardRequest: createValidForwardRequest('payment-101', '1000000000000000000'),
       };
 
       const response = await app.inject({
@@ -233,7 +255,7 @@ describe('POST /payments/:id/gasless', () => {
       const invalidRequest = {
         paymentId: 'payment-505',
         forwarderAddress: '0x' + 'a'.repeat(40),
-        forwardRequest: createValidForwardRequest({ signature: '' }),
+        forwardRequest: createValidForwardRequest('payment-505', '1000000000000000000', { signature: '' }),
       };
 
       const response = await app.inject({
