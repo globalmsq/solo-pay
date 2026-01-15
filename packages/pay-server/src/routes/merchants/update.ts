@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { MerchantService } from '../../services/merchant.service';
 import { createAuthMiddleware } from '../../middleware/auth.middleware';
 import { UpdateMerchantRequest, UpdateMerchantSchema } from '../../schemas/merchant.schema';
+import { ZodError } from 'zod';
 
 export async function updateMerchantRoute(
   app: FastifyInstance,
