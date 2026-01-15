@@ -78,17 +78,6 @@ services:
       # Requires: msq-relayer-service running with same network
       RELAYER_API_URL: http://relay-api:8080
       RELAYER_API_KEY: ${RELAY_API_KEY:-local-dev-api-key}
-      # Relayer address (from msq-relayer-service oz-relayer-1)
-      RELAYER_ADDRESS: ${RELAYER_ADDRESS:-0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC}
-      # Contract addresses:
-      # - TOKEN_ADDRESS: SampleToken from msq-relayer-service (nonce 1)
-      # - FORWARDER_ADDRESS: ERC2771Forwarder from msq-relayer-service (nonce 0)
-      # - GATEWAY_ADDRESS: PaymentGatewayProxy deployed by msqpay
-      #   Note: Address depends on Account #0 nonce. After fresh hardhat reset:
-      #   msq-relayer-service deploys nonces 0-2, then msqpay deploys at nonces 3-4
-      TOKEN_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-      GATEWAY_ADDRESS: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
     depends_on:
       mysql:
         condition: service_healthy

@@ -15,7 +15,6 @@ import { getRedisClient, disconnectRedis } from './db/redis';
 import { createPaymentRoute } from './routes/payments/create';
 import { getPaymentStatusRoute } from './routes/payments/status';
 import { submitGaslessRoute } from './routes/payments/gasless';
-import { executeRelayRoute } from './routes/payments/relay';
 import { getRelayStatusRoute } from './routes/payments/relay-status';
 import { getPaymentHistoryRoute } from './routes/payments/history';
 import { getTokenBalanceRoute } from './routes/tokens/balance';
@@ -44,8 +43,7 @@ let blockchainService: BlockchainService;
 const relayerApiUrl = process.env.RELAYER_API_URL || 'http://localhost:3001';
 const relayerApiKey = process.env.RELAYER_API_KEY || '';
 const relayerApiSecret = process.env.RELAYER_API_SECRET || '';
-const relayerAddress = process.env.RELAYER_ADDRESS || '0x0000000000000000000000000000000000000000';
-const relayerService = new RelayerService(relayerApiUrl, relayerApiKey, relayerApiSecret, relayerAddress);
+const relayerService = new RelayerService(relayerApiUrl, relayerApiKey, relayerApiSecret);
 
 // Initialize other database services
 const paymentService = new PaymentService(prisma);
@@ -87,7 +85,6 @@ const registerRoutes = async () => {
   );
   await getPaymentStatusRoute(server, blockchainService, paymentService);
   await submitGaslessRoute(server, relayerService, relayService, paymentService, merchantService);
-  await executeRelayRoute(server, relayerService, merchantService, paymentService);
   await getRelayStatusRoute(server, relayerService);
   await getPaymentHistoryRoute(server, blockchainService, paymentService, relayService);
   await getTokenBalanceRoute(server, blockchainService);

@@ -148,11 +148,11 @@ pnpm dev
 
 | Contract | Address |
 |----------|---------|
-| PaymentGateway (Proxy) | `0x2256bedB57869AF4fadF16e1ebD534A7d47513d7` |
+| PaymentGateway (Proxy) | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0x0d9A0fAf9a8101368aa01B88442B38f82180520E` |
+| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 
-Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0x2256bedB57869AF4fadF16e1ebD534A7d47513d7)
+Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 
 ## SDK Usage (@globalmsq/msqpay)
 
@@ -243,7 +243,6 @@ ERC-20 토큰의 지갑 상태를 조회합니다:
 | `RELAYER_API_URL` | Relayer 서비스 엔드포인트 | `http://simple-relayer:3001` |
 | `RELAYER_API_KEY` | Relayer API 키 (프로덕션만) | `sk_...` |
 | `RELAYER_API_SECRET` | Relayer API 시크릿 (프로덕션만) | `secret_...` |
-| `RELAYER_ADDRESS` | Relayer 지갑 주소 | `0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC` |
 
 > **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 데이터베이스 `chains` 테이블에서 관리되며 환경변수로 설정하지 않습니다. 자세한 내용은 [Pay Server README](./packages/pay-server/README.ko.md#체인-설정)를 참고하세요.
 

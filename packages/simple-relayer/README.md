@@ -57,7 +57,6 @@ RPC_URL=http://hardhat:8545  # Docker environment
 
 # Relayer Wallet
 RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 # Forwarder Contract
 FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
@@ -152,7 +151,6 @@ services:
       PORT: 3001
       RPC_URL: http://hardhat:8545
       RELAYER_PRIVATE_KEY: ${RELAYER_PRIVATE_KEY}
-      RELAYER_ADDRESS: ${RELAYER_ADDRESS}
       FORWARDER_ADDRESS: ${FORWARDER_ADDRESS}
     depends_on:
       - hardhat

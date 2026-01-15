@@ -82,6 +82,59 @@ npx hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network local
 npx hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network default
 ```
 
+### 기존 Forwarder를 사용한 배포
+
+외부 릴레이어 서비스의 ERC2771Forwarder를 사용하여 PaymentGateway를 배포하는 방법:
+
+```bash
+# 1. 기존 배포 아티팩트 삭제 (재배포 시)
+rm -rf ignition/deployments/chain-{CHAIN_ID}
+
+# 2. 파라미터 파일 생성
+mkdir -p ignition/parameters
+cat > ignition/parameters/network.json << EOF
+{
+  "PaymentGateway": {
+    "forwarderAddress": "0x기존Forwarder주소"
+  }
+}
+EOF
+
+# 3. 파라미터와 함께 배포
+npx hardhat ignition deploy ignition/modules/PaymentGateway.ts \
+  --network default \
+  --parameters ignition/parameters/network.json
+```
+
+**Polygon Amoy + msq-relayer-service Forwarder 예시:**
+
+```bash
+# 환경변수 설정
+export PRIVATE_KEY="0x..."
+export RPC_URL="https://rpc-amoy.polygon.technology"
+export CHAIN_ID=80002
+
+# Amoy용 파라미터 생성
+cat > ignition/parameters/amoy.json << EOF
+{
+  "PaymentGateway": {
+    "forwarderAddress": "0xF034a404241707F347A952Cd4095f9035AF877Bf"
+  }
+}
+EOF
+
+# 배포
+npx hardhat ignition deploy ignition/modules/PaymentGateway.ts \
+  --network default \
+  --parameters ignition/parameters/amoy.json
+```
+
+### 배포 후 작업
+
+1. **데이터베이스 업데이트**: `docker/init.sql`의 `gateway_address`와 `forwarder_address` 수정
+2. **docker-compose 업데이트**: `server` 서비스에서 `GATEWAY_ADDRESS`와 `FORWARDER_ADDRESS`를 제거하고, 다른 서비스(예: `simple-relayer`)에서는 필요 시 업데이트
+3. **컨트랙트 검증** (선택): `npx hardhat ignition verify chain-{CHAIN_ID}`
+
 ## 컨트랙트 검증
 
 배포 후 Block Explorer에서 소스 코드를 검증합니다:
@@ -96,12 +149,12 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 
 | Contract | Address |
 |----------|---------|
-| PaymentGatewayProxy | `0x2256bedB57869AF4fadF16e1ebD534A7d47513d7` |
-| PaymentGatewayV1 | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0x0d9A0fAf9a8101368aa01B88442B38f82180520E` |
+| PaymentGatewayProxy | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
+| PaymentGatewayV1 | `0xf5131C2c7140919042f811080D2Be9E8da37F9ED` |
+| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 | SUT Token | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
-> [Polygonscan에서 확인](https://amoy.polygonscan.com/address/0x2256bedB57869AF4fadF16e1ebD534A7d47513d7)
+> [Polygonscan에서 확인](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 
 ## 배포 결과 확인
 

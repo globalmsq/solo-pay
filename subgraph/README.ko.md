@@ -139,7 +139,7 @@ dataSources:
     name: PaymentGateway
     network: polygon-amoy  # 또는 polygon
     source:
-      address: "0x2256bedB57869AF4fadF16e1ebD534A7d47513d7"
+      address: "0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5"
       abi: PaymentGateway
       startBlock: 12345678  # 배포 블록 번호
 ```
