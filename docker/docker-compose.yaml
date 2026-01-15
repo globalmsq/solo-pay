@@ -107,16 +107,7 @@ services:
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: http://hardhat-node:8545
       # Simple Relayer API URL (Local gasless relay)
-      # Production: msq-relayer-service
       RELAYER_API_URL: http://simple-relayer:3001
-      # Relayer address (Hardhat Account #2)
-      RELAYER_ADDRESS: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
-      # Contract addresses (Hardhat deterministic)
-      # Deployment order: Forwarder (nonce 0) → Token (nonce 1) → Gateway (nonce 2-3)
-      # Same addresses as msq-relayer-service for consistency
-      TOKEN_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-      GATEWAY_ADDRESS: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
     depends_on:
       mysql:
         condition: service_healthy

@@ -76,7 +76,6 @@ describe('POST /payments/:id/gasless', () => {
       cancelRelayTransaction: vi.fn(),
       validateTransactionData: vi.fn().mockReturnValue(true),
       estimateGasFee: vi.fn().mockResolvedValue('50000000000'),
-      getRelayerAddress: vi.fn().mockReturnValue('0x' + 'f'.repeat(40)),
     } as any;
 
     // Mock RelayService
