@@ -132,7 +132,7 @@ npx hardhat ignition deploy ignition/modules/PaymentGateway.ts \
 ### After Deployment
 
 1. **Update database**: Update `gateway_address` and `forwarder_address` in `docker/init.sql`
-2. **Update docker-compose**: Update `GATEWAY_ADDRESS` and `FORWARDER_ADDRESS` in docker-compose files
+2. **Update docker-compose**: Remove `GATEWAY_ADDRESS` and `FORWARDER_ADDRESS` from the `server` service, and update them in other services (e.g., `simple-relayer`) if needed
 3. **Verify contract** (optional): `npx hardhat ignition verify chain-{CHAIN_ID}`
 
 ## Contract Verification

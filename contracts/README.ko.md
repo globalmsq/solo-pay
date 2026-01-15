@@ -132,7 +132,7 @@ npx hardhat ignition deploy ignition/modules/PaymentGateway.ts \
 ### 배포 후 작업
 
 1. **데이터베이스 업데이트**: `docker/init.sql`의 `gateway_address`와 `forwarder_address` 수정
-2. **docker-compose 업데이트**: docker-compose 파일들의 `GATEWAY_ADDRESS`와 `FORWARDER_ADDRESS` 수정
+2. **docker-compose 업데이트**: `server` 서비스에서 `GATEWAY_ADDRESS`와 `FORWARDER_ADDRESS`를 제거하고, 다른 서비스(예: `simple-relayer`)에서는 필요 시 업데이트
 3. **컨트랙트 검증** (선택): `npx hardhat ignition verify chain-{CHAIN_ID}`
 
 ## 컨트랙트 검증
