@@ -52,11 +52,11 @@ export async function updateMerchantRoute(
           },
         });
       } catch (error) {
-        if (error instanceof Error && error.name === 'ZodError') {
+        if (error instanceof ZodError) {
           return reply.code(400).send({
             code: 'VALIDATION_ERROR',
             message: 'Input validation failed',
-            details: (error as { errors?: unknown[] }).errors,
+            details: error.errors,
           });
         }
         const message = error instanceof Error ? error.message : 'Failed to update merchant';
