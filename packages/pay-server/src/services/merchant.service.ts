@@ -82,6 +82,7 @@ export class MerchantService {
 
   async findByApiKey(apiKey: string): Promise<Merchant | null> {
     const apiKeyHash = this.hashApiKey(apiKey);
+    console.log('apiKeyHash', apiKeyHash);
     return this.prisma.merchant.findFirst({
       where: {
         api_key_hash: apiKeyHash,

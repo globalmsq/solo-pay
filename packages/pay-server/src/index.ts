@@ -21,6 +21,7 @@ import { getPaymentHistoryRoute } from './routes/payments/history';
 import { getTokenBalanceRoute } from './routes/tokens/balance';
 import { getTokenAllowanceRoute } from './routes/tokens/allowance';
 import { getTransactionStatusRoute } from './routes/transactions/status';
+import { updateMerchantRoute } from './routes/merchants/update';
 
 const server = Fastify({
   logger: true,
@@ -93,6 +94,7 @@ const registerRoutes = async () => {
   await getTokenBalanceRoute(server, blockchainService);
   await getTokenAllowanceRoute(server, blockchainService);
   await getTransactionStatusRoute(server, blockchainService);
+  await updateMerchantRoute(server, merchantService);
 };
 
 // Graceful shutdown
