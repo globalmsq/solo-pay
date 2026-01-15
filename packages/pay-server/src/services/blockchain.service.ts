@@ -110,6 +110,8 @@ export interface TransactionStatus {
 export class BlockchainService {
   private clients: Map<number, PublicClient> = new Map();
   private chainConfigs: Map<number, InternalChainConfig> = new Map();
+  // Reverse map for O(1) address lookup: chainId -> (lowercaseAddress -> tokenInfo)
+  private addressToTokenMap: Map<number, Map<string, TokenConfig & { symbol: string }>> = new Map();
   private readonly logger = createLogger('BlockchainService');
 
   /**
@@ -126,12 +128,23 @@ export class BlockchainService {
 
       // 토큰을 symbol -> { address, decimals } 맵으로 변환
       const tokensMap: Record<string, { address: string; decimals: number }> = {};
+      // Reverse map: address -> tokenInfo for O(1) lookup
+      const addressMap = new Map<string, TokenConfig & { symbol: string }>();
+      
       for (const token of chainData.tokens) {
         tokensMap[token.symbol] = {
           address: token.address,
           decimals: token.decimals,
         };
+        // Populate reverse map (lowercase for case-insensitive lookup)
+        addressMap.set(token.address.toLowerCase(), {
+          address: token.address,
+          decimals: token.decimals,
+          symbol: token.symbol,
+        });
       }
+      
+      this.addressToTokenMap.set(chainData.network_id, addressMap);
 
       const internalConfig: InternalChainConfig = {
         chainId: chainData.network_id,
@@ -229,6 +242,34 @@ export class BlockchainService {
     }
 
     return true;
+  }
+
+  /**
+   * 토큰 검증: 주소만으로 확인 (symbol/decimals는 on-chain에서 조회)
+   * O(1) lookup using reverse address map
+   * @param chainId 체인 ID
+   * @param tokenAddress 토큰 주소
+   * @returns 유효한 토큰이면 true
+   */
+  validateTokenByAddress(chainId: number, tokenAddress: string): boolean {
+    const addressMap = this.addressToTokenMap.get(chainId);
+    if (!addressMap) {
+      return false;
+    }
+    return addressMap.has(tokenAddress.toLowerCase());
+  }
+
+  /**
+   * 토큰 주소로 토큰 설정 조회
+   * O(1) lookup using reverse address map
+   * @param chainId 체인 ID
+   * @param tokenAddress 토큰 주소
+   * @returns 토큰 설정 또는 null
+   */
+  getTokenConfigByAddress(chainId: number, tokenAddress: string): (TokenConfig & { symbol: string }) | null {
+    const addressMap = this.addressToTokenMap.get(chainId);
+    if (!addressMap) return null;
+    return addressMap.get(tokenAddress.toLowerCase()) || null;
   }
 
   /**

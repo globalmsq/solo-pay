@@ -102,7 +102,6 @@ X-API-Key: sk_test_abc123
 {
   "success": true,
   "paymentId": "0x5aed4bae...",
-  "orderId": "ORD-1733235200000-abc123",
   "products": [
     {
       "productId": "prod_001",
@@ -388,11 +387,11 @@ const client = new MSQPayClient({
 
 // 결제 생성
 const payment = await client.createPayment({
-  userId: 'user-123',
+  merchantId: 'merchant_001',
   amount: 100,
-  currency: 'SUT',
-  tokenAddress: '0x...',
-  recipientAddress: '0x...'
+  chainId: 31337,
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 
 // 결제 상태 조회
