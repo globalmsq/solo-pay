@@ -51,6 +51,10 @@ const mockPaymentData = {
   payment_hash: 'payment-123',
   merchant_id: 1, // matches mockMerchant.id
   status: 'CREATED',
+  amount: '1000000000000000000', // 1 token in wei (18 decimals)
+  chain_id: 80002,
+  token_address: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+  recipient_address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
 };
 
 describe('POST /payments/:id/gasless', () => {
