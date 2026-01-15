@@ -11,7 +11,7 @@ Complete reference for all MSQPay REST API endpoints.
 | Base URL | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
 | Protocol | REST API (HTTP/HTTPS) |
 | Content-Type | `application/json` |
-| Authentication | X-API-Key (payment API only) |
+| Authentication | x-api-key (payment API only) |
 
 ## Endpoint List
 
@@ -54,7 +54,7 @@ Create a new payment.
 ```http
 POST /payments/create
 Content-Type: application/json
-X-API-Key: sk_test_abc123
+x-api-key: sk_test_abc123
 ```
 
 ```json
@@ -360,7 +360,7 @@ See [Error Code Reference](errors.md) for complete error code list.
 # Create payment
 curl -X POST http://localhost:3001/payments/create \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_test_abc123" \
+  -H "x-api-key: sk_test_abc123" \
   -d '{
     "amount": 100,
     "currency": "SUT",

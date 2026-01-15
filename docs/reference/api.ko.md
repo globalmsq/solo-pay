@@ -11,7 +11,7 @@ MSQPay REST API 전체 엔드포인트 레퍼런스입니다.
 | Base URL | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
 | Protocol | REST API (HTTP/HTTPS) |
 | Content-Type | `application/json` |
-| Authentication | X-API-Key (결제 API만) |
+| Authentication | x-api-key (결제 API만) |
 
 ## 엔드포인트 목록
 
@@ -54,7 +54,7 @@ MSQPay REST API 전체 엔드포인트 레퍼런스입니다.
 ```http
 POST /payments/create
 Content-Type: application/json
-X-API-Key: sk_test_abc123
+x-api-key: sk_test_abc123
 ```
 
 ```json
@@ -360,7 +360,7 @@ ERC-20 토큰 잔액을 조회합니다.
 # 결제 생성
 curl -X POST http://localhost:3001/payments/create \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_test_abc123" \
+  -H "x-api-key: sk_test_abc123" \
   -d '{
     "amount": 100,
     "currency": "SUT",

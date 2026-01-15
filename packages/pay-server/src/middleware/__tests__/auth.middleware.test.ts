@@ -109,7 +109,7 @@ describe('Auth Middleware', () => {
   });
 
   describe('createAuthMiddleware', () => {
-    it('should return 401 when X-API-Key header is missing', async () => {
+    it('should return 401 when x-api-key header is missing', async () => {
       const middleware = createAuthMiddleware(mockMerchantService);
       const request = createMockRequest({});
       const reply = createMockReply();
@@ -119,11 +119,11 @@ describe('Auth Middleware', () => {
       expect(reply.code).toHaveBeenCalledWith(401);
       expect(reply.send).toHaveBeenCalledWith({
         code: 'UNAUTHORIZED',
-        message: 'Missing or invalid X-API-Key header',
+        message: 'Missing or invalid x-api-key header',
       });
     });
 
-    it('should return 401 when X-API-Key header is empty', async () => {
+    it('should return 401 when x-api-key header is empty', async () => {
       const middleware = createAuthMiddleware(mockMerchantService);
       const request = createMockRequest({ 'x-api-key': '   ' });
       const reply = createMockReply();
@@ -133,7 +133,7 @@ describe('Auth Middleware', () => {
       expect(reply.code).toHaveBeenCalledWith(401);
       expect(reply.send).toHaveBeenCalledWith({
         code: 'UNAUTHORIZED',
-        message: 'Missing or invalid X-API-Key header',
+        message: 'Missing or invalid x-api-key header',
       });
     });
 
