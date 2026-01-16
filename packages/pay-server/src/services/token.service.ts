@@ -64,6 +64,37 @@ export class TokenService {
     });
   }
 
+  async findByIds(ids: number[]): Promise<Token[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    return this.prisma.token.findMany({
+      where: {
+        id: { in: ids },
+        is_deleted: false,
+      },
+    });
+  }
+
+  async findAllForChains(chainIds: number[], includeDisabled: boolean = false): Promise<Token[]> {
+    if (chainIds.length === 0) {
+      return [];
+    }
+    const whereClause: any = {
+      chain_id: { in: chainIds },
+      is_deleted: false,
+    };
+
+    if (!includeDisabled) {
+      whereClause.is_enabled = true;
+    }
+
+    return this.prisma.token.findMany({
+      where: whereClause,
+      orderBy: { created_at: 'asc' },
+    });
+  }
+
   async update(id: number, input: UpdateTokenInput): Promise<Token> {
     return this.prisma.token.update({
       where: { id },
