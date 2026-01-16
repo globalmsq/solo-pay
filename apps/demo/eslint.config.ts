@@ -15,5 +15,5 @@ export default [
       ...nextPlugin.configs['core-web-vitals'].rules,
     },
   },
-  { exclude: ['**/postcss.config.js'] },
+  { ignores: ['**/postcss.config.cjs'] },
 ];
