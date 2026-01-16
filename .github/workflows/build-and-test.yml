@@ -40,7 +40,7 @@ jobs:
         run: pnpm lint
 
       - name: Check Prettier formatting
-        run: pnpm exec prettier --check "**/*.{ts,tsx,js,json,md}" --ignore-path .gitignore
+        run: pnpm exec prettier --check "**/*.{ts,tsx,js,json,md}"
 
   typecheck:
     name: Type Check
