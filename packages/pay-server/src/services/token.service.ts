@@ -64,6 +64,18 @@ export class TokenService {
     });
   }
 
+  async findByIds(ids: number[]): Promise<Token[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    return this.prisma.token.findMany({
+      where: {
+        id: { in: ids },
+        is_deleted: false,
+      },
+    });
+  }
+
   async update(id: number, input: UpdateTokenInput): Promise<Token> {
     return this.prisma.token.update({
       where: { id },

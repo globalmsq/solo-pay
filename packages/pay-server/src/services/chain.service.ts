@@ -73,6 +73,18 @@ export class ChainService {
     });
   }
 
+  async findByIds(ids: number[]): Promise<Chain[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    return this.prisma.chain.findMany({
+      where: {
+        id: { in: ids },
+        is_deleted: false,
+      },
+    });
+  }
+
   async update(id: number, input: UpdateChainInput): Promise<Chain> {
     return this.prisma.chain.update({
       where: { id },
