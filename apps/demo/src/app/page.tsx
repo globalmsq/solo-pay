@@ -32,9 +32,8 @@ export default function Home() {
   const paymentHistoryRef = useRef<PaymentHistoryRef>(null);
 
   // Handle payment success
-  const handlePaymentSuccess = useCallback((txHash: string) => {
+  const handlePaymentSuccess = useCallback(() => {
     setToast({ message: "Payment successful!", type: "success" });
-    // Refresh payment history after a short delay to allow blockchain to update
     setTimeout(() => {
       paymentHistoryRef.current?.refresh();
     }, PAYMENT_HISTORY_REFRESH_DELAY);

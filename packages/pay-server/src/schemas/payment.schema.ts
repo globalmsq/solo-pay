@@ -99,7 +99,7 @@ export function createAmountValidationSchema(
           path: ['forwardRequest', 'data'],
         });
       }
-    } catch (error) {
+    } catch {
       // If decoding fails, the data is invalid
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

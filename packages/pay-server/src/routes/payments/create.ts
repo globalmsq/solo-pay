@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { parseUnits, keccak256, toHex } from 'viem';
 import { Decimal } from '@prisma/client/runtime/library';
 import { randomBytes } from 'crypto';
+import { ZodError } from 'zod';
 import { CreatePaymentSchema } from '../../schemas/payment.schema';
 import { BlockchainService } from '../../services/blockchain.service';
 import { MerchantService } from '../../services/merchant.service';
@@ -181,11 +182,11 @@ export async function createPaymentRoute(
         expiresAt: payment.expires_at.toISOString(),
       });
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         return reply.code(400).send({
           code: 'VALIDATION_ERROR',
           message: '입력 검증 실패',
-          details: (error as { errors?: unknown[] }).errors,
+          details: error.errors,
         });
       }
       const message = error instanceof Error ? error.message : '결제를 생성할 수 없습니다';

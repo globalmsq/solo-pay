@@ -29,7 +29,7 @@ describe('MerchantService', () => {
 
     const apiKeyHash = crypto.createHash('sha256').update(merchantData.api_key).digest('hex');
     const mockResult = {
-      id: 'test-id-1',
+      id: 1,
       merchant_key: merchantData.merchant_key,
       name: merchantData.name,
       api_key_hash: apiKeyHash,
@@ -57,7 +57,7 @@ describe('MerchantService', () => {
 
   it('should find merchant by ID', async () => {
     const mockMerchant = {
-      id: 'test-id-2',
+      id: 2,
       merchant_key: `${TEST_PREFIX}002`,
       name: 'Another Merchant',
       api_key_hash: 'somehash',
@@ -71,17 +71,17 @@ describe('MerchantService', () => {
 
     mockPrisma.merchant.findFirst.mockResolvedValue(mockMerchant);
 
-    const result = await merchantService.findById('test-id-2');
+    const result = await merchantService.findById(2);
 
     expect(result).toBeDefined();
-    expect(result?.id).toBe('test-id-2');
+    expect(result?.id).toBe(2);
     expect(result?.name).toBe('Another Merchant');
     expect(mockPrisma.merchant.findFirst).toHaveBeenCalledOnce();
   });
 
   it('should find merchant by merchant key', async () => {
     const mockMerchant = {
-      id: 'test-id-3',
+      id: 3,
       merchant_key: `${TEST_PREFIX}003`,
       name: 'Key-based Merchant',
       api_key_hash: 'somehash',
@@ -133,7 +133,7 @@ describe('MerchantService', () => {
   it('should find all enabled merchants', async () => {
     const mockMerchants = [
       {
-        id: 'test-id-5',
+        id: 5,
         merchant_key: `${TEST_PREFIX}findall_a`,
         name: 'Merchant A',
         api_key_hash: 'hash_a',
@@ -145,7 +145,7 @@ describe('MerchantService', () => {
         deleted_at: null,
       },
       {
-        id: 'test-id-6',
+        id: 6,
         merchant_key: `${TEST_PREFIX}findall_b`,
         name: 'Merchant B',
         api_key_hash: 'hash_b',
@@ -168,7 +168,7 @@ describe('MerchantService', () => {
 
   it('should update merchant information', async () => {
     const mockUpdated = {
-      id: 'test-id-7',
+      id: 7,
       merchant_key: `${TEST_PREFIX}update`,
       name: 'Updated Name',
       api_key_hash: 'hash',
@@ -182,7 +182,7 @@ describe('MerchantService', () => {
 
     mockPrisma.merchant.update.mockResolvedValue(mockUpdated);
 
-    const updated = await merchantService.update('test-id-7', {
+    const updated = await merchantService.update(7, {
       name: 'Updated Name',
       webhook_url: 'https://example.com/webhook',
     });
@@ -194,7 +194,7 @@ describe('MerchantService', () => {
 
   it('should soft delete merchant', async () => {
     const mockDeleted = {
-      id: 'test-id-8',
+      id: 8,
       merchant_key: `${TEST_PREFIX}delete`,
       name: 'Delete Test',
       api_key_hash: 'hash',
@@ -209,13 +209,13 @@ describe('MerchantService', () => {
     mockPrisma.merchant.update.mockResolvedValue(mockDeleted);
     mockPrisma.merchant.findFirst.mockResolvedValue(null);
 
-    const deleted = await merchantService.softDelete('test-id-8');
+    const deleted = await merchantService.softDelete(8);
 
     expect(deleted.is_deleted).toBe(true);
     expect(deleted.deleted_at).toBeDefined();
 
     // Should not find deleted merchant
-    const found = await merchantService.findById('test-id-8');
+    const found = await merchantService.findById(8);
     expect(found).toBeNull();
   });
 
@@ -229,7 +229,7 @@ describe('MerchantService', () => {
   it('should not return api_key_hash in public response', async () => {
     const apiKeyHash = crypto.createHash('sha256').update('private_key_123').digest('hex');
     const mockMerchant = {
-      id: 'test-id-9',
+      id: 9,
       merchant_key: `${TEST_PREFIX}private`,
       name: 'Private Key Merchant',
       api_key_hash: apiKeyHash,

@@ -45,8 +45,7 @@ let blockchainService: BlockchainService;
 // Local: http://simple-relayer:3001
 const relayerApiUrl = process.env.RELAYER_API_URL || 'http://localhost:3001';
 const relayerApiKey = process.env.RELAYER_API_KEY || '';
-const relayerApiSecret = process.env.RELAYER_API_SECRET || '';
-const relayerService = new RelayerService(relayerApiUrl, relayerApiKey, relayerApiSecret);
+const relayerService = new RelayerService(relayerApiUrl, relayerApiKey);
 
 // Initialize other database services
 const paymentService = new PaymentService(prisma);
@@ -61,12 +60,12 @@ server.register(cors, {
 });
 
 // Health check endpoint
-server.get('/health', async (_request, _reply) => {
+server.get('/health', async () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
 
 // Root endpoint
-server.get('/', async (_request, _reply) => {
+server.get('/', async () => {
   return {
     service: 'MSQ Pay Server',
     version: '0.1.0',

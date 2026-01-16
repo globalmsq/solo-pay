@@ -91,13 +91,11 @@ export class PaymentMethodService {
   }
 
   async findAllForMerchant(merchantId: number): Promise<MerchantPaymentMethod[]> {
-    const whereClause: any = {
-      merchant_id: merchantId,
-      is_deleted: false,
-    };
-
     return this.prisma.merchantPaymentMethod.findMany({
-      where: whereClause,
+      where: {
+        merchant_id: merchantId,
+        is_deleted: false,
+      },
       orderBy: { created_at: 'asc' },
     });
   }

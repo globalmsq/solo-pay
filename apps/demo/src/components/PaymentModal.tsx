@@ -184,7 +184,7 @@ export function PaymentModal({
 
   // Read token balance using wagmi hook (MetaMask handles RPC)
   // chainId from serverConfig ensures we query the correct chain
-  const { data: balance, isLoading: balanceLoading, error: balanceError, refetch: refetchBalance } = useReadContract({
+  const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "balanceOf",
@@ -220,7 +220,7 @@ export function PaymentModal({
 
   // Read user's nonce from Forwarder contract for gasless payments (MetaMask handles RPC)
   // chainId from serverConfig ensures we query the correct chain
-  const { data: forwarderNonce, refetch: refetchNonce } = useReadContract({
+  const { refetch: refetchNonce } = useReadContract({
     address: serverConfig?.forwarderAddress as Address,
     abi: FORWARDER_ABI,
     functionName: "nonces",

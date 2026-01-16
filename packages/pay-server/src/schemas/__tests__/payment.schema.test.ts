@@ -40,7 +40,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
   describe('Invalid payloads', () => {
     it('should reject missing amount', () => {
       const payload = { ...validPayload };
-      delete (payload as any).amount;
+      delete (payload as Partial<typeof validPayload>).amount;
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
@@ -59,7 +59,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
 
     it('should reject missing tokenAddress', () => {
       const payload = { ...validPayload };
-      delete (payload as any).tokenAddress;
+      delete (payload as Partial<typeof validPayload>).tokenAddress;
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
@@ -72,7 +72,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
 
     it('should reject missing chainId', () => {
       const payload = { ...validPayload };
-      delete (payload as any).chainId;
+      delete (payload as Partial<typeof validPayload>).chainId;
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
@@ -97,7 +97,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
 
     it('should reject missing recipientAddress', () => {
       const payload = { ...validPayload };
-      delete (payload as any).recipientAddress;
+      delete (payload as Partial<typeof validPayload>).recipientAddress;
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
@@ -156,7 +156,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
     it('should require tokenAddress field', () => {
       // tokenAddress는 필수 필드
       const payloadWithoutToken = { ...validPayload };
-      delete (payloadWithoutToken as any).tokenAddress;
+      delete (payloadWithoutToken as Partial<typeof validPayload>).tokenAddress;
       const result = CreatePaymentSchema.safeParse(payloadWithoutToken);
       expect(result.success).toBe(false);
     });

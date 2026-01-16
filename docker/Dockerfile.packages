@@ -121,7 +121,7 @@ COPY --from=deps /app/apps/demo/node_modules ./apps/demo/node_modules
 # Copy built demo
 COPY --from=demo-builder /app/apps/demo/.next ./apps/demo/.next
 COPY --from=demo-builder /app/apps/demo/package.json ./apps/demo/
-COPY --from=demo-builder /app/apps/demo/next.config.js ./apps/demo/
+COPY --from=demo-builder /app/apps/demo/next.config.ts ./apps/demo/
 
 WORKDIR /app/apps/demo
 

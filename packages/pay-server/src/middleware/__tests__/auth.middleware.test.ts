@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { Decimal } from '@prisma/client/runtime/library';
+import { PaymentStatus } from '@prisma/client';
 import {
   createAuthMiddleware,
   createMerchantAuthMiddleware,
@@ -41,12 +43,13 @@ const mockPayment = {
   payment_hash: '0x123abc',
   merchant_id: 1, // belongs to merchant 1
   payment_method_id: 1,
-  amount: BigInt(1000),
+  amount: new Decimal('1000'),
   token_decimals: 18,
   token_symbol: 'TEST',
   network_id: 31337,
-  status: 'CREATED',
+  status: PaymentStatus.CREATED,
   tx_hash: null,
+  payer_address: null,
   expires_at: new Date(),
   confirmed_at: null,
   created_at: new Date(),
@@ -63,28 +66,36 @@ const createMockMerchantService = () => ({
   update: vi.fn(),
   verifyApiKey: vi.fn(),
   softDelete: vi.fn(),
-}) as unknown as MerchantService;
+}) as Partial<MerchantService> as MerchantService;
 
 const createMockPaymentService = () => ({
   findByHash: vi.fn(),
   findById: vi.fn(),
   create: vi.fn(),
   updateStatus: vi.fn(),
-}) as unknown as PaymentService;
+}) as Partial<PaymentService> as PaymentService;
 
 // Create mock request/reply
-const createMockRequest = (headers: Record<string, string> = {}, body: unknown = {}, params: unknown = {}): FastifyRequest => ({
-  headers,
-  body,
-  params,
-  merchant: undefined,
-  log: {
+const createMockRequest = (headers: Record<string, string> = {}, body: object = {}, params: object = {}): FastifyRequest => {
+  const mockLog = {
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
-  },
-} as unknown as FastifyRequest);
+    child: vi.fn(),
+    silent: vi.fn(),
+    fatal: vi.fn(),
+    trace: vi.fn(),
+    level: 'info',
+  };
+  return {
+    headers,
+    body,
+    params,
+    merchant: undefined,
+    log: mockLog,
+  } as Partial<FastifyRequest> as FastifyRequest;
+};
 
 const createMockReply = () => {
   const reply = {
@@ -95,7 +106,7 @@ const createMockReply = () => {
       return reply;
     }),
   };
-  return reply as unknown as FastifyReply & { sent: boolean };
+  return reply as Partial<FastifyReply> & { sent: boolean } as FastifyReply & { sent: boolean };
 };
 
 describe('Auth Middleware', () => {

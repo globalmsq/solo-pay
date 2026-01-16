@@ -360,7 +360,7 @@ export async function paymentMethodsRoute(
           if (!tokensByChainId.has(token.chain_id)) {
             tokensByChainId.set(token.chain_id, []);
           }
-          tokensByChainId.get(token.chain_id)!.push(token);
+          tokensByChainId.get(token.chain_id)?.push(token);
         }
         
         // Map chains with their tokens

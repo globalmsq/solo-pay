@@ -89,13 +89,13 @@ export class SignatureService {
       const domain = this.getDomain();
       const types = this.getForwardRequestTypes();
 
-      const recoveredAddress = recoverTypedDataAddress({
+      const recoveredAddress = await recoverTypedDataAddress({
         domain,
         types,
         primaryType: 'ForwardRequest',
-        message: request as unknown as Record<string, unknown>,
+        message: request,
         signature: signature as `0x${string}`,
-      }) as unknown as `0x${string}`;
+      });
 
       return (recoveredAddress as string).toLowerCase() === (request.from as string).toLowerCase();
     } catch {
@@ -124,15 +124,15 @@ export class SignatureService {
       const domain = this.getDomain();
       const types = this.getForwardRequestTypes();
 
-      const recovered = recoverTypedDataAddress({
+      const recovered = await recoverTypedDataAddress({
         domain,
         types,
         primaryType: 'ForwardRequest',
-        message: request as unknown as Record<string, unknown>,
+        message: request,
         signature: signature as `0x${string}`,
-      }) as unknown as `0x${string}`;
+      });
 
-      return recovered as Address;
+      return recovered;
     } catch {
       return null;
     }

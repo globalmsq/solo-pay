@@ -1,7 +1,6 @@
 import { API_URLS, DEFAULT_HEADERS } from './constants';
 import { MSQPayError } from './errors';
 import type {
-  Environment,
   MSQPayConfig,
   CreatePaymentParams,
   CreatePaymentResponse,
@@ -77,7 +76,7 @@ export class MSQPayClient {
   private async request<T>(
     method: string,
     path: string,
-    body?: unknown
+    body?: CreatePaymentParams | GaslessParams | RelayParams
   ): Promise<T> {
     const headers = {
       ...DEFAULT_HEADERS,

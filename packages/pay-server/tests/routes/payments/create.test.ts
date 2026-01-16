@@ -116,11 +116,11 @@ const mockPayment = {
 describe('POST /payments/create', () => {
   let app: FastifyInstance;
   let blockchainService: BlockchainService;
-  let merchantService: MerchantService;
-  let chainService: ChainService;
-  let tokenService: TokenService;
-  let paymentMethodService: PaymentMethodService;
-  let paymentService: PaymentService;
+  let merchantService: Partial<MerchantService>;
+  let chainService: Partial<ChainService>;
+  let tokenService: Partial<TokenService>;
+  let paymentMethodService: Partial<PaymentMethodService>;
+  let paymentService: Partial<PaymentService>;
 
   beforeEach(async () => {
     app = Fastify({ logger: false });
@@ -144,15 +144,13 @@ describe('POST /payments/create', () => {
     // Mock DB Services
     merchantService = {
       findByMerchantKey: vi.fn().mockImplementation((key: string) => {
-        // Support all merchant keys used in tests
         if (key.startsWith('merchant_')) {
           return Promise.resolve({ ...mockMerchant, merchant_key: key });
         }
         return Promise.resolve(null);
       }),
-      // Add findByApiKey for auth middleware - return merchant based on merchantId in request
       findByApiKey: vi.fn().mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_001' }),
-    } as any;
+    };
 
     chainService = {
       findByNetworkId: vi.fn().mockImplementation((networkId: number) => {
@@ -160,7 +158,7 @@ describe('POST /payments/create', () => {
         if (networkId === 31337) return Promise.resolve(mockChain31337);
         return Promise.resolve(null);
       }),
-    } as any;
+    };
 
     tokenService = {
       findByAddress: vi.fn().mockImplementation((chainId: number) => {
@@ -168,25 +166,24 @@ describe('POST /payments/create', () => {
         if (chainId === 2) return Promise.resolve(mockToken31337);
         return Promise.resolve(null);
       }),
-    } as any;
+    };
 
     paymentMethodService = {
       findByMerchantAndToken: vi.fn().mockResolvedValue(mockPaymentMethod),
-    } as any;
+    };
 
     paymentService = {
       create: vi.fn().mockResolvedValue(mockPayment),
-    } as any;
+    };
 
-    // 실제 라우트 등록
     await createPaymentRoute(
       app,
       blockchainService,
-      merchantService,
-      chainService,
-      tokenService,
-      paymentMethodService,
-      paymentService
+      merchantService as MerchantService,
+      chainService as ChainService,
+      tokenService as TokenService,
+      paymentMethodService as PaymentMethodService,
+      paymentService as PaymentService
     );
   });
 

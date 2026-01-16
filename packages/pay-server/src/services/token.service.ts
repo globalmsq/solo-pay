@@ -49,17 +49,12 @@ export class TokenService {
   }
 
   async findAllOnChain(chainId: number, includeDisabled: boolean = false): Promise<Token[]> {
-    const whereClause: any = {
-      chain_id: chainId,
-      is_deleted: false,
-    };
-
-    if (!includeDisabled) {
-      whereClause.is_enabled = true;
-    }
-
     return this.prisma.token.findMany({
-      where: whereClause,
+      where: {
+        chain_id: chainId,
+        is_deleted: false,
+        ...(includeDisabled ? {} : { is_enabled: true }),
+      },
       orderBy: { created_at: 'asc' },
     });
   }
@@ -80,17 +75,12 @@ export class TokenService {
     if (chainIds.length === 0) {
       return [];
     }
-    const whereClause: any = {
-      chain_id: { in: chainIds },
-      is_deleted: false,
-    };
-
-    if (!includeDisabled) {
-      whereClause.is_enabled = true;
-    }
-
     return this.prisma.token.findMany({
-      where: whereClause,
+      where: {
+        chain_id: { in: chainIds },
+        is_deleted: false,
+        ...(includeDisabled ? {} : { is_enabled: true }),
+      },
       orderBy: { created_at: 'asc' },
     });
   }

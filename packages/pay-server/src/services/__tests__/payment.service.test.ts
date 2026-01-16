@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockPrisma, resetPrismaMocks } from '../../db/__mocks__/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PaymentStatus } from '@prisma/client';
 
 // Mock the client module
 vi.mock('../../db/client', () => ({
@@ -46,7 +47,7 @@ describe('PaymentService', () => {
     const mockResult = {
       id: 1,
       ...paymentData,
-      status: 'CREATED',
+      status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
       created_at: new Date(),
@@ -61,6 +62,7 @@ describe('PaymentService', () => {
       event_type: 'CREATED',
       old_status: null,
       new_status: null,
+      metadata: null,
       created_at: new Date(),
     });
 
@@ -84,7 +86,7 @@ describe('PaymentService', () => {
       token_decimals: 6,
       token_symbol: 'USDC',
       network_id: 31337,
-      status: 'CREATED',
+      status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
       expires_at: new Date(Date.now() + 3600000),
@@ -113,7 +115,7 @@ describe('PaymentService', () => {
       token_decimals: 6,
       token_symbol: 'USDC',
       network_id: 31337,
-      status: 'CREATED',
+      status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
       expires_at: new Date(Date.now() + 3600000),
@@ -145,7 +147,7 @@ describe('PaymentService', () => {
       token_decimals: 6,
       token_symbol: 'USDC',
       network_id: 31337,
-      status: 'CREATED',
+      status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
       expires_at: new Date(Date.now() + 3600000),
@@ -156,7 +158,7 @@ describe('PaymentService', () => {
 
     const mockUpdated = {
       ...mockExisting,
-      status: 'CONFIRMED',
+      status: PaymentStatus.CONFIRMED,
       confirmed_at: new Date(),
     };
 
@@ -166,8 +168,9 @@ describe('PaymentService', () => {
       id: 2,
       payment_id: 4,
       event_type: 'STATUS_CHANGED',
-      old_status: 'CREATED',
-      new_status: 'CONFIRMED',
+      old_status: PaymentStatus.CREATED,
+      new_status: PaymentStatus.CONFIRMED,
+      metadata: null,
       created_at: new Date(),
     });
 
@@ -189,7 +192,7 @@ describe('PaymentService', () => {
         token_decimals: 6,
         token_symbol: 'USDC',
         network_id: 31337,
-        status: 'CONFIRMED',
+        status: PaymentStatus.CONFIRMED,
         payer_address: null,
         tx_hash: null,
         expires_at: new Date(Date.now() + 3600000),
@@ -224,7 +227,7 @@ describe('PaymentService', () => {
     const mockResult = {
       id: 7,
       ...paymentData,
-      status: 'CREATED',
+      status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
       created_at: new Date(),
@@ -239,6 +242,7 @@ describe('PaymentService', () => {
       event_type: 'CREATED',
       old_status: null,
       new_status: null,
+      metadata: null,
       created_at: new Date(),
     });
 

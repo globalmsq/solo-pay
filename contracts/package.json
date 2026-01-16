@@ -10,6 +10,9 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "test:coverage": "hardhat coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "solhint 'src/**/*.sol'",
+    "lint:fix": "solhint 'src/**/*.sol' --fix",
     "clean": "hardhat clean && rm -rf cache artifacts typechain-types",
     "deploy:local": "hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network localhost",
     "deploy:amoy": "hardhat ignition deploy ./ignition/modules/PaymentGateway.ts --network polygonAmoy",
@@ -26,10 +29,12 @@
     "verify:bnb": "hardhat ignition verify chain-56"
   },
   "devDependencies": {
+    "solhint": "^6.0.0",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-ignition": "^0.15.16",
     "@nomicfoundation/hardhat-ignition-ethers": "^0.15.17",
+    "@nomicfoundation/ignition-core": "^0.15.15",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-verify": "^2.1.3",

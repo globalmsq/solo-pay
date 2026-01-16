@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Address } from 'viem';
 import { BlockchainService } from '../../src/services/blockchain.service';
 import { ChainWithTokens } from '../../src/services/chain.service';
 
@@ -76,8 +77,8 @@ describe('BlockchainService', () => {
         userId: 'user123',
         amount: BigInt(100),
         currency: 'USD',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
+        tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
+        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
       const result = await blockchainService.recordPaymentOnChain(paymentData);
@@ -90,13 +91,13 @@ describe('BlockchainService', () => {
         userId: '',
         amount: BigInt(100),
         currency: 'USD',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
+        tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
+        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
-      await expect(
-        blockchainService.recordPaymentOnChain(incompleteData as any)
-      ).rejects.toThrow('필수 결제 정보가 누락되었습니다');
+      await expect(blockchainService.recordPaymentOnChain(incompleteData as Parameters<typeof blockchainService.recordPaymentOnChain>[0])).rejects.toThrow(
+        '필수 결제 정보가 누락되었습니다'
+      );
     });
 
     it('0 금액으로 요청할 때 에러를 던져야 함', async () => {
@@ -104,13 +105,13 @@ describe('BlockchainService', () => {
         userId: 'user456',
         amount: BigInt(0),
         currency: 'USD',
-        tokenAddress: '0x' + 'a'.repeat(40),
-        recipientAddress: '0x' + 'b'.repeat(40),
+        tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
+        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
-      await expect(
-        blockchainService.recordPaymentOnChain(invalidData)
-      ).rejects.toThrow('필수 결제 정보가 누락되었습니다');
+      await expect(blockchainService.recordPaymentOnChain(invalidData)).rejects.toThrow(
+        '필수 결제 정보가 누락되었습니다'
+      );
     });
 
     it('누락된 tokenAddress로 요청할 때 에러를 던져야 함', async () => {
@@ -118,13 +119,13 @@ describe('BlockchainService', () => {
         userId: 'user789',
         amount: BigInt(100),
         currency: 'USD',
-        tokenAddress: '',
-        recipientAddress: '0x' + 'b'.repeat(40),
+        tokenAddress: '' as Address,
+        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
-      await expect(
-        blockchainService.recordPaymentOnChain(invalidData as any)
-      ).rejects.toThrow('필수 결제 정보가 누락되었습니다');
+      await expect(blockchainService.recordPaymentOnChain(invalidData)).rejects.toThrow(
+        '필수 결제 정보가 누락되었습니다'
+      );
     });
   });
 
@@ -149,9 +150,9 @@ describe('BlockchainService', () => {
     it('가스 비용을 추정해야 함', async () => {
       const gasCost = await blockchainService.estimateGasCost(
         31337,
-        '0x' + 'a'.repeat(40),
+        ('0x' + 'a'.repeat(40)) as Address,
         BigInt(100),
-        '0x' + 'b'.repeat(40)
+        ('0x' + 'b'.repeat(40)) as Address
       );
 
       expect(gasCost).toBe(BigInt('200000'));
@@ -160,9 +161,9 @@ describe('BlockchainService', () => {
     it('다른 금액에도 가스 비용을 추정해야 함', async () => {
       const gasCost = await blockchainService.estimateGasCost(
         31337,
-        '0x' + 'c'.repeat(40),
+        ('0x' + 'c'.repeat(40)) as Address,
         BigInt(1000),
-        '0x' + 'd'.repeat(40)
+        ('0x' + 'd'.repeat(40)) as Address
       );
 
       expect(gasCost).toBe(BigInt('200000'));

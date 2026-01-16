@@ -8,11 +8,11 @@ import type {
 } from '../src/index';
 
 // Mock fetch globally
-global.fetch = vi.fn();
+const mockFetch = vi.fn();
+globalThis.fetch = mockFetch;
 
 describe('MSQPayClient', () => {
   let client: MSQPayClient;
-  const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -82,12 +82,11 @@ describe('MSQPayClient', () => {
 
   describe('createPayment', () => {
     const validParams: CreatePaymentParams = {
-      userId: 'user-1',
+      merchantId: 'merchant_demo_001',
       amount: 1000,
-      currency: 'USD',
+      chainId: 31337,
       tokenAddress: '0x1234567890123456789012345678901234567890',
-      recipientAddress: '0x0987654321098765432109876543210987654321',
-      description: 'Test payment'
+      recipientAddress: '0x0987654321098765432109876543210987654321'
     };
 
     it('TC-001: should create payment successfully', async () => {
@@ -97,8 +96,15 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: true,
           paymentId: 'pay-123',
-          transactionHash: '0xabc123',
-          status: 'pending'
+          chainId: 31337,
+          tokenAddress: '0x1234567890123456789012345678901234567890',
+          tokenSymbol: 'TEST',
+          tokenDecimals: 18,
+          gatewayAddress: '0xGateway',
+          forwarderAddress: '0xForwarder',
+          amount: '1000',
+          status: 'CREATED',
+          expiresAt: '2025-12-31T00:00:00Z'
         })
       });
 
@@ -106,8 +112,7 @@ describe('MSQPayClient', () => {
 
       expect(result.success).toBe(true);
       expect(result.paymentId).toBe('pay-123');
-      expect(result.transactionHash).toBe('0xabc123');
-      expect(result.status).toBe('pending');
+      expect(result.status).toBe('CREATED');
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3001/payments/create',
         expect.objectContaining({
@@ -477,8 +482,9 @@ describe('MSQPayClient', () => {
 
       try {
         await client.createPayment({
-          userId: 'user-1',
+          merchantId: 'merchant_demo_001',
           amount: 1000,
+          chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
           recipientAddress: '0x0987654321098765432109876543210987654321'
         });
@@ -492,8 +498,9 @@ describe('MSQPayClient', () => {
 
       await expect(
         client.createPayment({
-          userId: 'user-1',
+          merchantId: 'merchant_demo_001',
           amount: 1000,
+          chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
           recipientAddress: '0x0987654321098765432109876543210987654321'
         })
@@ -664,15 +671,22 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: true,
           paymentId: 'pay-123',
-          transactionHash: '0xabc123',
-          status: 'pending'
+          chainId: 31337,
+          tokenAddress: '0x1234567890123456789012345678901234567890',
+          tokenSymbol: 'TEST',
+          tokenDecimals: 18,
+          gatewayAddress: '0xGateway',
+          forwarderAddress: '0xForwarder',
+          amount: '1000',
+          status: 'CREATED',
+          expiresAt: '2025-12-31T00:00:00Z'
         })
       });
 
       const params: CreatePaymentParams = {
-        userId: 'user-1',
+        merchantId: 'merchant_demo_001',
         amount: 1000,
-        currency: 'USD',
+        chainId: 31337,
         tokenAddress: '0x1234567890123456789012345678901234567890',
         recipientAddress: '0x0987654321098765432109876543210987654321'
       };

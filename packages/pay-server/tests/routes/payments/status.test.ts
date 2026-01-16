@@ -8,8 +8,8 @@ import { PaymentStatus } from '../../../src/schemas/payment.schema';
 
 describe('GET /payments/:id/status', () => {
   let app: FastifyInstance;
-  let blockchainService: BlockchainService;
-  let paymentService: PaymentService;
+  let blockchainService: Partial<BlockchainService>;
+  let paymentService: Partial<PaymentService>;
 
   const mockPaymentData = {
     id: 'payment-db-id',
@@ -43,16 +43,18 @@ describe('GET /payments/:id/status', () => {
       waitForConfirmation: vi.fn(),
       estimateGasCost: vi.fn(),
       isChainSupported: vi.fn().mockReturnValue(true),
-    } as any;
+    };
 
-    // Mock PaymentService
     paymentService = {
       findByHash: vi.fn().mockResolvedValue(mockPaymentData),
       updateStatusByHash: vi.fn().mockResolvedValue(mockPaymentData),
-    } as any;
+    };
 
-    // 실제 라우트 등록
-    await getPaymentStatusRoute(app, blockchainService, paymentService);
+    await getPaymentStatusRoute(
+      app,
+      blockchainService as BlockchainService,
+      paymentService as PaymentService
+    );
   });
 
   describe('정상 케이스', () => {

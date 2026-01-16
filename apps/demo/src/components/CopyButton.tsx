@@ -15,8 +15,8 @@ export function CopyButton({ text, className = "" }: CopyButtonProps) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
-      // Silent fail - copy functionality is non-critical
+    } catch {
+      // Silent fail
     }
   }, [text]);
 

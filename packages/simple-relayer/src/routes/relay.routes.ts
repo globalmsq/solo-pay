@@ -222,7 +222,7 @@ export async function relayRoutes(
           status: result.status,
           createdAt: new Date(result.createdAt).toISOString(),
         };
-      } catch (error) {
+      } catch {
         reply.status(404);
         return {
           error: 'Transaction not found',

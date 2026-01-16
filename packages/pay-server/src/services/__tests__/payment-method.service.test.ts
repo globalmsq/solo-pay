@@ -11,8 +11,8 @@ import { PaymentMethodService } from '../payment-method.service';
 
 describe('PaymentMethodService', () => {
   let paymentMethodService: PaymentMethodService;
-  const merchantId = 'merchant-id-1';
-  const chainId = 'chain-id-1';
+  const merchantId = 1;
+  // chainId reserved for future test cases
   let tokenCounter = 0;
 
   beforeEach(() => {
@@ -23,7 +23,7 @@ describe('PaymentMethodService', () => {
 
   const createMockTokenId = () => {
     tokenCounter++;
-    return `token-id-${tokenCounter}`;
+    return tokenCounter;
   };
 
   it('should create a new payment method', async () => {

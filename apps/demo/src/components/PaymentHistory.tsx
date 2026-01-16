@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { formatUnits } from "viem";
 import { getPaymentHistory, PaymentHistoryItem } from "@/lib/api";
@@ -145,16 +145,19 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
                 </div>
 
                 {/* Explorer link */}
-                {getExplorerUrl(payment.transactionHash) && (
-                  <a
-                    href={getExplorerUrl(payment.transactionHash)!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary-600 hover:underline"
-                  >
-                    View on Explorer →
-                  </a>
-                )}
+                {(() => {
+                  const explorerUrl = getExplorerUrl(payment.transactionHash);
+                  return explorerUrl ? (
+                    <a
+                      href={explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary-600 hover:underline"
+                    >
+                      View on Explorer →
+                    </a>
+                  ) : null;
+                })()}
               </div>
             ))}
           </div>

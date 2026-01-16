@@ -24,9 +24,10 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as { message?: string };
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: err.message || 'Unknown error' },
       { status: 500 }
     );
   }

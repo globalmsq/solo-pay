@@ -42,11 +42,7 @@ export class RelayerService {
   private readonly apiKey: string;
   private readonly logger = createLogger('RelayerService');
 
-  constructor(
-    apiUrl: string,
-    apiKey: string,
-    _apiSecret: string // 미사용: relay-api는 Secret 불필요, 호환성을 위해 파라미터 유지
-  ) {
+  constructor(apiUrl: string, apiKey: string) {
     if (!apiUrl) {
       throw new Error('Relayer API URL이 필요합니다');
     }
@@ -77,9 +73,7 @@ export class RelayerService {
   /**
    * Relayer 트랜잭션 상태를 내부 상태로 매핑
    */
-  private mapStatus(
-    relayerStatus: RelayerTxStatus
-  ): RelayerResponse['status'] {
+  private mapStatus(relayerStatus: RelayerTxStatus): RelayerResponse['status'] {
     switch (relayerStatus) {
       case 'pending':
       case 'sent':
@@ -100,8 +94,8 @@ export class RelayerService {
   /**
    * ERC2771 ForwardRequest를 사용한 Gasless 거래 제출
    *
-   * ForwardRequest 파라미터와 서명을 simple-defender의 /relay/forward 엔드포인트로 전송합니다.
-   * simple-defender는 Forwarder.execute(ForwardRequestData)를 호출합니다.
+   * ForwardRequest 파라미터와 서명을 simple-relayer의 /relay/forward 엔드포인트로 전송합니다.
+   * simple-relayer는 Forwarder.execute(ForwardRequestData)를 호출합니다.
    */
   async submitForwardTransaction(
     paymentId: string,
@@ -165,15 +159,10 @@ export class RelayerService {
           throw new Error('릴레이어 잔액이 부족합니다');
         }
         if (error.message.includes('nonce')) {
-          throw new Error(
-            '트랜잭션 nonce 충돌이 발생했습니다. 잠시 후 다시 시도해주세요'
-          );
+          throw new Error('트랜잭션 nonce 충돌이 발생했습니다. 잠시 후 다시 시도해주세요');
         }
-        if (
-          error.message.includes('unauthorized') ||
-          error.message.includes('401')
-        ) {
-          throw new Error('Defender API 인증에 실패했습니다');
+        if (error.message.includes('unauthorized') || error.message.includes('401')) {
+          throw new Error('Relayer API 인증에 실패했습니다');
         }
       }
 
@@ -184,7 +173,7 @@ export class RelayerService {
   /**
    * 릴레이 거래 상태 조회
    *
-   * Defender API를 통해 트랜잭션 상태를 조회합니다.
+   * Relayer API를 통해 트랜잭션 상태를 조회합니다.
    */
   async getRelayStatus(relayRequestId: string): Promise<RelayerResponse> {
     if (!relayRequestId) {
@@ -192,13 +181,10 @@ export class RelayerService {
     }
 
     try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/relay/status/${relayRequestId}`,
-        {
-          method: 'GET',
-          headers: this.getHeaders(),
-        }
-      );
+      const response = await fetch(`${this.baseUrl}/api/v1/relay/status/${relayRequestId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -242,9 +228,7 @@ export class RelayerService {
 
       // 이미 채굴되었거나 확정된 트랜잭션은 취소 불가
       if (status.status === 'mined' || status.status === 'confirmed') {
-        this.logger.warn(
-          `트랜잭션이 이미 처리됨: ${relayRequestId}`
-        );
+        this.logger.warn(`트랜잭션이 이미 처리됨: ${relayRequestId}`);
         return false;
       }
 
@@ -253,10 +237,8 @@ export class RelayerService {
         return true;
       }
 
-      // Defender SDK는 직접적인 취소 API를 제공하지 않음
-      this.logger.warn(
-        `트랜잭션 취소는 현재 지원되지 않습니다: ${relayRequestId}`
-      );
+      // Relayer SDK는 직접적인 취소 API를 제공하지 않음
+      this.logger.warn(`트랜잭션 취소는 현재 지원되지 않습니다: ${relayRequestId}`);
       return false;
     } catch (error) {
       this.logger.error({ err: error }, '릴레이 거래 취소 실패');

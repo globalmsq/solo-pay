@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { NonceService } from '../nonce.service';
 
 describe('NonceService', () => {
@@ -21,28 +21,28 @@ describe('NonceService', () => {
     });
 
     it('should throw error with invalid forwarder address', () => {
-      expect(() => new NonceService(rpcUrl, 'invalid' as any)).toThrow('Invalid forwarder address');
+      expect(() => new NonceService(rpcUrl, 'invalid' as `0x${string}`)).toThrow('Invalid forwarder address');
     });
 
     it('should throw error with invalid address format', () => {
-      expect(() => new NonceService(rpcUrl, '0x123' as any)).toThrow('Invalid forwarder address');
+      expect(() => new NonceService(rpcUrl, '0x123' as `0x${string}`)).toThrow('Invalid forwarder address');
     });
   });
 
   describe('getNonce', () => {
     it('should throw error with invalid address format', async () => {
-      await expect(nonceService.getNonce('invalid' as any)).rejects.toThrow(
+      await expect(nonceService.getNonce('invalid' as `0x${string}`)).rejects.toThrow(
         'Invalid address format'
       );
     });
 
     it('should throw error with short address', async () => {
-      await expect(nonceService.getNonce('0x123' as any)).rejects.toThrow('Invalid address format');
+      await expect(nonceService.getNonce('0x123' as `0x${string}`)).rejects.toThrow('Invalid address format');
     });
 
     it('should throw error with address not starting with 0x', async () => {
       await expect(
-        nonceService.getNonce('1234567890123456789012345678901234567890' as any)
+        nonceService.getNonce('1234567890123456789012345678901234567890' as `0x${string}`)
       ).rejects.toThrow('Invalid address format');
     });
 
@@ -61,6 +61,7 @@ describe('NonceService', () => {
     });
 
     it('should throw error with non-array input', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect(nonceService.getNonceBatch(null as any)).rejects.toThrow(
         'Addresses must be a non-empty array'
       );

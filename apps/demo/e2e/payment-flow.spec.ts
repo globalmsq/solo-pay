@@ -79,7 +79,7 @@ test.describe('Payment Modal', () => {
 });
 
 test.describe('Checkout API Integration', () => {
-  test('should call checkout API with correct product', async ({ page, request }) => {
+  test('should call checkout API with correct product', async ({ request }) => {
     // Direct API test
     const response = await request.post('/api/checkout', {
       data: {

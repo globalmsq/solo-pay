@@ -33,7 +33,7 @@ describe('createPayment', () => {
       status: 'pending',
     };
 
-    (global.fetch as any).mockResolvedValueOnce({
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     });
@@ -103,7 +103,7 @@ describe('createPayment', () => {
     };
 
     // Mock: first 500, second 500, third success
-    (global.fetch as any)
+    (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -135,7 +135,7 @@ describe('createPayment', () => {
 
   it('should return error after 3 consecutive 5xx errors', async () => {
     // Mock: three 500 errors
-    (global.fetch as any)
+    (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValue({
         ok: false,
         status: 500,
@@ -162,7 +162,7 @@ describe('createPayment', () => {
       code: 'INVALID_REQUEST',
     };
 
-    (global.fetch as any).mockResolvedValueOnce({
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 400,
       json: async () => mockErrorResponse,

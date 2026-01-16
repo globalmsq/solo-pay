@@ -244,7 +244,7 @@ export class RelayService {
           }
         }, 5000);
       }
-    } catch (error) {
+    } catch {
       const record = this.transactions.get(transactionId);
       if (record) {
         record.status = 'failed';

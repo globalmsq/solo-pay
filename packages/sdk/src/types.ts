@@ -111,11 +111,17 @@ export interface RelayStatusResponse {
   status: 'submitted' | 'pending' | 'mined' | 'confirmed' | 'failed';
 }
 
+export interface ErrorDetails {
+  message?: string;
+  path?: (string | number)[];
+  [key: string]: string | number | boolean | (string | number)[] | undefined;
+}
+
 export interface ErrorResponse {
   success: false;
   code: string;
   message: string;
-  details?: unknown;
+  details?: ErrorDetails[];
 }
 
 // Payment History types

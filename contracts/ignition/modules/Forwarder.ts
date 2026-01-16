@@ -1,4 +1,5 @@
-import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+import { buildModule } from '@nomicfoundation/hardhat-ignition/modules';
+import type { IgnitionModuleResult } from '@nomicfoundation/ignition-core';
 
 /**
  * Standalone ERC2771Forwarder deployment module
@@ -11,9 +12,9 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
  *
  * This ensures Token is always at nonce 1 = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
  */
-const ForwarderModule = buildModule("Forwarder", (m) => {
+const ForwarderModule: ReturnType<typeof buildModule<'Forwarder', string, IgnitionModuleResult<string>>> = buildModule('Forwarder', (m) => {
   // Domain name must match client (PaymentModal.tsx) and relay-api (signature-verifier.service.ts)
-  const forwarder = m.contract("ERC2771Forwarder", ["MSQForwarder"]);
+  const forwarder = m.contract('ERC2771Forwarder', ['MSQForwarder']);
 
   return { forwarder };
 });
