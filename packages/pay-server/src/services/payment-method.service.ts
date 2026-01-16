@@ -4,6 +4,7 @@ export interface CreatePaymentMethodInput {
   merchant_id: number;
   token_id: number;
   recipient_address: string;
+  is_enabled?: boolean;
 }
 
 export interface UpdatePaymentMethodInput {
@@ -20,7 +21,7 @@ export class PaymentMethodService {
         merchant_id: input.merchant_id,
         token_id: input.token_id,
         recipient_address: input.recipient_address.toLowerCase(),
-        is_enabled: true,
+        is_enabled: input.is_enabled !== undefined ? input.is_enabled : true,
         is_deleted: false,
       },
     });
@@ -45,15 +46,32 @@ export class PaymentMethodService {
     });
   }
 
-  async findAllForMerchant(merchantId: number, includeDisabled: boolean = false): Promise<MerchantPaymentMethod[]> {
+  async findByMerchantAndTokenIncludingDeleted(merchantId: number, tokenId: number): Promise<MerchantPaymentMethod | null> {
+    return this.prisma.merchantPaymentMethod.findFirst({
+      where: {
+        merchant_id: merchantId,
+        token_id: tokenId,
+      },
+    });
+  }
+
+  async restore(id: number, input: { recipient_address: string; is_enabled: boolean }): Promise<MerchantPaymentMethod> {
+    return this.prisma.merchantPaymentMethod.update({
+      where: { id },
+      data: {
+        recipient_address: input.recipient_address.toLowerCase(),
+        is_enabled: input.is_enabled,
+        is_deleted: false,
+        deleted_at: null,
+      },
+    });
+  }
+
+  async findAllForMerchant(merchantId: number): Promise<MerchantPaymentMethod[]> {
     const whereClause: any = {
       merchant_id: merchantId,
       is_deleted: false,
     };
-
-    if (!includeDisabled) {
-      whereClause.is_enabled = true;
-    }
 
     return this.prisma.merchantPaymentMethod.findMany({
       where: whereClause,
