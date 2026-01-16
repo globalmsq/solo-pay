@@ -11,7 +11,7 @@ MSQPay REST API 전체 엔드포인트 레퍼런스입니다.
 | Base URL | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
 | Protocol | REST API (HTTP/HTTPS) |
 | Content-Type | `application/json` |
-| Authentication | X-API-Key (결제 API만) |
+| Authentication | x-api-key (결제 API만) |
 
 ## 엔드포인트 목록
 
@@ -54,7 +54,7 @@ MSQPay REST API 전체 엔드포인트 레퍼런스입니다.
 ```http
 POST /payments/create
 Content-Type: application/json
-X-API-Key: sk_test_abc123
+x-api-key: sk_test_abc123
 ```
 
 ```json
@@ -102,7 +102,6 @@ X-API-Key: sk_test_abc123
 {
   "success": true,
   "paymentId": "0x5aed4bae...",
-  "orderId": "ORD-1733235200000-abc123",
   "products": [
     {
       "productId": "prod_001",
@@ -361,7 +360,7 @@ ERC-20 토큰 잔액을 조회합니다.
 # 결제 생성
 curl -X POST http://localhost:3001/payments/create \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_test_abc123" \
+  -H "x-api-key: sk_test_abc123" \
   -d '{
     "amount": 100,
     "currency": "SUT",
@@ -388,11 +387,11 @@ const client = new MSQPayClient({
 
 // 결제 생성
 const payment = await client.createPayment({
-  userId: 'user-123',
+  merchantId: 'merchant_001',
   amount: 100,
-  currency: 'SUT',
-  tokenAddress: '0x...',
-  recipientAddress: '0x...'
+  chainId: 31337,
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 
 // 결제 상태 조회

@@ -601,8 +601,6 @@ export const CheckoutResponseSchema = z.object({
   success: z.boolean(),
   // 결제 서버에서 생성된 paymentId
   paymentId: z.string(),
-  // 상점 서버에서 생성된 orderId
-  orderId: z.string(),
   // 상품 정보 (배열)
   products: z.array(CheckoutResponseItemSchema),
   // 결제 정보 (상점 설정 기반)

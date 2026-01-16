@@ -17,12 +17,13 @@ describe('GET /payments/:id/status', () => {
     network_id: 31337,
     token_symbol: 'USDC',
     status: 'PENDING',
+    amount: '1000000000000000000', // 1 token in wei (18 decimals)
   };
 
   const mockPaymentStatus: PaymentStatus = {
     paymentId: 'payment-123',
     userId: 'user123',
-    amount: 100,
+    amount: 1000000000000000000, // Must match mockPaymentData.amount for completed status
     tokenAddress: '0x' + 'a'.repeat(40),
     tokenSymbol: 'USDC',
     recipientAddress: '0x' + 'b'.repeat(40),

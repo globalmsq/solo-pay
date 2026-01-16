@@ -25,12 +25,11 @@ const client = new MSQPayClient({
 
 // Create a payment
 const payment = await client.createPayment({
-  userId: 'user-123',
-  amount: 1000,
-  currency: 'USD',
-  tokenAddress: '0x1234567890123456789012345678901234567890',
-  recipientAddress: '0x0987654321098765432109876543210987654321',
-  description: 'Purchase order #12345'
+  merchantId: 'merchant_001',
+  amount: 100,
+  chainId: 31337,
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 
 console.log(`Payment created: ${payment.paymentId}`);
@@ -333,11 +332,11 @@ async function processPayment() {
     // Step 1: Create payment
     console.log('Creating payment...');
     const payment = await client.createPayment({
-      userId: 'user-456',
-      amount: 5000,
-      currency: 'USD',
-      tokenAddress: '0x6b175474e89094c44da98b954eedeac495271d0f',
-      recipientAddress: '0x9e5b65f2d0ca4541925d7c4cc5367cbeca076f82'
+      merchantId: 'merchant_001',
+      amount: 100,
+      chainId: 31337,
+      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
     });
     console.log(`Payment created: ${payment.paymentId}`);
 

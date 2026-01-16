@@ -45,9 +45,6 @@ MSQPay uses the same HTTP API-based architecture across all environments. Enviro
 RELAYER_API_URL=http://simple-relayer:3001
 # Simple Relayer HTTP service URL (Docker container)
 
-RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-# Relayer wallet address (Hardhat default account #0)
-
 # ============================================
 # Blockchain Configuration
 # ============================================
@@ -89,9 +86,6 @@ RELAYER_API_KEY=your_defender_api_key_here
 
 RELAYER_API_SECRET=your_defender_api_secret_here
 # OZ Defender API secret
-
-RELAYER_ADDRESS=0x...
-# Relayer address created in OZ Defender
 
 # ============================================
 # Blockchain Configuration (Required)
@@ -232,8 +226,7 @@ Relayer is the server wallet that submits Meta-Transactions.
 
 **Create Relayer Wallet**:
 1. Generate new Ethereum wallet (secure private key storage)
-2. Record wallet address (`RELAYER_ADDRESS`)
-3. Set private key as environment variable (`RELAYER_PRIVATE_KEY`)
+2. Set private key as environment variable (`RELAYER_PRIVATE_KEY`)
 
 ### 2.4 Fund Relayer
 
@@ -336,7 +329,6 @@ const required = [
   'GATEWAY_ADDRESS',
   'FORWARDER_ADDRESS',
   'RELAYER_PRIVATE_KEY',
-  'RELAYER_ADDRESS',
   'PORT',
   'NODE_ENV'
 ];
@@ -399,7 +391,6 @@ docker run -p 3000:3000 \
   -e GATEWAY_ADDRESS=0x... \
   -e FORWARDER_ADDRESS=0x... \
   -e RELAYER_PRIVATE_KEY=xxx \
-  -e RELAYER_ADDRESS=0x... \
   msqpay-api:latest
 
 # Test connection
@@ -422,7 +413,6 @@ services:
       GATEWAY_ADDRESS: 0x...
       FORWARDER_ADDRESS: 0x...
       RELAYER_PRIVATE_KEY: ${RELAYER_PRIVATE_KEY}
-      RELAYER_ADDRESS: 0x...
       NODE_ENV: production
     restart: unless-stopped
     healthcheck:
@@ -453,7 +443,6 @@ railway variable set BLOCKCHAIN_RPC_URL https://polygon-rpc.com
 railway variable set GATEWAY_ADDRESS 0x...
 railway variable set FORWARDER_ADDRESS 0x...
 railway variable set RELAYER_PRIVATE_KEY xxx
-railway variable set RELAYER_ADDRESS 0x...
 
 # 5. Deploy
 railway up
@@ -477,7 +466,6 @@ vercel
 # - GATEWAY_ADDRESS
 # - FORWARDER_ADDRESS
 # - RELAYER_PRIVATE_KEY
-# - RELAYER_ADDRESS
 ```
 
 ### 6.3 AWS Lambda Deployment
@@ -502,7 +490,6 @@ provider:
     GATEWAY_ADDRESS: ${env:GATEWAY_ADDRESS}
     FORWARDER_ADDRESS: ${env:FORWARDER_ADDRESS}
     RELAYER_PRIVATE_KEY: ${env:RELAYER_PRIVATE_KEY}
-    RELAYER_ADDRESS: ${env:RELAYER_ADDRESS}
 
 functions:
   api:

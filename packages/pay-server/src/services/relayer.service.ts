@@ -8,15 +8,6 @@ interface RelayerResponse {
   status: 'submitted' | 'pending' | 'mined' | 'confirmed' | 'failed';
 }
 
-interface RelayerRequest {
-  to: Address;
-  data: string;
-  value?: string;
-  gasLimit: string;
-  speed: 'safeLow' | 'average' | 'fast' | 'fastest';
-}
-
-
 type RelayerTxStatus =
   | 'pending'
   | 'sent'
@@ -49,14 +40,12 @@ interface RelayerInfo {
 export class RelayerService {
   private readonly baseUrl: string;
   private readonly apiKey: string;
-  private readonly relayerAddress: Address;
   private readonly logger = createLogger('RelayerService');
 
   constructor(
     apiUrl: string,
     apiKey: string,
-    _apiSecret: string, // 미사용: relay-api는 Secret 불필요, 호환성을 위해 파라미터 유지
-    relayerAddress: string
+    _apiSecret: string // 미사용: relay-api는 Secret 불필요, 호환성을 위해 파라미터 유지
   ) {
     if (!apiUrl) {
       throw new Error('Relayer API URL이 필요합니다');
@@ -64,7 +53,6 @@ export class RelayerService {
 
     this.baseUrl = apiUrl.replace(/\/$/, ''); // 끝의 슬래시 제거
     this.apiKey = apiKey;
-    this.relayerAddress = relayerAddress as Address;
   }
 
   /**
@@ -106,86 +94,6 @@ export class RelayerService {
         return 'failed';
       default:
         return 'pending';
-    }
-  }
-
-  /**
-   * Gasless 거래 요청 제출
-   *
-   * Defender API를 통해 트랜잭션을 제출합니다.
-   * 릴레이어가 가스비를 대신 지불합니다.
-   */
-  async submitGaslessTransaction(
-    paymentId: string,
-    targetAddress: Address,
-    transactionData: string,
-    options?: {
-      value?: string;
-      gasLimit?: string;
-      speed?: RelayerRequest['speed'];
-    }
-  ): Promise<RelayerResponse> {
-    // 필수 파라미터 검증
-    if (!paymentId || !targetAddress || !transactionData) {
-      throw new Error('필수 파라미터가 누락되었습니다');
-    }
-
-    // 트랜잭션 데이터 검증
-    if (!this.validateTransactionData(transactionData)) {
-      throw new Error('잘못된 트랜잭션 데이터 형식입니다');
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/api/v1/relay/direct`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          to: targetAddress,
-          data: transactionData,
-          value: options?.value ?? '0',
-          gasLimit: options?.gasLimit ?? '200000',
-          speed: options?.speed ?? 'average',
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      const tx = (await response.json()) as RelayerApiResponse;
-
-      this.logger.info(
-        `트랜잭션 제출됨: paymentId=${paymentId}, txId=${tx.transactionId}`
-      );
-
-      return {
-        relayRequestId: tx.transactionId,
-        transactionHash: tx.hash,
-        status: this.mapStatus(tx.status),
-      };
-    } catch (error) {
-      this.logger.error({ err: error }, 'Gasless 거래 제출 실패');
-
-      // 에러 타입에 따른 처리
-      if (error instanceof Error) {
-        if (error.message.includes('insufficient funds')) {
-          throw new Error('릴레이어 잔액이 부족합니다');
-        }
-        if (error.message.includes('nonce')) {
-          throw new Error(
-            '트랜잭션 nonce 충돌이 발생했습니다. 잠시 후 다시 시도해주세요'
-          );
-        }
-        if (
-          error.message.includes('unauthorized') ||
-          error.message.includes('401')
-        ) {
-          throw new Error('Defender API 인증에 실패했습니다');
-        }
-      }
-
-      throw new Error('Gasless 거래를 제출할 수 없습니다');
     }
   }
 
@@ -452,13 +360,6 @@ export class RelayerService {
       this.logger.error({ err: error }, 'Nonce 조회 실패');
       throw new Error('Nonce를 조회할 수 없습니다');
     }
-  }
-
-  /**
-   * 릴레이어 주소 조회
-   */
-  getRelayerAddress(): Address {
-    return this.relayerAddress;
   }
 
   /**

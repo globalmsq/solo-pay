@@ -77,7 +77,6 @@ RELAYER_API_URL=http://simple-relayer:3001  # Local development
 # RELAYER_API_URL=https://api.defender.openzeppelin.com  # Production
 RELAYER_API_KEY=  # Production only
 RELAYER_API_SECRET=  # Production only
-RELAYER_ADDRESS=0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
 ```
 
 > **참고**: 체인 설정(RPC URL, Contract 주소 등)은 데이터베이스의 `chains` 테이블에서 관리됩니다. 환경변수가 아닙니다.

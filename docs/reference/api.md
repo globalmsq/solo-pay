@@ -11,7 +11,7 @@ Complete reference for all MSQPay REST API endpoints.
 | Base URL | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
 | Protocol | REST API (HTTP/HTTPS) |
 | Content-Type | `application/json` |
-| Authentication | X-API-Key (payment API only) |
+| Authentication | x-api-key (payment API only) |
 
 ## Endpoint List
 
@@ -54,7 +54,7 @@ Create a new payment.
 ```http
 POST /payments/create
 Content-Type: application/json
-X-API-Key: sk_test_abc123
+x-api-key: sk_test_abc123
 ```
 
 ```json
@@ -102,7 +102,6 @@ Create payment based on product array (internal store server API route only).
 {
   "success": true,
   "paymentId": "0x5aed4bae...",
-  "orderId": "ORD-1733235200000-abc123",
   "products": [
     {
       "productId": "prod_001",
@@ -361,7 +360,7 @@ See [Error Code Reference](errors.md) for complete error code list.
 # Create payment
 curl -X POST http://localhost:3001/payments/create \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_test_abc123" \
+  -H "x-api-key: sk_test_abc123" \
   -d '{
     "amount": 100,
     "currency": "SUT",
@@ -388,11 +387,11 @@ const client = new MSQPayClient({
 
 // Create payment
 const payment = await client.createPayment({
-  userId: 'user-123',
+  merchantId: 'merchant_001',
   amount: 100,
-  currency: 'SUT',
-  tokenAddress: '0x...',
-  recipientAddress: '0x...'
+  chainId: 31337,
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 
 // Query payment status

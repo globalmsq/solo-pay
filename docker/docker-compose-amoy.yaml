@@ -28,8 +28,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: msqpay-redis
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
@@ -52,7 +52,7 @@ services:
       RELAYER_PRIVATE_KEY: "${RELAYER_PRIVATE_KEY}"
       RPC_URL: https://rpc-amoy.polygon.technology
       CHAIN_ID: 80002
-      FORWARDER_ADDRESS: "0x0d9A0fAf9a8101368aa01B88442B38f82180520E"
+      FORWARDER_ADDRESS: "0xF034a404241707F347A952Cd4095f9035AF877Bf"
     networks:
       - msqpay-network
     healthcheck:
@@ -82,14 +82,12 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: https://rpc-amoy.polygon.technology
-      # Simple Relayer API URL (Local gasless relay)
-      RELAYER_API_URL: http://simple-relayer:3001
-      # TODO: Set your relayer address
-      RELAYER_ADDRESS: "${RELAYER_ADDRESS}"
-      # Polygon Amoy Contract Addresses
-      FORWARDER_ADDRESS: "0x0d9A0fAf9a8101368aa01B88442B38f82180520E"
-      GATEWAY_ADDRESS: "0x2256bedB57869AF4fadF16e1ebD534A7d47513d7"
-      TOKEN_ADDRESS: "0xE4C687167705Abf55d709395f92e254bdF5825a2"
+      # Option 1: simple-relayer (local)
+      # RELAYER_API_URL: http://simple-relayer:3001
+
+      # Option 2: relay-api (msq-relayer-service)
+      RELAYER_API_URL: http://relay-api:8080
+      RELAYER_API_KEY: ${RELAY_API_KEY:-amoy-dev-api-key}
     depends_on:
       mysql:
         condition: service_healthy
@@ -99,6 +97,7 @@ services:
         condition: service_healthy
     networks:
       - msqpay-network
+      - msq-network
 
   # Demo App (Next.js)
   demo:
@@ -119,6 +118,8 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:3001
       # Server-side API URL (Docker internal network)
       MSQPAY_API_URL: http://server:3001
+      # Merchant API Key (same as docker-compose.yaml: merchant_demo_001)
+      MSQPAY_API_KEY: "123"
     depends_on:
       - server
     networks:
@@ -127,6 +128,8 @@ services:
 networks:
   msqpay-network:
     driver: bridge
+  msq-network:
+    external: true
 
 volumes:
   mysql-data:

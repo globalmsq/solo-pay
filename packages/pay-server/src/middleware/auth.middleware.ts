@@ -10,7 +10,7 @@ declare module 'fastify' {
 }
 
 /**
- * Base authentication middleware - validates X-API-Key header
+ * Base authentication middleware - validates x-api-key header
  * and attaches merchant to request if valid
  */
 export function createAuthMiddleware(merchantService: MerchantService) {
@@ -23,7 +23,7 @@ export function createAuthMiddleware(merchantService: MerchantService) {
     if (!apiKey || apiKey.trim() === '') {
       return reply.code(401).send({
         code: 'UNAUTHORIZED',
-        message: 'Missing or invalid X-API-Key header',
+        message: 'Missing or invalid x-api-key header',
       });
     }
 

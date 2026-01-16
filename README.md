@@ -148,11 +148,11 @@ pnpm dev
 
 | Contract | Address |
 |----------|---------|
-| PaymentGateway (Proxy) | `0x2256bedB57869AF4fadF16e1ebD534A7d47513d7` |
+| PaymentGateway (Proxy) | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0x0d9A0fAf9a8101368aa01B88442B38f82180520E` |
+| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 
-Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0x2256bedB57869AF4fadF16e1ebD534A7d47513d7)
+Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 
 ## SDK Usage (@globalmsq/msqpay)
 
@@ -168,9 +168,7 @@ const client = new MSQPayClient({
 // Create payment (called from merchant server)
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
-  orderId: 'ORD-12345',
   amount: 100,
-  currency: 'TEST',
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
@@ -245,7 +243,6 @@ Key environment variables for the payment server:
 | `RELAYER_API_URL` | Relayer service endpoint | `http://simple-relayer:3001` |
 | `RELAYER_API_KEY` | Relayer API key (production only) | `sk_...` |
 | `RELAYER_API_SECRET` | Relayer API secret (production only) | `secret_...` |
-| `RELAYER_ADDRESS` | Relayer wallet address | `0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC` |
 
 > **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the database `chains` table, not environment variables. See [Pay Server README](./packages/pay-server/README.md#multi-chain-configuration) for details.
 

@@ -240,24 +240,23 @@ ERC2771Forwarder
 결제서버에서 Node.js로 생성 (스마트 컨트랙트 아님):
 
 ```typescript
-import { keccak256, toBytes, concat } from 'viem';
+import { keccak256, toHex } from 'viem';
 import { randomBytes } from 'crypto';
 
-function generatePaymentId(storeId: string, orderId: string): `0x${string}` {
+function generatePaymentId(merchantId: string): `0x${string}` {
+  const random = randomBytes(32);
   return keccak256(
-    concat([
-      toBytes(storeId),      // API Key에서 추출
-      toBytes(orderId),      // 상점서버 요청
-      randomBytes(32)        // 매번 다른 ID 보장
-    ])
+    toHex(`${merchantId}:${Date.now()}:${random.toString('hex')}`)
   );
 }
 ```
 
 **특징**:
-- 같은 상점 + 같은 orderId → 항상 다른 paymentId
-- storeId 포함 → 상점간 충돌 불가
-- randomBytes 포함 → 동일 요청도 매번 새로운 ID
+- merchantId + timestamp + random bytes 기반 생성
+- orderId는 server-to-server 아키텍처에서 불필요
+- 상점은 paymentId를 내부 주문과 매핑할 수 있음
+- merchantId 포함 → 상점간 충돌 불가
+- randomBytes 포함 → 항상 고유한 paymentId
 
 ## 보안 설계
 
@@ -306,9 +305,9 @@ function generatePaymentId(storeId: string, orderId: string): `0x${string}` {
 
 | Contract | Address |
 |----------|---------|
-| PaymentGateway (Proxy) | `0x2256bedB57869AF4fadF16e1ebD534A7d47513d7` |
+| PaymentGateway (Proxy) | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0x0d9A0fAf9a8101368aa01B88442B38f82180520E` |
+| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 | SUT Token | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
 ## 확장성

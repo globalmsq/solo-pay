@@ -113,7 +113,7 @@ describe('MSQPayClient', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'X-API-Key': 'test-api-key',
+            'x-api-key': 'test-api-key',
             'Content-Type': 'application/json'
           })
         })
@@ -429,7 +429,7 @@ describe('MSQPayClient', () => {
   });
 
   describe('API Key header', () => {
-    it('should include X-API-Key header in all requests', async () => {
+    it('should include x-api-key header in all requests', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -455,7 +455,7 @@ describe('MSQPayClient', () => {
         expect.any(String),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-API-Key': 'test-api-key'
+            'x-api-key': 'test-api-key'
           })
         })
       );
@@ -543,7 +543,7 @@ describe('MSQPayClient', () => {
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
-            'X-API-Key': 'test-api-key'
+            'x-api-key': 'test-api-key'
           })
         })
       );

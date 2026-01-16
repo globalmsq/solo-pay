@@ -45,9 +45,6 @@ MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용�
 RELAYER_API_URL=http://simple-relayer:3001
 # Simple Relayer HTTP 서비스 URL (Docker 컨테이너)
 
-RELAYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-# Relayer 지갑 주소 (Hardhat 기본 계정 #0)
-
 # ============================================
 # Blockchain Configuration
 # ============================================
@@ -89,9 +86,6 @@ RELAYER_API_KEY=your_defender_api_key_here
 
 RELAYER_API_SECRET=your_defender_api_secret_here
 # OZ Defender API 시크릿
-
-RELAYER_ADDRESS=0x...
-# OZ Defender에서 생성한 Relayer 주소
 
 # ============================================
 # Blockchain Configuration (Required)
@@ -232,8 +226,7 @@ await gateway.initialize(owner, forwarderAddress);
 
 **릴레이어 지갑 생성**:
 1. 새 이더리움 지갑 생성 (개인키 안전하게 보관)
-2. 지갑 주소 기록 (`RELAYER_ADDRESS`)
-3. 개인키를 환경 변수로 설정 (`RELAYER_PRIVATE_KEY`)
+2. 개인키를 환경 변수로 설정 (`RELAYER_PRIVATE_KEY`)
 
 ### 2.4 릴레이어 자금 충전
 
@@ -336,7 +329,6 @@ const required = [
   'GATEWAY_ADDRESS',
   'FORWARDER_ADDRESS',
   'RELAYER_PRIVATE_KEY',
-  'RELAYER_ADDRESS',
   'PORT',
   'NODE_ENV'
 ];
@@ -399,7 +391,6 @@ docker run -p 3000:3000 \
   -e GATEWAY_ADDRESS=0x... \
   -e FORWARDER_ADDRESS=0x... \
   -e RELAYER_PRIVATE_KEY=xxx \
-  -e RELAYER_ADDRESS=0x... \
   msqpay-api:latest
 
 # 연결 테스트
@@ -422,7 +413,6 @@ services:
       GATEWAY_ADDRESS: 0x...
       FORWARDER_ADDRESS: 0x...
       RELAYER_PRIVATE_KEY: ${RELAYER_PRIVATE_KEY}
-      RELAYER_ADDRESS: 0x...
       NODE_ENV: production
     restart: unless-stopped
     healthcheck:
@@ -453,7 +443,6 @@ railway variable set BLOCKCHAIN_RPC_URL https://polygon-rpc.com
 railway variable set GATEWAY_ADDRESS 0x...
 railway variable set FORWARDER_ADDRESS 0x...
 railway variable set RELAYER_PRIVATE_KEY xxx
-railway variable set RELAYER_ADDRESS 0x...
 
 # 5. 배포
 railway up
@@ -477,7 +466,6 @@ vercel
 # - GATEWAY_ADDRESS
 # - FORWARDER_ADDRESS
 # - RELAYER_PRIVATE_KEY
-# - RELAYER_ADDRESS
 ```
 
 ### 6.3 AWS Lambda 배포
@@ -502,7 +490,6 @@ provider:
     GATEWAY_ADDRESS: ${env:GATEWAY_ADDRESS}
     FORWARDER_ADDRESS: ${env:FORWARDER_ADDRESS}
     RELAYER_PRIVATE_KEY: ${env:RELAYER_PRIVATE_KEY}
-    RELAYER_ADDRESS: ${env:RELAYER_ADDRESS}
 
 functions:
   api:

@@ -23,7 +23,13 @@ vi.mock('wagmi', () => ({
       writeContract: vi.fn(),
     },
   })),
+  useWriteContract: vi.fn(() => ({
+    writeContractAsync: vi.fn().mockResolvedValue('0xmocktxhash'),
+  })),
   useChainId: vi.fn(() => 80002),
+  useSwitchChain: vi.fn(() => ({
+    switchChainAsync: vi.fn().mockResolvedValue(undefined),
+  })),
   useReadContract: vi.fn(() => ({
     data: BigInt('1000000000000000000'),
     isLoading: false,

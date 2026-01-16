@@ -85,14 +85,3 @@ export function getMerchantConfig(): MerchantConfig {
   };
 }
 
-/**
- * orderId 생성
- *
- * 상점 서버에서 주문 생성 시 호출
- * 형식: ord_{timestamp}_{random}
- */
-export function generateOrderId(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `ord_${timestamp}_${random}`;
-}

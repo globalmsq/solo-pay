@@ -42,15 +42,14 @@ Users pay gas fees directly.
 
 ```typescript
 const payment = await client.createPayment({
-  userId: 'user-123',
-  amount: 1000,
-  currency: 'USD',
-  tokenAddress: '0x1234567890123456789012345678901234567890',
-  recipientAddress: '0x0987654321098765432109876543210987654321',
-  description: 'Purchase order #12345'
+  merchantId: 'merchant_001',
+  amount: 100,
+  chainId: 31337,
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 
-console.log(payment.paymentId); // "pay-123"
+console.log(payment.paymentId); // "0x..."
 ```
 
 ### 2. Frontend Payment Execution
@@ -100,11 +99,11 @@ Same as Direct Payment:
 
 ```typescript
 const payment = await client.createPayment({
-  userId: 'user-123',
-  amount: 1000,
-  currency: 'USD',
-  tokenAddress: '0x...',
-  recipientAddress: '0x...'
+  merchantId: 'merchant_001',
+  amount: 100,
+  chainId: 31337,
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
 });
 ```
 
@@ -283,11 +282,11 @@ app.post('/api/checkout', async (req, res) => {
 
     // 3. Create payment
     const payment = await client.createPayment({
-      userId: req.user.id,
+      merchantId: 'merchant_001',
       amount: product.price,  // Price determined by server
-      currency: 'USD',
-      tokenAddress: '0x...',
-      recipientAddress: '0x...'
+      chainId: 31337,
+      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
     });
 
     // 4. Return paymentId

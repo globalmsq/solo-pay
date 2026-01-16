@@ -283,7 +283,7 @@ export async function GET(
 import { NextRequest, NextResponse } from 'next/server';
 import { MSQPayClient } from '@globalmsq/msqpay';
 import { getProductById } from '@/lib/products';
-import { getMerchantConfig, generateOrderId } from '@/lib/merchant';
+import { getMerchantConfig } from '@/lib/merchant';
 
 const client = new MSQPayClient({
   environment: 'custom',
@@ -368,30 +368,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const orderId = generateOrderId();
-
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
-      orderId: orderId,
       amount: totalAmount,
-      currency: merchantConfig.tokenSymbol,
       chainId: merchantConfig.chainId,
       recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
-      tokenDecimals: merchantConfig.tokenDecimals,
     });
 
+    // tokenSymbol, tokenDecimals는 결제 서버에서 on-chain 조회한 값 사용 (source of truth)
     return NextResponse.json(
       {
         success: true,
+        // 결제 서버에서 생성된 paymentId
+        // 상점은 이 paymentId를 저장하여 내부 주문과 매핑할 수 있음
         paymentId: payment.paymentId,
-        orderId: orderId,
         products: productInfos,
         totalAmount: totalAmount.toString(),
-        chainId: merchantConfig.chainId,
-        tokenSymbol: merchantConfig.tokenSymbol,
-        tokenAddress: merchantConfig.tokenAddress,
-        decimals: merchantConfig.tokenDecimals,
+        chainId: payment.chainId,
+        tokenSymbol: payment.tokenSymbol,       // From on-chain via pay-server
+        tokenAddress: payment.tokenAddress,
+        decimals: payment.tokenDecimals,        // From on-chain via pay-server
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
         recipientAddress: merchantConfig.recipientAddress,
