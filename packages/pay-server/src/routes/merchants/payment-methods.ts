@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { MerchantPaymentMethod } from '@prisma/client';
+import { MerchantPaymentMethod, Token } from '@prisma/client';
 import { MerchantService } from '../../services/merchant.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { TokenService } from '../../services/token.service';
@@ -348,24 +348,37 @@ export async function paymentMethodsRoute(
         // Get all enabled chains
         const chains = await chainService.findAll();
         
-        // Get tokens for each chain
-        const chainsWithTokens = await Promise.all(
-          chains.map(async (chain) => {
-            const tokens = await tokenService.findAllOnChain(chain.id, false);
-            return {
-              id: chain.id,
-              network_id: chain.network_id,
-              name: chain.name,
-              is_testnet: chain.is_testnet,
-              tokens: tokens.map(token => ({
-                id: token.id,
-                address: token.address,
-                symbol: token.symbol,
-                decimals: token.decimals,
-              })),
-            };
-          })
-        );
+        // Extract chain IDs for bulk token query
+        const chainIds = chains.map(chain => chain.id);
+        
+        // Fetch all tokens for all chains in a single query
+        const allTokens = await tokenService.findAllForChains(chainIds, false);
+        
+        // Group tokens by chain_id using a Map for O(1) lookups
+        const tokensByChainId = new Map<number, Token[]>();
+        for (const token of allTokens) {
+          if (!tokensByChainId.has(token.chain_id)) {
+            tokensByChainId.set(token.chain_id, []);
+          }
+          tokensByChainId.get(token.chain_id)!.push(token);
+        }
+        
+        // Map chains with their tokens
+        const chainsWithTokens = chains.map(chain => {
+          const tokens = tokensByChainId.get(chain.id) || [];
+          return {
+            id: chain.id,
+            network_id: chain.network_id,
+            name: chain.name,
+            is_testnet: chain.is_testnet,
+            tokens: tokens.map(token => ({
+              id: token.id,
+              address: token.address,
+              symbol: token.symbol,
+              decimals: token.decimals,
+            })),
+          };
+        });
 
         return reply.code(200).send({
           success: true,
