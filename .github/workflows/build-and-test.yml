@@ -51,7 +51,7 @@ jobs:
         run: pnpm --filter @msq/pay-server exec prisma generate
 
       - name: Compile contracts (generate typechain-types)
-        run: pnpm --filter contracts exec hardhat compile
+        run: pnpm --filter @msq/pay-contracts exec hardhat compile
 
       - name: Run type check
         run: pnpm typecheck
