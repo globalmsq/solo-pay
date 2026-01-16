@@ -12,7 +12,9 @@ import type { IgnitionModuleResult } from '@nomicfoundation/ignition-core';
  *
  * This ensures Token is always at nonce 1 = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
  */
-const ForwarderModule: ReturnType<typeof buildModule<'Forwarder', string, IgnitionModuleResult<string>>> = buildModule('Forwarder', (m) => {
+const ForwarderModule: ReturnType<
+  typeof buildModule<'Forwarder', string, IgnitionModuleResult<string>>
+> = buildModule('Forwarder', (m) => {
   // Domain name must match client (PaymentModal.tsx) and relay-api (signature-verifier.service.ts)
   const forwarder = m.contract('ERC2771Forwarder', ['MSQForwarder']);
 

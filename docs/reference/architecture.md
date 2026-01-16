@@ -6,13 +6,13 @@ Complete architecture and design principles of the MSQPay blockchain payment sys
 
 ## Core Principles
 
-| Principle | Description |
-|------|------|
-| **Contract = Source of Truth** | Payment completion is only trusted from the smart contract |
-| **Integrated DB Architecture** | MySQL + Redis caching integration, while maintaining Contract = Source of Truth |
-| **Consistent API Interface** | Same API format for both MVP and Production |
-| **Server-Issued paymentId** | Payment server is the sole generator of paymentId |
-| **Merchant Server ↔ Blockchain Separation** | Store servers only call Payment Server API, no direct blockchain access |
+| Principle                                   | Description                                                                     |
+| ------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Contract = Source of Truth**              | Payment completion is only trusted from the smart contract                      |
+| **Integrated DB Architecture**              | MySQL + Redis caching integration, while maintaining Contract = Source of Truth |
+| **Consistent API Interface**                | Same API format for both MVP and Production                                     |
+| **Server-Issued paymentId**                 | Payment server is the sole generator of paymentId                               |
+| **Merchant Server ↔ Blockchain Separation** | Store servers only call Payment Server API, no direct blockchain access         |
 
 ## Complete System Diagram
 
@@ -155,13 +155,13 @@ flowchart TB
 
 ### Service Configuration
 
-| Service | Port | Description |
-|--------|------|------|
-| mysql | 3306 | Payment data |
-| redis | 6379 | Caching |
+| Service | Port | Description      |
+| ------- | ---- | ---------------- |
+| mysql   | 3306 | Payment data     |
+| redis   | 6379 | Caching          |
 | hardhat | 8545 | Local blockchain |
-| server | 3001 | Payment API |
-| demo | 3000 | Frontend |
+| server  | 3001 | Payment API      |
+| demo    | 3000 | Frontend         |
 
 ## API Server Structure
 
@@ -245,13 +245,12 @@ import { randomBytes } from 'crypto';
 
 function generatePaymentId(merchantId: string): `0x${string}` {
   const random = randomBytes(32);
-  return keccak256(
-    toHex(`${merchantId}:${Date.now()}:${random.toString('hex')}`)
-  );
+  return keccak256(toHex(`${merchantId}:${Date.now()}:${random.toString('hex')}`));
 }
 ```
 
 **Characteristics**:
+
 - Generated from merchantId + timestamp + random bytes
 - orderId is not required in server-to-server architecture
 - Merchant can map paymentId to their internal order themselves
@@ -262,53 +261,53 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 
 ### Client Manipulation Prevention
 
-| Threat | Countermeasure |
-|------|------|
-| Fake paymentId generation | Only Payment Server issues paymentId |
-| Payment completion forgery | Query directly from Contract |
+| Threat                           | Countermeasure                                                         |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| Fake paymentId generation        | Only Payment Server issues paymentId                                   |
+| Payment completion forgery       | Query directly from Contract                                           |
 | **Amount Manipulation (Direct)** | **Store server queries product price (no frontend amount acceptance)** |
-| Amount Manipulation (Gasless) | Verify amount in signature data |
-| Store impersonation | API Key authentication |
+| Amount Manipulation (Gasless)    | Verify amount in signature data                                        |
+| Store impersonation              | API Key authentication                                                 |
 
 **Core Security Principle**: Frontend sends only `productId`, and store server must query actual price from DB/config and pass to Payment Server.
 
 ### Contract Security
 
-| Risk | Countermeasure |
-|------|------|
-| Reentrancy | ReentrancyGuard applied |
-| Replay Attack | Prevent duplicates with processedPayments |
-| Meta-tx Replay | Forwarder nonce + deadline |
-| Unauthorized Upgrade | onlyOwner modifier on _authorizeUpgrade |
+| Risk                 | Countermeasure                            |
+| -------------------- | ----------------------------------------- |
+| Reentrancy           | ReentrancyGuard applied                   |
+| Replay Attack        | Prevent duplicates with processedPayments |
+| Meta-tx Replay       | Forwarder nonce + deadline                |
+| Unauthorized Upgrade | onlyOwner modifier on \_authorizeUpgrade  |
 
 ### SDK/API Security
 
-| Risk | Countermeasure |
-|------|------|
-| Invalid Payment ID | Guarantee uniqueness with hash order ID |
-| Signature Reuse | Include nonce + deadline |
-| Man-in-the-middle | HTTPS only |
-| Rate Limiting | 10 req/s per client (future implementation) |
+| Risk               | Countermeasure                              |
+| ------------------ | ------------------------------------------- |
+| Invalid Payment ID | Guarantee uniqueness with hash order ID     |
+| Signature Reuse    | Include nonce + deadline                    |
+| Man-in-the-middle  | HTTPS only                                  |
+| Rate Limiting      | 10 req/s per client (future implementation) |
 
 ## Network Configuration
 
 ### Polygon Amoy Testnet
 
-| Item | Value |
-|------|-----|
-| Chain ID | 80002 |
-| Name | Polygon Amoy Testnet |
-| RPC URL | https://rpc-amoy.polygon.technology |
-| Block Explorer | https://amoy.polygonscan.com |
+| Item           | Value                               |
+| -------------- | ----------------------------------- |
+| Chain ID       | 80002                               |
+| Name           | Polygon Amoy Testnet                |
+| RPC URL        | https://rpc-amoy.polygon.technology |
+| Block Explorer | https://amoy.polygonscan.com        |
 
 ### Deployed Contracts
 
-| Contract | Address |
-|----------|---------|
-| PaymentGateway (Proxy) | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
+| Contract                | Address                                      |
+| ----------------------- | -------------------------------------------- |
+| PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
-| SUT Token | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
+| ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
+| SUT Token               | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
 ## Scalability
 
@@ -316,33 +315,33 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 
 In production environment, separate API Server and Status Worker:
 
-| Server | Role | Stateless |
-|------|------|-----------|
-| **API Server** | Handle external requests, payment creation, relay | O |
-| **Status Worker** | Monitor blockchain events, sync status | X |
+| Server            | Role                                              | Stateless |
+| ----------------- | ------------------------------------------------- | --------- |
+| **API Server**    | Handle external requests, payment creation, relay | O         |
+| **Status Worker** | Monitor blockchain events, sync status            | X         |
 
 **Scaling Strategy**:
 
-| Component | Scaling Method |
-|----------|----------|
-| API Server | Horizontal scaling (load balancer) |
+| Component     | Scaling Method                              |
+| ------------- | ------------------------------------------- |
+| API Server    | Horizontal scaling (load balancer)          |
 | Status Worker | Single instance (prevent event duplication) |
-| MySQL | Read Replica |
-| Redis | Cluster mode |
+| MySQL         | Read Replica                                |
+| Redis         | Cluster mode                                |
 
 ## Technology Stack
 
-| Component | Technology |
-|----------|------|
-| Smart Contract | Solidity 0.8.24, OpenZeppelin 5.x |
-| Contract Framework | Hardhat |
-| Payment Server | Node.js, Fastify v5, viem v2.21 |
-| Payment Server Tests | Vitest, Pino structured logging |
-| SDK | TypeScript, Node 18+ native fetch |
-| SDK Tests | Vitest, 100% coverage |
-| Relay | Simple Relayer (dev) / OZ Defender (prod) |
-| Demo App | Next.js 14, wagmi, RainbowKit |
-| Package Manager | pnpm |
+| Component            | Technology                                |
+| -------------------- | ----------------------------------------- |
+| Smart Contract       | Solidity 0.8.24, OpenZeppelin 5.x         |
+| Contract Framework   | Hardhat                                   |
+| Payment Server       | Node.js, Fastify v5, viem v2.21           |
+| Payment Server Tests | Vitest, Pino structured logging           |
+| SDK                  | TypeScript, Node 18+ native fetch         |
+| SDK Tests            | Vitest, 100% coverage                     |
+| Relay                | Simple Relayer (dev) / OZ Defender (prod) |
+| Demo App             | Next.js 14, wagmi, RainbowKit             |
+| Package Manager      | pnpm                                      |
 
 ## Related Documentation
 

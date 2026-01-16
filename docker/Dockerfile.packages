@@ -13,7 +13,7 @@ RUN apk add --no-cache git python3 make g++ && \
 WORKDIR /app
 
 # Copy workspace configuration
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml eslint.config.ts ./
 
 # ============================================
 # Dependencies Stage

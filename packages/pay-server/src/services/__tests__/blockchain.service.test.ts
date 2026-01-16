@@ -127,7 +127,10 @@ describe('BlockchainService - New methods for SPEC-API-001', () => {
       // Mock getDecimals to simulate fallback behavior
       vi.spyOn(service, 'getDecimals').mockResolvedValue(18);
 
-      const decimals = await service.getDecimals(80002, '0xE4C687167705Abf55d709395f92e254bdF5825a2');
+      const decimals = await service.getDecimals(
+        80002,
+        '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+      );
       expect(decimals).toBe(18);
     });
 
@@ -135,7 +138,10 @@ describe('BlockchainService - New methods for SPEC-API-001', () => {
       // Mock getDecimals to return 6 decimals (like USDC)
       vi.spyOn(service, 'getDecimals').mockResolvedValue(6);
 
-      const decimals = await service.getDecimals(80002, '0xE4C687167705Abf55d709395f92e254bdF5825a2');
+      const decimals = await service.getDecimals(
+        80002,
+        '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+      );
       expect(decimals).toBe(6);
     });
 

@@ -4,7 +4,7 @@ import type {
   CreatePaymentParams,
   GaslessParams,
   RelayParams,
-  GetPaymentHistoryParams
+  GetPaymentHistoryParams,
 } from '../src/index';
 
 // Mock fetch globally
@@ -18,7 +18,7 @@ describe('MSQPayClient', () => {
     vi.clearAllMocks();
     client = new MSQPayClient({
       environment: 'development',
-      apiKey: 'test-api-key'
+      apiKey: 'test-api-key',
     });
   });
 
@@ -26,7 +26,7 @@ describe('MSQPayClient', () => {
     it('TC-007.1: should initialize with development environment', () => {
       const devClient = new MSQPayClient({
         environment: 'development',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       });
       expect(devClient.getApiUrl()).toBe('http://localhost:3001');
     });
@@ -34,7 +34,7 @@ describe('MSQPayClient', () => {
     it('TC-007.2: should initialize with staging environment', () => {
       const stagingClient = new MSQPayClient({
         environment: 'staging',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       });
       expect(stagingClient.getApiUrl()).toBe('https://pay-api.staging.msq.com');
     });
@@ -42,7 +42,7 @@ describe('MSQPayClient', () => {
     it('TC-007.3: should initialize with production environment', () => {
       const prodClient = new MSQPayClient({
         environment: 'production',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       });
       expect(prodClient.getApiUrl()).toBe('https://pay-api.msq.com');
     });
@@ -51,7 +51,7 @@ describe('MSQPayClient', () => {
       const customClient = new MSQPayClient({
         environment: 'custom',
         apiKey: 'test-key',
-        apiUrl: 'https://custom.api.com'
+        apiUrl: 'https://custom.api.com',
       });
       expect(customClient.getApiUrl()).toBe('https://custom.api.com');
     });
@@ -60,7 +60,7 @@ describe('MSQPayClient', () => {
       expect(() => {
         new MSQPayClient({
           environment: 'custom',
-          apiKey: 'test-key'
+          apiKey: 'test-key',
         });
       }).toThrow('apiUrl is required when environment is "custom"');
     });
@@ -86,7 +86,7 @@ describe('MSQPayClient', () => {
       amount: 1000,
       chainId: 31337,
       tokenAddress: '0x1234567890123456789012345678901234567890',
-      recipientAddress: '0x0987654321098765432109876543210987654321'
+      recipientAddress: '0x0987654321098765432109876543210987654321',
     };
 
     it('TC-001: should create payment successfully', async () => {
@@ -104,8 +104,8 @@ describe('MSQPayClient', () => {
           forwarderAddress: '0xForwarder',
           amount: '1000',
           status: 'CREATED',
-          expiresAt: '2025-12-31T00:00:00Z'
-        })
+          expiresAt: '2025-12-31T00:00:00Z',
+        }),
       });
 
       const result = await client.createPayment(validParams);
@@ -119,8 +119,8 @@ describe('MSQPayClient', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'x-api-key': 'test-api-key',
-            'Content-Type': 'application/json'
-          })
+            'Content-Type': 'application/json',
+          }),
         })
       );
     });
@@ -132,13 +132,13 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'VALIDATION_ERROR',
-          message: '입력 검증 실패'
-        })
+          message: '입력 검증 실패',
+        }),
       });
 
       await expect(client.createPayment(validParams)).rejects.toMatchObject({
         code: 'VALIDATION_ERROR',
-        statusCode: 400
+        statusCode: 400,
       });
     });
 
@@ -150,8 +150,8 @@ describe('MSQPayClient', () => {
           success: false,
           code: 'INVALID_REQUEST',
           message: 'Invalid request format',
-          details: { field: 'amount', error: 'must be positive' }
-        })
+          details: { field: 'amount', error: 'must be positive' },
+        }),
       });
 
       try {
@@ -161,7 +161,7 @@ describe('MSQPayClient', () => {
         expect(error).toBeInstanceOf(MSQPayError);
         expect((error as MSQPayError).details).toEqual({
           field: 'amount',
-          error: 'must be positive'
+          error: 'must be positive',
         });
       }
     });
@@ -173,13 +173,13 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'INTERNAL_ERROR',
-          message: '서버 내부 오류'
-        })
+          message: '서버 내부 오류',
+        }),
       });
 
       await expect(client.createPayment(validParams)).rejects.toMatchObject({
         code: 'INTERNAL_ERROR',
-        statusCode: 500
+        statusCode: 500,
       });
     });
   });
@@ -202,9 +202,9 @@ describe('MSQPayClient', () => {
             transactionHash: '0xabc123',
             blockNumber: 12345,
             createdAt: '2025-11-29T10:00:00Z',
-            updatedAt: '2025-11-29T10:05:00Z'
-          }
-        })
+            updatedAt: '2025-11-29T10:05:00Z',
+          },
+        }),
       });
 
       const result = await client.getPaymentStatus('pay-123');
@@ -215,7 +215,7 @@ describe('MSQPayClient', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3001/payments/pay-123/status',
         expect.objectContaining({
-          method: 'GET'
+          method: 'GET',
         })
       );
     });
@@ -227,13 +227,13 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'NOT_FOUND',
-          message: '결제 정보를 찾을 수 없습니다'
-        })
+          message: '결제 정보를 찾을 수 없습니다',
+        }),
       });
 
       await expect(client.getPaymentStatus('invalid-id')).rejects.toMatchObject({
         code: 'NOT_FOUND',
-        statusCode: 404
+        statusCode: 404,
       });
     });
 
@@ -255,9 +255,9 @@ describe('MSQPayClient', () => {
               recipientAddress: '0x0987654321098765432109876543210987654321',
               status,
               createdAt: '2025-11-29T10:00:00Z',
-              updatedAt: '2025-11-29T10:05:00Z'
-            }
-          })
+              updatedAt: '2025-11-29T10:05:00Z',
+            },
+          }),
         });
 
         const result = await client.getPaymentStatus('pay-123');
@@ -277,8 +277,8 @@ describe('MSQPayClient', () => {
         gas: '300000',
         deadline: '1735689600',
         data: '0x' + 'ab'.repeat(68),
-        signature: '0x' + 'a'.repeat(130)
-      }
+        signature: '0x' + 'a'.repeat(130),
+      },
     };
 
     it('TC-005: should submit gasless transaction successfully', async () => {
@@ -289,8 +289,8 @@ describe('MSQPayClient', () => {
           success: true,
           relayRequestId: 'relay-123',
           status: 'submitted',
-          message: 'Transaction submitted'
-        })
+          message: 'Transaction submitted',
+        }),
       });
 
       const result = await client.submitGasless(validParams);
@@ -301,7 +301,7 @@ describe('MSQPayClient', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3001/payments/pay-123/gasless',
         expect.objectContaining({
-          method: 'POST'
+          method: 'POST',
         })
       );
     });
@@ -317,8 +317,8 @@ describe('MSQPayClient', () => {
             success: true,
             relayRequestId: 'relay-123',
             status,
-            message: 'Transaction ' + status
-          })
+            message: 'Transaction ' + status,
+          }),
         });
 
         const result = await client.submitGasless(validParams);
@@ -333,13 +333,13 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'INVALID_SIGNATURE',
-          message: '잘못된 서명 형식'
-        })
+          message: '잘못된 서명 형식',
+        }),
       });
 
       await expect(client.submitGasless(validParams)).rejects.toMatchObject({
         code: 'INVALID_SIGNATURE',
-        statusCode: 400
+        statusCode: 400,
       });
     });
   });
@@ -348,7 +348,7 @@ describe('MSQPayClient', () => {
     const validParams: RelayParams = {
       paymentId: 'pay-123',
       transactionData: '0x' + 'b'.repeat(256),
-      gasEstimate: 100000
+      gasEstimate: 100000,
     };
 
     it('TC-006: should execute relay successfully', async () => {
@@ -360,8 +360,8 @@ describe('MSQPayClient', () => {
           relayRequestId: 'relay-123',
           transactionHash: '0xdef456',
           status: 'mined',
-          message: 'Relay executed'
-        })
+          message: 'Relay executed',
+        }),
       });
 
       const result = await client.executeRelay(validParams);
@@ -373,7 +373,7 @@ describe('MSQPayClient', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3001/payments/pay-123/relay',
         expect.objectContaining({
-          method: 'POST'
+          method: 'POST',
         })
       );
     });
@@ -389,8 +389,8 @@ describe('MSQPayClient', () => {
             success: true,
             relayRequestId: 'relay-123',
             status,
-            message: 'Relay ' + status
-          })
+            message: 'Relay ' + status,
+          }),
         });
 
         const result = await client.executeRelay(validParams);
@@ -405,13 +405,13 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'INVALID_TRANSACTION_DATA',
-          message: '잘못된 트랜잭션 데이터'
-        })
+          message: '잘못된 트랜잭션 데이터',
+        }),
       });
 
       await expect(client.executeRelay(validParams)).rejects.toMatchObject({
         code: 'INVALID_TRANSACTION_DATA',
-        statusCode: 400
+        statusCode: 400,
       });
     });
 
@@ -422,13 +422,13 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'INVALID_GAS_ESTIMATE',
-          message: '잘못된 가스 추정치'
-        })
+          message: '잘못된 가스 추정치',
+        }),
       });
 
       await expect(client.executeRelay(validParams)).rejects.toMatchObject({
         code: 'INVALID_GAS_ESTIMATE',
-        statusCode: 400
+        statusCode: 400,
       });
     });
   });
@@ -449,9 +449,9 @@ describe('MSQPayClient', () => {
             recipientAddress: '0x0987654321098765432109876543210987654321',
             status: 'pending',
             createdAt: '2025-11-29T10:00:00Z',
-            updatedAt: '2025-11-29T10:00:00Z'
-          }
-        })
+            updatedAt: '2025-11-29T10:00:00Z',
+          },
+        }),
       });
 
       await client.getPaymentStatus('pay-123');
@@ -460,8 +460,8 @@ describe('MSQPayClient', () => {
         expect.any(String),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'x-api-key': 'test-api-key'
-          })
+            'x-api-key': 'test-api-key',
+          }),
         })
       );
     });
@@ -476,8 +476,8 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'VALIDATION_ERROR',
-          message: errorMessage
-        })
+          message: errorMessage,
+        }),
       });
 
       try {
@@ -486,7 +486,7 @@ describe('MSQPayClient', () => {
           amount: 1000,
           chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
-          recipientAddress: '0x0987654321098765432109876543210987654321'
+          recipientAddress: '0x0987654321098765432109876543210987654321',
         });
       } catch (error) {
         expect((error as MSQPayError).message).toBe(errorMessage);
@@ -502,7 +502,7 @@ describe('MSQPayClient', () => {
           amount: 1000,
           chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
-          recipientAddress: '0x0987654321098765432109876543210987654321'
+          recipientAddress: '0x0987654321098765432109876543210987654321',
         })
       ).rejects.toThrow('Network error');
     });
@@ -511,7 +511,7 @@ describe('MSQPayClient', () => {
   describe('getPaymentHistory', () => {
     const validParams: GetPaymentHistoryParams = {
       chainId: 31337,
-      payer: '0x1234567890123456789012345678901234567890'
+      payer: '0x1234567890123456789012345678901234567890',
     };
 
     it('TC-009.1: should get payment history successfully', async () => {
@@ -532,10 +532,10 @@ describe('MSQPayClient', () => {
               timestamp: '1735689600',
               transactionHash: '0xtxhash123',
               status: 'completed',
-              isGasless: false
-            }
-          ]
-        })
+              isGasless: false,
+            },
+          ],
+        }),
       });
 
       const result = await client.getPaymentHistory(validParams);
@@ -550,8 +550,8 @@ describe('MSQPayClient', () => {
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
-            'x-api-key': 'test-api-key'
-          })
+            'x-api-key': 'test-api-key',
+          }),
         })
       );
     });
@@ -575,10 +575,10 @@ describe('MSQPayClient', () => {
               transactionHash: '0xtxhash456',
               status: 'completed',
               isGasless: true,
-              relayId: 'relay-789'
-            }
-          ]
-        })
+              relayId: 'relay-789',
+            },
+          ],
+        }),
       });
 
       const result = await client.getPaymentHistory(validParams);
@@ -594,8 +594,8 @@ describe('MSQPayClient', () => {
         status: 200,
         json: async () => ({
           success: true,
-          data: []
-        })
+          data: [],
+        }),
       });
 
       const result = await client.getPaymentHistory(validParams);
@@ -610,13 +610,13 @@ describe('MSQPayClient', () => {
         status: 200,
         json: async () => ({
           success: true,
-          data: []
-        })
+          data: [],
+        }),
       });
 
       await client.getPaymentHistory({
         ...validParams,
-        limit: 50
+        limit: 50,
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -632,13 +632,13 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'INVALID_CHAIN_ID',
-          message: '지원하지 않는 체인 ID입니다'
-        })
+          message: '지원하지 않는 체인 ID입니다',
+        }),
       });
 
       await expect(client.getPaymentHistory(validParams)).rejects.toMatchObject({
         code: 'INVALID_CHAIN_ID',
-        statusCode: 400
+        statusCode: 400,
       });
     });
 
@@ -649,16 +649,18 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: false,
           code: 'INVALID_ADDRESS',
-          message: '유효하지 않은 지갑 주소입니다'
-        })
+          message: '유효하지 않은 지갑 주소입니다',
+        }),
       });
 
-      await expect(client.getPaymentHistory({
-        chainId: 31337,
-        payer: 'invalid-address'
-      })).rejects.toMatchObject({
+      await expect(
+        client.getPaymentHistory({
+          chainId: 31337,
+          payer: 'invalid-address',
+        })
+      ).rejects.toMatchObject({
         code: 'INVALID_ADDRESS',
-        statusCode: 400
+        statusCode: 400,
       });
     });
   });
@@ -679,8 +681,8 @@ describe('MSQPayClient', () => {
           forwarderAddress: '0xForwarder',
           amount: '1000',
           status: 'CREATED',
-          expiresAt: '2025-12-31T00:00:00Z'
-        })
+          expiresAt: '2025-12-31T00:00:00Z',
+        }),
       });
 
       const params: CreatePaymentParams = {
@@ -688,7 +690,7 @@ describe('MSQPayClient', () => {
         amount: 1000,
         chainId: 31337,
         tokenAddress: '0x1234567890123456789012345678901234567890',
-        recipientAddress: '0x0987654321098765432109876543210987654321'
+        recipientAddress: '0x0987654321098765432109876543210987654321',
       };
 
       await client.createPayment(params);
@@ -714,9 +716,9 @@ describe('MSQPayClient', () => {
             recipientAddress: '0x0987654321098765432109876543210987654321',
             status: 'pending',
             createdAt: '2025-11-29T10:00:00Z',
-            updatedAt: '2025-11-29T10:00:00Z'
-          }
-        })
+            updatedAt: '2025-11-29T10:00:00Z',
+          },
+        }),
       });
 
       await client.getPaymentStatus('pay-456');

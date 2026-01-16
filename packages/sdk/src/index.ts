@@ -15,5 +15,5 @@ export type {
   GetPaymentHistoryParams,
   PaymentHistoryItem,
   PaymentHistoryResponse,
-  ErrorResponse
+  ErrorResponse,
 } from './types';

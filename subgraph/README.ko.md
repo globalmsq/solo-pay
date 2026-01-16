@@ -30,15 +30,15 @@ Subgraph는 블록체인 이벤트를 실시간으로 인덱싱하여 다음과 
 
 ```graphql
 type Payment @entity(immutable: true) {
-  id: ID!                      # paymentId (hex string)
-  payer: Bytes!                # 결제자 주소
-  merchant: Bytes!             # 상점 주소
-  token: Bytes!                # 토큰 주소
-  amount: BigInt!              # 결제 금액
-  timestamp: BigInt!           # 블록 타임스탬프
-  transactionHash: Bytes!      # 트랜잭션 해시
-  blockNumber: BigInt!         # 블록 번호
-  gasMode: GasMode!            # Direct | MetaTx
+  id: ID! # paymentId (hex string)
+  payer: Bytes! # 결제자 주소
+  merchant: Bytes! # 상점 주소
+  token: Bytes! # 토큰 주소
+  amount: BigInt! # 결제 금액
+  timestamp: BigInt! # 블록 타임스탬프
+  transactionHash: Bytes! # 트랜잭션 해시
+  blockNumber: BigInt! # 블록 번호
+  gasMode: GasMode! # Direct | MetaTx
 }
 ```
 
@@ -48,10 +48,10 @@ type Payment @entity(immutable: true) {
 
 ```graphql
 type MerchantStats @entity {
-  id: ID!                      # 상점 주소 (lowercase)
-  totalReceived: BigInt!       # 총 수령액
-  paymentCount: Int!           # 결제 건수
-  lastPaymentAt: BigInt        # 마지막 결제 시간
+  id: ID! # 상점 주소 (lowercase)
+  totalReceived: BigInt! # 총 수령액
+  paymentCount: Int! # 결제 건수
+  lastPaymentAt: BigInt # 마지막 결제 시간
 }
 ```
 
@@ -61,10 +61,10 @@ type MerchantStats @entity {
 
 ```graphql
 type DailyVolume @entity {
-  id: ID!                      # 날짜 (YYYY-MM-DD)
-  date: BigInt!                # Unix 타임스탬프
-  volume: BigInt!              # 총 거래량
-  count: Int!                  # 거래 건수
+  id: ID! # 날짜 (YYYY-MM-DD)
+  date: BigInt! # Unix 타임스탬프
+  volume: BigInt! # 총 거래량
+  count: Int! # 거래 건수
 }
 ```
 
@@ -74,10 +74,10 @@ type DailyVolume @entity {
 
 ```graphql
 type TokenStats @entity {
-  id: ID!                      # 토큰 주소 (lowercase)
-  symbol: String               # 토큰 심볼
-  totalVolume: BigInt!         # 총 거래량
-  transactionCount: Int!       # 거래 건수
+  id: ID! # 토큰 주소 (lowercase)
+  symbol: String # 토큰 심볼
+  totalVolume: BigInt! # 총 거래량
+  transactionCount: Int! # 거래 건수
 }
 ```
 
@@ -87,11 +87,11 @@ type TokenStats @entity {
 
 ```graphql
 type GlobalStats @entity {
-  id: ID!                      # "global"
-  totalPayments: Int!          # 총 결제 건수
-  totalVolume: BigInt!         # 총 거래량
-  uniqueMerchants: Int!        # 고유 상점 수
-  uniquePayers: Int!           # 고유 결제자 수
+  id: ID! # "global"
+  totalPayments: Int! # 총 결제 건수
+  totalVolume: BigInt! # 총 거래량
+  uniqueMerchants: Int! # 고유 상점 수
+  uniquePayers: Int! # 고유 결제자 수
 }
 ```
 
@@ -137,11 +137,11 @@ pnpm build
 dataSources:
   - kind: ethereum
     name: PaymentGateway
-    network: polygon-amoy  # 또는 polygon
+    network: polygon-amoy # 또는 polygon
     source:
-      address: "0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5"
+      address: '0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5'
       abi: PaymentGateway
-      startBlock: 12345678  # 배포 블록 번호
+      startBlock: 12345678 # 배포 블록 번호
 ```
 
 5. 배포:
@@ -179,11 +179,7 @@ pnpm remove:local
 
 ```graphql
 {
-  payments(
-    first: 10
-    orderBy: timestamp
-    orderDirection: desc
-  ) {
+  payments(first: 10, orderBy: timestamp, orderDirection: desc) {
     id
     payer
     merchant
@@ -200,9 +196,7 @@ pnpm remove:local
 
 ```graphql
 {
-  merchantStats(
-    id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
-  ) {
+  merchantStats(id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8") {
     totalReceived
     paymentCount
     lastPaymentAt
@@ -214,11 +208,7 @@ pnpm remove:local
 
 ```graphql
 {
-  dailyVolumes(
-    first: 30
-    orderBy: date
-    orderDirection: desc
-  ) {
+  dailyVolumes(first: 30, orderBy: date, orderDirection: desc) {
     id
     date
     volume
@@ -263,7 +253,7 @@ pnpm remove:local
     where: {
       merchant: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
       gasMode: MetaTx
-      timestamp_gte: 1704067200  # 2024-01-01 00:00:00 UTC
+      timestamp_gte: 1704067200 # 2024-01-01 00:00:00 UTC
     }
     orderBy: timestamp
     orderDirection: desc
@@ -308,9 +298,9 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
 
   // 2. 가스 모드 판단 (Direct vs MetaTx)
   if (event.transaction.from.equals(event.params.payer)) {
-    payment.gasMode = "Direct";
+    payment.gasMode = 'Direct';
   } else {
-    payment.gasMode = "MetaTx";
+    payment.gasMode = 'MetaTx';
   }
 
   payment.save();
@@ -325,11 +315,11 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
 
 ## 지원 네트워크
 
-| 네트워크 | Chain ID | 상태 | Subgraph URL |
-|---------|----------|------|--------------|
-| Polygon Amoy | 80002 | Testnet | TBD |
-| Polygon Mainnet | 137 | Production | TBD |
-| Hardhat Local | 31337 | Development | 로컬 Graph Node |
+| 네트워크        | Chain ID | 상태        | Subgraph URL    |
+| --------------- | -------- | ----------- | --------------- |
+| Polygon Amoy    | 80002    | Testnet     | TBD             |
+| Polygon Mainnet | 137      | Production  | TBD             |
+| Hardhat Local   | 31337    | Development | 로컬 Graph Node |
 
 ## 배포 체크리스트
 
@@ -389,7 +379,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables: { payer } })
+    body: JSON.stringify({ query, variables: { payer } }),
   });
 
   return response.json();
@@ -408,6 +398,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
 ⚠️ **배포 대기 중**: Subgraph는 구현되었지만 아직 배포되지 않았습니다.
 
 **다음 단계**:
+
 1. The Graph Studio에 배포
 2. Demo App에서 Subgraph URL 설정
 3. 결제 내역 조회 기능 통합

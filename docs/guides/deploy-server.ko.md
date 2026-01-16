@@ -8,13 +8,14 @@ MSQPay 결제 API를 다양한 환경에 배포하기 위한 단계별 가이드
 
 MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용합니다. `RELAYER_API_URL` 환경변수만 변경하여 환경을 전환합니다:
 
-| 환경 | Relay 서비스 | API URL | Forwarder |
-|------|-------------|---------|-----------|
-| **Local (Docker Compose)** | Simple Relayer HTTP 서비스 | http://simple-relayer:3001 | ERC2771Forwarder |
-| **Testnet (Polygon Amoy)** | OZ Defender API | https://api.defender.openzeppelin.com | ERC2771Forwarder |
-| **Mainnet (Polygon)** | OZ Defender API | https://api.defender.openzeppelin.com | ERC2771Forwarder |
+| 환경                       | Relay 서비스               | API URL                               | Forwarder        |
+| -------------------------- | -------------------------- | ------------------------------------- | ---------------- |
+| **Local (Docker Compose)** | Simple Relayer HTTP 서비스 | http://simple-relayer:3001            | ERC2771Forwarder |
+| **Testnet (Polygon Amoy)** | OZ Defender API            | https://api.defender.openzeppelin.com | ERC2771Forwarder |
+| **Mainnet (Polygon)**      | OZ Defender API            | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 
 **환경 전환 방식**: `RELAYER_API_URL` 환경 변수로 제어
+
 - `http://simple-relayer:3001` → Local 개발 환경 (Simple Relayer Docker 컨테이너)
 - `https://api.defender.openzeppelin.com` → Production 환경 (OZ Defender API)
 
@@ -63,6 +64,7 @@ NODE_ENV=development
 ```
 
 **Simple Relayer 서비스 환경 변수** (simple-relayer 컨테이너):
+
 ```bash
 RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 # Hardhat 기본 계정 #0 개인키
@@ -130,11 +132,11 @@ Pay Server는 `chains.json` 설정 파일을 통해 멀티체인을 지원합니
 
 #### 설정 파일 종류
 
-| 파일 | 환경 | 설명 |
-|------|------|------|
-| `chains.json` | Local | Hardhat 로컬 개발 환경 |
-| `chains.testnet.json` | Testnet | Polygon Amoy 테스트넷 |
-| `chains.production.json` | Production | Polygon Mainnet |
+| 파일                     | 환경       | 설명                   |
+| ------------------------ | ---------- | ---------------------- |
+| `chains.json`            | Local      | Hardhat 로컬 개발 환경 |
+| `chains.testnet.json`    | Testnet    | Polygon Amoy 테스트넷  |
+| `chains.production.json` | Production | Polygon Mainnet        |
 
 #### 설정 파일 구조
 
@@ -199,12 +201,14 @@ git commit -m "chore: add .env files to gitignore"
 ERC2771Forwarder는 Meta-Transaction을 처리하는 핵심 컨트랙트입니다.
 
 **Hardhat Ignition으로 배포**:
+
 ```bash
 cd contracts
 npx hardhat ignition deploy ignition/modules/Forwarder.ts --network amoy
 ```
 
 **배포 후 확인**:
+
 1. 배포된 Forwarder 주소 기록
 2. Polygonscan에서 컨트랙트 검증
 3. `FORWARDER_ADDRESS` 환경 변수 설정
@@ -214,9 +218,10 @@ npx hardhat ignition deploy ignition/modules/Forwarder.ts --network amoy
 PaymentGateway는 Forwarder를 trustedForwarder로 설정해야 합니다.
 
 **배포 스크립트에서 Forwarder 주소 지정**:
+
 ```typescript
 // ignition/modules/PaymentGateway.ts
-const forwarderAddress = "0x..."; // 2.1에서 배포한 주소
+const forwarderAddress = '0x...'; // 2.1에서 배포한 주소
 await gateway.initialize(owner, forwarderAddress);
 ```
 
@@ -225,6 +230,7 @@ await gateway.initialize(owner, forwarderAddress);
 릴레이어는 Meta-Transaction을 제출하는 서버 지갑입니다.
 
 **릴레이어 지갑 생성**:
+
 1. 새 이더리움 지갑 생성 (개인키 안전하게 보관)
 2. 개인키를 환경 변수로 설정 (`RELAYER_PRIVATE_KEY`)
 
@@ -240,13 +246,13 @@ await gateway.initialize(owner, forwarderAddress);
 
 ### 3.1 공개 RPC 비교
 
-| 제공자 | URL | 속도 | 안정성 | 비용 |
-|--------|-----|------|--------|------|
-| **Polygon RPC** | `https://polygon-rpc.com` | 중간 | 높음 | 무료 |
-| **Infura** | `https://mainnet.infura.io/v3/{PROJECT_ID}` | 빠름 | 높음 | 유료 |
-| **Alchemy** | `https://polygon-mainnet.g.alchemy.com/v2/{API_KEY}` | 매우빠름 | 매우높음 | 유료 |
-| **QuickNode** | `https://polished-responsive-diagram.quiknode.pro/...` | 빠름 | 높음 | 유료 |
-| **Ankr** | `https://rpc.ankr.com/polygon` | 중간 | 중간 | 무료 |
+| 제공자          | URL                                                    | 속도     | 안정성   | 비용 |
+| --------------- | ------------------------------------------------------ | -------- | -------- | ---- |
+| **Polygon RPC** | `https://polygon-rpc.com`                              | 중간     | 높음     | 무료 |
+| **Infura**      | `https://mainnet.infura.io/v3/{PROJECT_ID}`            | 빠름     | 높음     | 유료 |
+| **Alchemy**     | `https://polygon-mainnet.g.alchemy.com/v2/{API_KEY}`   | 매우빠름 | 매우높음 | 유료 |
+| **QuickNode**   | `https://polished-responsive-diagram.quiknode.pro/...` | 빠름     | 높음     | 유료 |
+| **Ankr**        | `https://rpc.ankr.com/polygon`                         | 중간     | 중간     | 무료 |
 
 ### 3.2 RPC 선택 기준
 
@@ -407,7 +413,7 @@ services:
   api:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       BLOCKCHAIN_RPC_URL: https://polygon-rpc.com
       GATEWAY_ADDRESS: 0x...
@@ -416,7 +422,7 @@ services:
       NODE_ENV: production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -539,7 +545,7 @@ logger.error('RPC error', { error: 'Connection refused' });
 
 ### 7.2 에러 추적 (Sentry)
 
-```bash
+````bash
 # Sentry 클라이언트 설치
 npm install @sentry/node
 
@@ -559,7 +565,7 @@ try {
 } catch (error) {
   Sentry.captureException(error);
 }
-```
+````
 
 ### 7.3 메트릭 수집 (Prometheus)
 
@@ -692,6 +698,7 @@ Error: Connection refused at BLOCKCHAIN_RPC_URL
 ```
 
 해결책:
+
 1. RPC URL 확인 (`BLOCKCHAIN_RPC_URL` 환경 변수)
 2. 네트워크 연결 확인
 3. 방화벽 설정 확인
@@ -704,6 +711,7 @@ Error: Invalid signature - EIP-712 verification failed
 ```
 
 해결책:
+
 1. EIP-712 domain이 Forwarder 컨트랙트와 일치하는지 확인
 2. chainId가 올바른지 확인
 3. verifyingContract 주소가 올바른지 확인
@@ -717,6 +725,7 @@ Error: Insufficient balance for gas
 ```
 
 해결책:
+
 1. 릴레이어 지갑에 POL 전송
 2. 충분한 잔액 확인 (최소 0.5 POL 테스트넷, 5 POL 메인넷)
 3. 거래 볼륨 재평가

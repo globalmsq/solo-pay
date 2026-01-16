@@ -1,16 +1,16 @@
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { fallback, unstable_connector, http, type Config } from "wagmi";
-import { polygonAmoy, hardhat, type Chain } from "wagmi/chains";
-import { injected } from "wagmi/connectors";
-import type { ChainConfig } from "@/app/api/config/route";
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { fallback, unstable_connector, http, type Config } from 'wagmi';
+import { polygonAmoy, hardhat, type Chain } from 'wagmi/chains';
+import { injected } from 'wagmi/connectors';
+import type { ChainConfig } from '@/app/api/config/route';
 
 // WalletConnect Project ID - Get one at https://cloud.walletconnect.com/
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "YOUR_PROJECT_ID";
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID';
 
 // Polygon Amoy 백업 RPC 목록 (공용 RPC 불안정 대비)
 const AMOY_BACKUP_RPCS = [
-  "https://polygon-amoy.drpc.org",
-  "https://polygon-amoy-bor-rpc.publicnode.com",
+  'https://polygon-amoy.drpc.org',
+  'https://polygon-amoy-bor-rpc.publicnode.com',
 ];
 
 /**
@@ -32,20 +32,18 @@ export function createWagmiConfig(chainConfig: ChainConfig): Config {
   };
 
   // Amoy인 경우 백업 RPC 추가, 그 외는 단일 RPC
-  const httpTransports = chainConfig.chainId === 80002
-    ? [http(chainConfig.rpcUrl), ...AMOY_BACKUP_RPCS.map(url => http(url))]
-    : [http(chainConfig.rpcUrl)];
+  const httpTransports =
+    chainConfig.chainId === 80002
+      ? [http(chainConfig.rpcUrl), ...AMOY_BACKUP_RPCS.map((url) => http(url))]
+      : [http(chainConfig.rpcUrl)];
 
   return getDefaultConfig({
-    appName: "MSQ Pay Demo",
+    appName: 'MSQ Pay Demo',
     projectId,
     chains: [customChain],
     ssr: true,
     transports: {
-      [customChain.id]: fallback([
-        unstable_connector(injected),
-        ...httpTransports,
-      ]),
+      [customChain.id]: fallback([unstable_connector(injected), ...httpTransports]),
     },
   });
 }
@@ -71,4 +69,3 @@ export const SUBGRAPH_URLS: Record<number, string> = {
 export function getSubgraphUrl(chainId: number): string | undefined {
   return SUBGRAPH_URLS[chainId];
 }
-

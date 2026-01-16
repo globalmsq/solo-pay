@@ -94,7 +94,13 @@ const registerRoutes = async () => {
   await getTransactionStatusRoute(server, blockchainService);
   await updateMerchantRoute(server, merchantService);
   await getMerchantRoute(server, merchantService, paymentMethodService, tokenService, chainService);
-  await paymentMethodsRoute(server, merchantService, paymentMethodService, tokenService, chainService);
+  await paymentMethodsRoute(
+    server,
+    merchantService,
+    paymentMethodService,
+    tokenService,
+    chainService
+  );
 };
 
 // Graceful shutdown

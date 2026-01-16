@@ -21,11 +21,15 @@ describe('NonceService', () => {
     });
 
     it('should throw error with invalid forwarder address', () => {
-      expect(() => new NonceService(rpcUrl, 'invalid' as `0x${string}`)).toThrow('Invalid forwarder address');
+      expect(() => new NonceService(rpcUrl, 'invalid' as `0x${string}`)).toThrow(
+        'Invalid forwarder address'
+      );
     });
 
     it('should throw error with invalid address format', () => {
-      expect(() => new NonceService(rpcUrl, '0x123' as `0x${string}`)).toThrow('Invalid forwarder address');
+      expect(() => new NonceService(rpcUrl, '0x123' as `0x${string}`)).toThrow(
+        'Invalid forwarder address'
+      );
     });
   });
 
@@ -37,7 +41,9 @@ describe('NonceService', () => {
     });
 
     it('should throw error with short address', async () => {
-      await expect(nonceService.getNonce('0x123' as `0x${string}`)).rejects.toThrow('Invalid address format');
+      await expect(nonceService.getNonce('0x123' as `0x${string}`)).rejects.toThrow(
+        'Invalid address format'
+      );
     });
 
     it('should throw error with address not starting with 0x', async () => {

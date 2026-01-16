@@ -9,7 +9,7 @@ export function getMSQPayClient(): MSQPayClient {
     msqpayClient = new MSQPayClient({
       environment: 'custom',
       apiUrl: apiUrl,
-      apiKey: process.env.MSQPAY_API_KEY || 'demo-api-key'
+      apiKey: process.env.MSQPAY_API_KEY || 'demo-api-key',
     });
   }
   return msqpayClient;

@@ -77,6 +77,7 @@ test: add unit tests for createPayment
 ```
 
 **Types**:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -220,7 +221,7 @@ describe('MSQPayClient', () => {
   it('should create payment', async () => {
     const client = new MSQPayClient({
       environment: 'development',
-      apiKey: 'test-key'
+      apiKey: 'test-key',
     });
 
     const payment = await client.createPayment({
@@ -228,7 +229,7 @@ describe('MSQPayClient', () => {
       amount: 100,
       chainId: 31337,
       recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     });
 
     expect(payment.paymentId).toBeDefined();
@@ -246,8 +247,7 @@ test('should process payment', async ({ page }) => {
 
   await page.click('[data-testid="pay-button"]');
 
-  await expect(page.locator('[data-testid="success-message"]'))
-    .toBeVisible();
+  await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
 });
 ```
 

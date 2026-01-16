@@ -68,9 +68,7 @@ export type GaslessRequest = z.infer<typeof GaslessRequestSchema>;
  * amount matches the expected DB amount.
  * This prevents frontend manipulation and gas waste.
  */
-export function createAmountValidationSchema(
-  expectedAmount: bigint
-): z.ZodType<GaslessRequest> {
+export function createAmountValidationSchema(expectedAmount: bigint): z.ZodType<GaslessRequest> {
   return GaslessRequestSchema.superRefine((data, ctx) => {
     try {
       const decoded = decodeFunctionData({
@@ -103,7 +101,8 @@ export function createAmountValidationSchema(
       // If decoding fails, the data is invalid
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'forwardRequest.data를 파싱할 수 없습니다. 유효한 pay() 함수 호출 데이터여야 합니다.',
+        message:
+          'forwardRequest.data를 파싱할 수 없습니다. 유효한 pay() 함수 호출 데이터여야 합니다.',
         path: ['forwardRequest', 'data'],
       });
     }

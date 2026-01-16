@@ -17,7 +17,9 @@ import type { IgnitionModuleResult } from '@nomicfoundation/ignition-core';
  *
  * Note: MockERC20 is deployed separately via MockERC20.ts module
  */
-const PaymentGatewayModule: ReturnType<typeof buildModule<'PaymentGateway', string, IgnitionModuleResult<string>>> = buildModule('PaymentGateway', (m) => {
+const PaymentGatewayModule: ReturnType<
+  typeof buildModule<'PaymentGateway', string, IgnitionModuleResult<string>>
+> = buildModule('PaymentGateway', (m) => {
   // Get deployment parameters
   const owner = m.getParameter('owner', m.getAccount(0));
   const forwarderAddress = m.getParameter<string>('forwarderAddress', '');

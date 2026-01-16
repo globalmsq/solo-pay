@@ -16,16 +16,16 @@ MSQ Pay Server는 블록체인 기반 결제 시스템의 백엔드 API 서버�
 
 ## 기술 스택
 
-| 구성요소 | 기술 | 버전 |
-|----------|------|------|
-| Framework | Fastify | ^5.0.0 |
-| Blockchain | viem | ^2.21.0 |
-| Database | MySQL + Prisma | ^6.0.0 |
-| Cache | Redis + ioredis | ^5.4.0 |
-| Validation | Zod | ^3.23.0 |
-| Runtime | Node.js | 18+ |
-| Language | TypeScript | ^5.4.0 |
-| Testing | Vitest | ^2.0.0 |
+| 구성요소   | 기술            | 버전    |
+| ---------- | --------------- | ------- |
+| Framework  | Fastify         | ^5.0.0  |
+| Blockchain | viem            | ^2.21.0 |
+| Database   | MySQL + Prisma  | ^6.0.0  |
+| Cache      | Redis + ioredis | ^5.4.0  |
+| Validation | Zod             | ^3.23.0 |
+| Runtime    | Node.js         | 18+     |
+| Language   | TypeScript      | ^5.4.0  |
+| Testing    | Vitest          | ^2.0.0  |
 
 ## 시작하기
 
@@ -112,6 +112,7 @@ curl http://localhost:3001/health
 ```
 
 응답 예시:
+
 ```json
 {
   "status": "ok",
@@ -273,6 +274,7 @@ docker-compose logs -f pay-server
 ```
 
 Docker 환경에서는 다음 서비스와 연동됩니다:
+
 - MySQL (포트 3306)
 - Redis (포트 6379)
 - Simple Relayer (포트 3001)

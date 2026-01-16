@@ -68,7 +68,9 @@ export function createMerchantAuthMiddleware(merchantService: MerchantService) {
     const merchant = request.merchant;
     if (!merchant) {
       // This should not be reached if baseAuth is functioning correctly
-      request.log.error('Merchant object not found on request after base authentication in merchantAuthMiddleware');
+      request.log.error(
+        'Merchant object not found on request after base authentication in merchantAuthMiddleware'
+      );
       return reply.code(500).send({
         code: 'INTERNAL_ERROR',
         message: 'Authentication context is missing',
@@ -108,7 +110,9 @@ export function createPaymentAuthMiddleware(
     const merchant = request.merchant;
     if (!merchant) {
       // This should not be reached if baseAuth is functioning correctly
-      request.log.error('Merchant object not found on request after base authentication in paymentAuthMiddleware');
+      request.log.error(
+        'Merchant object not found on request after base authentication in paymentAuthMiddleware'
+      );
       return reply.code(500).send({
         code: 'INTERNAL_ERROR',
         message: 'Authentication context is missing',

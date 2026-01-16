@@ -30,15 +30,15 @@ Individual payment records:
 
 ```graphql
 type Payment @entity(immutable: true) {
-  id: ID!                      # paymentId (hex string)
-  payer: Bytes!                # Payer address
-  merchant: Bytes!             # Merchant address
-  token: Bytes!                # Token address
-  amount: BigInt!              # Payment amount
-  timestamp: BigInt!           # Block timestamp
-  transactionHash: Bytes!      # Transaction hash
-  blockNumber: BigInt!         # Block number
-  gasMode: GasMode!            # Direct | MetaTx
+  id: ID! # paymentId (hex string)
+  payer: Bytes! # Payer address
+  merchant: Bytes! # Merchant address
+  token: Bytes! # Token address
+  amount: BigInt! # Payment amount
+  timestamp: BigInt! # Block timestamp
+  transactionHash: Bytes! # Transaction hash
+  blockNumber: BigInt! # Block number
+  gasMode: GasMode! # Direct | MetaTx
 }
 ```
 
@@ -48,10 +48,10 @@ Merchant statistics:
 
 ```graphql
 type MerchantStats @entity {
-  id: ID!                      # Merchant address (lowercase)
-  totalReceived: BigInt!       # Total received amount
-  paymentCount: Int!           # Number of payments
-  lastPaymentAt: BigInt        # Last payment time
+  id: ID! # Merchant address (lowercase)
+  totalReceived: BigInt! # Total received amount
+  paymentCount: Int! # Number of payments
+  lastPaymentAt: BigInt # Last payment time
 }
 ```
 
@@ -61,10 +61,10 @@ Daily transaction volume:
 
 ```graphql
 type DailyVolume @entity {
-  id: ID!                      # Date (YYYY-MM-DD)
-  date: BigInt!                # Unix timestamp
-  volume: BigInt!              # Total volume
-  count: Int!                  # Transaction count
+  id: ID! # Date (YYYY-MM-DD)
+  date: BigInt! # Unix timestamp
+  volume: BigInt! # Total volume
+  count: Int! # Transaction count
 }
 ```
 
@@ -74,10 +74,10 @@ Token statistics:
 
 ```graphql
 type TokenStats @entity {
-  id: ID!                      # Token address (lowercase)
-  symbol: String               # Token symbol
-  totalVolume: BigInt!         # Total volume
-  transactionCount: Int!       # Transaction count
+  id: ID! # Token address (lowercase)
+  symbol: String # Token symbol
+  totalVolume: BigInt! # Total volume
+  transactionCount: Int! # Transaction count
 }
 ```
 
@@ -87,11 +87,11 @@ Global system statistics:
 
 ```graphql
 type GlobalStats @entity {
-  id: ID!                      # "global"
-  totalPayments: Int!          # Total payment count
-  totalVolume: BigInt!         # Total volume
-  uniqueMerchants: Int!        # Unique merchant count
-  uniquePayers: Int!           # Unique payer count
+  id: ID! # "global"
+  totalPayments: Int! # Total payment count
+  totalVolume: BigInt! # Total volume
+  uniqueMerchants: Int! # Unique merchant count
+  uniquePayers: Int! # Unique payer count
 }
 ```
 
@@ -137,11 +137,11 @@ pnpm build
 dataSources:
   - kind: ethereum
     name: PaymentGateway
-    network: polygon-amoy  # or polygon
+    network: polygon-amoy # or polygon
     source:
-      address: "0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5"
+      address: '0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5'
       abi: PaymentGateway
-      startBlock: 12345678  # Deployment block number
+      startBlock: 12345678 # Deployment block number
 ```
 
 5. Deploy:
@@ -179,11 +179,7 @@ pnpm remove:local
 
 ```graphql
 {
-  payments(
-    first: 10
-    orderBy: timestamp
-    orderDirection: desc
-  ) {
+  payments(first: 10, orderBy: timestamp, orderDirection: desc) {
     id
     payer
     merchant
@@ -200,9 +196,7 @@ pnpm remove:local
 
 ```graphql
 {
-  merchantStats(
-    id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
-  ) {
+  merchantStats(id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8") {
     totalReceived
     paymentCount
     lastPaymentAt
@@ -214,11 +208,7 @@ pnpm remove:local
 
 ```graphql
 {
-  dailyVolumes(
-    first: 30
-    orderBy: date
-    orderDirection: desc
-  ) {
+  dailyVolumes(first: 30, orderBy: date, orderDirection: desc) {
     id
     date
     volume
@@ -263,7 +253,7 @@ pnpm remove:local
     where: {
       merchant: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
       gasMode: MetaTx
-      timestamp_gte: 1704067200  # 2024-01-01 00:00:00 UTC
+      timestamp_gte: 1704067200 # 2024-01-01 00:00:00 UTC
     }
     orderBy: timestamp
     orderDirection: desc
@@ -308,9 +298,9 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
 
   // 2. Determine gas mode (Direct vs MetaTx)
   if (event.transaction.from.equals(event.params.payer)) {
-    payment.gasMode = "Direct";
+    payment.gasMode = 'Direct';
   } else {
-    payment.gasMode = "MetaTx";
+    payment.gasMode = 'MetaTx';
   }
 
   payment.save();
@@ -325,11 +315,11 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
 
 ## Supported Networks
 
-| Network | Chain ID | Status | Subgraph URL |
-|---------|----------|--------|--------------|
-| Polygon Amoy | 80002 | Testnet | TBD |
-| Polygon Mainnet | 137 | Production | TBD |
-| Hardhat Local | 31337 | Development | Local Graph Node |
+| Network         | Chain ID | Status      | Subgraph URL     |
+| --------------- | -------- | ----------- | ---------------- |
+| Polygon Amoy    | 80002    | Testnet     | TBD              |
+| Polygon Mainnet | 137      | Production  | TBD              |
+| Hardhat Local   | 31337    | Development | Local Graph Node |
 
 ## Deployment Checklist
 
@@ -389,7 +379,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables: { payer } })
+    body: JSON.stringify({ query, variables: { payer } }),
   });
 
   return response.json();
@@ -408,6 +398,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
 ⚠️ **Awaiting Deployment**: Subgraph is implemented but not yet deployed.
 
 **Next Steps**:
+
 1. Deploy to The Graph Studio
 2. Configure Subgraph URL in Demo App
 3. Integrate payment history query functionality

@@ -122,7 +122,8 @@ export async function submitGaslessRoute(
           message: 'Gasless 거래가 제출되었습니다',
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Gasless 거래를 제출할 수 없습니다';
+        const message =
+          error instanceof Error ? error.message : 'Gasless 거래를 제출할 수 없습니다';
         return reply.code(500).send({
           code: 'INTERNAL_ERROR',
           message,

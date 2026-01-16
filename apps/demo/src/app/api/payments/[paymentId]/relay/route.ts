@@ -13,7 +13,7 @@ export async function POST(
     const result = await client.executeRelay({
       paymentId,
       transactionData: body.transactionData,
-      gasEstimate: body.gasEstimate
+      gasEstimate: body.gasEstimate,
     });
 
     return NextResponse.json(result);

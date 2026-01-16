@@ -131,15 +131,21 @@ describe('POST /payments/create', () => {
 
     // Mock getDecimals and getTokenSymbolOnChain to return on-chain values
     blockchainService.getDecimals = vi.fn().mockResolvedValue(18);
-    blockchainService.getTokenSymbolOnChain = vi.fn().mockImplementation((_chainId: number, tokenAddress: string) => {
-      if (tokenAddress.toLowerCase() === '0xE4C687167705Abf55d709395f92e254bdF5825a2'.toLowerCase()) {
-        return Promise.resolve('SUT');
-      }
-      if (tokenAddress.toLowerCase() === '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'.toLowerCase()) {
-        return Promise.resolve('TEST');
-      }
-      return Promise.resolve('UNKNOWN');
-    });
+    blockchainService.getTokenSymbolOnChain = vi
+      .fn()
+      .mockImplementation((_chainId: number, tokenAddress: string) => {
+        if (
+          tokenAddress.toLowerCase() === '0xE4C687167705Abf55d709395f92e254bdF5825a2'.toLowerCase()
+        ) {
+          return Promise.resolve('SUT');
+        }
+        if (
+          tokenAddress.toLowerCase() === '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'.toLowerCase()
+        ) {
+          return Promise.resolve('TEST');
+        }
+        return Promise.resolve('UNKNOWN');
+      });
 
     // Mock DB Services
     merchantService = {
@@ -209,8 +215,8 @@ describe('POST /payments/create', () => {
       expect(body.success).toBe(true);
       expect(body.paymentId).toBeDefined();
       expect(body.tokenAddress).toBe('0xE4C687167705Abf55d709395f92e254bdF5825a2');
-      expect(body.tokenSymbol).toBe('SUT');       // From on-chain mock
-      expect(body.tokenDecimals).toBe(18);        // From on-chain mock
+      expect(body.tokenSymbol).toBe('SUT'); // From on-chain mock
+      expect(body.tokenDecimals).toBe(18); // From on-chain mock
       expect(body.gatewayAddress).toBeDefined();
       expect(body.forwarderAddress).toBeDefined();
       expect(body.amount).toBe('100000000000000000000'); // 100 * 10^18
@@ -220,7 +226,9 @@ describe('POST /payments/create', () => {
 
     it('Hardhat 체인 (chainId 31337)으로 최소 필수 정보만으로 결제를 생성할 수 있어야 함', async () => {
       // Update mock to return merchant_002 for this test
-      merchantService.findByApiKey = vi.fn().mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_002' });
+      merchantService.findByApiKey = vi
+        .fn()
+        .mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_002' });
 
       const minimalPayment = {
         merchantId: 'merchant_002',

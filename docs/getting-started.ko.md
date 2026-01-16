@@ -9,6 +9,7 @@
 MSQPay는 ERC-20 토큰 기반 블록체인 결제 시스템입니다. 상점서버는 SDK를 통해 결제를 생성하고, 사용자는 Direct Payment(가스비 직접 지불) 또는 Gasless Payment(가스비 대납) 방식으로 결제할 수 있습니다.
 
 **핵심 특징**:
+
 - 스마트 컨트랙트가 유일한 진실 공급원 (Contract = Source of Truth)
 - Direct Payment와 Gasless Payment 지원
 - TypeScript SDK 제공
@@ -32,11 +33,11 @@ docker-compose ps
 
 ### 2. 서비스 접속
 
-| 서비스 | URL | 설명 |
-|--------|-----|------|
-| Demo App | http://localhost:3000 | 프론트엔드 |
-| Payment Server | http://localhost:3001 | API 서버 |
-| Hardhat | http://localhost:8545 | 로컬 블록체인 |
+| 서비스         | URL                   | 설명          |
+| -------------- | --------------------- | ------------- |
+| Demo App       | http://localhost:3000 | 프론트엔드    |
+| Payment Server | http://localhost:3001 | API 서버      |
+| Hardhat        | http://localhost:8545 | 로컬 블록체인 |
 
 ### 3. Health Check
 
@@ -52,21 +53,25 @@ curl http://localhost:3001/health
 #### 상점 개발자
 
 결제 기능을 상점에 통합하려면:
+
 - [결제 통합하기](guides/integrate-payment.ko.md) - SDK 사용법, Direct/Gasless 결제 구현
 
 #### 운영자
 
 결제 서버를 배포하려면:
+
 - [서버 배포하기](guides/deploy-server.ko.md) - Docker, 환경 변수, 프로덕션 체크리스트
 
 #### 개발자
 
 프로젝트에 기여하려면:
+
 - [코드 기여하기](guides/contribute.ko.md) - 로컬 개발 환경, PR 프로세스
 
 #### 참고 자료
 
 자세한 내용은:
+
 - [API 레퍼런스](reference/api.ko.md) - 모든 API 엔드포인트
 - [SDK 레퍼런스](reference/sdk.ko.md) - MSQPayClient 메서드
 - [시스템 구조](reference/architecture.ko.md) - 전체 시스템 다이어그램
@@ -106,10 +111,10 @@ curl http://localhost:3001/health
 
 ## 지원 네트워크
 
-| 네트워크 | Chain ID | 토큰 |
-|---------|----------|------|
-| Polygon Amoy (Testnet) | 80002 | SUT |
-| Hardhat (Local) | 31337 | TEST |
+| 네트워크               | Chain ID | 토큰 |
+| ---------------------- | -------- | ---- |
+| Polygon Amoy (Testnet) | 80002    | SUT  |
+| Hardhat (Local)        | 31337    | TEST |
 
 ## 문제 해결
 

@@ -11,6 +11,7 @@ pnpm add @globalmsq/msqpay
 ```
 
 **요구사항**:
+
 - Node.js >= 18.0.0
 - TypeScript >= 5.0 (선택사항)
 
@@ -20,19 +21,19 @@ pnpm add @globalmsq/msqpay
 import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
-  environment: 'development',  // or 'staging', 'production', 'custom'
-  apiKey: 'your-api-key'
+  environment: 'development', // or 'staging', 'production', 'custom'
+  apiKey: 'your-api-key',
 });
 ```
 
 ### 환경 설정
 
-| Environment | API URL |
-|-------------|---------|
-| development | http://localhost:3001 |
-| staging | https://pay-api.staging.msq.com |
-| production | https://pay-api.msq.com |
-| custom | `apiUrl` 파라미터 필요 |
+| Environment | API URL                         |
+| ----------- | ------------------------------- |
+| development | http://localhost:3001           |
+| staging     | https://pay-api.staging.msq.com |
+| production  | https://pay-api.msq.com         |
+| custom      | `apiUrl` 파라미터 필요          |
 
 ## Direct Payment 구현
 
@@ -46,7 +47,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 console.log(payment.paymentId); // "0x..."
@@ -64,7 +65,7 @@ await writeContract({
   address: payment.gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, token, amount, merchant]
+  args: [paymentId, token, amount, merchant],
 });
 ```
 
@@ -103,7 +104,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 ```
 
@@ -112,16 +113,17 @@ const payment = await client.createPayment({
 ```typescript
 const gaslessResult = await client.submitGasless({
   paymentId: payment.paymentId,
-  forwarderAddress: '0x...',  // ERC2771Forwarder 주소
-  forwardRequest: {           // ForwardRequest 객체
+  forwarderAddress: '0x...', // ERC2771Forwarder 주소
+  forwardRequest: {
+    // ForwardRequest 객체
     from: userAddress,
     to: gatewayAddress,
     value: '0',
     gas: '200000',
     deadline: Math.floor(Date.now() / 1000) + 3600,
     data: '0x...',
-    signature: '0x...'        // EIP-712 서명
-  }
+    signature: '0x...', // EIP-712 서명
+  },
 });
 
 console.log(gaslessResult.relayRequestId); // "relay-123"
@@ -139,13 +141,13 @@ const signature = await signTypedData({
   domain: typedData.domain,
   types: typedData.types,
   primaryType: typedData.primaryType,
-  message: typedData.message
+  message: typedData.message,
 });
 
 // signature를 상점서버로 전송
 await fetch('/api/payments/relay', {
   method: 'POST',
-  body: JSON.stringify({ paymentId, signature, forwardRequest })
+  body: JSON.stringify({ paymentId, signature, forwardRequest }),
 });
 ```
 
@@ -164,10 +166,10 @@ console.log(status.data.status); // "pending" | "confirmed" | "completed"
 const history = await client.getPaymentHistory({
   chainId: 31337,
   payer: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  limit: 100
+  limit: 100,
 });
 
-history.data.forEach(payment => {
+history.data.forEach((payment) => {
   console.log(`${payment.paymentId}: ${payment.amount}`);
   console.log(`Gasless: ${payment.isGasless}`);
 });
@@ -177,18 +179,18 @@ history.data.forEach(payment => {
 
 ### 주요 에러 10개
 
-| 에러 코드 | HTTP 상태 | 설명 | 해결 방법 |
-|----------|----------|------|----------|
-| `VALIDATION_ERROR` | 400 | 입력 검증 실패 | 입력 데이터 확인 |
-| `INVALID_REQUEST` | 400 | 잘못된 요청 | API 형식 확인 |
-| `INVALID_SIGNATURE` | 400 | 서명 검증 실패 | EIP-712 서명 재생성 |
-| `INVALID_TRANSACTION_DATA` | 400 | 잘못된 TX 데이터 | 트랜잭션 데이터 검증 |
-| `INVALID_GAS_ESTIMATE` | 400 | 잘못된 가스 추정 | 가스 값 재계산 |
-| `NOT_FOUND` | 404 | 결제 정보 없음 | paymentId 확인 |
-| `PAYMENT_ALREADY_PROCESSED` | 400 | 이미 처리된 결제 | 중복 제출 방지 |
-| `INSUFFICIENT_BALANCE` | 400 | 토큰 잔액 부족 | 사용자 잔액 확인 |
-| `INSUFFICIENT_ALLOWANCE` | 400 | Approval 부족 | Token approval 필요 |
-| `INTERNAL_ERROR` | 500 | 서버 오류 | 재시도 또는 지원팀 문의 |
+| 에러 코드                   | HTTP 상태 | 설명             | 해결 방법               |
+| --------------------------- | --------- | ---------------- | ----------------------- |
+| `VALIDATION_ERROR`          | 400       | 입력 검증 실패   | 입력 데이터 확인        |
+| `INVALID_REQUEST`           | 400       | 잘못된 요청      | API 형식 확인           |
+| `INVALID_SIGNATURE`         | 400       | 서명 검증 실패   | EIP-712 서명 재생성     |
+| `INVALID_TRANSACTION_DATA`  | 400       | 잘못된 TX 데이터 | 트랜잭션 데이터 검증    |
+| `INVALID_GAS_ESTIMATE`      | 400       | 잘못된 가스 추정 | 가스 값 재계산          |
+| `NOT_FOUND`                 | 404       | 결제 정보 없음   | paymentId 확인          |
+| `PAYMENT_ALREADY_PROCESSED` | 400       | 이미 처리된 결제 | 중복 제출 방지          |
+| `INSUFFICIENT_BALANCE`      | 400       | 토큰 잔액 부족   | 사용자 잔액 확인        |
+| `INSUFFICIENT_ALLOWANCE`    | 400       | Approval 부족    | Token approval 필요     |
+| `INTERNAL_ERROR`            | 500       | 서버 오류        | 재시도 또는 지원팀 문의 |
 
 ### 에러 핸들링 예제
 
@@ -224,7 +226,7 @@ try {
 ```typescript
 // ❌ 잘못된 방법 (금액 조작 가능)
 app.post('/api/checkout', async (req, res) => {
-  const { amount } = req.body;  // 프론트에서 받음 → 위험!
+  const { amount } = req.body; // 프론트에서 받음 → 위험!
   await client.createPayment({ amount });
 });
 ```
@@ -234,11 +236,11 @@ app.post('/api/checkout', async (req, res) => {
 ```typescript
 // ✅ 올바른 방법
 app.post('/api/checkout', async (req, res) => {
-  const { productId } = req.body;  // productId만 받음
+  const { productId } = req.body; // productId만 받음
 
   // DB에서 실제 가격 조회
   const product = await db.products.findById(productId);
-  const amount = product.price;  // 서버에서 결정
+  const amount = product.price; // 서버에서 결정
 
   await client.createPayment({ amount });
 });
@@ -269,7 +271,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   environment: 'production',
-  apiKey: process.env.MSQPAY_API_KEY!
+  apiKey: process.env.MSQPAY_API_KEY!,
 });
 
 app.post('/api/checkout', async (req, res) => {
@@ -283,15 +285,14 @@ app.post('/api/checkout', async (req, res) => {
     // 3. 결제 생성
     const payment = await client.createPayment({
       merchantId: 'merchant_001',
-      amount: product.price,  // 서버가 결정한 가격
+      amount: product.price, // 서버가 결정한 가격
       chainId: 31337,
       recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     });
 
     // 4. paymentId 반환
     res.json({ paymentId: payment.paymentId });
-
   } catch (error) {
     if (error instanceof MSQPayError) {
       res.status(error.statusCode).json({ error: error.message });
@@ -313,7 +314,7 @@ app.get('/api/payments/:id/status', async (req, res) => {
 const response = await fetch('/api/checkout', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ productId: 'prod_001' })
+  body: JSON.stringify({ productId: 'prod_001' }),
 });
 
 const { paymentId } = await response.json();
@@ -323,7 +324,7 @@ await writeContract({
   address: gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, tokenAddress, amount, merchantAddress]
+  args: [paymentId, tokenAddress, amount, merchantAddress],
 });
 
 // 3. 결제 상태 확인 (2초 간격)

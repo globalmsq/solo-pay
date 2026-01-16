@@ -95,9 +95,11 @@ describe('BlockchainService', () => {
         recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
-      await expect(blockchainService.recordPaymentOnChain(incompleteData as Parameters<typeof blockchainService.recordPaymentOnChain>[0])).rejects.toThrow(
-        '필수 결제 정보가 누락되었습니다'
-      );
+      await expect(
+        blockchainService.recordPaymentOnChain(
+          incompleteData as Parameters<typeof blockchainService.recordPaymentOnChain>[0]
+        )
+      ).rejects.toThrow('필수 결제 정보가 누락되었습니다');
     });
 
     it('0 금액으로 요청할 때 에러를 던져야 함', async () => {

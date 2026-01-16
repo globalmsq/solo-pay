@@ -22,14 +22,18 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
     });
 
     it('should accept valid payment with chainId 31337 (Hardhat)', () => {
-      const payload = { ...validPayload, chainId: 31337, tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512' };
+      const payload = {
+        ...validPayload,
+        chainId: 31337,
+        tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+      };
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(true);
     });
 
     it('should accept different amounts', () => {
       const testCases = [0.1, 1, 100, 1000, 999999999];
-      testCases.forEach(amount => {
+      testCases.forEach((amount) => {
         const payload = { ...validPayload, amount };
         const result = CreatePaymentSchema.safeParse(payload);
         expect(result.success).toBe(true);
@@ -109,7 +113,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
         '0x' + 'a'.repeat(41), // 41 chars (should be 40)
         'x' + 'a'.repeat(40), // missing 0x
       ];
-      testCases.forEach(address => {
+      testCases.forEach((address) => {
         const payload = { ...validPayload, recipientAddress: address };
         const result = CreatePaymentSchema.safeParse(payload);
         expect(result.success).toBe(false);
@@ -123,7 +127,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
         '0xffffffffffffffffffffffffffffffffffffffff',
         '0x1234567890abcdef1234567890abcdef12345678',
       ];
-      testAddresses.forEach(address => {
+      testAddresses.forEach((address) => {
         const payload = { ...validPayload, recipientAddress: address };
         const result = CreatePaymentSchema.safeParse(payload);
         expect(result.success).toBe(true);

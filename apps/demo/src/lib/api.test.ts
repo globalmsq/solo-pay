@@ -4,11 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import {
-  createPayment,
-  CreatePaymentRequest,
-  ApiErrorCode,
-} from './api';
+import { createPayment, CreatePaymentRequest, ApiErrorCode } from './api';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -135,12 +131,11 @@ describe('createPayment', () => {
 
   it('should return error after 3 consecutive 5xx errors', async () => {
     // Mock: three 500 errors
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => ({ message: 'Server error' }),
-      });
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: 'Server error' }),
+    });
 
     const request: CreatePaymentRequest = {
       chainId: 80002,

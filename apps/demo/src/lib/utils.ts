@@ -27,5 +27,5 @@ export function truncateHash(hash: string, prefixLen = 10, suffixLen = 8): strin
  */
 export function formatTimestamp(timestamp: string): string {
   const date = new Date(parseInt(timestamp) * 1000);
-  return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 }

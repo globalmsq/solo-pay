@@ -51,7 +51,9 @@ describe('PaymentMethodService', () => {
     expect(result).toBeDefined();
     expect(result.merchant_id).toBe(merchantId);
     expect(result.token_id).toBe(tokenId);
-    expect(result.recipient_address.toLowerCase()).toBe('0x742d35Cc6634C0532925a3b844Bc029e4b2A69e2'.toLowerCase());
+    expect(result.recipient_address.toLowerCase()).toBe(
+      '0x742d35Cc6634C0532925a3b844Bc029e4b2A69e2'.toLowerCase()
+    );
     expect(result.is_enabled).toBe(true);
     expect(result.is_deleted).toBe(false);
     expect(mockPrisma.merchantPaymentMethod.create).toHaveBeenCalledOnce();
@@ -149,7 +151,9 @@ describe('PaymentMethodService', () => {
       recipient_address: '0x4444444444444444444444444444444444444444',
     });
 
-    expect(updated.recipient_address.toLowerCase()).toBe('0x4444444444444444444444444444444444444444'.toLowerCase());
+    expect(updated.recipient_address.toLowerCase()).toBe(
+      '0x4444444444444444444444444444444444444444'.toLowerCase()
+    );
     expect(mockPrisma.merchantPaymentMethod.update).toHaveBeenCalledOnce();
   });
 

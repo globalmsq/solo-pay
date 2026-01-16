@@ -5,6 +5,7 @@
 ### 1단계: Docker Desktop 시작
 
 **macOS**:
+
 ```bash
 # Docker Desktop 앱 실행
 open /Applications/Docker.app
@@ -26,6 +27,7 @@ docker-compose up
 ```
 
 **예상 출력**:
+
 ```
 Creating msqpay-mysql   ... done
 Creating msqpay-redis   ... done
@@ -241,12 +243,14 @@ docker inspect msqpay-server
 ## 🎯 다음 단계
 
 1. **결제서버 API 개발**
+
    ```bash
    cd ../packages/pay-server
    pnpm dev
    ```
 
 2. **SDK 개발**
+
    ```bash
    cd ../packages/sdk
    pnpm dev

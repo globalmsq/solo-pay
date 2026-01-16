@@ -65,7 +65,10 @@ describe('TokenService', () => {
 
     mockPrisma.token.findFirst.mockResolvedValue(mockToken);
 
-    const result = await tokenService.findByAddress(chainId, '0x6B175474E89094C44Da98b954EedeAC495271d0F');
+    const result = await tokenService.findByAddress(
+      chainId,
+      '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+    );
 
     expect(result).toBeDefined();
     expect(result?.symbol).toBe('DAI');
@@ -183,7 +186,10 @@ describe('TokenService', () => {
   it('should return null for non-existent token', async () => {
     mockPrisma.token.findFirst.mockResolvedValue(null);
 
-    const result = await tokenService.findByAddress(chainId, '0x0000000000000000000000000000000000000000');
+    const result = await tokenService.findByAddress(
+      chainId,
+      '0x0000000000000000000000000000000000000000'
+    );
     expect(result).toBeNull();
   });
 

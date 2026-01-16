@@ -1,8 +1,4 @@
-import {
-  TypedDataDomain,
-  TypedDataParameter,
-  recoverTypedDataAddress,
-} from 'viem';
+import { TypedDataDomain, TypedDataParameter, recoverTypedDataAddress } from 'viem';
 import { Address } from 'viem';
 
 interface ForwardRequest extends Record<string, unknown> {
@@ -108,10 +104,7 @@ export class SignatureService {
    *
    * 서명에서 서명자의 주소를 추출합니다.
    */
-  async recoverSignerAddress(
-    request: ForwardRequest,
-    signature: string
-  ): Promise<Address | null> {
+  async recoverSignerAddress(request: ForwardRequest, signature: string): Promise<Address | null> {
     try {
       if (!this.isValidSignature(signature)) {
         return null;

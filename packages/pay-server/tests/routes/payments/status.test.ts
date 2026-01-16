@@ -145,12 +145,10 @@ describe('GET /payments/:id/status', () => {
           ...mockPaymentData,
           status: status.toUpperCase(),
         });
-        blockchainService.getPaymentStatus = vi
-          .fn()
-          .mockResolvedValueOnce({
-            ...mockPaymentStatus,
-            status,
-          });
+        blockchainService.getPaymentStatus = vi.fn().mockResolvedValueOnce({
+          ...mockPaymentStatus,
+          status,
+        });
 
         const response = await app.inject({
           method: 'GET',

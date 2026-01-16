@@ -20,7 +20,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 // Initialize the client
 const client = new MSQPayClient({
   environment: 'production',
-  apiKey: 'your-api-key'
+  apiKey: 'your-api-key',
 });
 
 // Create a payment
@@ -29,7 +29,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 console.log(`Payment created: ${payment.paymentId}`);
@@ -50,14 +50,14 @@ console.log(`Payment created: ${payment.paymentId}`);
 // Development
 const devClient = new MSQPayClient({
   environment: 'development',
-  apiKey: 'dev-api-key'
+  apiKey: 'dev-api-key',
 });
 
 // Custom environment
 const customClient = new MSQPayClient({
   environment: 'custom',
   apiKey: 'custom-api-key',
-  apiUrl: 'https://my-api.example.com'
+  apiUrl: 'https://my-api.example.com',
 });
 ```
 
@@ -229,15 +229,15 @@ try {
 
 ### Error Codes
 
-| Code | HTTP Status | Description |
-|------|------------|------------|
-| `VALIDATION_ERROR` | 400 | Input validation failed |
-| `INVALID_REQUEST` | 400 | Malformed request |
-| `INVALID_SIGNATURE` | 400 | Invalid signature format |
-| `INVALID_TRANSACTION_DATA` | 400 | Invalid transaction data |
-| `INVALID_GAS_ESTIMATE` | 400 | Invalid gas estimate |
-| `NOT_FOUND` | 404 | Payment not found |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code                       | HTTP Status | Description              |
+| -------------------------- | ----------- | ------------------------ |
+| `VALIDATION_ERROR`         | 400         | Input validation failed  |
+| `INVALID_REQUEST`          | 400         | Malformed request        |
+| `INVALID_SIGNATURE`        | 400         | Invalid signature format |
+| `INVALID_TRANSACTION_DATA` | 400         | Invalid transaction data |
+| `INVALID_GAS_ESTIMATE`     | 400         | Invalid gas estimate     |
+| `NOT_FOUND`                | 404         | Payment not found        |
+| `INTERNAL_ERROR`           | 500         | Server error             |
 
 ## TypeScript Types
 
@@ -259,7 +259,7 @@ import {
   GetPaymentHistoryParams,
   PaymentHistoryItem,
   PaymentHistoryResponse,
-  ErrorResponse
+  ErrorResponse,
 } from '@globalmsq/msqpay';
 ```
 
@@ -278,27 +278,27 @@ interface CreatePaymentParams {
   userId: string;
   amount: number;
   currency?: 'USD' | 'EUR' | 'KRW';
-  tokenAddress: string;      // 0x + 40 hex characters
-  recipientAddress: string;  // 0x + 40 hex characters
+  tokenAddress: string; // 0x + 40 hex characters
+  recipientAddress: string; // 0x + 40 hex characters
   description?: string;
 }
 
 interface GaslessParams {
   paymentId: string;
-  forwarderAddress: string;  // 0x + 40 hex characters
-  signature: string;         // 0x hex string
+  forwarderAddress: string; // 0x + 40 hex characters
+  signature: string; // 0x hex string
 }
 
 interface RelayParams {
   paymentId: string;
-  transactionData: string;   // 0x hex string
+  transactionData: string; // 0x hex string
   gasEstimate: number;
 }
 
 interface GetPaymentHistoryParams {
-  chainId: number;           // Blockchain chain ID
-  payer: string;             // Payer wallet address (0x + 40 hex)
-  limit?: number;            // Optional: Number of records
+  chainId: number; // Blockchain chain ID
+  payer: string; // Payer wallet address (0x + 40 hex)
+  limit?: number; // Optional: Number of records
 }
 
 interface PaymentHistoryItem {
@@ -325,7 +325,7 @@ import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
 async function processPayment() {
   const client = new MSQPayClient({
     environment: 'production',
-    apiKey: process.env.MSQPAY_API_KEY!
+    apiKey: process.env.MSQPAY_API_KEY!,
   });
 
   try {
@@ -336,13 +336,13 @@ async function processPayment() {
       amount: 100,
       chainId: 31337,
       tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     });
     console.log(`Payment created: ${payment.paymentId}`);
 
     // Step 2: Check payment status
     console.log('Checking payment status...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     const status = await client.getPaymentStatus(payment.paymentId);
     console.log(`Payment status: ${status.data.status}`);
 
@@ -353,9 +353,14 @@ async function processPayment() {
         paymentId: payment.paymentId,
         forwarderAddress: '0x9e5b65f2d0ca4541925d7c4cc5367cbeca076f82',
         forwardRequest: {
-          from: '0x...', to: '0x...', value: '0', gas: '200000',
-          deadline: '1234567890', data: '0x...', signature: '0x...'
-        }
+          from: '0x...',
+          to: '0x...',
+          value: '0',
+          gas: '200000',
+          deadline: '1234567890',
+          data: '0x...',
+          signature: '0x...',
+        },
       });
       console.log(`Relay request: ${gaslessResult.relayRequestId}`);
     }
@@ -405,6 +410,7 @@ MIT
 ## Support
 
 For issues or questions:
+
 1. Check the error code and details in the thrown `MSQPayError`
 2. Verify your API key and environment configuration
 3. Ensure Node.js version >= 18.0.0

@@ -1,22 +1,18 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import {
-  RainbowKitProvider,
-  darkTheme,
-  lightTheme,
-} from "@rainbow-me/rainbowkit";
-import { WagmiProvider, type Config } from "wagmi";
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { createWagmiConfig, fetchChainConfig } from "@/lib/wagmi";
-import type { ChainConfig } from "@/app/api/config/route";
+import * as React from 'react';
+import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
+import { WagmiProvider, type Config } from 'wagmi';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import { createWagmiConfig, fetchChainConfig } from '@/lib/wagmi';
+import type { ChainConfig } from '@/app/api/config/route';
 
-import "@rainbow-me/rainbowkit/styles.css";
+import '@rainbow-me/rainbowkit/styles.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,           // 30초간 캐시 유지
+      staleTime: 30_000, // 30초간 캐시 유지
       refetchOnWindowFocus: false, // 탭 전환 시 refetch 방지
     },
   },

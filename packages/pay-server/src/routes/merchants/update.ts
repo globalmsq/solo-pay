@@ -4,10 +4,7 @@ import { createAuthMiddleware } from '../../middleware/auth.middleware';
 import { UpdateMerchantRequest, UpdateMerchantSchema } from '../../schemas/merchant.schema';
 import { ZodError } from 'zod';
 
-export async function updateMerchantRoute(
-  app: FastifyInstance,
-  merchantService: MerchantService
-) {
+export async function updateMerchantRoute(app: FastifyInstance, merchantService: MerchantService) {
   // Auth middleware validates X-API-Key header and attaches merchant to request
   const authMiddleware = createAuthMiddleware(merchantService);
 

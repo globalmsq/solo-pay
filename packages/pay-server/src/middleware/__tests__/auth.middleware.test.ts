@@ -57,26 +57,32 @@ const mockPayment = {
 };
 
 // Create mock services
-const createMockMerchantService = () => ({
-  findByApiKey: vi.fn(),
-  findByMerchantKey: vi.fn(),
-  findById: vi.fn(),
-  findAll: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
-  verifyApiKey: vi.fn(),
-  softDelete: vi.fn(),
-}) as Partial<MerchantService> as MerchantService;
+const createMockMerchantService = () =>
+  ({
+    findByApiKey: vi.fn(),
+    findByMerchantKey: vi.fn(),
+    findById: vi.fn(),
+    findAll: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    verifyApiKey: vi.fn(),
+    softDelete: vi.fn(),
+  }) as Partial<MerchantService> as MerchantService;
 
-const createMockPaymentService = () => ({
-  findByHash: vi.fn(),
-  findById: vi.fn(),
-  create: vi.fn(),
-  updateStatus: vi.fn(),
-}) as Partial<PaymentService> as PaymentService;
+const createMockPaymentService = () =>
+  ({
+    findByHash: vi.fn(),
+    findById: vi.fn(),
+    create: vi.fn(),
+    updateStatus: vi.fn(),
+  }) as Partial<PaymentService> as PaymentService;
 
 // Create mock request/reply
-const createMockRequest = (headers: Record<string, string> = {}, body: object = {}, params: object = {}): FastifyRequest => {
+const createMockRequest = (
+  headers: Record<string, string> = {},
+  body: object = {},
+  params: object = {}
+): FastifyRequest => {
   const mockLog = {
     error: vi.fn(),
     warn: vi.fn(),
@@ -256,11 +262,7 @@ describe('Auth Middleware', () => {
 
     it('should return 403 when payment does not belong to API key owner', async () => {
       const middleware = createPaymentAuthMiddleware(mockMerchantService, mockPaymentService);
-      const request = createMockRequest(
-        { 'x-api-key': 'metastar_key' },
-        {},
-        { id: '0x123abc' }
-      );
+      const request = createMockRequest({ 'x-api-key': 'metastar_key' }, {}, { id: '0x123abc' });
       const reply = createMockReply();
 
       vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant2); // merchant 2
@@ -278,11 +280,7 @@ describe('Auth Middleware', () => {
 
     it('should pass when payment belongs to API key owner', async () => {
       const middleware = createPaymentAuthMiddleware(mockMerchantService, mockPaymentService);
-      const request = createMockRequest(
-        { 'x-api-key': 'demo_key' },
-        {},
-        { id: '0x123abc' }
-      );
+      const request = createMockRequest({ 'x-api-key': 'demo_key' }, {}, { id: '0x123abc' });
       const reply = createMockReply();
 
       vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant); // merchant 1
@@ -296,11 +294,7 @@ describe('Auth Middleware', () => {
 
     it('should pass when payment is not found (let route handler deal with it)', async () => {
       const middleware = createPaymentAuthMiddleware(mockMerchantService, mockPaymentService);
-      const request = createMockRequest(
-        { 'x-api-key': 'demo_key' },
-        {},
-        { id: '0x999' }
-      );
+      const request = createMockRequest({ 'x-api-key': 'demo_key' }, {}, { id: '0x999' });
       const reply = createMockReply();
 
       vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant);

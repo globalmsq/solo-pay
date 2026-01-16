@@ -1,6 +1,6 @@
-import { ethers } from "hardhat";
-import * as fs from "fs";
-import * as path from "path";
+import { ethers } from 'hardhat';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Get deployed contract address from Ignition deployment artifacts.
@@ -8,11 +8,11 @@ import * as path from "path";
 function getDeployedAddress(contractId: string): string | null {
   const deploymentPath = path.join(
     __dirname,
-    "../ignition/deployments/chain-31337/deployed_addresses.json"
+    '../ignition/deployments/chain-31337/deployed_addresses.json'
   );
 
   if (fs.existsSync(deploymentPath)) {
-    const addresses = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
+    const addresses = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
     if (addresses[contractId]) {
       return addresses[contractId];
     }
@@ -34,34 +34,32 @@ function getDeployedAddress(contractId: string): string | null {
 async function main() {
   // Token address priority: env var > Ignition artifacts
   const TOKEN_ADDRESS =
-    process.env.TOKEN_ADDRESS ||
-    getDeployedAddress("MockERC20#MockERC20") ||
-    "";
+    process.env.TOKEN_ADDRESS || getDeployedAddress('MockERC20#MockERC20') || '';
 
   if (!TOKEN_ADDRESS) {
     throw new Error(
-      "TOKEN_ADDRESS not found. Please deploy contracts first or set TOKEN_ADDRESS env var."
+      'TOKEN_ADDRESS not found. Please deploy contracts first or set TOKEN_ADDRESS env var.'
     );
   }
 
   // Test user account (Hardhat Account #3)
-  const TEST_USER_ADDRESS = "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
-  const MINT_AMOUNT = ethers.parseUnits("1000000", 18); // 1,000,000 tokens
+  const TEST_USER_ADDRESS = '0x90F79bf6EB2c4f870365E785982E1f101E93b906';
+  const MINT_AMOUNT = ethers.parseUnits('1000000', 18); // 1,000,000 tokens
 
   // Get Account #0 (owner of both MockERC20 and SampleToken)
   const [owner] = await ethers.getSigners();
 
   // Use minimal ABI for mint function (works with both MockERC20 and SampleToken)
   const mintAbi = [
-    "function mint(address to, uint256 amount) external",
-    "function balanceOf(address account) view returns (uint256)",
-    "function symbol() view returns (string)",
+    'function mint(address to, uint256 amount) external',
+    'function balanceOf(address account) view returns (uint256)',
+    'function symbol() view returns (string)',
   ];
 
   const token = new ethers.Contract(TOKEN_ADDRESS, mintAbi, owner);
 
   // Try to get token symbol for display
-  let tokenSymbol = "TOKEN";
+  let tokenSymbol = 'TOKEN';
   try {
     tokenSymbol = await token.symbol();
   } catch {

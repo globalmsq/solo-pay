@@ -21,7 +21,16 @@ export interface PaymentStatus {
   currency: 'USD' | 'EUR' | 'KRW';
   tokenAddress: string;
   recipientAddress: string;
-  status: 'pending' | 'confirmed' | 'failed' | 'completed' | 'CREATED' | 'PENDING' | 'CONFIRMED' | 'FAILED' | 'EXPIRED';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'failed'
+    | 'completed'
+    | 'CREATED'
+    | 'PENDING'
+    | 'CONFIRMED'
+    | 'FAILED'
+    | 'EXPIRED';
   transactionHash?: string;
   blockNumber?: number;
   createdAt: string;
@@ -62,7 +71,9 @@ export async function getPaymentStatus(paymentId: string): Promise<ApiResponse<P
   const response = await fetch(`${API_URL}/payments/${paymentId}/status`);
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to fetch payment status' }));
+    const error = await response
+      .json()
+      .catch(() => ({ message: 'Failed to fetch payment status' }));
     return {
       success: false,
       code: error.code || 'FETCH_ERROR',
@@ -78,11 +89,18 @@ export async function getPaymentStatus(paymentId: string): Promise<ApiResponse<P
  * @param userAddress 사용자 지갑 주소
  * @param chainId 체인 ID
  */
-export async function getPaymentHistory(userAddress: string, chainId: number): Promise<ApiResponse<PaymentHistoryItem[]>> {
-  const response = await fetch(`${API_URL}/payments/history?chainId=${chainId}&payer=${userAddress}`);
+export async function getPaymentHistory(
+  userAddress: string,
+  chainId: number
+): Promise<ApiResponse<PaymentHistoryItem[]>> {
+  const response = await fetch(
+    `${API_URL}/payments/history?chainId=${chainId}&payer=${userAddress}`
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to fetch payment history' }));
+    const error = await response
+      .json()
+      .catch(() => ({ message: 'Failed to fetch payment history' }));
     return {
       success: false,
       code: error.code || 'FETCH_ERROR',
@@ -152,7 +170,9 @@ export async function getTokenAllowance(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to fetch token allowance' }));
+    const error = await response
+      .json()
+      .catch(() => ({ message: 'Failed to fetch token allowance' }));
     return {
       success: false,
       code: error.code || 'FETCH_ERROR',
@@ -175,7 +195,9 @@ export async function getTransactionStatus(
   const response = await fetch(`${API_URL}/transactions/${txHash}/status?chainId=${chainId}`);
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to fetch transaction status' }));
+    const error = await response
+      .json()
+      .catch(() => ({ message: 'Failed to fetch transaction status' }));
     return {
       success: false,
       code: error.code || 'FETCH_ERROR',
@@ -315,7 +337,9 @@ export async function submitGaslessPayment(
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Gasless payment submission failed' }));
+      const error = await response
+        .json()
+        .catch(() => ({ message: 'Gasless payment submission failed' }));
       return {
         success: false,
         code: error.code || ApiErrorCode.SERVER_ERROR,
@@ -348,7 +372,9 @@ export async function getRelayStatus(
     const response = await fetch(`${API_URL}/payments/relay/${relayRequestId}/status`);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Failed to fetch relay status' }));
+      const error = await response
+        .json()
+        .catch(() => ({ message: 'Failed to fetch relay status' }));
       return {
         success: false,
         code: error.code || ApiErrorCode.SERVER_ERROR,
@@ -464,7 +490,6 @@ async function retryWithDelay(
 
   throw lastError || new Error('Retry failed');
 }
-
 
 /**
  * Create a payment request with the server
@@ -628,9 +653,7 @@ export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
  * @param request Checkout request with products array
  * @returns Promise with checkout response including server-verified amount and chainId
  */
-export async function checkout(
-  request: CheckoutRequest
-): Promise<ApiResponse<CheckoutResponse>> {
+export async function checkout(request: CheckoutRequest): Promise<ApiResponse<CheckoutResponse>> {
   // Validate request
   const validation = CheckoutRequestSchema.safeParse(request);
   if (!validation.success) {

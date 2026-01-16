@@ -1,17 +1,9 @@
-import {
-  PaymentCompleted as PaymentCompletedEvent,
-} from "../generated/PaymentGateway/PaymentGateway";
-import {
-  Payment,
-  MerchantStats,
-  DailyVolume,
-  TokenStats,
-  GlobalStats,
-} from "../generated/schema";
-import { BigInt } from "@graphprotocol/graph-ts";
+import { PaymentCompleted as PaymentCompletedEvent } from '../generated/PaymentGateway/PaymentGateway';
+import { Payment, MerchantStats, DailyVolume, TokenStats, GlobalStats } from '../generated/schema';
+import { BigInt } from '@graphprotocol/graph-ts';
 
 // Constants
-const GLOBAL_STATS_ID = "global";
+const GLOBAL_STATS_ID = 'global';
 const SECONDS_PER_DAY = 86400;
 
 /**
@@ -32,9 +24,9 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   // If tx.from == payer, it's a direct payment
   // If tx.from != payer, it's a meta-transaction (via forwarder)
   if (event.transaction.from.equals(event.params.payer)) {
-    payment.gasMode = "Direct";
+    payment.gasMode = 'Direct';
   } else {
-    payment.gasMode = "MetaTx";
+    payment.gasMode = 'MetaTx';
   }
 
   payment.save();
@@ -142,7 +134,7 @@ function updateGlobalStats(event: PaymentCompletedEvent): void {
  */
 function getDayId(timestamp: BigInt): string {
   const dayNumber = timestamp.div(BigInt.fromI32(SECONDS_PER_DAY));
-  return "day-" + dayNumber.toString();
+  return 'day-' + dayNumber.toString();
 }
 
 /**

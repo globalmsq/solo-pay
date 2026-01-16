@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+coverage/
+
+# Generated files
+artifacts/
+cache/
+typechain-types/
+subgraph/generated/
+
+# Config/tool files
+.moai/
+.claude/
+.mcp.json
+
+# Lock files
+pnpm-lock.yaml

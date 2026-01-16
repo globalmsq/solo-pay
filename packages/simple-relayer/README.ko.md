@@ -9,6 +9,7 @@ Simple Relayer는 로컬 개발 환경에서 프로덕션 Relayer API를 대체�
 로컬 개발 시 외부 Relayer 서비스 없이 Gasless 결제를 테스트할 수 있도록 동일한 API 인터페이스를 제공합니다.
 
 **용도**:
+
 - Docker Compose 로컬 개발 환경
 - Hardhat 네트워크에서 Gasless 결제 테스트
 - 프로덕션 Relayer API 호환 HTTP 서비스
@@ -25,13 +26,13 @@ Simple Relayer는 로컬 개발 환경에서 프로덕션 Relayer API를 대체�
 
 ## 기술 스택
 
-| 구성요소 | 기술 | 버전 |
-|----------|------|------|
-| Framework | Fastify | ^5.0.0 |
-| Blockchain | viem | ^2.21.0 |
-| Runtime | Node.js | 18+ |
-| Language | TypeScript | ^5.4.0 |
-| Testing | Vitest | ^2.0.0 |
+| 구성요소   | 기술       | 버전    |
+| ---------- | ---------- | ------- |
+| Framework  | Fastify    | ^5.0.0  |
+| Blockchain | viem       | ^2.21.0 |
+| Runtime    | Node.js    | 18+     |
+| Language   | TypeScript | ^5.4.0  |
+| Testing    | Vitest     | ^2.0.0  |
 
 ## 시작하기
 
@@ -82,6 +83,7 @@ pnpm start
 Meta-Transaction을 실행합니다. 프로덕션 Relayer API와 호환됩니다.
 
 **요청**:
+
 ```bash
 curl -X POST http://localhost:3001/txs \
   -H "Content-Type: application/json" \
@@ -94,12 +96,14 @@ curl -X POST http://localhost:3001/txs \
 ```
 
 **요청 파라미터**:
+
 - `to` (required): Forwarder 컨트랙트 주소
 - `data` (required): ERC2771Forwarder.execute() 호출 데이터 (인코딩된 ForwardRequest)
 - `speed` (optional): 가스 가격 설정 (`safeLow`, `average`, `fast`, `fastest`) - 현재 무시됨
 - `gasLimit` (optional): 가스 한도 - 현재 무시됨
 
 **응답**:
+
 ```json
 {
   "transactionId": "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
@@ -110,6 +114,7 @@ curl -X POST http://localhost:3001/txs \
 ```
 
 **응답 필드**:
+
 - `transactionId`: 고유 트랜잭션 ID (UUID)
 - `hash`: 블록체인 트랜잭션 해시
 - `status`: 트랜잭션 상태 (`pending`, `mined`, `failed`)
@@ -120,11 +125,13 @@ curl -X POST http://localhost:3001/txs \
 서버 헬스 체크
 
 **요청**:
+
 ```bash
 curl http://localhost:3001/health
 ```
 
 **응답**:
+
 ```json
 {
   "status": "ok",
@@ -146,7 +153,7 @@ services:
       dockerfile: docker/Dockerfile.packages
       target: simple-relayer
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       PORT: 3001
       RPC_URL: http://hardhat:8545
@@ -222,22 +229,23 @@ pnpm typecheck
 
 ## 프로덕션 Relayer vs Simple Relayer
 
-| 기능 | 프로덕션 Relayer | Simple Relayer |
-|------|-----------------|----------------|
-| **환경** | Production | Development |
-| **인증** | API Key + Secret | 없음 |
-| **가스 관리** | 자동 충전, 가스 가격 최적화 | 고정 (Hardhat 기본값) |
-| **모니터링** | 대시보드, 알림 | 로그만 |
-| **Nonce 관리** | 자동 | viem 자동 처리 |
-| **재시도 로직** | 있음 | 없음 |
-| **비용** | 유료 | 무료 |
-| **설정** | 복잡 | 간단 |
+| 기능            | 프로덕션 Relayer            | Simple Relayer        |
+| --------------- | --------------------------- | --------------------- |
+| **환경**        | Production                  | Development           |
+| **인증**        | API Key + Secret            | 없음                  |
+| **가스 관리**   | 자동 충전, 가스 가격 최적화 | 고정 (Hardhat 기본값) |
+| **모니터링**    | 대시보드, 알림              | 로그만                |
+| **Nonce 관리**  | 자동                        | viem 자동 처리        |
+| **재시도 로직** | 있음                        | 없음                  |
+| **비용**        | 유료                        | 무료                  |
+| **설정**        | 복잡                        | 간단                  |
 
 ## 보안 주의사항
 
 ⚠️ **프로덕션 사용 금지**: 이 서비스는 개발 전용입니다.
 
 **개발 환경에서만 사용해야 하는 이유**:
+
 - 인증 없음 (누구나 트랜잭션 실행 가능)
 - 가스 관리 없음 (Relayer 잔액 고갈 가능)
 - 에러 처리 최소화
@@ -245,6 +253,7 @@ pnpm typecheck
 - Nonce 충돌 가능성
 
 **Relayer 개인키 관리**:
+
 - 테스트 계정만 사용
 - 실제 자산이 있는 계정 사용 금지
 - `.env` 파일을 Git에 커밋하지 마세요

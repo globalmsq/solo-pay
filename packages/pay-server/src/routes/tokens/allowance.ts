@@ -61,7 +61,12 @@ export async function getTokenAllowanceRoute(
         });
       }
 
-      const allowance = await blockchainService.getTokenAllowance(chainIdNum, tokenAddress, owner, spender);
+      const allowance = await blockchainService.getTokenAllowance(
+        chainIdNum,
+        tokenAddress,
+        owner,
+        spender
+      );
 
       return reply.code(200).send({
         success: true,

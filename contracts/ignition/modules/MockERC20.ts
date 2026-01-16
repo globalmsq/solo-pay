@@ -11,7 +11,9 @@ import type { IgnitionModuleResult } from '@nomicfoundation/ignition-core';
  * m.getParameter() returns Future objects, not actual values,
  * making conditional deployment (if chainId === 31337) impossible.
  */
-const MockERC20Module: ReturnType<typeof buildModule<'MockERC20', string, IgnitionModuleResult<string>>> = buildModule('MockERC20', (m) => {
+const MockERC20Module: ReturnType<
+  typeof buildModule<'MockERC20', string, IgnitionModuleResult<string>>
+> = buildModule('MockERC20', (m) => {
   const mockToken = m.contract('MockERC20', ['Test Token', 'TEST', 18]);
   return { mockToken };
 });

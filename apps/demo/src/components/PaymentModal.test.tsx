@@ -75,26 +75,14 @@ describe('PaymentModal', () => {
   });
 
   it('should render payment modal with product details', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     expect(screen.getByText('Checkout')).toBeInTheDocument();
     expect(screen.getByText(mockProduct.name)).toBeInTheDocument();
   });
 
   it('should have close button in the modal header', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     // The modal should have buttons for closing
     const buttons = screen.getAllByRole('button');
@@ -102,25 +90,13 @@ describe('PaymentModal', () => {
   });
 
   it('should display balance information', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     expect(screen.getByText(/Your.*Balance:/i)).toBeInTheDocument();
   });
 
   it('should display payment method selector with Direct and Gasless options', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     expect(screen.getByText('Payment Method')).toBeInTheDocument();
     expect(screen.getByText(/Direct/i)).toBeInTheDocument();
@@ -128,13 +104,7 @@ describe('PaymentModal', () => {
   });
 
   it('should show approval button when token approval is needed (Direct mode)', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     // The approval button should be visible in the DOM
     const buttons = screen.getAllByRole('button');
@@ -142,13 +112,7 @@ describe('PaymentModal', () => {
   });
 
   it('should show payment buttons for payment processing', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     // Check that there is at least one button for payment/action
     const buttons = screen.getAllByRole('button');
@@ -156,26 +120,14 @@ describe('PaymentModal', () => {
   });
 
   it('should load server configuration on mount', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     // Component should render without errors
     expect(screen.getByText('Checkout')).toBeInTheDocument();
   });
 
   it('should use serverConfig for addresses instead of legacy contracts', async () => {
-    render(
-      <PaymentModal
-        product={mockProduct}
-        onClose={mockOnClose}
-        onSuccess={mockOnSuccess}
-      />
-    );
+    render(<PaymentModal product={mockProduct} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     // Component should be rendered and functional
     expect(screen.getByText(mockProduct.name)).toBeInTheDocument();
