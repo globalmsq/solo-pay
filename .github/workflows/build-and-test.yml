@@ -98,5 +98,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Compile contracts (generate artifacts)
+        run: pnpm --filter @msq/pay-contracts exec hardhat compile
+
       - name: Build all packages
         run: pnpm build
