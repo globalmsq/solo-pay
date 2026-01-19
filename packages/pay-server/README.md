@@ -16,16 +16,16 @@ MSQ Pay Server is the backend API server for the blockchain-based payment system
 
 ## Tech Stack
 
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Framework | Fastify | ^5.0.0 |
-| Blockchain | viem | ^2.21.0 |
-| Database | MySQL + Prisma | ^6.0.0 |
-| Cache | Redis + ioredis | ^5.4.0 |
-| Validation | Zod | ^3.23.0 |
-| Runtime | Node.js | 18+ |
-| Language | TypeScript | ^5.4.0 |
-| Testing | Vitest | ^2.0.0 |
+| Component  | Technology      | Version |
+| ---------- | --------------- | ------- |
+| Framework  | Fastify         | ^5.0.0  |
+| Blockchain | viem            | ^2.21.0 |
+| Database   | MySQL + Prisma  | ^6.0.0  |
+| Cache      | Redis + ioredis | ^5.4.0  |
+| Validation | Zod             | ^3.23.0 |
+| Runtime    | Node.js         | 18+     |
+| Language   | TypeScript      | ^5.4.0  |
+| Testing    | Vitest          | ^2.0.0  |
 
 ## Getting Started
 
@@ -113,6 +113,7 @@ curl http://localhost:3001/health
 ```
 
 Response example:
+
 ```json
 {
   "status": "ok",
@@ -347,6 +348,7 @@ Key metrics to monitor:
 ### Common Issues
 
 **Database connection failed**
+
 ```bash
 # Check MySQL is running
 docker-compose ps mysql
@@ -356,6 +358,7 @@ DATABASE_URL=mysql://user:password@host:3306/database
 ```
 
 **Redis connection failed**
+
 ```bash
 # Redis is optional, but if used:
 docker-compose ps redis
@@ -365,6 +368,7 @@ REDIS_URL=redis://localhost:6379
 ```
 
 **RPC errors**
+
 ```bash
 # Verify RPC URL is accessible
 curl https://rpc-amoy.polygon.technology

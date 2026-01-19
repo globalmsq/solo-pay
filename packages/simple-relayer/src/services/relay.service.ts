@@ -219,10 +219,7 @@ export class RelayService {
     }
   }
 
-  private async monitorTransaction(
-    transactionId: string,
-    hash: `0x${string}`
-  ): Promise<void> {
+  private async monitorTransaction(transactionId: string, hash: `0x${string}`): Promise<void> {
     try {
       const receipt = await this.publicClient.waitForTransactionReceipt({
         hash,
@@ -244,7 +241,7 @@ export class RelayService {
           }
         }, 5000);
       }
-    } catch (error) {
+    } catch {
       const record = this.transactions.get(transactionId);
       if (record) {
         record.status = 'failed';

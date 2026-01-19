@@ -81,47 +81,47 @@ const mockPaymentData = {
 
 describe('POST /payments/:id/gasless', () => {
   let app: FastifyInstance;
-  let relayerService: RelayerService;
-  let relayService: RelayService;
-  let paymentService: PaymentService;
-  let merchantService: MerchantService;
+  let relayerService: Partial<RelayerService>;
+  let relayService: Partial<RelayService>;
+  let paymentService: Partial<PaymentService>;
+  let merchantService: Partial<MerchantService>;
 
   beforeEach(async () => {
     app = Fastify({ logger: false });
     await app.register(cors);
 
-    // Mock RelayerService (was DefenderService)
+    // Mock RelayerService
     relayerService = {
-      submitForwardTransaction: vi
-        .fn()
-        .mockResolvedValue({
-          relayRequestId: 'relay-123-' + Date.now(),
-          status: 'submitted',
-        }),
+      submitForwardTransaction: vi.fn().mockResolvedValue({
+        relayRequestId: 'relay-123-' + Date.now(),
+        status: 'submitted',
+      }),
       getRelayStatus: vi.fn(),
       cancelRelayTransaction: vi.fn(),
       validateTransactionData: vi.fn().mockReturnValue(true),
       estimateGasFee: vi.fn().mockResolvedValue('50000000000'),
-    } as any;
+    };
 
-    // Mock RelayService
     relayService = {
       create: vi.fn().mockResolvedValue({ id: 'relay-db-id' }),
-    } as any;
+    };
 
-    // Mock PaymentService
     paymentService = {
       findByHash: vi.fn().mockResolvedValue(mockPaymentData),
       updateStatus: vi.fn().mockResolvedValue(mockPaymentData),
-    } as any;
+    };
 
-    // Mock MerchantService for authentication
     merchantService = {
       findByApiKey: vi.fn().mockResolvedValue(mockMerchant),
-    } as any;
+    };
 
-    // 실제 라우트 등록 - using RelayerService, not DefenderService
-    await submitGaslessRoute(app, relayerService, relayService, paymentService, merchantService);
+    await submitGaslessRoute(
+      app,
+      relayerService as RelayerService,
+      relayService as RelayService,
+      paymentService as PaymentService,
+      merchantService as MerchantService
+    );
   });
 
   describe('정상 케이스', () => {
@@ -232,10 +232,10 @@ describe('POST /payments/:id/gasless', () => {
   });
 
   describe('예외 케이스', () => {
-    it('Defender 서비스 오류 발생 시 500 상태 코드를 반환해야 함', async () => {
+    it('Relayer 서비스 오류 발생 시 500 상태 코드를 반환해야 함', async () => {
       relayerService.submitForwardTransaction = vi
         .fn()
-        .mockRejectedValueOnce(new Error('Defender API 오류'));
+        .mockRejectedValueOnce(new Error('Relayer API 오류'));
 
       const validRequest = createValidGaslessRequest('payment-404');
 
@@ -255,7 +255,9 @@ describe('POST /payments/:id/gasless', () => {
       const invalidRequest = {
         paymentId: 'payment-505',
         forwarderAddress: '0x' + 'a'.repeat(40),
-        forwardRequest: createValidForwardRequest('payment-505', '1000000000000000000', { signature: '' }),
+        forwardRequest: createValidForwardRequest('payment-505', '1000000000000000000', {
+          signature: '',
+        }),
       };
 
       const response = await app.inject({

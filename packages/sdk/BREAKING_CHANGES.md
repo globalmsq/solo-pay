@@ -17,9 +17,9 @@ client.createPayment({
   userId: 'user123',
   amount: 100,
   currency: 'USD',
-  tokenAddress: '0x...',  // Hardcoded by developer
+  tokenAddress: '0x...', // Hardcoded by developer
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  description: 'Order #12345'
+  description: 'Order #12345',
 });
 ```
 
@@ -29,9 +29,9 @@ client.createPayment({
 client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
-  chainId: 80002,   // Explicitly specify chain
+  chainId: 80002, // Explicitly specify chain
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 ```
 
@@ -41,16 +41,16 @@ client.createPayment({
 
 ### Request Parameters
 
-| Parameter | v1.x | v2.0.0 | Status |
-|-----------|------|--------|--------|
-| `userId` | Required | Removed | Breaking Change |
-| `merchantId` | N/A | Required (NEW) | New parameter |
-| `amount` | Required | Required | No change |
-| `currency` | Optional enum | Removed (auto from on-chain) | Breaking Change |
-| `tokenAddress` | Required (hardcoded) | Required | No change |
-| `chainId` | N/A | Required (NEW) | New parameter |
-| `recipientAddress` | Required | Required | No change |
-| `description` | Optional | Removed | Breaking Change |
+| Parameter          | v1.x                 | v2.0.0                       | Status          |
+| ------------------ | -------------------- | ---------------------------- | --------------- |
+| `userId`           | Required             | Removed                      | Breaking Change |
+| `merchantId`       | N/A                  | Required (NEW)               | New parameter   |
+| `amount`           | Required             | Required                     | No change       |
+| `currency`         | Optional enum        | Removed (auto from on-chain) | Breaking Change |
+| `tokenAddress`     | Required (hardcoded) | Required                     | No change       |
+| `chainId`          | N/A                  | Required (NEW)               | New parameter   |
+| `recipientAddress` | Required             | Required                     | No change       |
+| `description`      | Optional             | Removed                      | Breaking Change |
 
 **Note:** Token symbol and decimals are now fetched automatically from on-chain data.
 
@@ -86,6 +86,7 @@ client.createPayment({
 ```
 
 **New fields in v2.0.0:**
+
 - `chainId` - Blockchain chain ID
 - `tokenAddress` - Token address from server
 - `tokenSymbol` - Token symbol fetched from on-chain (source of truth)
@@ -114,7 +115,7 @@ import { MSQPayClient } from '@msqpay/sdk';
 
 const client = new MSQPayClient({
   environment: 'production',
-  apiKey: 'your-api-key'
+  apiKey: 'your-api-key',
 });
 ```
 
@@ -130,7 +131,7 @@ const response = await client.createPayment({
   currency: 'USD',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  description: 'Order #12345'
+  description: 'Order #12345',
 });
 
 // After (v2.0.0) - symbol/decimals fetched from on-chain automatically
@@ -144,7 +145,7 @@ function MyComponent() {
     amount: 100,
     chainId, // Use wagmi hook to get current chain
     recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-    tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+    tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
   });
 }
 ```
@@ -160,7 +161,7 @@ const response = await client.createPayment({
   amount: 100,
   chainId: 80002,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 // ✅ Use server-provided values instead of hardcoded config
@@ -172,7 +173,7 @@ await writeContract({
   abi: ERC20_ABI,
   functionName: 'approve',
   args: [gatewayAddress, amount],
-  account: userAddress
+  account: userAddress,
 });
 ```
 
@@ -185,14 +186,14 @@ If your app had hardcoded contract addresses:
 export const CONTRACTS = {
   80002: {
     gateway: '0x...',
-    forwarder: '0x...'
-  }
+    forwarder: '0x...',
+  },
 };
 
 export const TOKENS = {
   80002: {
-    SUT: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
-  }
+    SUT: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+  },
 };
 
 // ✅ REPLACE: Get from server response
@@ -201,7 +202,7 @@ const { tokenAddress, gatewayAddress } = await client.createPayment({
   amount,
   chainId,
   recipientAddress,
-  tokenAddress
+  tokenAddress,
 });
 ```
 
@@ -211,10 +212,10 @@ const { tokenAddress, gatewayAddress } = await client.createPayment({
 
 v2.0.0 supports the following blockchain networks:
 
-| Chain | Chain ID | Token | Token Address |
-|-------|----------|-------|---------------|
-| **Polygon Amoy (Testnet)** | 80002 | SUT | 0xE4C687167705Abf55d709395f92e254bdF5825a2 |
-| **Hardhat (Local)** | 31337 | TEST | 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 |
+| Chain                      | Chain ID | Token | Token Address                              |
+| -------------------------- | -------- | ----- | ------------------------------------------ |
+| **Polygon Amoy (Testnet)** | 80002    | SUT   | 0xE4C687167705Abf55d709395f92e254bdF5825a2 |
+| **Hardhat (Local)**        | 31337    | TEST  | 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 |
 
 ---
 
@@ -227,9 +228,9 @@ try {
   await client.createPayment({
     merchantId: 'merchant_001',
     amount: 100,
-    chainId: 1,  // Unsupported chain
+    chainId: 1, // Unsupported chain
     recipientAddress: '0x...',
-    tokenAddress: '0x0000000000000000000000000000000000000000'  // Unknown token
+    tokenAddress: '0x0000000000000000000000000000000000000000', // Unknown token
   });
 } catch (error) {
   if (error.code === 'UNSUPPORTED_CHAIN') {
@@ -270,7 +271,7 @@ if (sdkVersion === 'v1') {
     amount: 100,
     chainId: 80002,
     recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-    tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+    tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
   });
 }
 ```

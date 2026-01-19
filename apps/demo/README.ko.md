@@ -29,6 +29,7 @@ MSQPay는 3계층 아키텍처를 사용합니다:
 ```
 
 **핵심 원칙:**
+
 - 프론트엔드는 직접 MSQPay 서버와 통신하지 않습니다
 - 모든 API 호출은 상점 서버를 통해 프록시됩니다
 - API 키는 서버 사이드에서만 사용됩니다 (보안)
@@ -55,11 +56,11 @@ MSQPAY_API_URL=http://localhost:3001
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 ```
 
-| 변수 | 필수 | 위치 | 설명 |
-|------|------|------|------|
-| `MSQPAY_API_KEY` | ✅ | Server | MSQPay 결제서버 인증 키 |
-| `MSQPAY_API_URL` | ❌ | Server | 결제서버 URL (기본: localhost:3001) |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅ | Client | [WalletConnect](https://cloud.walletconnect.com/)에서 발급 |
+| 변수                                   | 필수 | 위치   | 설명                                                       |
+| -------------------------------------- | ---- | ------ | ---------------------------------------------------------- |
+| `MSQPAY_API_KEY`                       | ✅   | Server | MSQPay 결제서버 인증 키                                    |
+| `MSQPAY_API_URL`                       | ❌   | Server | 결제서버 URL (기본: localhost:3001)                        |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅   | Client | [WalletConnect](https://cloud.walletconnect.com/)에서 발급 |
 
 > **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 결제 서버의 데이터베이스에서 관리됩니다. 지갑 연결은 RainbowKit을 통해 처리됩니다.
 
@@ -106,7 +107,7 @@ export function getMSQPayClient(): MSQPayClient {
     msqpayClient = new MSQPayClient({
       environment: 'custom',
       apiUrl: apiUrl,
-      apiKey: process.env.MSQPAY_API_KEY || ''
+      apiKey: process.env.MSQPAY_API_KEY || '',
     });
   }
   return msqpayClient;
@@ -114,6 +115,7 @@ export function getMSQPayClient(): MSQPayClient {
 ```
 
 **환경 옵션:**
+
 - `development`: 개발 서버 (기본 URL 사용)
 - `staging`: 스테이징 서버
 - `production`: 프로덕션 서버
@@ -132,10 +134,7 @@ export function getMSQPayClient(): MSQPayClient {
 import { NextRequest, NextResponse } from 'next/server';
 import { getMSQPayClient } from '@/lib/msqpay-server';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { paymentId: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { paymentId: string } }) {
   try {
     const client = getMSQPayClient();
     const result = await client.getPaymentStatus(params.paymentId);
@@ -180,10 +179,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
 ```
@@ -195,10 +191,7 @@ export async function GET(request: NextRequest) {
 import { NextRequest, NextResponse } from 'next/server';
 import { getMSQPayClient } from '@/lib/msqpay-server';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { paymentId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { paymentId: string } }) {
   try {
     const client = getMSQPayClient();
     const body = await request.json();
@@ -206,7 +199,7 @@ export async function POST(
     const result = await client.submitGasless({
       paymentId: params.paymentId,
       forwarderAddress: body.forwarderAddress,
-      forwardRequest: body.forwardRequest
+      forwardRequest: body.forwardRequest,
     });
 
     return NextResponse.json(result);
@@ -226,10 +219,7 @@ export async function POST(
 import { NextRequest, NextResponse } from 'next/server';
 import { getMSQPayClient } from '@/lib/msqpay-server';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { paymentId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { paymentId: string } }) {
   try {
     const client = getMSQPayClient();
     const body = await request.json();
@@ -237,7 +227,7 @@ export async function POST(
     const result = await client.executeRelay({
       paymentId: params.paymentId,
       transactionData: body.transactionData,
-      gasEstimate: body.gasEstimate
+      gasEstimate: body.gasEstimate,
     });
 
     return NextResponse.json(result);
@@ -386,9 +376,9 @@ export async function POST(request: NextRequest) {
         products: productInfos,
         totalAmount: totalAmount.toString(),
         chainId: payment.chainId,
-        tokenSymbol: payment.tokenSymbol,       // From on-chain via pay-server
+        tokenSymbol: payment.tokenSymbol, // From on-chain via pay-server
         tokenAddress: payment.tokenAddress,
-        decimals: payment.tokenDecimals,        // From on-chain via pay-server
+        decimals: payment.tokenDecimals, // From on-chain via pay-server
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
         recipientAddress: merchantConfig.recipientAddress,
@@ -500,8 +490,8 @@ async function submitGaslessPayment(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       forwarderAddress,
-      forwardRequest
-    })
+      forwardRequest,
+    }),
   });
 
   const result = await response.json();
@@ -536,7 +526,7 @@ async function waitForPaymentConfirmation(
     }
 
     // pending 상태면 대기 후 재시도
-    await new Promise(resolve => setTimeout(resolve, intervalMs));
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
 
   throw new Error('결제 확인 시간이 초과되었습니다');
@@ -586,13 +576,13 @@ MSQPay가 가스비를 대납하는 방식입니다.
 
 ### SDK 에러 코드
 
-| 코드 | 설명 | 해결 방법 |
-|------|------|----------|
-| `INVALID_API_KEY` | API 키가 유효하지 않음 | API 키 확인 |
-| `PAYMENT_NOT_FOUND` | 결제를 찾을 수 없음 | paymentId 확인 |
-| `INSUFFICIENT_BALANCE` | 잔액 부족 | 토큰 잔액 확인 |
-| `NETWORK_ERROR` | 네트워크 오류 | 연결 상태 확인 |
-| `TRANSACTION_FAILED` | 트랜잭션 실패 | 트랜잭션 로그 확인 |
+| 코드                   | 설명                   | 해결 방법          |
+| ---------------------- | ---------------------- | ------------------ |
+| `INVALID_API_KEY`      | API 키가 유효하지 않음 | API 키 확인        |
+| `PAYMENT_NOT_FOUND`    | 결제를 찾을 수 없음    | paymentId 확인     |
+| `INSUFFICIENT_BALANCE` | 잔액 부족              | 토큰 잔액 확인     |
+| `NETWORK_ERROR`        | 네트워크 오류          | 연결 상태 확인     |
+| `TRANSACTION_FAILED`   | 트랜잭션 실패          | 트랜잭션 로그 확인 |
 
 ### 에러 처리 패턴
 
@@ -613,7 +603,7 @@ try {
         // API 키 설정 확인
         break;
       default:
-        // 일반 에러 처리
+      // 일반 에러 처리
     }
   } else {
     console.error('알 수 없는 에러:', error);

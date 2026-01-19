@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
-import { useAccount, useChainId } from "wagmi";
-import { formatUnits } from "viem";
-import { getPaymentHistory, PaymentHistoryItem } from "@/lib/api";
-import { formatTimestamp } from "@/lib/utils";
-import { CopyButton } from "./CopyButton";
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useAccount, useChainId } from 'wagmi';
+import { formatUnits } from 'viem';
+import { getPaymentHistory, PaymentHistoryItem } from '@/lib/api';
+import { formatTimestamp } from '@/lib/utils';
+import { CopyButton } from './CopyButton';
 
 // Address display with copy button - shows more characters
 function AddressWithCopy({ address, label }: { address: string; label: string }) {
@@ -48,10 +48,10 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
       if (response.success && response.data) {
         setPayments(response.data);
       } else {
-        setError(response.message || "Failed to fetch payments");
+        setError(response.message || 'Failed to fetch payments');
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to fetch payments";
+      const message = err instanceof Error ? err.message : 'Failed to fetch payments';
       setError(message);
     } finally {
       setLoading(false);
@@ -82,23 +82,19 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <div>
           <h3 className="font-semibold">Recent Payments</h3>
-          <p className="text-xs text-gray-500">
-            From Payment API
-          </p>
+          <p className="text-xs text-gray-500">From Payment API</p>
         </div>
         <button
           onClick={fetchPayments}
           disabled={loading}
           className="px-3 py-1 text-sm bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 rounded-lg hover:bg-primary-200 disabled:opacity-50 transition-colors"
         >
-          {loading ? "Loading..." : "Refresh"}
+          {loading ? 'Loading...' : 'Refresh'}
         </button>
       </div>
 
       <div className="p-4">
-        {error && (
-          <div className="text-center text-red-500 py-4 text-sm">{error}</div>
-        )}
+        {error && <div className="text-center text-red-500 py-4 text-sm">{error}</div>}
 
         {payments.length === 0 && !loading && !error && (
           <p className="text-center text-gray-500 dark:text-gray-400 py-4">
@@ -115,12 +111,14 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
               >
                 {/* Header: Badge + Timestamp */}
                 <div className="flex justify-between items-center mb-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    payment.isGasless
-                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                      : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                  }`}>
-                    {payment.isGasless ? "Gasless" : "Direct"}
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      payment.isGasless
+                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                    }`}
+                  >
+                    {payment.isGasless ? 'Gasless' : 'Direct'}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {formatTimestamp(payment.timestamp)}
@@ -130,7 +128,8 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
                 {/* Amount */}
                 <div className="mb-3">
                   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                    {formatUnits(BigInt(payment.amount), payment.decimals || 18)} {payment.tokenSymbol || "TOKEN"}
+                    {formatUnits(BigInt(payment.amount), payment.decimals || 18)}{' '}
+                    {payment.tokenSymbol || 'TOKEN'}
                   </span>
                 </div>
 
@@ -145,16 +144,19 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
                 </div>
 
                 {/* Explorer link */}
-                {getExplorerUrl(payment.transactionHash) && (
-                  <a
-                    href={getExplorerUrl(payment.transactionHash)!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary-600 hover:underline"
-                  >
-                    View on Explorer →
-                  </a>
-                )}
+                {(() => {
+                  const explorerUrl = getExplorerUrl(payment.transactionHash);
+                  return explorerUrl ? (
+                    <a
+                      href={explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary-600 hover:underline"
+                    >
+                      View on Explorer →
+                    </a>
+                  ) : null;
+                })()}
               </div>
             ))}
           </div>

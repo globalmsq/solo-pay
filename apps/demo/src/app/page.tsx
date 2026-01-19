@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useDisconnect } from "wagmi";
-import { ProductCard } from "@/components/ProductCard";
-import { PaymentHistory, PaymentHistoryRef } from "@/components/PaymentHistory";
-import { Toast } from "@/components/Toast";
-import { PAYMENT_HISTORY_REFRESH_DELAY } from "@/lib/constants";
-import { PRODUCTS } from "@/lib/products";
-import { useChainConfig } from "@/app/providers";
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useDisconnect } from 'wagmi';
+import { ProductCard } from '@/components/ProductCard';
+import { PaymentHistory, PaymentHistoryRef } from '@/components/PaymentHistory';
+import { Toast } from '@/components/Toast';
+import { PAYMENT_HISTORY_REFRESH_DELAY } from '@/lib/constants';
+import { PRODUCTS } from '@/lib/products';
+import { useChainConfig } from '@/app/providers';
 
 export default function Home() {
   const { isConnected, chain } = useAccount();
@@ -26,15 +26,17 @@ export default function Home() {
   }, [chainConfig, walletChainId, isConnected, disconnect]);
 
   // Toast state
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+  } | null>(null);
 
   // PaymentHistory ref for refresh
   const paymentHistoryRef = useRef<PaymentHistoryRef>(null);
 
   // Handle payment success
-  const handlePaymentSuccess = useCallback((txHash: string) => {
-    setToast({ message: "Payment successful!", type: "success" });
-    // Refresh payment history after a short delay to allow blockchain to update
+  const handlePaymentSuccess = useCallback(() => {
+    setToast({ message: 'Payment successful!', type: 'success' });
     setTimeout(() => {
       paymentHistoryRef.current?.refresh();
     }, PAYMENT_HISTORY_REFRESH_DELAY);
@@ -43,21 +45,13 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8">
       {/* Toast notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
       <header className="flex justify-between items-center mb-12">
         <div>
           <h1 className="text-3xl font-bold text-primary-600">MSQ Pay Demo</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Blockchain Payment Gateway
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">Blockchain Payment Gateway</p>
         </div>
         <div className="flex items-center gap-4">
           {/* Current chain info (read-only) */}
@@ -78,9 +72,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         {/* Info banner */}
         <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
-          <h2 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-            How it works
-          </h2>
+          <h2 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">How it works</h2>
           <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
             <li>
               • <strong>Direct Payment:</strong> You pay gas fees

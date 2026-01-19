@@ -87,7 +87,7 @@ export async function healthRoutes(
       try {
         await relayService.getRelayerInfo();
         return { ready: true };
-      } catch (error) {
+      } catch {
         reply.status(503);
         return {
           ready: false,

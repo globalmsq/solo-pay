@@ -9,6 +9,7 @@ Simple Relayer is a lightweight HTTP service that replaces production Relayer AP
 Provides the same API interface for testing Gasless payments without external Relayer services during local development.
 
 **Purpose**:
+
 - Docker Compose local development environment
 - Gasless payment testing on Hardhat network
 - HTTP service compatible with production Relayer API
@@ -25,13 +26,13 @@ Provides the same API interface for testing Gasless payments without external Re
 
 ## Tech Stack
 
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Framework | Fastify | ^5.0.0 |
-| Blockchain | viem | ^2.21.0 |
-| Runtime | Node.js | 18+ |
-| Language | TypeScript | ^5.4.0 |
-| Testing | Vitest | ^2.0.0 |
+| Component  | Technology | Version |
+| ---------- | ---------- | ------- |
+| Framework  | Fastify    | ^5.0.0  |
+| Blockchain | viem       | ^2.21.0 |
+| Runtime    | Node.js    | 18+     |
+| Language   | TypeScript | ^5.4.0  |
+| Testing    | Vitest     | ^2.0.0  |
 
 ## Getting Started
 
@@ -82,6 +83,7 @@ Server runs at `http://localhost:3001`.
 Execute Meta-Transaction. Compatible with production Relayer API.
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:3001/txs \
   -H "Content-Type: application/json" \
@@ -94,12 +96,14 @@ curl -X POST http://localhost:3001/txs \
 ```
 
 **Request Parameters**:
+
 - `to` (required): Forwarder contract address
 - `data` (required): ERC2771Forwarder.execute() call data (encoded ForwardRequest)
 - `speed` (optional): Gas price setting (`safeLow`, `average`, `fast`, `fastest`) - currently ignored
 - `gasLimit` (optional): Gas limit - currently ignored
 
 **Response**:
+
 ```json
 {
   "transactionId": "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
@@ -110,6 +114,7 @@ curl -X POST http://localhost:3001/txs \
 ```
 
 **Response Fields**:
+
 - `transactionId`: Unique transaction ID (UUID)
 - `hash`: Blockchain transaction hash
 - `status`: Transaction status (`pending`, `mined`, `failed`)
@@ -120,11 +125,13 @@ curl -X POST http://localhost:3001/txs \
 Server health check
 
 **Request**:
+
 ```bash
 curl http://localhost:3001/health
 ```
 
 **Response**:
+
 ```json
 {
   "status": "ok",
@@ -146,7 +153,7 @@ services:
       dockerfile: docker/Dockerfile.packages
       target: simple-relayer
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       PORT: 3001
       RPC_URL: http://hardhat:8545
@@ -222,22 +229,23 @@ pnpm typecheck
 
 ## Production Relayer vs Simple Relayer
 
-| Feature | Production Relayer | Simple Relayer |
-|---------|-------------------|----------------|
-| **Environment** | Production | Development |
-| **Authentication** | API Key + Secret | None |
-| **Gas Management** | Auto-refill, gas price optimization | Fixed (Hardhat default) |
-| **Monitoring** | Dashboard, alerts | Logs only |
-| **Nonce Management** | Automatic | viem auto-handling |
-| **Retry Logic** | Yes | No |
-| **Cost** | Paid | Free |
-| **Setup** | Complex | Simple |
+| Feature              | Production Relayer                  | Simple Relayer          |
+| -------------------- | ----------------------------------- | ----------------------- |
+| **Environment**      | Production                          | Development             |
+| **Authentication**   | API Key + Secret                    | None                    |
+| **Gas Management**   | Auto-refill, gas price optimization | Fixed (Hardhat default) |
+| **Monitoring**       | Dashboard, alerts                   | Logs only               |
+| **Nonce Management** | Automatic                           | viem auto-handling      |
+| **Retry Logic**      | Yes                                 | No                      |
+| **Cost**             | Paid                                | Free                    |
+| **Setup**            | Complex                             | Simple                  |
 
 ## Security Considerations
 
 ⚠️ **Do Not Use in Production**: This service is for development only.
 
 **Reasons to use only in development**:
+
 - No authentication (anyone can execute transactions)
 - No gas management (Relayer balance can be depleted)
 - Minimal error handling
@@ -245,6 +253,7 @@ pnpm typecheck
 - Potential nonce conflicts
 
 **Relayer Private Key Management**:
+
 - Use test accounts only
 - Never use accounts with real assets
 - Do not commit `.env` file to Git

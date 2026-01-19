@@ -29,6 +29,7 @@ MSQPay uses a 3-tier architecture:
 ```
 
 **Core Principles:**
+
 - Frontend never communicates directly with MSQPay server
 - All API calls are proxied through merchant server
 - API keys are used server-side only (security)
@@ -55,11 +56,11 @@ MSQPAY_API_URL=http://localhost:3001
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 ```
 
-| Variable | Required | Location | Description |
-|----------|----------|----------|-------------|
-| `MSQPAY_API_KEY` | ✅ | Server | MSQPay server authentication key |
-| `MSQPAY_API_URL` | ❌ | Server | Payment server URL (default: localhost:3001) |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅ | Client | Issued from [WalletConnect](https://cloud.walletconnect.com/) |
+| Variable                               | Required | Location | Description                                                   |
+| -------------------------------------- | -------- | -------- | ------------------------------------------------------------- |
+| `MSQPAY_API_KEY`                       | ✅       | Server   | MSQPay server authentication key                              |
+| `MSQPAY_API_URL`                       | ❌       | Server   | Payment server URL (default: localhost:3001)                  |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅       | Client   | Issued from [WalletConnect](https://cloud.walletconnect.com/) |
 
 > **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the payment server's database. Wallet connection is handled through RainbowKit.
 
@@ -106,7 +107,7 @@ export function getMSQPayClient(): MSQPayClient {
     msqpayClient = new MSQPayClient({
       environment: 'custom',
       apiUrl: apiUrl,
-      apiKey: process.env.MSQPAY_API_KEY || ''
+      apiKey: process.env.MSQPAY_API_KEY || '',
     });
   }
   return msqpayClient;
@@ -114,6 +115,7 @@ export function getMSQPayClient(): MSQPayClient {
 ```
 
 **Environment Options:**
+
 - `development`: Development server (uses default URL)
 - `staging`: Staging server
 - `production`: Production server
@@ -132,10 +134,7 @@ API endpoints to implement on merchant server.
 import { NextRequest, NextResponse } from 'next/server';
 import { getMSQPayClient } from '@/lib/msqpay-server';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { paymentId: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { paymentId: string } }) {
   try {
     const client = getMSQPayClient();
     const result = await client.getPaymentStatus(params.paymentId);
@@ -180,10 +179,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
 ```
@@ -195,10 +191,7 @@ export async function GET(request: NextRequest) {
 import { NextRequest, NextResponse } from 'next/server';
 import { getMSQPayClient } from '@/lib/msqpay-server';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { paymentId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { paymentId: string } }) {
   try {
     const client = getMSQPayClient();
     const body = await request.json();
@@ -206,7 +199,7 @@ export async function POST(
     const result = await client.submitGasless({
       paymentId: params.paymentId,
       forwarderAddress: body.forwarderAddress,
-      forwardRequest: body.forwardRequest
+      forwardRequest: body.forwardRequest,
     });
 
     return NextResponse.json(result);
@@ -226,10 +219,7 @@ export async function POST(
 import { NextRequest, NextResponse } from 'next/server';
 import { getMSQPayClient } from '@/lib/msqpay-server';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { paymentId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { paymentId: string } }) {
   try {
     const client = getMSQPayClient();
     const body = await request.json();
@@ -237,7 +227,7 @@ export async function POST(
     const result = await client.executeRelay({
       paymentId: params.paymentId,
       transactionData: body.transactionData,
-      gasEstimate: body.gasEstimate
+      gasEstimate: body.gasEstimate,
     });
 
     return NextResponse.json(result);
@@ -384,9 +374,9 @@ export async function POST(request: NextRequest) {
         products: productInfos,
         totalAmount: totalAmount.toString(),
         chainId: payment.chainId,
-        tokenSymbol: payment.tokenSymbol,       // From on-chain via pay-server
+        tokenSymbol: payment.tokenSymbol, // From on-chain via pay-server
         tokenAddress: payment.tokenAddress,
-        decimals: payment.tokenDecimals,        // From on-chain via pay-server
+        decimals: payment.tokenDecimals, // From on-chain via pay-server
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
         recipientAddress: merchantConfig.recipientAddress,
@@ -498,8 +488,8 @@ async function submitGaslessPayment(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       forwarderAddress,
-      forwardRequest
-    })
+      forwardRequest,
+    }),
   });
 
   const result = await response.json();
@@ -534,7 +524,7 @@ async function waitForPaymentConfirmation(
     }
 
     // Wait then retry if pending
-    await new Promise(resolve => setTimeout(resolve, intervalMs));
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
 
   throw new Error('Payment confirmation timeout');
@@ -584,13 +574,13 @@ MSQPay covers gas fees.
 
 ### SDK Error Codes
 
-| Code | Description | Solution |
-|------|-------------|----------|
-| `INVALID_API_KEY` | Invalid API key | Check API key |
-| `PAYMENT_NOT_FOUND` | Payment not found | Verify paymentId |
-| `INSUFFICIENT_BALANCE` | Insufficient balance | Check token balance |
-| `NETWORK_ERROR` | Network error | Check connection status |
-| `TRANSACTION_FAILED` | Transaction failed | Check transaction logs |
+| Code                   | Description          | Solution                |
+| ---------------------- | -------------------- | ----------------------- |
+| `INVALID_API_KEY`      | Invalid API key      | Check API key           |
+| `PAYMENT_NOT_FOUND`    | Payment not found    | Verify paymentId        |
+| `INSUFFICIENT_BALANCE` | Insufficient balance | Check token balance     |
+| `NETWORK_ERROR`        | Network error        | Check connection status |
+| `TRANSACTION_FAILED`   | Transaction failed   | Check transaction logs  |
 
 ### Error Handling Pattern
 
@@ -611,7 +601,7 @@ try {
         // Check API key configuration
         break;
       default:
-        // General error handling
+      // General error handling
     }
   } else {
     console.error('Unknown error:', error);

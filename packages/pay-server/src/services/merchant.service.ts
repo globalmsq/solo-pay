@@ -55,16 +55,11 @@ export class MerchantService {
   }
 
   async findAll(includeDisabled: boolean = false): Promise<Merchant[]> {
-    const whereClause: any = {
-      is_deleted: false,
-    };
-
-    if (!includeDisabled) {
-      whereClause.is_enabled = true;
-    }
-
     return this.prisma.merchant.findMany({
-      where: whereClause,
+      where: {
+        is_deleted: false,
+        ...(includeDisabled ? {} : { is_enabled: true }),
+      },
       orderBy: { created_at: 'asc' },
     });
   }

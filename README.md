@@ -10,12 +10,12 @@ A blockchain payment system that multiple services can integrate with.
 
 ### Core Principles
 
-| Principle | Description |
-|-----------|-------------|
-| **Contract = Source of Truth** | Payment completion is determined solely by smart contracts |
-| **Integrated DB Architecture** | MySQL + Redis caching integration, maintaining Contract = Source of Truth |
-| **Consistent API Interface** | Same API interface for both MVP and Production |
-| **Server-Issued paymentId** | Payment server is the sole creator of paymentId |
+| Principle                                   | Description                                                                |
+| ------------------------------------------- | -------------------------------------------------------------------------- |
+| **Contract = Source of Truth**              | Payment completion is determined solely by smart contracts                 |
+| **Integrated DB Architecture**              | MySQL + Redis caching integration, maintaining Contract = Source of Truth  |
+| **Consistent API Interface**                | Same API interface for both MVP and Production                             |
+| **Server-Issued paymentId**                 | Payment server is the sole creator of paymentId                            |
 | **Merchant Server ↔ Blockchain Separation** | Merchant servers only call payment server API, no direct blockchain access |
 
 ### Features
@@ -87,13 +87,13 @@ docker-compose logs -f server
 
 ### Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| mysql | 3306 | Payment data (root/pass) |
-| redis | 6379 | Caching |
-| hardhat | 8545 | Local blockchain |
-| server | 3001 | Payment API |
-| demo | 3000 | Frontend |
+| Service | Port | Description              |
+| ------- | ---- | ------------------------ |
+| mysql   | 3306 | Payment data (root/pass) |
+| redis   | 6379 | Caching                  |
+| hardhat | 8545 | Local blockchain         |
+| server  | 3001 | Payment API              |
+| demo    | 3000 | Frontend                 |
 
 ### Commands
 
@@ -146,11 +146,11 @@ pnpm dev
 
 ### Contracts (Polygon Amoy Testnet)
 
-| Contract | Address |
-|----------|---------|
-| PaymentGateway (Proxy) | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
+| Contract                | Address                                      |
+| ----------------------- | -------------------------------------------- |
+| PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
+| ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 
 Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 
@@ -162,7 +162,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 // Initialize
 const client = new MSQPayClient({
   environment: 'development', // or 'custom' + apiUrl
-  apiKey: 'sk_test_abc123'
+  apiKey: 'sk_test_abc123',
 });
 
 // Create payment (called from merchant server)
@@ -171,7 +171,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 // Check status (chainId not required - auto-determined by server)
@@ -181,15 +181,15 @@ console.log(status.data.status); // "pending" | "completed"
 // Submit gasless transaction (EIP-712 signature required)
 const gaslessResult = await client.submitGasless({
   paymentId: payment.paymentId,
-  forwarderAddress: '0x...',  // ERC2771Forwarder contract address
-  forwardRequest: { from, to, value, gas, deadline, data, signature: '0x...' }
+  forwarderAddress: '0x...', // ERC2771Forwarder contract address
+  forwardRequest: { from, to, value, gas, deadline, data, signature: '0x...' },
 });
 
 // Execute relay transaction
 const relayResult = await client.executeRelay({
   paymentId: payment.paymentId,
   transactionData: '0x...',
-  gasEstimate: 100000
+  gasEstimate: 100000,
 });
 ```
 
@@ -199,35 +199,41 @@ const relayResult = await client.executeRelay({
 
 ### Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/payments/create` | POST | Create payment, issue paymentId |
-| `/api/checkout` | POST | Product-based payment (Demo App API Route) |
-| `/payments/:id/status` | GET | Check payment status (chainId auto-determined) |
-| `/payments/:id/gasless` | POST | Submit gasless transaction |
-| `/payments/:id/relay` | POST | Execute relay transaction |
-| `/payments/history` | GET | Query payment history (payer-based) |
-| `/tokens/balance` | GET | Query token balance |
-| `/tokens/allowance` | GET | Query token approval amount |
-| `/transactions/:id/status` | GET | Query transaction status |
+| Endpoint                   | Method | Purpose                                        |
+| -------------------------- | ------ | ---------------------------------------------- |
+| `/payments/create`         | POST   | Create payment, issue paymentId                |
+| `/api/checkout`            | POST   | Product-based payment (Demo App API Route)     |
+| `/payments/:id/status`     | GET    | Check payment status (chainId auto-determined) |
+| `/payments/:id/gasless`    | POST   | Submit gasless transaction                     |
+| `/payments/:id/relay`      | POST   | Execute relay transaction                      |
+| `/payments/history`        | GET    | Query payment history (payer-based)            |
+| `/tokens/balance`          | GET    | Query token balance                            |
+| `/tokens/allowance`        | GET    | Query token approval amount                    |
+| `/transactions/:id/status` | GET    | Query transaction status                       |
 
 ### Recently Added Features
 
 #### Payment History API
+
 Query user payment history from blockchain events and DB:
+
 - **Endpoint**: `GET /payments/history?chainId={}&payer={}&limit={}`
 - **Function**: Query history based on payer address
 - **Response**: Payment list (includes gasless status, relay ID, token decimals/symbol)
 
 #### Token Balance/Allowance API
+
 Query ERC-20 token wallet status:
+
 - **Endpoint**: `GET /tokens/balance?tokenAddress={addr}&address={wallet}`
 - **Function**: Query user wallet token balance
 - **Endpoint**: `GET /tokens/allowance?tokenAddress={addr}&owner={addr}&spender={addr}`
 - **Function**: Query token approval amount
 
 #### Transaction Status API
+
 Query transaction status and confirmation info:
+
 - **Endpoint**: `GET /transactions/:id/status`
 - **Function**: Query status, block number, confirmation count by transaction hash
 - **Status values**: `pending` (waiting), `confirmed` (confirmed), `failed` (failed)
@@ -236,13 +242,13 @@ Query transaction status and confirmation info:
 
 Key environment variables for the payment server:
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `DATABASE_URL` | MySQL connection string | `mysql://user:pass@localhost:3306/msqpay` |
-| `REDIS_URL` | Redis connection string (optional) | `redis://localhost:6379` |
-| `RELAYER_API_URL` | Relayer service endpoint | `http://simple-relayer:3001` |
-| `RELAYER_API_KEY` | Relayer API key (production only) | `sk_...` |
-| `RELAYER_API_SECRET` | Relayer API secret (production only) | `secret_...` |
+| Variable             | Purpose                              | Example                                   |
+| -------------------- | ------------------------------------ | ----------------------------------------- |
+| `DATABASE_URL`       | MySQL connection string              | `mysql://user:pass@localhost:3306/msqpay` |
+| `REDIS_URL`          | Redis connection string (optional)   | `redis://localhost:6379`                  |
+| `RELAYER_API_URL`    | Relayer service endpoint             | `http://simple-relayer:3001`              |
+| `RELAYER_API_KEY`    | Relayer API key (production only)    | `sk_...`                                  |
+| `RELAYER_API_SECRET` | Relayer API secret (production only) | `secret_...`                              |
 
 > **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the database `chains` table, not environment variables. See [Pay Server README](./packages/pay-server/README.md#multi-chain-configuration) for details.
 
@@ -259,17 +265,17 @@ Key environment variables for the payment server:
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Smart Contract | Solidity 0.8.24, OpenZeppelin 5.x |
-| Contract Framework | Hardhat |
-| Payment Server | Node.js, Fastify v5, viem v2.21 |
-| Payment Server Tests | Vitest, Pino structured logging |
-| SDK | TypeScript, Node 18+ native fetch (no dependencies) |
-| SDK Tests | Vitest, 100% coverage |
-| Relay | Relayer Service (dev: Simple Relayer / prod: OpenZeppelin Defender) |
-| Demo App | Next.js 14, wagmi, RainbowKit |
-| Package Manager | pnpm |
+| Component            | Technology                                                          |
+| -------------------- | ------------------------------------------------------------------- |
+| Smart Contract       | Solidity 0.8.24, OpenZeppelin 5.x                                   |
+| Contract Framework   | Hardhat                                                             |
+| Payment Server       | Node.js, Fastify v5, viem v2.21                                     |
+| Payment Server Tests | Vitest, Pino structured logging                                     |
+| SDK                  | TypeScript, Node 18+ native fetch (no dependencies)                 |
+| SDK Tests            | Vitest, 100% coverage                                               |
+| Relay                | Relayer Service (dev: Simple Relayer / prod: OpenZeppelin Defender) |
+| Demo App             | Next.js 14, wagmi, RainbowKit                                       |
+| Package Manager      | pnpm                                                                |
 
 ## License
 

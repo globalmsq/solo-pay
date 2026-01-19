@@ -11,6 +11,7 @@ pnpm add @globalmsq/msqpay
 ```
 
 **Requirements**:
+
 - Node.js >= 18.0.0
 - TypeScript >= 5.0 (optional)
 
@@ -20,19 +21,19 @@ pnpm add @globalmsq/msqpay
 import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
-  environment: 'development',  // or 'staging', 'production', 'custom'
-  apiKey: 'your-api-key'
+  environment: 'development', // or 'staging', 'production', 'custom'
+  apiKey: 'your-api-key',
 });
 ```
 
 ### Environment Configuration
 
-| Environment | API URL |
-|-------------|---------|
-| development | http://localhost:3001 |
-| staging | https://pay-api.staging.msq.com |
-| production | https://pay-api.msq.com |
-| custom | Requires `apiUrl` parameter |
+| Environment | API URL                         |
+| ----------- | ------------------------------- |
+| development | http://localhost:3001           |
+| staging     | https://pay-api.staging.msq.com |
+| production  | https://pay-api.msq.com         |
+| custom      | Requires `apiUrl` parameter     |
 
 ## Direct Payment Implementation
 
@@ -46,7 +47,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 console.log(payment.paymentId); // "0x..."
@@ -64,7 +65,7 @@ await writeContract({
   address: payment.gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, token, amount, merchant]
+  args: [paymentId, token, amount, merchant],
 });
 ```
 
@@ -103,7 +104,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 ```
 
@@ -112,16 +113,17 @@ const payment = await client.createPayment({
 ```typescript
 const gaslessResult = await client.submitGasless({
   paymentId: payment.paymentId,
-  forwarderAddress: '0x...',  // ERC2771Forwarder address
-  forwardRequest: {           // ForwardRequest object
+  forwarderAddress: '0x...', // ERC2771Forwarder address
+  forwardRequest: {
+    // ForwardRequest object
     from: userAddress,
     to: gatewayAddress,
     value: '0',
     gas: '200000',
     deadline: Math.floor(Date.now() / 1000) + 3600,
     data: '0x...',
-    signature: '0x...'        // EIP-712 signature
-  }
+    signature: '0x...', // EIP-712 signature
+  },
 });
 
 console.log(gaslessResult.relayRequestId); // "relay-123"
@@ -139,13 +141,13 @@ const signature = await signTypedData({
   domain: typedData.domain,
   types: typedData.types,
   primaryType: typedData.primaryType,
-  message: typedData.message
+  message: typedData.message,
 });
 
 // Send signature to store server
 await fetch('/api/payments/relay', {
   method: 'POST',
-  body: JSON.stringify({ paymentId, signature, forwardRequest })
+  body: JSON.stringify({ paymentId, signature, forwardRequest }),
 });
 ```
 
@@ -164,10 +166,10 @@ console.log(status.data.status); // "pending" | "confirmed" | "completed"
 const history = await client.getPaymentHistory({
   chainId: 31337,
   payer: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  limit: 100
+  limit: 100,
 });
 
-history.data.forEach(payment => {
+history.data.forEach((payment) => {
   console.log(`${payment.paymentId}: ${payment.amount}`);
   console.log(`Gasless: ${payment.isGasless}`);
 });
@@ -177,18 +179,18 @@ history.data.forEach(payment => {
 
 ### Top 10 Error Codes
 
-| Error Code | HTTP Status | Description | Solution |
-|----------|----------|------|----------|
-| `VALIDATION_ERROR` | 400 | Input validation failed | Check input data |
-| `INVALID_REQUEST` | 400 | Invalid request | Verify API format |
-| `INVALID_SIGNATURE` | 400 | Signature verification failed | Regenerate EIP-712 signature |
-| `INVALID_TRANSACTION_DATA` | 400 | Invalid TX data | Verify transaction data |
-| `INVALID_GAS_ESTIMATE` | 400 | Invalid gas estimate | Recalculate gas value |
-| `NOT_FOUND` | 404 | Payment not found | Check paymentId |
-| `PAYMENT_ALREADY_PROCESSED` | 400 | Already processed payment | Prevent duplicate submission |
-| `INSUFFICIENT_BALANCE` | 400 | Insufficient token balance | Check user balance |
-| `INSUFFICIENT_ALLOWANCE` | 400 | Insufficient approval | Token approval needed |
-| `INTERNAL_ERROR` | 500 | Server error | Retry or contact support |
+| Error Code                  | HTTP Status | Description                   | Solution                     |
+| --------------------------- | ----------- | ----------------------------- | ---------------------------- |
+| `VALIDATION_ERROR`          | 400         | Input validation failed       | Check input data             |
+| `INVALID_REQUEST`           | 400         | Invalid request               | Verify API format            |
+| `INVALID_SIGNATURE`         | 400         | Signature verification failed | Regenerate EIP-712 signature |
+| `INVALID_TRANSACTION_DATA`  | 400         | Invalid TX data               | Verify transaction data      |
+| `INVALID_GAS_ESTIMATE`      | 400         | Invalid gas estimate          | Recalculate gas value        |
+| `NOT_FOUND`                 | 404         | Payment not found             | Check paymentId              |
+| `PAYMENT_ALREADY_PROCESSED` | 400         | Already processed payment     | Prevent duplicate submission |
+| `INSUFFICIENT_BALANCE`      | 400         | Insufficient token balance    | Check user balance           |
+| `INSUFFICIENT_ALLOWANCE`    | 400         | Insufficient approval         | Token approval needed        |
+| `INTERNAL_ERROR`            | 500         | Server error                  | Retry or contact support     |
 
 ### Error Handling Example
 
@@ -224,7 +226,7 @@ try {
 ```typescript
 // ❌ Wrong approach (amount manipulation possible)
 app.post('/api/checkout', async (req, res) => {
-  const { amount } = req.body;  // Received from frontend → Dangerous!
+  const { amount } = req.body; // Received from frontend → Dangerous!
   await client.createPayment({ amount });
 });
 ```
@@ -234,11 +236,11 @@ app.post('/api/checkout', async (req, res) => {
 ```typescript
 // ✅ Correct approach
 app.post('/api/checkout', async (req, res) => {
-  const { productId } = req.body;  // Only receive productId
+  const { productId } = req.body; // Only receive productId
 
   // Query actual price from DB
   const product = await db.products.findById(productId);
-  const amount = product.price;  // Server determines price
+  const amount = product.price; // Server determines price
 
   await client.createPayment({ amount });
 });
@@ -269,7 +271,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   environment: 'production',
-  apiKey: process.env.MSQPAY_API_KEY!
+  apiKey: process.env.MSQPAY_API_KEY!,
 });
 
 app.post('/api/checkout', async (req, res) => {
@@ -283,15 +285,14 @@ app.post('/api/checkout', async (req, res) => {
     // 3. Create payment
     const payment = await client.createPayment({
       merchantId: 'merchant_001',
-      amount: product.price,  // Price determined by server
+      amount: product.price, // Price determined by server
       chainId: 31337,
       recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+      tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     });
 
     // 4. Return paymentId
     res.json({ paymentId: payment.paymentId });
-
   } catch (error) {
     if (error instanceof MSQPayError) {
       res.status(error.statusCode).json({ error: error.message });
@@ -313,7 +314,7 @@ app.get('/api/payments/:id/status', async (req, res) => {
 const response = await fetch('/api/checkout', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ productId: 'prod_001' })
+  body: JSON.stringify({ productId: 'prod_001' }),
 });
 
 const { paymentId } = await response.json();
@@ -323,7 +324,7 @@ await writeContract({
   address: gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, tokenAddress, amount, merchantAddress]
+  args: [paymentId, tokenAddress, amount, merchantAddress],
 });
 
 // 3. Check payment status (2 second interval)

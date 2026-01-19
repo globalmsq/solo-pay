@@ -20,7 +20,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 // 클라이언트 초기화
 const client = new MSQPayClient({
   environment: 'production',
-  apiKey: 'your-api-key'
+  apiKey: 'your-api-key',
 });
 
 // 결제 생성
@@ -29,7 +29,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 console.log(`Payment created: ${payment.paymentId}`);
@@ -50,14 +50,14 @@ console.log(`Payment created: ${payment.paymentId}`);
 // 개발 환경
 const devClient = new MSQPayClient({
   environment: 'development',
-  apiKey: 'dev-api-key'
+  apiKey: 'dev-api-key',
 });
 
 // 커스텀 환경
 const customClient = new MSQPayClient({
   environment: 'custom',
   apiKey: 'custom-api-key',
-  apiUrl: 'https://my-api.example.com'
+  apiUrl: 'https://my-api.example.com',
 });
 ```
 
@@ -229,15 +229,15 @@ try {
 
 ### 에러 코드
 
-| 코드 | HTTP 상태 | 설명 |
-|------|------------|------------|
-| `VALIDATION_ERROR` | 400 | 입력 검증 실패 |
-| `INVALID_REQUEST` | 400 | 잘못된 요청 형식 |
-| `INVALID_SIGNATURE` | 400 | 잘못된 서명 형식 |
-| `INVALID_TRANSACTION_DATA` | 400 | 잘못된 트랜잭션 데이터 |
-| `INVALID_GAS_ESTIMATE` | 400 | 잘못된 가스 추정 |
-| `NOT_FOUND` | 404 | 결제를 찾을 수 없음 |
-| `INTERNAL_ERROR` | 500 | 서버 오류 |
+| 코드                       | HTTP 상태 | 설명                   |
+| -------------------------- | --------- | ---------------------- |
+| `VALIDATION_ERROR`         | 400       | 입력 검증 실패         |
+| `INVALID_REQUEST`          | 400       | 잘못된 요청 형식       |
+| `INVALID_SIGNATURE`        | 400       | 잘못된 서명 형식       |
+| `INVALID_TRANSACTION_DATA` | 400       | 잘못된 트랜잭션 데이터 |
+| `INVALID_GAS_ESTIMATE`     | 400       | 잘못된 가스 추정       |
+| `NOT_FOUND`                | 404       | 결제를 찾을 수 없음    |
+| `INTERNAL_ERROR`           | 500       | 서버 오류              |
 
 ## TypeScript 타입
 
@@ -259,7 +259,7 @@ import {
   GetPaymentHistoryParams,
   PaymentHistoryItem,
   PaymentHistoryResponse,
-  ErrorResponse
+  ErrorResponse,
 } from '@globalmsq/msqpay';
 ```
 
@@ -278,27 +278,27 @@ interface CreatePaymentParams {
   userId: string;
   amount: number;
   currency?: 'USD' | 'EUR' | 'KRW';
-  tokenAddress: string;      // 0x + 40 hex 문자
-  recipientAddress: string;  // 0x + 40 hex 문자
+  tokenAddress: string; // 0x + 40 hex 문자
+  recipientAddress: string; // 0x + 40 hex 문자
   description?: string;
 }
 
 interface GaslessParams {
   paymentId: string;
-  forwarderAddress: string;  // 0x + 40 hex 문자
-  signature: string;         // 0x hex 문자열
+  forwarderAddress: string; // 0x + 40 hex 문자
+  signature: string; // 0x hex 문자열
 }
 
 interface RelayParams {
   paymentId: string;
-  transactionData: string;   // 0x hex 문자열
+  transactionData: string; // 0x hex 문자열
   gasEstimate: number;
 }
 
 interface GetPaymentHistoryParams {
-  chainId: number;           // 블록체인 체인 ID
-  payer: string;             // 지불자 지갑 주소 (0x + 40 hex)
-  limit?: number;            // 선택사항: 레코드 수
+  chainId: number; // 블록체인 체인 ID
+  payer: string; // 지불자 지갑 주소 (0x + 40 hex)
+  limit?: number; // 선택사항: 레코드 수
 }
 
 interface PaymentHistoryItem {
@@ -325,7 +325,7 @@ import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
 async function processPayment() {
   const client = new MSQPayClient({
     environment: 'production',
-    apiKey: process.env.MSQPAY_API_KEY!
+    apiKey: process.env.MSQPAY_API_KEY!,
   });
 
   try {
@@ -336,13 +336,13 @@ async function processPayment() {
       amount: 100,
       chainId: 31337,
       tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     });
     console.log(`Payment created: ${payment.paymentId}`);
 
     // 단계 2: 결제 상태 확인
     console.log('Checking payment status...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     const status = await client.getPaymentStatus(payment.paymentId);
     console.log(`Payment status: ${status.data.status}`);
 
@@ -353,9 +353,14 @@ async function processPayment() {
         paymentId: payment.paymentId,
         forwarderAddress: '0x9e5b65f2d0ca4541925d7c4cc5367cbeca076f82',
         forwardRequest: {
-          from: '0x...', to: '0x...', value: '0', gas: '200000',
-          deadline: '1234567890', data: '0x...', signature: '0x...'
-        }
+          from: '0x...',
+          to: '0x...',
+          value: '0',
+          gas: '200000',
+          deadline: '1234567890',
+          data: '0x...',
+          signature: '0x...',
+        },
       });
       console.log(`릴레이 요청: ${gaslessResult.relayRequestId}`);
     }
@@ -405,6 +410,7 @@ MIT
 ## 지원
 
 문제나 질문이 있는 경우:
+
 1. 발생한 `MSQPayError`의 에러 코드 및 상세 정보 확인
 2. API 키 및 환경 설정 확인
 3. Node.js 버전 >= 18.0.0 확인

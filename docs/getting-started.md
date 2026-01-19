@@ -9,6 +9,7 @@ A blockchain payment gateway that enables integration for multiple stores
 MSQPay is an ERC-20 token-based blockchain payment system. Store servers can create payments through the SDK, and users can pay via Direct Payment (paying gas fees directly) or Gasless Payment (gas fees subsidized).
 
 **Key Features**:
+
 - Smart contract as the single source of truth (Contract = Source of Truth)
 - Support for both Direct Payment and Gasless Payment
 - TypeScript SDK provided
@@ -32,11 +33,11 @@ docker-compose ps
 
 ### 2. Access Services
 
-| Service | URL | Description |
-|--------|-----|------|
-| Demo App | http://localhost:3000 | Frontend |
-| Payment Server | http://localhost:3001 | API Server |
-| Hardhat | http://localhost:8545 | Local Blockchain |
+| Service        | URL                   | Description      |
+| -------------- | --------------------- | ---------------- |
+| Demo App       | http://localhost:3000 | Frontend         |
+| Payment Server | http://localhost:3001 | API Server       |
+| Hardhat        | http://localhost:8545 | Local Blockchain |
 
 ### 3. Health Check
 
@@ -52,21 +53,25 @@ curl http://localhost:3001/health
 #### Store Developers
 
 To integrate payment features into your store:
+
 - [Integrate Payment](guides/integrate-payment.md) - SDK usage, Direct/Gasless payment implementation
 
 #### Operators
 
 To deploy payment server:
+
 - [Deploy Server](guides/deploy-server.md) - Docker, environment variables, production checklist
 
 #### Contributors
 
 To contribute to the project:
+
 - [Contribute Code](guides/contribute.md) - Local development setup, PR process
 
 #### Reference
 
 For detailed information:
+
 - [API Reference](reference/api.md) - All API endpoints
 - [SDK Reference](reference/sdk.md) - MSQPayClient methods
 - [System Architecture](reference/architecture.md) - Complete system diagram
@@ -106,10 +111,10 @@ Service subsidizes gas fees:
 
 ## Supported Networks
 
-| Network | Chain ID | Token |
-|---------|----------|------|
-| Polygon Amoy (Testnet) | 80002 | SUT |
-| Hardhat (Local) | 31337 | TEST |
+| Network                | Chain ID | Token |
+| ---------------------- | -------- | ----- |
+| Polygon Amoy (Testnet) | 80002    | SUT   |
+| Hardhat (Local)        | 31337    | TEST  |
 
 ## Troubleshooting
 

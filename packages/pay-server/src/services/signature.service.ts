@@ -1,8 +1,4 @@
-import {
-  TypedDataDomain,
-  TypedDataParameter,
-  recoverTypedDataAddress,
-} from 'viem';
+import { TypedDataDomain, TypedDataParameter, recoverTypedDataAddress } from 'viem';
 import { Address } from 'viem';
 
 interface ForwardRequest extends Record<string, unknown> {
@@ -89,13 +85,13 @@ export class SignatureService {
       const domain = this.getDomain();
       const types = this.getForwardRequestTypes();
 
-      const recoveredAddress = recoverTypedDataAddress({
+      const recoveredAddress = await recoverTypedDataAddress({
         domain,
         types,
         primaryType: 'ForwardRequest',
-        message: request as unknown as Record<string, unknown>,
+        message: request,
         signature: signature as `0x${string}`,
-      }) as unknown as `0x${string}`;
+      });
 
       return (recoveredAddress as string).toLowerCase() === (request.from as string).toLowerCase();
     } catch {
@@ -108,10 +104,7 @@ export class SignatureService {
    *
    * 서명에서 서명자의 주소를 추출합니다.
    */
-  async recoverSignerAddress(
-    request: ForwardRequest,
-    signature: string
-  ): Promise<Address | null> {
+  async recoverSignerAddress(request: ForwardRequest, signature: string): Promise<Address | null> {
     try {
       if (!this.isValidSignature(signature)) {
         return null;
@@ -124,15 +117,15 @@ export class SignatureService {
       const domain = this.getDomain();
       const types = this.getForwardRequestTypes();
 
-      const recovered = recoverTypedDataAddress({
+      const recovered = await recoverTypedDataAddress({
         domain,
         types,
         primaryType: 'ForwardRequest',
-        message: request as unknown as Record<string, unknown>,
+        message: request,
         signature: signature as `0x${string}`,
-      }) as unknown as `0x${string}`;
+      });
 
-      return recovered as Address;
+      return recovered;
     } catch {
       return null;
     }

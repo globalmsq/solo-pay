@@ -59,7 +59,10 @@ export class PaymentMethodService {
     });
   }
 
-  async findByMerchantAndToken(merchantId: number, tokenId: number): Promise<MerchantPaymentMethod | null> {
+  async findByMerchantAndToken(
+    merchantId: number,
+    tokenId: number
+  ): Promise<MerchantPaymentMethod | null> {
     return this.prisma.merchantPaymentMethod.findFirst({
       where: {
         merchant_id: merchantId,
@@ -69,7 +72,10 @@ export class PaymentMethodService {
     });
   }
 
-  async findByMerchantAndTokenIncludingDeleted(merchantId: number, tokenId: number): Promise<MerchantPaymentMethod | null> {
+  async findByMerchantAndTokenIncludingDeleted(
+    merchantId: number,
+    tokenId: number
+  ): Promise<MerchantPaymentMethod | null> {
     return this.prisma.merchantPaymentMethod.findFirst({
       where: {
         merchant_id: merchantId,
@@ -78,7 +84,10 @@ export class PaymentMethodService {
     });
   }
 
-  async restore(id: number, input: { recipient_address: string; is_enabled: boolean }): Promise<MerchantPaymentMethod> {
+  async restore(
+    id: number,
+    input: { recipient_address: string; is_enabled: boolean }
+  ): Promise<MerchantPaymentMethod> {
     return this.prisma.merchantPaymentMethod.update({
       where: { id },
       data: {
@@ -91,13 +100,11 @@ export class PaymentMethodService {
   }
 
   async findAllForMerchant(merchantId: number): Promise<MerchantPaymentMethod[]> {
-    const whereClause: any = {
-      merchant_id: merchantId,
-      is_deleted: false,
-    };
-
     return this.prisma.merchantPaymentMethod.findMany({
-      where: whereClause,
+      where: {
+        merchant_id: merchantId,
+        is_deleted: false,
+      },
       orderBy: { created_at: 'asc' },
     });
   }
@@ -127,7 +134,7 @@ export class PaymentMethodService {
   /**
    * Enrich payment methods with token and chain information using bulk queries
    * This method optimizes the N+1 query problem by fetching all tokens and chains in bulk
-   * 
+   *
    * @param paymentMethods Array of payment methods to enrich
    * @param tokenService TokenService instance for bulk token queries
    * @param chainService ChainService instance for bulk chain queries
@@ -144,21 +151,21 @@ export class PaymentMethodService {
 
     // Extract unique token IDs and chain IDs
     const tokenIds = [...new Set(paymentMethods.map((pm) => pm.token_id))];
-    
+
     // Fetch all tokens in bulk
     const tokens = await tokenService.findByIds(tokenIds);
     const tokenMap = new Map(tokens.map((token) => [token.id, token]));
 
     // Extract unique chain IDs from tokens
     const chainIds = [...new Set(tokens.map((token) => token.chain_id))];
-    
+
     // Fetch all chains in bulk
     const chains = await chainService.findByIds(chainIds);
     const chainMap = new Map(chains.map((chain) => [chain.id, chain]));
 
     // Enrich payment methods with token and chain data
     const enriched: EnrichedPaymentMethod[] = [];
-    
+
     for (const pm of paymentMethods) {
       const token = tokenMap.get(pm.token_id);
       if (!token) {

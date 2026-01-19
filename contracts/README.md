@@ -6,15 +6,15 @@ Smart contract package for the MSQ Pay payment system.
 
 ## Supported Networks
 
-| Network | Chain ID | Type | RPC Fallback |
-|---------|----------|------|--------------|
-| Hardhat Local | 31337 | Development | localhost:8545 |
-| Polygon Amoy | 80002 | Testnet | rpc-amoy.polygon.technology |
-| Polygon | 137 | Mainnet | polygon-rpc.com |
-| Ethereum Sepolia | 11155111 | Testnet | rpc.sepolia.org |
-| Ethereum | 1 | Mainnet | cloudflare-eth.com |
-| BNB Testnet | 97 | Testnet | data-seed-prebsc-1-s1.binance.org |
-| BNB | 56 | Mainnet | bsc-dataseed.binance.org |
+| Network          | Chain ID | Type        | RPC Fallback                      |
+| ---------------- | -------- | ----------- | --------------------------------- |
+| Hardhat Local    | 31337    | Development | localhost:8545                    |
+| Polygon Amoy     | 80002    | Testnet     | rpc-amoy.polygon.technology       |
+| Polygon          | 137      | Mainnet     | polygon-rpc.com                   |
+| Ethereum Sepolia | 11155111 | Testnet     | rpc.sepolia.org                   |
+| Ethereum         | 1        | Mainnet     | cloudflare-eth.com                |
+| BNB Testnet      | 97       | Testnet     | data-seed-prebsc-1-s1.binance.org |
+| BNB              | 56       | Mainnet     | bsc-dataseed.binance.org          |
 
 ## Installation
 
@@ -147,12 +147,12 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 
 ### Polygon Amoy (Testnet)
 
-| Contract | Address |
-|----------|---------|
+| Contract            | Address                                      |
+| ------------------- | -------------------------------------------- |
 | PaymentGatewayProxy | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
-| PaymentGatewayV1 | `0xf5131C2c7140919042f811080D2Be9E8da37F9ED` |
-| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
-| SUT Token | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
+| PaymentGatewayV1    | `0xf5131C2c7140919042f811080D2Be9E8da37F9ED` |
+| ERC2771Forwarder    | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
+| SUT Token           | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
 > [View on Polygonscan](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 

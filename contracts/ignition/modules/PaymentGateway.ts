@@ -1,4 +1,5 @@
-import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+import { buildModule } from '@nomicfoundation/hardhat-ignition/modules';
+import type { IgnitionModuleResult } from '@nomicfoundation/ignition-core';
 
 /**
  * Deployment module for PaymentGateway contracts
@@ -16,10 +17,12 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
  *
  * Note: MockERC20 is deployed separately via MockERC20.ts module
  */
-const PaymentGatewayModule = buildModule("PaymentGateway", (m) => {
+const PaymentGatewayModule: ReturnType<
+  typeof buildModule<'PaymentGateway', string, IgnitionModuleResult<string>>
+> = buildModule('PaymentGateway', (m) => {
   // Get deployment parameters
-  const owner = m.getParameter("owner", m.getAccount(0));
-  const forwarderAddress = m.getParameter<string>("forwarderAddress", "");
+  const owner = m.getParameter('owner', m.getAccount(0));
+  const forwarderAddress = m.getParameter<string>('forwarderAddress', '');
 
   // Deploy or reuse ERC2771Forwarder
   // Note: Ignition's getParameter returns a Future, so we can't use conditional logic directly.
@@ -28,23 +31,23 @@ const PaymentGatewayModule = buildModule("PaymentGateway", (m) => {
 
   if (forwarderAddress) {
     // Reuse existing forwarder (e.g., from msq-relayer-service)
-    forwarder = m.contractAt("ERC2771Forwarder", forwarderAddress, {
-      id: "ExternalForwarder",
+    forwarder = m.contractAt('ERC2771Forwarder', forwarderAddress, {
+      id: 'ExternalForwarder',
     });
   } else {
     // Deploy new forwarder
-    forwarder = m.contract("ERC2771Forwarder", ["MSQForwarder"]);
+    forwarder = m.contract('ERC2771Forwarder', ['MSQForwarder']);
   }
 
   // Deploy PaymentGatewayV1 implementation (with trustedForwarder in constructor)
-  const implementation = m.contract("PaymentGatewayV1", [forwarder]);
+  const implementation = m.contract('PaymentGatewayV1', [forwarder]);
 
   // Encode initialization data (owner only - forwarder is set in constructor)
-  const initData = m.encodeFunctionCall(implementation, "initialize", [owner]);
+  const initData = m.encodeFunctionCall(implementation, 'initialize', [owner]);
 
   // Deploy ERC1967Proxy
-  const proxy = m.contract("ERC1967Proxy", [implementation, initData], {
-    id: "PaymentGatewayProxy",
+  const proxy = m.contract('ERC1967Proxy', [implementation, initData], {
+    id: 'PaymentGatewayProxy',
   });
 
   return {

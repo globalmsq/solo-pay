@@ -81,8 +81,8 @@ describe('RelayService', () => {
   describe('submitTransaction', () => {
     it('트랜잭션을 제출하고 레코드를 반환해야 함', async () => {
       const result = await relayService.submitTransaction({
-        to: '0x' + 'a'.repeat(40) as `0x${string}`,
-        data: '0x' + 'b'.repeat(64) as `0x${string}`,
+        to: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+        data: ('0x' + 'b'.repeat(64)) as `0x${string}`,
       });
 
       expect(result.transactionId).toContain('mock_tx_');
@@ -93,8 +93,8 @@ describe('RelayService', () => {
 
     it('value와 gasLimit 옵션을 받아들여야 함', async () => {
       const result = await relayService.submitTransaction({
-        to: '0x' + 'a'.repeat(40) as `0x${string}`,
-        data: '0x' + 'b'.repeat(64) as `0x${string}`,
+        to: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+        data: ('0x' + 'b'.repeat(64)) as `0x${string}`,
         value: '1000000000000000000',
         gasLimit: '500000',
       });
@@ -108,8 +108,8 @@ describe('RelayService', () => {
   describe('getTransaction', () => {
     it('존재하는 트랜잭션을 조회해야 함', async () => {
       const submitted = await relayService.submitTransaction({
-        to: '0x' + 'a'.repeat(40) as `0x${string}`,
-        data: '0x' + 'b'.repeat(64) as `0x${string}`,
+        to: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+        data: ('0x' + 'b'.repeat(64)) as `0x${string}`,
       });
 
       const result = await relayService.getTransaction(submitted.transactionId);
@@ -134,7 +134,7 @@ describe('RelayService', () => {
 
   describe('getNonce', () => {
     it('주어진 주소의 nonce를 반환해야 함', async () => {
-      const nonce = await relayService.getNonce('0x' + 'a'.repeat(40) as `0x${string}`);
+      const nonce = await relayService.getNonce(('0x' + 'a'.repeat(40)) as `0x${string}`);
 
       expect(typeof nonce).toBe('bigint');
     });

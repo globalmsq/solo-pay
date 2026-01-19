@@ -6,38 +6,38 @@ MSQPay REST API 전체 엔드포인트 레퍼런스입니다.
 
 ## 개요
 
-| 항목 | 값 |
-|------|-----|
-| Base URL | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
-| Protocol | REST API (HTTP/HTTPS) |
-| Content-Type | `application/json` |
-| Authentication | x-api-key (결제 API만) |
+| 항목           | 값                                                              |
+| -------------- | --------------------------------------------------------------- |
+| Base URL       | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
+| Protocol       | REST API (HTTP/HTTPS)                                           |
+| Content-Type   | `application/json`                                              |
+| Authentication | x-api-key (결제 API만)                                          |
 
 ## 엔드포인트 목록
 
 ### 결제 API
 
-| 엔드포인트 | 메서드 | 설명 |
-|-----------|--------|------|
-| `/payments/create` | POST | 결제 생성, paymentId 발급 |
-| `/api/checkout` | POST | 상품 기반 결제 (Demo App) |
-| `/payments/:id/status` | GET | 결제 상태 조회 |
-| `/payments/:id/gasless` | POST | Gasless 거래 제출 |
-| `/payments/:id/relay` | POST | Relay 거래 실행 |
-| `/payments/history` | GET | 결제 이력 조회 |
+| 엔드포인트              | 메서드 | 설명                      |
+| ----------------------- | ------ | ------------------------- |
+| `/payments/create`      | POST   | 결제 생성, paymentId 발급 |
+| `/api/checkout`         | POST   | 상품 기반 결제 (Demo App) |
+| `/payments/:id/status`  | GET    | 결제 상태 조회            |
+| `/payments/:id/gasless` | POST   | Gasless 거래 제출         |
+| `/payments/:id/relay`   | POST   | Relay 거래 실행           |
+| `/payments/history`     | GET    | 결제 이력 조회            |
 
 ### 토큰 API
 
-| 엔드포인트 | 메서드 | 설명 |
-|-----------|--------|------|
-| `/tokens/:tokenAddress/balance` | GET | 토큰 잔액 조회 |
-| `/tokens/:tokenAddress/allowance` | GET | 토큰 Approval 조회 |
+| 엔드포인트                        | 메서드 | 설명               |
+| --------------------------------- | ------ | ------------------ |
+| `/tokens/:tokenAddress/balance`   | GET    | 토큰 잔액 조회     |
+| `/tokens/:tokenAddress/allowance` | GET    | 토큰 Approval 조회 |
 
 ### 거래 API
 
-| 엔드포인트 | 메서드 | 설명 |
-|-----------|--------|------|
-| `/transactions/:id/status` | GET | 거래 상태 조회 |
+| 엔드포인트                 | 메서드 | 설명           |
+| -------------------------- | ------ | -------------- |
+| `/transactions/:id/status` | GET    | 거래 상태 조회 |
 
 ---
 
@@ -140,6 +140,7 @@ x-api-key: sk_test_abc123
 ```
 
 **Status 값**:
+
 - `pending`: 결제 대기 중
 - `confirmed`: 블록체인 확인됨
 - `completed`: 완료됨
@@ -187,11 +188,11 @@ Relay 거래를 실행합니다. (Gasless API와 동일한 요청/응답 형식)
 
 #### 쿼리 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| chainId | number | ✅ | 블록체인 네트워크 ID |
-| payer | string | ✅ | 결제자 지갑 주소 |
-| limit | number | ❌ | 조회 범위 (기본: 1000) |
+| 파라미터 | 타입   | 필수 | 설명                   |
+| -------- | ------ | ---- | ---------------------- |
+| chainId  | number | ✅   | 블록체인 네트워크 ID   |
+| payer    | string | ✅   | 결제자 지갑 주소       |
+| limit    | number | ❌   | 조회 범위 (기본: 1000) |
 
 #### 응답 (200 OK)
 
@@ -227,16 +228,16 @@ ERC-20 토큰 잔액을 조회합니다.
 
 #### URL 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| tokenAddress | string | ✅ | ERC-20 토큰 주소 |
+| 파라미터     | 타입   | 필수 | 설명             |
+| ------------ | ------ | ---- | ---------------- |
+| tokenAddress | string | ✅   | ERC-20 토큰 주소 |
 
 #### 쿼리 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| chainId | number | ✅ | 블록체인 네트워크 ID |
-| address | string | ✅ | 조회할 지갑 주소 |
+| 파라미터 | 타입   | 필수 | 설명                 |
+| -------- | ------ | ---- | -------------------- |
+| chainId  | number | ✅   | 블록체인 네트워크 ID |
+| address  | string | ✅   | 조회할 지갑 주소     |
 
 #### 응답 (200 OK)
 
@@ -259,17 +260,17 @@ ERC-20 토큰 잔액을 조회합니다.
 
 #### URL 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| tokenAddress | string | ✅ | ERC-20 토큰 주소 |
+| 파라미터     | 타입   | 필수 | 설명             |
+| ------------ | ------ | ---- | ---------------- |
+| tokenAddress | string | ✅   | ERC-20 토큰 주소 |
 
 #### 쿼리 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| chainId | number | ✅ | 블록체인 네트워크 ID |
-| owner | string | ✅ | 소유자 주소 |
-| spender | string | ✅ | 승인받은 주소 (Gateway) |
+| 파라미터 | 타입   | 필수 | 설명                    |
+| -------- | ------ | ---- | ----------------------- |
+| chainId  | number | ✅   | 블록체인 네트워크 ID    |
+| owner    | string | ✅   | 소유자 주소             |
+| spender  | string | ✅   | 승인받은 주소 (Gateway) |
 
 #### 응답 (200 OK)
 
@@ -297,9 +298,9 @@ ERC-20 토큰 잔액을 조회합니다.
 
 #### URL 파라미터
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| id | string | ✅ | 트랜잭션 해시 |
+| 파라미터 | 타입   | 필수 | 설명          |
+| -------- | ------ | ---- | ------------- |
+| id       | string | ✅   | 트랜잭션 해시 |
 
 #### 응답 (200 OK)
 
@@ -321,6 +322,7 @@ ERC-20 토큰 잔액을 조회합니다.
 ```
 
 **Status 값**:
+
 - `pending`: 채굴 대기 중
 - `confirmed`: 확인됨 (1개 이상 블록)
 - `failed`: 실행 실패
@@ -340,13 +342,13 @@ ERC-20 토큰 잔액을 조회합니다.
 
 ### 주요 에러 코드
 
-| 코드 | HTTP 상태 | 설명 |
-|------|----------|------|
-| VALIDATION_ERROR | 400 | 입력 검증 실패 |
-| INVALID_REQUEST | 400 | 잘못된 요청 |
-| INVALID_SIGNATURE | 400 | 서명 검증 실패 |
-| NOT_FOUND | 404 | 리소스 없음 |
-| INTERNAL_ERROR | 500 | 서버 오류 |
+| 코드              | HTTP 상태 | 설명           |
+| ----------------- | --------- | -------------- |
+| VALIDATION_ERROR  | 400       | 입력 검증 실패 |
+| INVALID_REQUEST   | 400       | 잘못된 요청    |
+| INVALID_SIGNATURE | 400       | 서명 검증 실패 |
+| NOT_FOUND         | 404       | 리소스 없음    |
+| INTERNAL_ERROR    | 500       | 서버 오류      |
 
 전체 에러 코드 목록은 [에러 코드 레퍼런스](errors.ko.md)를 참고하세요.
 
@@ -382,7 +384,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   environment: 'development',
-  apiKey: 'sk_test_abc123'
+  apiKey: 'sk_test_abc123',
 });
 
 // 결제 생성
@@ -391,7 +393,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 // 결제 상태 조회

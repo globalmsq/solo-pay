@@ -48,6 +48,18 @@ const PAYMENT_COMPLETED_EVENT = parseAbiItem(
   'event PaymentCompleted(bytes32 indexed paymentId, address indexed payer, address indexed merchant, address token, uint256 amount, uint256 timestamp)'
 );
 
+/**
+ * PaymentCompleted 이벤트 args 타입
+ */
+interface PaymentCompletedEventArgs {
+  paymentId: string;
+  payer: string;
+  merchant: string;
+  token: string;
+  amount: bigint;
+  timestamp: bigint;
+}
+
 // PaymentGateway ABI (processedPayments 조회용)
 const PAYMENT_GATEWAY_ABI = [
   {
@@ -122,7 +134,9 @@ export class BlockchainService {
     for (const chainData of chainsWithTokens) {
       // gateway_address, forwarder_address가 없는 체인은 건너뜀
       if (!chainData.gateway_address || !chainData.forwarder_address) {
-        this.logger.warn(`⚠️ Chain ${chainData.name} (${chainData.network_id}) skipped: missing contract addresses`);
+        this.logger.warn(
+          `⚠️ Chain ${chainData.name} (${chainData.network_id}) skipped: missing contract addresses`
+        );
         continue;
       }
 
@@ -130,7 +144,7 @@ export class BlockchainService {
       const tokensMap: Record<string, { address: string; decimals: number }> = {};
       // Reverse map: address -> tokenInfo for O(1) lookup
       const addressMap = new Map<string, TokenConfig & { symbol: string }>();
-      
+
       for (const token of chainData.tokens) {
         tokensMap[token.symbol] = {
           address: token.address,
@@ -143,7 +157,7 @@ export class BlockchainService {
           symbol: token.symbol,
         });
       }
-      
+
       this.addressToTokenMap.set(chainData.network_id, addressMap);
 
       const internalConfig: InternalChainConfig = {
@@ -179,7 +193,9 @@ export class BlockchainService {
       this.clients.set(chainData.network_id, client);
       this.chainConfigs.set(chainData.network_id, internalConfig);
 
-      this.logger.info(`🔗 Chain ${chainData.name} (${chainData.network_id}) initialized: ${chainData.rpc_url}`);
+      this.logger.info(
+        `🔗 Chain ${chainData.name} (${chainData.network_id}) initialized: ${chainData.rpc_url}`
+      );
     }
   }
 
@@ -266,7 +282,10 @@ export class BlockchainService {
    * @param tokenAddress 토큰 주소
    * @returns 토큰 설정 또는 null
    */
-  getTokenConfigByAddress(chainId: number, tokenAddress: string): (TokenConfig & { symbol: string }) | null {
+  getTokenConfigByAddress(
+    chainId: number,
+    tokenAddress: string
+  ): (TokenConfig & { symbol: string }) | null {
     const addressMap = this.addressToTokenMap.get(chainId);
     if (!addressMap) return null;
     return addressMap.get(tokenAddress.toLowerCase()) || null;
@@ -373,7 +392,10 @@ export class BlockchainService {
   /**
    * paymentId로 PaymentCompleted 이벤트 조회
    */
-  private async getPaymentDetailsByPaymentId(chainId: number, paymentId: string): Promise<{
+  private async getPaymentDetailsByPaymentId(
+    chainId: number,
+    paymentId: string
+  ): Promise<{
     payer: string;
     merchant: string;
     token: string;
@@ -389,9 +411,7 @@ export class BlockchainService {
 
       const currentBlock = await client.getBlockNumber();
       // 최근 10000블록 범위에서 검색 (약 5-6시간)
-      const fromBlock = currentBlock > BigInt(10000)
-        ? currentBlock - BigInt(10000)
-        : BigInt(0);
+      const fromBlock = currentBlock > BigInt(10000) ? currentBlock - BigInt(10000) : BigInt(0);
 
       const logs = await client.getLogs({
         address: contractAddress,
@@ -408,23 +428,29 @@ export class BlockchainService {
       }
 
       const log = logs[0];
-      const block = await client.getBlock({ blockHash: log.blockHash! });
-      const tokenAddress = (log.args as any).token || '';
+      if (!log.blockHash) {
+        return null;
+      }
+      const block = await client.getBlock({ blockHash: log.blockHash });
+      const args = log.args as PaymentCompletedEventArgs;
+      const tokenAddress = args.token || '';
 
       // 온체인에서 토큰 심볼 조회
-      const tokenSymbol = tokenAddress ? await this.getTokenSymbolOnChain(chainId, tokenAddress) : 'UNKNOWN';
+      const tokenSymbol = tokenAddress
+        ? await this.getTokenSymbolOnChain(chainId, tokenAddress)
+        : 'UNKNOWN';
 
       return {
-        payer: (log.args as any).payer || '',
-        merchant: (log.args as any).merchant || '',
+        payer: args.payer || '',
+        merchant: args.merchant || '',
         token: tokenAddress,
         tokenSymbol,
-        amount: ((log.args as any).amount || BigInt(0)).toString(),
+        amount: (args.amount || BigInt(0)).toString(),
         timestamp: new Date(Number(block.timestamp) * 1000).toISOString(),
         transactionHash: log.transactionHash,
       };
-    } catch (error) {
-      this.logger.error({ err: error }, '결제 상세 정보 조회 실패');
+    } catch (err) {
+      this.logger.error({ err }, '결제 상세 정보 조회 실패');
       return null;
     }
   }
@@ -487,26 +513,27 @@ export class BlockchainService {
   /**
    * 가스 비용 추정
    */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   async estimateGasCost(
     _chainId: number,
     _tokenAddress: Address,
     _amount: bigint,
     _recipientAddress: Address
   ): Promise<bigint> {
-    try {
-      // 실제 구현에서는 eth_estimateGas 호출
-      // 여기서는 고정 값 반환 (파라미터는 향후 실제 추정에 사용)
-      return BigInt('200000');
-    } catch (error) {
-      this.logger.error({ err: error }, '가스 비용 추정 실패');
-      throw new Error('가스 비용을 추정할 수 없습니다');
-    }
+    /* eslint-enable @typescript-eslint/no-unused-vars */
+    // 실제 구현에서는 eth_estimateGas 호출
+    // 여기서는 고정 값 반환 (파라미터는 향후 실제 추정에 사용)
+    return BigInt('200000');
   }
 
   /**
    * 토큰 잔액 조회
    */
-  async getTokenBalance(chainId: number, tokenAddress: string, walletAddress: string): Promise<string> {
+  async getTokenBalance(
+    chainId: number,
+    tokenAddress: string,
+    walletAddress: string
+  ): Promise<string> {
     try {
       const client = this.getClient(chainId);
       const balance = await client.readContract({
@@ -586,7 +613,7 @@ export class BlockchainService {
         blockNumber: Number(receipt.blockNumber),
         confirmations,
       };
-    } catch (error) {
+    } catch {
       // 트랜잭션이 아직 채굴되지 않았거나 존재하지 않음
       return {
         status: 'pending',
@@ -608,9 +635,8 @@ export class BlockchainService {
       const contractAddress = config.contracts.gateway as Address;
 
       const currentBlock = await client.getBlockNumber();
-      const fromBlock = currentBlock > BigInt(blockRange)
-        ? currentBlock - BigInt(blockRange)
-        : BigInt(0);
+      const fromBlock =
+        currentBlock > BigInt(blockRange) ? currentBlock - BigInt(blockRange) : BigInt(0);
 
       const logs = await client.getLogs({
         address: contractAddress,
@@ -622,26 +648,31 @@ export class BlockchainService {
         toBlock: 'latest',
       });
 
+      const logsWithBlockHash = logs.filter((log) => log.blockHash !== null);
+
       const payments: PaymentHistoryItem[] = await Promise.all(
-        logs.map(async (log) => {
-          const block = await client.getBlock({ blockHash: log.blockHash! });
-          const tokenAddress = (log.args as any).token || '';
+        logsWithBlockHash.map(async (log) => {
+          const block = await client.getBlock({ blockHash: log.blockHash as `0x${string}` });
+          const args = log.args as PaymentCompletedEventArgs;
+          const tokenAddress = args.token || '';
           // 온체인에서 토큰 심볼과 decimals 조회
-          const tokenSymbol = tokenAddress ? await this.getTokenSymbolOnChain(chainId, tokenAddress) : 'UNKNOWN';
+          const tokenSymbol = tokenAddress
+            ? await this.getTokenSymbolOnChain(chainId, tokenAddress)
+            : 'UNKNOWN';
           const decimals = tokenAddress ? await this.getDecimals(chainId, tokenAddress) : 18;
 
           return {
-            paymentId: (log.args as any).paymentId || '',
-            payer: (log.args as any).payer || '',
-            merchant: (log.args as any).merchant || '',
+            paymentId: args.paymentId || '',
+            payer: args.payer || '',
+            merchant: args.merchant || '',
             token: tokenAddress,
             tokenSymbol,
             decimals,
-            amount: ((log.args as any).amount || BigInt(0)).toString(),
+            amount: (args.amount || BigInt(0)).toString(),
             timestamp: block.timestamp.toString(),
             transactionHash: log.transactionHash,
             status: 'completed',
-            isGasless: false, // 기본값, history route에서 DB 조회 후 업데이트
+            isGasless: false,
             relayId: undefined,
           };
         })
@@ -670,7 +701,7 @@ export class BlockchainService {
       });
 
       return Number(decimals);
-    } catch (error) {
+    } catch {
       this.logger.warn(`Failed to get decimals for ${tokenAddress}, using fallback 18`);
       return 18;
     }

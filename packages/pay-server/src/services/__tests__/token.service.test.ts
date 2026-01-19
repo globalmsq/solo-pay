@@ -11,7 +11,7 @@ import { TokenService } from '../token.service';
 
 describe('TokenService', () => {
   let tokenService: TokenService;
-  const chainId = 'test-chain-id';
+  const chainId = 1;
 
   beforeEach(() => {
     resetPrismaMocks();
@@ -27,7 +27,7 @@ describe('TokenService', () => {
     };
 
     const mockResult = {
-      id: 'token-id-1',
+      id: 1,
       ...tokenData,
       is_enabled: true,
       is_deleted: false,
@@ -51,7 +51,7 @@ describe('TokenService', () => {
 
   it('should find token by address on chain', async () => {
     const mockToken = {
-      id: 'token-id-2',
+      id: 2,
       chain_id: chainId,
       address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
       symbol: 'DAI',
@@ -65,7 +65,10 @@ describe('TokenService', () => {
 
     mockPrisma.token.findFirst.mockResolvedValue(mockToken);
 
-    const result = await tokenService.findByAddress(chainId, '0x6B175474E89094C44Da98b954EedeAC495271d0F');
+    const result = await tokenService.findByAddress(
+      chainId,
+      '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+    );
 
     expect(result).toBeDefined();
     expect(result?.symbol).toBe('DAI');
@@ -75,7 +78,7 @@ describe('TokenService', () => {
 
   it('should find token by ID', async () => {
     const mockToken = {
-      id: 'token-id-3',
+      id: 3,
       chain_id: chainId,
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
       symbol: 'USDT',
@@ -89,10 +92,10 @@ describe('TokenService', () => {
 
     mockPrisma.token.findFirst.mockResolvedValue(mockToken);
 
-    const result = await tokenService.findById('token-id-3');
+    const result = await tokenService.findById(3);
 
     expect(result).toBeDefined();
-    expect(result?.id).toBe('token-id-3');
+    expect(result?.id).toBe(3);
     expect(result?.symbol).toBe('USDT');
     expect(mockPrisma.token.findFirst).toHaveBeenCalledOnce();
   });
@@ -100,7 +103,7 @@ describe('TokenService', () => {
   it('should find all tokens on chain', async () => {
     const mockTokens = [
       {
-        id: 'token-id-4',
+        id: 4,
         chain_id: chainId,
         address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB49',
         symbol: 'USDC2',
@@ -112,7 +115,7 @@ describe('TokenService', () => {
         deleted_at: null,
       },
       {
-        id: 'token-id-5',
+        id: 5,
         chain_id: chainId,
         address: '0x6B175474E89094C44Da98b954EedeAC495271d1F',
         symbol: 'DAI2',
@@ -135,7 +138,7 @@ describe('TokenService', () => {
 
   it('should update token information', async () => {
     const mockUpdated = {
-      id: 'token-id-6',
+      id: 6,
       chain_id: chainId,
       address: '0x2260fac5e5542a773aa44fbcff0b92d3d107d3d9',
       symbol: 'Wrapped BTC',
@@ -149,7 +152,7 @@ describe('TokenService', () => {
 
     mockPrisma.token.update.mockResolvedValue(mockUpdated);
 
-    const updated = await tokenService.update('token-id-6', {
+    const updated = await tokenService.update(6, {
       symbol: 'Wrapped BTC',
     });
 
@@ -159,7 +162,7 @@ describe('TokenService', () => {
 
   it('should soft delete token', async () => {
     const mockDeleted = {
-      id: 'token-id-7',
+      id: 7,
       chain_id: chainId,
       address: '0xC02aaA39b223FE8D0A0e8e4F27ead9083C756Cc2',
       symbol: 'WETH',
@@ -173,7 +176,7 @@ describe('TokenService', () => {
 
     mockPrisma.token.update.mockResolvedValue(mockDeleted);
 
-    const deleted = await tokenService.softDelete('token-id-7');
+    const deleted = await tokenService.softDelete(7);
 
     expect(deleted.is_deleted).toBe(true);
     expect(deleted.deleted_at).toBeDefined();
@@ -183,7 +186,10 @@ describe('TokenService', () => {
   it('should return null for non-existent token', async () => {
     mockPrisma.token.findFirst.mockResolvedValue(null);
 
-    const result = await tokenService.findByAddress(chainId, '0x0000000000000000000000000000000000000000');
+    const result = await tokenService.findByAddress(
+      chainId,
+      '0x0000000000000000000000000000000000000000'
+    );
     expect(result).toBeNull();
   });
 

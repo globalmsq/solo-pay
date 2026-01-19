@@ -6,10 +6,7 @@ import { RelayerService } from '../../services/relayer.service';
  *
  * Polls the relayer for transaction status
  */
-export async function getRelayStatusRoute(
-  app: FastifyInstance,
-  relayerService: RelayerService
-) {
+export async function getRelayStatusRoute(app: FastifyInstance, relayerService: RelayerService) {
   app.get<{ Params: { relayRequestId: string } }>(
     '/payments/relay/:relayRequestId/status',
     async (request, reply) => {
@@ -24,7 +21,7 @@ export async function getRelayStatusRoute(
           });
         }
 
-        // Query Defender for relay status
+        // Query Relayer for relay status
         const result = await relayerService.getRelayStatus(relayRequestId);
 
         return reply.code(200).send({

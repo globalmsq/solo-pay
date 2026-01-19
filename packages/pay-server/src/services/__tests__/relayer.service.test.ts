@@ -19,7 +19,6 @@ describe('RelayerService', () => {
   let relayerService: RelayerService;
   const mockApiUrl = 'https://relay.example.com';
   const mockApiKey = 'test-api-key';
-  const mockApiSecret = 'test-api-secret';
 
   const mockForwardRequest = {
     from: '0x' + 'a'.repeat(40),
@@ -34,7 +33,7 @@ describe('RelayerService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    relayerService = new RelayerService(mockApiUrl, mockApiKey, mockApiSecret);
+    relayerService = new RelayerService(mockApiUrl, mockApiKey);
   });
 
   afterEach(() => {
@@ -47,17 +46,11 @@ describe('RelayerService', () => {
     });
 
     it('should throw error when API URL is missing', () => {
-      expect(() => new RelayerService('', mockApiKey, mockApiSecret)).toThrow(
-        'Relayer API URL이 필요합니다'
-      );
+      expect(() => new RelayerService('', mockApiKey)).toThrow('Relayer API URL이 필요합니다');
     });
 
     it('should remove trailing slash from API URL', () => {
-      const service = new RelayerService(
-        'https://relay.example.com/',
-        mockApiKey,
-        mockApiSecret
-      );
+      const service = new RelayerService('https://relay.example.com/', mockApiKey);
       expect(service).toBeDefined();
     });
   });
@@ -91,7 +84,7 @@ describe('RelayerService', () => {
 
   describe('submitForwardTransaction', () => {
     const paymentId = 'payment-123';
-    const forwarderAddress = '0x' + 'e'.repeat(40) as `0x${string}`;
+    const forwarderAddress = ('0x' + 'e'.repeat(40)) as `0x${string}`;
 
     it('should submit forward transaction successfully', async () => {
       mockFetch.mockResolvedValueOnce({
@@ -127,32 +120,20 @@ describe('RelayerService', () => {
 
     it('should throw error when paymentId is missing', async () => {
       await expect(
-        relayerService.submitForwardTransaction(
-          '',
-          forwarderAddress,
-          mockForwardRequest
-        )
+        relayerService.submitForwardTransaction('', forwarderAddress, mockForwardRequest)
       ).rejects.toThrow('필수 파라미터가 누락되었습니다');
     });
 
     it('should throw error when forwarderAddress is missing', async () => {
       await expect(
-        relayerService.submitForwardTransaction(
-          paymentId,
-          '' as `0x${string}`,
-          mockForwardRequest
-        )
+        relayerService.submitForwardTransaction(paymentId, '' as `0x${string}`, mockForwardRequest)
       ).rejects.toThrow('필수 파라미터가 누락되었습니다');
     });
 
     it('should throw error for invalid signature format', async () => {
       const invalidRequest = { ...mockForwardRequest, signature: 'invalid' };
       await expect(
-        relayerService.submitForwardTransaction(
-          paymentId,
-          forwarderAddress,
-          invalidRequest
-        )
+        relayerService.submitForwardTransaction(paymentId, forwarderAddress, invalidRequest)
       ).rejects.toThrow('잘못된 서명 형식입니다');
     });
 
@@ -164,11 +145,7 @@ describe('RelayerService', () => {
       });
 
       await expect(
-        relayerService.submitForwardTransaction(
-          paymentId,
-          forwarderAddress,
-          mockForwardRequest
-        )
+        relayerService.submitForwardTransaction(paymentId, forwarderAddress, mockForwardRequest)
       ).rejects.toThrow('ForwardRequest 거래를 제출할 수 없습니다');
     });
 
@@ -180,11 +157,7 @@ describe('RelayerService', () => {
       });
 
       await expect(
-        relayerService.submitForwardTransaction(
-          paymentId,
-          forwarderAddress,
-          mockForwardRequest
-        )
+        relayerService.submitForwardTransaction(paymentId, forwarderAddress, mockForwardRequest)
       ).rejects.toThrow('릴레이어 잔액이 부족합니다');
     });
 
@@ -196,11 +169,7 @@ describe('RelayerService', () => {
       });
 
       await expect(
-        relayerService.submitForwardTransaction(
-          paymentId,
-          forwarderAddress,
-          mockForwardRequest
-        )
+        relayerService.submitForwardTransaction(paymentId, forwarderAddress, mockForwardRequest)
       ).rejects.toThrow('트랜잭션 nonce 충돌이 발생했습니다');
     });
 
@@ -212,12 +181,8 @@ describe('RelayerService', () => {
       });
 
       await expect(
-        relayerService.submitForwardTransaction(
-          paymentId,
-          forwarderAddress,
-          mockForwardRequest
-        )
-      ).rejects.toThrow('Defender API 인증에 실패했습니다');
+        relayerService.submitForwardTransaction(paymentId, forwarderAddress, mockForwardRequest)
+      ).rejects.toThrow('Relayer API 인증에 실패했습니다');
     });
   });
 
@@ -275,7 +240,7 @@ describe('RelayerService', () => {
   });
 
   describe('getNonce', () => {
-    const address = '0x' + 'a'.repeat(40) as `0x${string}`;
+    const address = ('0x' + 'a'.repeat(40)) as `0x${string}`;
 
     it('should get nonce successfully', async () => {
       mockFetch.mockResolvedValueOnce({
@@ -295,9 +260,9 @@ describe('RelayerService', () => {
     });
 
     it('should throw error when address is missing', async () => {
-      await expect(
-        relayerService.getNonce('' as `0x${string}`)
-      ).rejects.toThrow('주소는 필수입니다');
+      await expect(relayerService.getNonce('' as `0x${string}`)).rejects.toThrow(
+        '주소는 필수입니다'
+      );
     });
 
     it('should handle HTTP error', async () => {
@@ -306,9 +271,7 @@ describe('RelayerService', () => {
         status: 500,
       });
 
-      await expect(relayerService.getNonce(address)).rejects.toThrow(
-        'Nonce를 조회할 수 없습니다'
-      );
+      await expect(relayerService.getNonce(address)).rejects.toThrow('Nonce를 조회할 수 없습니다');
     });
   });
 

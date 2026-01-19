@@ -49,16 +49,19 @@ Obligations:
 Call Claude-generated agents with clear and direct language:
 
 Domain expert calling examples:
+
 - "Use the expert-backend subagent to develop the API"
 - "Use the expert-frontend subagent to create React components"
 - "Use the expert-security subagent to conduct security audit"
 
 Workflow manager calling examples:
+
 - "Use the manager-tdd subagent to implement with TDD approach"
 - "Use the manager-quality subagent to review code quality"
 - "Use the manager-docs subagent to generate documentation"
 
 General purpose agent calling examples:
+
 - "Use the general-purpose subagent for complex multi-step tasks"
 - "Use the Explore subagent to analyze the codebase structure"
 - "Use the Plan subagent to research implementation options"
@@ -81,6 +84,7 @@ After the parallel agents complete their work, use the system-integrator subagen
 When tasks are interrupted, specific agents can be resumed to continue work:
 
 Resume calling examples:
+
 - Resume agent abc123 and continue the security analysis
 - Resume the backend implementation from the last checkpoint
 - Continue with the frontend development using the existing context
@@ -98,6 +102,7 @@ Resume calling examples:
 Skills-based Knowledge Injection:
 
 Core execution patterns:
+
 - Skill("moai-foundation-claude") - Alfred orchestration rules
 - Skill("moai-foundation-core") - SPEC system and core workflows
 - Skill("moai-workflow-project") - Project management and documentation
@@ -113,6 +118,7 @@ Core execution patterns:
 Agent Selection Guide:
 
 Recommended agents by task type:
+
 - API development: expert-backend subagent to develop REST API
 - React components: expert-frontend subagent to create React components
 - Security review: expert-security subagent to conduct security audit
@@ -138,14 +144,17 @@ Recommended agents by task type:
 Each agent has clear and narrow expertise:
 
 Good examples (single responsibility):
+
 - "Use the expert-backend subagent to implement JWT authentication"
 - "Use the expert-frontend subagent to create reusable button components"
 - "Use the expert-database subagent to optimize database queries"
 
 Bad examples (scope too broad):
+
 - "Use the general-purpose subagent to build entire application"
 
 Better approach:
+
 - Use the expert-backend subagent to build API backend
 - Use the expert-frontend subagent to build React frontend
 - Use the expert-database subagent to design database schema
@@ -157,6 +166,7 @@ Important: Write in pure text without code examples (comply with documentation p
 Provide comprehensive and clear instructions to agents in text format:
 
 Detailed prompt writing guide:
+
 - Use the expert-backend subagent to implement user authentication API endpoints
 - CRITICAL: Always respond to the user in [USER_LANGUAGE] from conversation_language config
 - All internal agent instructions remain in English
@@ -171,11 +181,13 @@ Detailed prompt writing guide:
 Important Principle: All agents must respond in the user's selected language.
 
 Language Response Mandate:
+
 - User-facing responses: Always use the user's selected language from conversation_language
 - Internal agent instructions: Always use English for consistency and clarity
 - Code comments and documentation: Use English as specified in development standards
 
 Language Resolution examples:
+
 - Korean user → Korean responses (안녕하세요, 요청하신 작업을 완료했습니다)
 - Japanese user → Japanese responses (こんにちは、リクエストされた作業を完了しました)
 - English user → English responses (Hello, I have completed the requested task)
@@ -186,6 +198,7 @@ Language Resolution examples:
 Specify tool access permissions appropriate to agent roles:
 
 Examples by tool access level:
+
 - Read-only agents (security audit, code review): security-auditor subagent with Read, Grep, Glob tools only, focus on security analysis and recommendations
 - Write-restricted agents (test generation, documentation): test-generator subagent can create new files but cannot modify existing production code
 - Full access agents (implementation experts): expert-backend subagent with full access to Read, Write, Edit, Bash tools as needed
@@ -199,9 +212,10 @@ Examples by tool access level:
 Dynamically select optimal agents based on task complexity and context:
 
 Dynamic selection procedure:
+
 - First analyze the task complexity using the task-analyzer subagent
 - For simple tasks: use the general-purpose subagent
-- For medium complexity: use the appropriate expert-* subagent
+- For medium complexity: use the appropriate expert-\* subagent
 - For complex tasks: use the workflow-manager subagent to coordinate multiple specialized agents
 
 ### Performance-Based Agent Selection
@@ -209,6 +223,7 @@ Dynamic selection procedure:
 Optimal selection considering agent performance metrics:
 
 Performance analysis procedure:
+
 - Analyze task requirements and constraints (time, file count, expertise)
 - Compare performance metrics (expert-backend: avg 45min, 95% success rate vs general-purpose: avg 60min, 88% success rate)
 - Recommended: Use the expert-backend subagent for optimal performance and success rate
@@ -220,6 +235,7 @@ Performance analysis procedure:
 ### MoAI Commands and Agent Integration
 
 MoAI command integration procedure:
+
 1. /moai:1-plan "user authentication system implementation" → Use the spec-builder subagent to create EARS format specification
 2. /moai:2-run SPEC-001 → Use the manager-tdd subagent to implement with RED-GREEN-REFACTOR cycle
 3. /moai:3-sync SPEC-001 → Use the manager-docs subagent to synchronize documentation
@@ -227,6 +243,7 @@ MoAI command integration procedure:
 ### SPEC Execution Through Agent Chain
 
 SPEC execution agent chain:
+
 - Phase 1: Use the spec-analyzer subagent to understand requirements
 - Phase 2: Use the architect-designer subagent to create system design
 - Phase 3: Use the expert-backend subagent to implement core features
@@ -243,6 +260,7 @@ SPEC execution agent chain:
 Utilize Context7 MCP server for latest API documentation and information:
 
 Context7 utilization procedure:
+
 - Use the mcp-context7 subagent to research latest React 19 hooks API and implementation examples
 - Get current FastAPI best practices and patterns
 - Find latest security vulnerability information
@@ -253,8 +271,9 @@ Context7 utilization procedure:
 Utilize Sequential-Thinking MCP for complex analysis and architecture design:
 
 Sequential-Thinking utilization procedure:
+
 - For complex tasks (>10 files, architecture changes): First activate the sequential-thinking subagent for deep analysis
-- Then use the appropriate expert-* subagents for implementation
+- Then use the appropriate expert-\* subagents for implementation
 - Finally use the integrator subagent to ensure system coherence
 
 ---
@@ -266,6 +285,7 @@ Sequential-Thinking utilization procedure:
 Minimize and efficiently manage context transfer between agents:
 
 Context optimization procedure:
+
 - Before delegating to agents: Use the context-optimizer subagent to create minimal context
 - Include spec_id, key_requirements (max 3 bullet points), architecture_summary (max 200 chars), integration_points (only direct dependencies)
 - Exclude background information, reasoning, and non-essential details
@@ -275,6 +295,7 @@ Context optimization procedure:
 Each agent call creates an independent 200K token session:
 
 Session management procedure:
+
 - Complex task breaks into multiple agent sessions
 - Session 1: Use the analyzer subagent (200K token context)
 - Session 2: Use the designer subagent (new 200K token context)
@@ -289,6 +310,7 @@ Session management procedure:
 Alfred automatically reads user settings from .moai/config/config.json at session start:
 
 Configuration file structure:
+
 - user.name: User name (use default greeting if empty)
 - language.conversation_language: ko, en, ja, zh, ar, vi, nl, etc.
 - language.conversation_language_name: Language display name (auto-generated)
@@ -309,6 +331,7 @@ Configuration file structure:
 Include personalization information for all subagent calls:
 
 Agent calling examples:
+
 - Korean user: "Use the [subagent] subagent to [task]. User: {name}님, Language: Korean"
 - English user: "Use the [subagent] subagent to [task]. User: {name}, Language: English"
 
@@ -365,6 +388,7 @@ This guide covers:
 Appropriate agent delegation according to error types:
 
 Error handling procedure:
+
 - Agent execution errors: Use the expert-debug subagent to troubleshoot issues, analyze error logs, provide recovery strategies
 - Token limit errors: Execute /clear to refresh context, then resume agent work with fresh context
 - Permission errors: Use the system-admin subagent to check Claude Code settings and permissions, verify agent tool access rights
@@ -431,6 +455,7 @@ Error handling procedure:
 ### Essential Skills
 
 Core Skills patterns:
+
 - Skill("moai-foundation-claude") - Alfred orchestration patterns
 - Skill("moai-foundation-core") - SPEC system and core workflows
 - Skill("moai-workflow-project") - Project management and configuration
@@ -448,6 +473,7 @@ Core Skills patterns:
 ### Common Agent Calling Patterns
 
 Agent calling pattern examples:
+
 - Sequential tasks: First use the analyzer subagent to understand the current system, then use the designer subagent to create improvements, finally use the implementer subagent to apply the changes
 - Parallel tasks: Use the backend subagent to develop API endpoints, simultaneously use the frontend subagent to create UI components, then use the integrator subagent to ensure they work together
 - Resume tasks: Resume agent abc123 and continue the security implementation from where it left off, focusing on the authentication module

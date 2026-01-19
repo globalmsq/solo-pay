@@ -5,10 +5,14 @@ packages:
   - subgraph
 
 onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
   - bufferutil
   - esbuild
   - keccak
+  - prisma
   - protobufjs
   - secp256k1
+  - sharp
   - unrs-resolver
   - utf-8-validate

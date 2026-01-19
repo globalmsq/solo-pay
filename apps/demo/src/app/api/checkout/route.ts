@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
         // 결제 정보 (상점 설정 기반)
         totalAmount: totalAmount.toString(),
         chainId: payment.chainId,
-        tokenSymbol: payment.tokenSymbol,       // From on-chain via pay-server
+        tokenSymbol: payment.tokenSymbol, // From on-chain via pay-server
         tokenAddress: payment.tokenAddress,
-        decimals: payment.tokenDecimals,        // From on-chain via pay-server
+        decimals: payment.tokenDecimals, // From on-chain via pay-server
         // 결제 컨트랙트 정보 (결제 서버 응답)
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,

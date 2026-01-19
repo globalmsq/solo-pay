@@ -6,38 +6,38 @@ Complete reference for all MSQPay REST API endpoints.
 
 ## Overview
 
-| Item | Value |
-|------|-----|
-| Base URL | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
-| Protocol | REST API (HTTP/HTTPS) |
-| Content-Type | `application/json` |
-| Authentication | x-api-key (payment API only) |
+| Item           | Value                                                           |
+| -------------- | --------------------------------------------------------------- |
+| Base URL       | `http://localhost:3001` (dev), `https://pay-api.msq.com` (prod) |
+| Protocol       | REST API (HTTP/HTTPS)                                           |
+| Content-Type   | `application/json`                                              |
+| Authentication | x-api-key (payment API only)                                    |
 
 ## Endpoint List
 
 ### Payment API
 
-| Endpoint | Method | Description |
-|-----------|--------|------|
-| `/payments/create` | POST | Create payment, issue paymentId |
-| `/api/checkout` | POST | Product-based payment (Demo App) |
-| `/payments/:id/status` | GET | Query payment status |
-| `/payments/:id/gasless` | POST | Submit gasless transaction |
-| `/payments/:id/relay` | POST | Execute relay transaction |
-| `/payments/history` | GET | Query payment history |
+| Endpoint                | Method | Description                      |
+| ----------------------- | ------ | -------------------------------- |
+| `/payments/create`      | POST   | Create payment, issue paymentId  |
+| `/api/checkout`         | POST   | Product-based payment (Demo App) |
+| `/payments/:id/status`  | GET    | Query payment status             |
+| `/payments/:id/gasless` | POST   | Submit gasless transaction       |
+| `/payments/:id/relay`   | POST   | Execute relay transaction        |
+| `/payments/history`     | GET    | Query payment history            |
 
 ### Token API
 
-| Endpoint | Method | Description |
-|-----------|--------|------|
-| `/tokens/:tokenAddress/balance` | GET | Query token balance |
-| `/tokens/:tokenAddress/allowance` | GET | Query token approval |
+| Endpoint                          | Method | Description          |
+| --------------------------------- | ------ | -------------------- |
+| `/tokens/:tokenAddress/balance`   | GET    | Query token balance  |
+| `/tokens/:tokenAddress/allowance` | GET    | Query token approval |
 
 ### Transaction API
 
-| Endpoint | Method | Description |
-|-----------|--------|------|
-| `/transactions/:id/status` | GET | Query transaction status |
+| Endpoint                   | Method | Description              |
+| -------------------------- | ------ | ------------------------ |
+| `/transactions/:id/status` | GET    | Query transaction status |
 
 ---
 
@@ -140,6 +140,7 @@ Query payment status.
 ```
 
 **Status Values**:
+
 - `pending`: Payment pending
 - `confirmed`: Confirmed on blockchain
 - `completed`: Completed
@@ -187,11 +188,11 @@ Query user's payment history.
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|---------|------|------|------|
-| chainId | number | ✅ | Blockchain network ID |
-| payer | string | ✅ | Payer wallet address |
-| limit | number | ❌ | Query limit (default: 1000) |
+| Parameter | Type   | Required | Description                 |
+| --------- | ------ | -------- | --------------------------- |
+| chainId   | number | ✅       | Blockchain network ID       |
+| payer     | string | ✅       | Payer wallet address        |
+| limit     | number | ❌       | Query limit (default: 1000) |
 
 #### Response (200 OK)
 
@@ -227,16 +228,16 @@ Query ERC-20 token balance.
 
 #### URL Parameters
 
-| Parameter | Type | Required | Description |
-|---------|------|------|------|
-| tokenAddress | string | ✅ | ERC-20 token address |
+| Parameter    | Type   | Required | Description          |
+| ------------ | ------ | -------- | -------------------- |
+| tokenAddress | string | ✅       | ERC-20 token address |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|---------|------|------|------|
-| chainId | number | ✅ | Blockchain network ID |
-| address | string | ✅ | Wallet address to query |
+| Parameter | Type   | Required | Description             |
+| --------- | ------ | -------- | ----------------------- |
+| chainId   | number | ✅       | Blockchain network ID   |
+| address   | string | ✅       | Wallet address to query |
 
 #### Response (200 OK)
 
@@ -259,17 +260,17 @@ Query token approval amount.
 
 #### URL Parameters
 
-| Parameter | Type | Required | Description |
-|---------|------|------|------|
-| tokenAddress | string | ✅ | ERC-20 token address |
+| Parameter    | Type   | Required | Description          |
+| ------------ | ------ | -------- | -------------------- |
+| tokenAddress | string | ✅       | ERC-20 token address |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|---------|------|------|------|
-| chainId | number | ✅ | Blockchain network ID |
-| owner | string | ✅ | Owner address |
-| spender | string | ✅ | Approved address (Gateway) |
+| Parameter | Type   | Required | Description                |
+| --------- | ------ | -------- | -------------------------- |
+| chainId   | number | ✅       | Blockchain network ID      |
+| owner     | string | ✅       | Owner address              |
+| spender   | string | ✅       | Approved address (Gateway) |
 
 #### Response (200 OK)
 
@@ -297,9 +298,9 @@ Query transaction status.
 
 #### URL Parameters
 
-| Parameter | Type | Required | Description |
-|---------|------|------|------|
-| id | string | ✅ | Transaction hash |
+| Parameter | Type   | Required | Description      |
+| --------- | ------ | -------- | ---------------- |
+| id        | string | ✅       | Transaction hash |
 
 #### Response (200 OK)
 
@@ -321,6 +322,7 @@ Query transaction status.
 ```
 
 **Status Values**:
+
 - `pending`: Awaiting mining
 - `confirmed`: Confirmed (1+ blocks)
 - `failed`: Execution failed
@@ -340,13 +342,13 @@ All errors follow this format:
 
 ### Common Error Codes
 
-| Code | HTTP Status | Description |
-|------|----------|------|
-| VALIDATION_ERROR | 400 | Input validation failed |
-| INVALID_REQUEST | 400 | Invalid request |
-| INVALID_SIGNATURE | 400 | Signature verification failed |
-| NOT_FOUND | 404 | Resource not found |
-| INTERNAL_ERROR | 500 | Server error |
+| Code              | HTTP Status | Description                   |
+| ----------------- | ----------- | ----------------------------- |
+| VALIDATION_ERROR  | 400         | Input validation failed       |
+| INVALID_REQUEST   | 400         | Invalid request               |
+| INVALID_SIGNATURE | 400         | Signature verification failed |
+| NOT_FOUND         | 404         | Resource not found            |
+| INTERNAL_ERROR    | 500         | Server error                  |
 
 See [Error Code Reference](errors.md) for complete error code list.
 
@@ -382,7 +384,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   environment: 'development',
-  apiKey: 'sk_test_abc123'
+  apiKey: 'sk_test_abc123',
 });
 
 // Create payment
@@ -391,7 +393,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 // Query payment status

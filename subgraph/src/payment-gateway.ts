@@ -1,17 +1,9 @@
-import {
-  PaymentCompleted as PaymentCompletedEvent,
-} from "../generated/PaymentGateway/PaymentGateway";
-import {
-  Payment,
-  MerchantStats,
-  DailyVolume,
-  TokenStats,
-  GlobalStats,
-} from "../generated/schema";
-import { BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
+import { PaymentCompleted as PaymentCompletedEvent } from '../generated/PaymentGateway/PaymentGateway';
+import { Payment, MerchantStats, DailyVolume, TokenStats, GlobalStats } from '../generated/schema';
+import { BigInt } from '@graphprotocol/graph-ts';
 
 // Constants
-const GLOBAL_STATS_ID = "global";
+const GLOBAL_STATS_ID = 'global';
 const SECONDS_PER_DAY = 86400;
 
 /**
@@ -19,8 +11,7 @@ const SECONDS_PER_DAY = 86400;
  * Creates/updates Payment, MerchantStats, DailyVolume, TokenStats, and GlobalStats entities
  */
 export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
-  // Create Payment entity
-  let payment = new Payment(event.params.paymentId.toHexString());
+  const payment = new Payment(event.params.paymentId.toHexString());
   payment.payer = event.params.payer;
   payment.merchant = event.params.merchant;
   payment.token = event.params.token;
@@ -33,9 +24,9 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   // If tx.from == payer, it's a direct payment
   // If tx.from != payer, it's a meta-transaction (via forwarder)
   if (event.transaction.from.equals(event.params.payer)) {
-    payment.gasMode = "Direct";
+    payment.gasMode = 'Direct';
   } else {
-    payment.gasMode = "MetaTx";
+    payment.gasMode = 'MetaTx';
   }
 
   payment.save();
@@ -57,7 +48,7 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
  * Update merchant statistics
  */
 function updateMerchantStats(event: PaymentCompletedEvent): void {
-  let merchantId = event.params.merchant.toHexString();
+  const merchantId = event.params.merchant.toHexString();
   let merchant = MerchantStats.load(merchantId);
 
   if (merchant == null) {
@@ -77,7 +68,7 @@ function updateMerchantStats(event: PaymentCompletedEvent): void {
  * Update daily volume statistics
  */
 function updateDailyVolume(event: PaymentCompletedEvent): void {
-  let dayId = getDayId(event.params.timestamp);
+  const dayId = getDayId(event.params.timestamp);
   let daily = DailyVolume.load(dayId);
 
   if (daily == null) {
@@ -97,7 +88,7 @@ function updateDailyVolume(event: PaymentCompletedEvent): void {
  * Update token statistics
  */
 function updateTokenStats(event: PaymentCompletedEvent): void {
-  let tokenId = event.params.token.toHexString();
+  const tokenId = event.params.token.toHexString();
   let token = TokenStats.load(tokenId);
 
   if (token == null) {
@@ -142,15 +133,15 @@ function updateGlobalStats(event: PaymentCompletedEvent): void {
  * AssemblyScript doesn't support JavaScript Date API
  */
 function getDayId(timestamp: BigInt): string {
-  let dayNumber = timestamp.div(BigInt.fromI32(SECONDS_PER_DAY));
-  return "day-" + dayNumber.toString();
+  const dayNumber = timestamp.div(BigInt.fromI32(SECONDS_PER_DAY));
+  return 'day-' + dayNumber.toString();
 }
 
 /**
  * Get the start of the day (00:00:00 UTC) for a given timestamp
  */
 function getDayStart(timestamp: BigInt): BigInt {
-  let seconds = timestamp.toI64();
-  let dayStart = seconds - (seconds % SECONDS_PER_DAY);
+  const seconds = timestamp.toI64();
+  const dayStart = seconds - (seconds % SECONDS_PER_DAY);
   return BigInt.fromI64(dayStart);
 }

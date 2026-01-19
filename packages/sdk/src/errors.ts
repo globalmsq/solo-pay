@@ -1,9 +1,15 @@
+export interface ErrorDetails {
+  message?: string;
+  path?: (string | number)[];
+  [key: string]: string | number | boolean | (string | number)[] | undefined;
+}
+
 export class MSQPayError extends Error {
   constructor(
     public code: string,
     message: string,
     public statusCode: number,
-    public details?: unknown
+    public details?: ErrorDetails[]
   ) {
     super(message);
     this.name = 'MSQPayError';
@@ -18,5 +24,5 @@ export const ERROR_CODES: Record<string, number> = {
   INVALID_GAS_ESTIMATE: 400,
   INVALID_SIGNATURE: 400,
   NOT_FOUND: 404,
-  INTERNAL_ERROR: 500
+  INTERNAL_ERROR: 500,
 };

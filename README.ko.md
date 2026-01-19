@@ -10,13 +10,13 @@ Multi-Service Blockchain Payment Gateway - ERC-20 토큰 결제 게이트웨이
 
 ### 핵심 원칙
 
-| 원칙 | 설명 |
-|------|------|
-| **Contract = Source of Truth** | 결제 완료 여부는 오직 스마트 컨트랙트만 신뢰 |
-| **DB 통합 아키텍처** | MySQL + Redis 캐싱 통합, Contract = Source of Truth 유지 |
-| **동일 API 인터페이스** | MVP와 Production 모두 같은 API 형태 |
-| **서버 발급 paymentId** | 결제서버가 유일한 paymentId 생성자 |
-| **상점서버 ↔ 블록체인 분리** | 상점서버는 결제서버 API만 호출, 블록체인 접근 불가 |
+| 원칙                           | 설명                                                     |
+| ------------------------------ | -------------------------------------------------------- |
+| **Contract = Source of Truth** | 결제 완료 여부는 오직 스마트 컨트랙트만 신뢰             |
+| **DB 통합 아키텍처**           | MySQL + Redis 캐싱 통합, Contract = Source of Truth 유지 |
+| **동일 API 인터페이스**        | MVP와 Production 모두 같은 API 형태                      |
+| **서버 발급 paymentId**        | 결제서버가 유일한 paymentId 생성자                       |
+| **상점서버 ↔ 블록체인 분리**   | 상점서버는 결제서버 API만 호출, 블록체인 접근 불가       |
 
 ### Features
 
@@ -87,13 +87,13 @@ docker-compose logs -f server
 
 ### Services
 
-| 서비스 | 포트 | 설명 |
-|--------|------|------|
-| mysql | 3306 | 결제 데이터 (root/pass) |
-| redis | 6379 | 캐싱 |
-| hardhat | 8545 | 로컬 블록체인 |
-| server | 3001 | Payment API |
-| demo | 3000 | 프론트엔드 |
+| 서비스  | 포트 | 설명                    |
+| ------- | ---- | ----------------------- |
+| mysql   | 3306 | 결제 데이터 (root/pass) |
+| redis   | 6379 | 캐싱                    |
+| hardhat | 8545 | 로컬 블록체인           |
+| server  | 3001 | Payment API             |
+| demo    | 3000 | 프론트엔드              |
 
 ### Commands
 
@@ -146,11 +146,11 @@ pnpm dev
 
 ### Contracts (Polygon Amoy Testnet)
 
-| Contract | Address |
-|----------|---------|
-| PaymentGateway (Proxy) | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
+| Contract                | Address                                      |
+| ----------------------- | -------------------------------------------- |
+| PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
+| ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 
 Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 
@@ -162,7 +162,7 @@ import { MSQPayClient } from '@globalmsq/msqpay';
 // 초기화
 const client = new MSQPayClient({
   environment: 'development', // 또는 'custom' + apiUrl
-  apiKey: 'sk_test_abc123'
+  apiKey: 'sk_test_abc123',
 });
 
 // 결제 생성 (상점서버에서 호출)
@@ -171,7 +171,7 @@ const payment = await client.createPayment({
   amount: 100,
   chainId: 31337,
   recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2'
+  tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
 // 상태 조회 (chainId 불필요 - 서버에서 자동 결정)
@@ -181,15 +181,15 @@ console.log(status.data.status); // "pending" | "completed"
 // Gasless 거래 제출 (EIP-712 서명 필요)
 const gaslessResult = await client.submitGasless({
   paymentId: payment.paymentId,
-  forwarderAddress: '0x...',  // ERC2771Forwarder 컨트랙트 주소
-  forwardRequest: { from, to, value, gas, deadline, data, signature: '0x...' }
+  forwarderAddress: '0x...', // ERC2771Forwarder 컨트랙트 주소
+  forwardRequest: { from, to, value, gas, deadline, data, signature: '0x...' },
 });
 
 // Relay 거래 실행
 const relayResult = await client.executeRelay({
   paymentId: payment.paymentId,
   transactionData: '0x...',
-  gasEstimate: 100000
+  gasEstimate: 100000,
 });
 ```
 
@@ -199,35 +199,41 @@ const relayResult = await client.executeRelay({
 
 ### 엔드포인트
 
-| 엔드포인트 | 메서드 | 용도 |
-|-----------|--------|------|
-| `/payments/create` | POST | 결제 생성, paymentId 발급 |
-| `/api/checkout` | POST | 상품 기반 결제 (Demo App API Route) |
-| `/payments/:id/status` | GET | 결제 상태 조회 (chainId 자동 결정) |
-| `/payments/:id/gasless` | POST | Gasless 거래 제출 |
-| `/payments/:id/relay` | POST | 릴레이 거래 실행 |
-| `/payments/history` | GET | 결제 이력 조회 (payer 기반) |
-| `/tokens/balance` | GET | 토큰 잔액 조회 |
-| `/tokens/allowance` | GET | 토큰 approval 금액 조회 |
-| `/transactions/:id/status` | GET | 거래 상태 조회 |
+| 엔드포인트                 | 메서드 | 용도                                |
+| -------------------------- | ------ | ----------------------------------- |
+| `/payments/create`         | POST   | 결제 생성, paymentId 발급           |
+| `/api/checkout`            | POST   | 상품 기반 결제 (Demo App API Route) |
+| `/payments/:id/status`     | GET    | 결제 상태 조회 (chainId 자동 결정)  |
+| `/payments/:id/gasless`    | POST   | Gasless 거래 제출                   |
+| `/payments/:id/relay`      | POST   | 릴레이 거래 실행                    |
+| `/payments/history`        | GET    | 결제 이력 조회 (payer 기반)         |
+| `/tokens/balance`          | GET    | 토큰 잔액 조회                      |
+| `/tokens/allowance`        | GET    | 토큰 approval 금액 조회             |
+| `/transactions/:id/status` | GET    | 거래 상태 조회                      |
 
 ### 최근 추가 기능
 
 #### Payment History API
+
 사용자의 결제 이력을 블록체인 이벤트와 DB에서 조회합니다:
+
 - **엔드포인트**: `GET /payments/history?chainId={}&payer={}&limit={}`
 - **기능**: 결제자(payer) 주소 기반 이력 조회
 - **응답**: 결제 목록 (Gasless 여부, Relay ID, Token decimals/symbol 포함)
 
 #### Token Balance/Allowance API
+
 ERC-20 토큰의 지갑 상태를 조회합니다:
+
 - **엔드포인트**: `GET /tokens/balance?tokenAddress={addr}&address={wallet}`
 - **기능**: 사용자 지갑의 토큰 잔액 조회
 - **엔드포인트**: `GET /tokens/allowance?tokenAddress={addr}&owner={addr}&spender={addr}`
 - **기능**: 토큰 approval 금액 조회
 
 #### Transaction Status API
+
 거래 상태와 확인 정보를 조회합니다:
+
 - **엔드포인트**: `GET /transactions/:id/status`
 - **기능**: 트랜잭션 해시로 상태, 블록 번호, 확인 수 조회
 - **상태값**: `pending` (대기), `confirmed` (확인됨), `failed` (실패)
@@ -236,13 +242,13 @@ ERC-20 토큰의 지갑 상태를 조회합니다:
 
 결제 서버의 주요 환경 변수:
 
-| 변수 | 용도 | 예시 |
-|------|------|------|
-| `DATABASE_URL` | MySQL 연결 문자열 | `mysql://user:pass@localhost:3306/msqpay` |
-| `REDIS_URL` | Redis 연결 문자열 (선택사항) | `redis://localhost:6379` |
-| `RELAYER_API_URL` | Relayer 서비스 엔드포인트 | `http://simple-relayer:3001` |
-| `RELAYER_API_KEY` | Relayer API 키 (프로덕션만) | `sk_...` |
-| `RELAYER_API_SECRET` | Relayer API 시크릿 (프로덕션만) | `secret_...` |
+| 변수                 | 용도                            | 예시                                      |
+| -------------------- | ------------------------------- | ----------------------------------------- |
+| `DATABASE_URL`       | MySQL 연결 문자열               | `mysql://user:pass@localhost:3306/msqpay` |
+| `REDIS_URL`          | Redis 연결 문자열 (선택사항)    | `redis://localhost:6379`                  |
+| `RELAYER_API_URL`    | Relayer 서비스 엔드포인트       | `http://simple-relayer:3001`              |
+| `RELAYER_API_KEY`    | Relayer API 키 (프로덕션만)     | `sk_...`                                  |
+| `RELAYER_API_SECRET` | Relayer API 시크릿 (프로덕션만) | `secret_...`                              |
 
 > **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 데이터베이스 `chains` 테이블에서 관리되며 환경변수로 설정하지 않습니다. 자세한 내용은 [Pay Server README](./packages/pay-server/README.ko.md#체인-설정)를 참고하세요.
 
@@ -259,17 +265,17 @@ ERC-20 토큰의 지갑 상태를 조회합니다:
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Smart Contract | Solidity 0.8.24, OpenZeppelin 5.x |
-| Contract Framework | Hardhat |
-| Payment Server | Node.js, Fastify v5, viem v2.21 |
-| Payment Server Tests | Vitest, Pino structured logging |
-| SDK | TypeScript, Node 18+ native fetch (no dependencies) |
-| SDK Tests | Vitest, 100% coverage |
-| Relay | Relayer Service (개발: Simple Relayer / 프로덕션: OpenZeppelin Defender) |
-| Demo App | Next.js 14, wagmi, RainbowKit |
-| Package Manager | pnpm |
+| Component            | Technology                                                               |
+| -------------------- | ------------------------------------------------------------------------ |
+| Smart Contract       | Solidity 0.8.24, OpenZeppelin 5.x                                        |
+| Contract Framework   | Hardhat                                                                  |
+| Payment Server       | Node.js, Fastify v5, viem v2.21                                          |
+| Payment Server Tests | Vitest, Pino structured logging                                          |
+| SDK                  | TypeScript, Node 18+ native fetch (no dependencies)                      |
+| SDK Tests            | Vitest, 100% coverage                                                    |
+| Relay                | Relayer Service (개발: Simple Relayer / 프로덕션: OpenZeppelin Defender) |
+| Demo App             | Next.js 14, wagmi, RainbowKit                                            |
+| Package Manager      | pnpm                                                                     |
 
 ## License
 

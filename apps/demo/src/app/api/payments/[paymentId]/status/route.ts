@@ -3,17 +3,18 @@ import { getMSQPayClient } from '@/lib/msqpay-server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
     const client = getMSQPayClient();
-    // chainId는 Pay Server에서 paymentId 기반으로 조회
-    const result = await client.getPaymentStatus(params.paymentId);
+    const { paymentId } = await params;
+    const result = await client.getPaymentStatus(paymentId);
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as { message?: string; statusCode?: number };
     return NextResponse.json(
-      { success: false, message: error.message },
-      { status: error.statusCode || 500 }
+      { success: false, message: err.message || 'Unknown error' },
+      { status: err.statusCode || 500 }
     );
   }
 }

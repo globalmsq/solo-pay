@@ -6,13 +6,13 @@ MSQPay 블록체인 결제 시스템의 전체 아키텍처 및 설계 원칙입
 
 ## 핵심 원칙
 
-| 원칙 | 설명 |
-|------|------|
-| **Contract = Source of Truth** | 결제 완료 여부는 오직 스마트 컨트랙트만 신뢰 |
-| **Integrated DB Architecture** | MySQL + Redis 캐싱 통합, 그러나 Contract = Source of Truth 유지 |
-| **Consistent API Interface** | MVP와 Production 모두 동일한 API 형태 |
-| **Server-Issued paymentId** | 결제서버가 유일한 paymentId 생성자 |
-| **Merchant Server ↔ Blockchain Separation** | 상점서버는 결제서버 API만 호출, 블록체인 직접 접근 불가 |
+| 원칙                                        | 설명                                                            |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| **Contract = Source of Truth**              | 결제 완료 여부는 오직 스마트 컨트랙트만 신뢰                    |
+| **Integrated DB Architecture**              | MySQL + Redis 캐싱 통합, 그러나 Contract = Source of Truth 유지 |
+| **Consistent API Interface**                | MVP와 Production 모두 동일한 API 형태                           |
+| **Server-Issued paymentId**                 | 결제서버가 유일한 paymentId 생성자                              |
+| **Merchant Server ↔ Blockchain Separation** | 상점서버는 결제서버 API만 호출, 블록체인 직접 접근 불가         |
 
 ## 전체 시스템 다이어그램
 
@@ -155,13 +155,13 @@ flowchart TB
 
 ### 서비스 구성
 
-| 서비스 | 포트 | 설명 |
-|--------|------|------|
-| mysql | 3306 | 결제 데이터 |
-| redis | 6379 | 캐싱 |
+| 서비스  | 포트 | 설명          |
+| ------- | ---- | ------------- |
+| mysql   | 3306 | 결제 데이터   |
+| redis   | 6379 | 캐싱          |
 | hardhat | 8545 | 로컬 블록체인 |
-| server | 3001 | Payment API |
-| demo | 3000 | 프론트엔드 |
+| server  | 3001 | Payment API   |
+| demo    | 3000 | 프론트엔드    |
 
 ## API 서버 구조
 
@@ -245,13 +245,12 @@ import { randomBytes } from 'crypto';
 
 function generatePaymentId(merchantId: string): `0x${string}` {
   const random = randomBytes(32);
-  return keccak256(
-    toHex(`${merchantId}:${Date.now()}:${random.toString('hex')}`)
-  );
+  return keccak256(toHex(`${merchantId}:${Date.now()}:${random.toString('hex')}`));
 }
 ```
 
 **특징**:
+
 - merchantId + timestamp + random bytes 기반 생성
 - orderId는 server-to-server 아키텍처에서 불필요
 - 상점은 paymentId를 내부 주문과 매핑할 수 있음
@@ -262,53 +261,53 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 
 ### 클라이언트 조작 방지
 
-| 위협 | 대응 |
-|------|------|
-| 가짜 paymentId 생성 | 결제서버만 paymentId 발급 |
-| 결제 완료 위조 | Contract에서 직접 조회 |
+| 위협                   | 대응                                                      |
+| ---------------------- | --------------------------------------------------------- |
+| 가짜 paymentId 생성    | 결제서버만 paymentId 발급                                 |
+| 결제 완료 위조         | Contract에서 직접 조회                                    |
 | **금액 조작 (Direct)** | **상점서버에서 상품 가격 조회 (프론트 amount 수신 금지)** |
-| 금액 조작 (Gasless) | 서명 데이터에서 amount 확인 |
-| 상점 위장 | API Key 인증 |
+| 금액 조작 (Gasless)    | 서명 데이터에서 amount 확인                               |
+| 상점 위장              | API Key 인증                                              |
 
 **핵심 보안 원칙**: 프론트엔드는 `productId`만 전송하고, 상점서버가 DB/설정에서 실제 가격을 조회하여 결제서버에 전달해야 합니다.
 
 ### 컨트랙트 보안
 
-| 위험 | 대응 |
-|------|------|
-| Reentrancy | ReentrancyGuard 적용 |
-| Replay Attack | processedPayments로 중복 방지 |
-| Meta-tx Replay | Forwarder nonce + deadline |
-| Unauthorized Upgrade | onlyOwner modifier on _authorizeUpgrade |
+| 위험                 | 대응                                     |
+| -------------------- | ---------------------------------------- |
+| Reentrancy           | ReentrancyGuard 적용                     |
+| Replay Attack        | processedPayments로 중복 방지            |
+| Meta-tx Replay       | Forwarder nonce + deadline               |
+| Unauthorized Upgrade | onlyOwner modifier on \_authorizeUpgrade |
 
 ### SDK/API 보안
 
-| 위험 | 대응 |
-|------|------|
-| Invalid Payment ID | Hash order ID로 고유성 보장 |
-| Signature Reuse | nonce + deadline 포함 |
-| Man-in-the-middle | HTTPS only |
-| Rate Limiting | 10 req/s per client (향후 적용) |
+| 위험               | 대응                            |
+| ------------------ | ------------------------------- |
+| Invalid Payment ID | Hash order ID로 고유성 보장     |
+| Signature Reuse    | nonce + deadline 포함           |
+| Man-in-the-middle  | HTTPS only                      |
+| Rate Limiting      | 10 req/s per client (향후 적용) |
 
 ## 네트워크 설정
 
 ### Polygon Amoy Testnet
 
-| 항목 | 값 |
-|------|-----|
-| Chain ID | 80002 |
-| Name | Polygon Amoy Testnet |
-| RPC URL | https://rpc-amoy.polygon.technology |
-| Block Explorer | https://amoy.polygonscan.com |
+| 항목           | 값                                  |
+| -------------- | ----------------------------------- |
+| Chain ID       | 80002                               |
+| Name           | Polygon Amoy Testnet                |
+| RPC URL        | https://rpc-amoy.polygon.technology |
+| Block Explorer | https://amoy.polygonscan.com        |
 
 ### 배포된 컨트랙트
 
-| Contract | Address |
-|----------|---------|
-| PaymentGateway (Proxy) | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
+| Contract                | Address                                      |
+| ----------------------- | -------------------------------------------- |
+| PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
-| SUT Token | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
+| ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
+| SUT Token               | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
 ## 확장성
 
@@ -316,33 +315,33 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 
 Production 환경에서는 API Server와 Status Worker를 분리:
 
-| 서버 | 역할 | Stateless |
-|------|------|-----------|
-| **API Server** | 외부 요청 처리, 결제 생성, Relay | O |
-| **Status Worker** | 블록체인 이벤트 모니터링, 상태 동기화 | X |
+| 서버              | 역할                                  | Stateless |
+| ----------------- | ------------------------------------- | --------- |
+| **API Server**    | 외부 요청 처리, 결제 생성, Relay      | O         |
+| **Status Worker** | 블록체인 이벤트 모니터링, 상태 동기화 | X         |
 
 **확장 방식**:
 
-| 구성요소 | 확장 방식 |
-|----------|----------|
-| API Server | 수평 확장 (로드밸런서) |
+| 구성요소      | 확장 방식                        |
+| ------------- | -------------------------------- |
+| API Server    | 수평 확장 (로드밸런서)           |
 | Status Worker | 단일 인스턴스 (이벤트 중복 방지) |
-| MySQL | Read Replica |
-| Redis | Cluster 모드 |
+| MySQL         | Read Replica                     |
+| Redis         | Cluster 모드                     |
 
 ## 기술 스택
 
-| 구성요소 | 기술 |
-|----------|------|
-| Smart Contract | Solidity 0.8.24, OpenZeppelin 5.x |
-| Contract Framework | Hardhat |
-| Payment Server | Node.js, Fastify v5, viem v2.21 |
-| Payment Server Tests | Vitest, Pino structured logging |
-| SDK | TypeScript, Node 18+ native fetch |
-| SDK Tests | Vitest, 100% coverage |
-| Relay | Simple Relayer (dev) / OZ Defender (prod) |
-| Demo App | Next.js 14, wagmi, RainbowKit |
-| Package Manager | pnpm |
+| 구성요소             | 기술                                      |
+| -------------------- | ----------------------------------------- |
+| Smart Contract       | Solidity 0.8.24, OpenZeppelin 5.x         |
+| Contract Framework   | Hardhat                                   |
+| Payment Server       | Node.js, Fastify v5, viem v2.21           |
+| Payment Server Tests | Vitest, Pino structured logging           |
+| SDK                  | TypeScript, Node 18+ native fetch         |
+| SDK Tests            | Vitest, 100% coverage                     |
+| Relay                | Simple Relayer (dev) / OZ Defender (prod) |
+| Demo App             | Next.js 14, wagmi, RainbowKit             |
+| Package Manager      | pnpm                                      |
 
 ## 관련 문서
 

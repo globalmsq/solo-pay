@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { Address } from 'viem';
+import { ZodError } from 'zod';
 import {
   GaslessRequestSchema,
   ForwardRequest,
@@ -46,11 +47,11 @@ export async function submitGaslessRoute(
         try {
           validatedData = GaslessRequestSchema.parse(request.body);
         } catch (error) {
-          if (error instanceof Error && error.name === 'ZodError') {
+          if (error instanceof ZodError) {
             return reply.code(400).send({
               code: 'VALIDATION_ERROR',
               message: '입력 검증 실패',
-              details: (error as { errors?: unknown[] }).errors,
+              details: error.errors,
             });
           }
           throw error;
@@ -70,11 +71,11 @@ export async function submitGaslessRoute(
         try {
           validatedData = createAmountValidationSchema(dbAmount).parse(validatedData);
         } catch (error) {
-          if (error instanceof Error && error.name === 'ZodError') {
+          if (error instanceof ZodError) {
             return reply.code(400).send({
               code: 'VALIDATION_ERROR',
               message: '입력 검증 실패',
-              details: (error as { errors?: unknown[] }).errors,
+              details: error.errors,
             });
           }
           throw error;
@@ -121,7 +122,8 @@ export async function submitGaslessRoute(
           message: 'Gasless 거래가 제출되었습니다',
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Gasless 거래를 제출할 수 없습니다';
+        const message =
+          error instanceof Error ? error.message : 'Gasless 거래를 제출할 수 없습니다';
         return reply.code(500).send({
           code: 'INTERNAL_ERROR',
           message,

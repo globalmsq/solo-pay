@@ -12,16 +12,6 @@
     "outDir": "./dist",
     "rootDir": "."
   },
-  "include": [
-    "./src/**/*",
-    "./test/**/*",
-    "./ignition/**/*",
-    "./hardhat.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "artifacts",
-    "cache",
-    "typechain-types"
-  ]
+  "include": ["./src/**/*", "./test/**/*", "./hardhat.config.ts", "./ignition/**/*"],
+  "exclude": ["node_modules", "artifacts", "cache"]
 }

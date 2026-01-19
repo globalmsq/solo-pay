@@ -16,7 +16,7 @@ describe('SignatureService', () => {
     });
 
     it('should throw error with invalid forwarder address', () => {
-      expect(() => new SignatureService('invalid' as any, chainId)).toThrow();
+      expect(() => new SignatureService('invalid' as `0x${string}`, chainId)).toThrow();
     });
 
     it('should throw error with invalid chain ID', () => {
@@ -111,7 +111,7 @@ describe('SignatureService', () => {
     it('should return false for invalid request address format', async () => {
       const invalidRequest = {
         ...validRequest,
-        from: 'invalid' as any,
+        from: 'invalid' as `0x${string}`,
       };
 
       const signature = '0x' + 'aa'.repeat(65);
@@ -123,7 +123,7 @@ describe('SignatureService', () => {
     it('should return false for missing request.from', async () => {
       const invalidRequest = {
         ...validRequest,
-        from: '' as any,
+        from: '' as `0x${string}`,
       };
 
       const signature = '0x' + 'aa'.repeat(65);
@@ -135,7 +135,7 @@ describe('SignatureService', () => {
     it('should return false for non-numeric nonce', async () => {
       const invalidRequest = {
         ...validRequest,
-        nonce: 'invalid' as any,
+        nonce: 'invalid',
       };
 
       const signature = '0x' + 'aa'.repeat(64) + '1b';
@@ -181,7 +181,7 @@ describe('SignatureService', () => {
     it('should return null for invalid request', async () => {
       const invalidRequest = {
         ...validRequest,
-        from: 'invalid' as any,
+        from: 'invalid' as `0x${string}`,
       };
 
       const signature = '0x' + 'aa'.repeat(64) + '1b';

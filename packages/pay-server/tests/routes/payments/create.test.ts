@@ -116,11 +116,11 @@ const mockPayment = {
 describe('POST /payments/create', () => {
   let app: FastifyInstance;
   let blockchainService: BlockchainService;
-  let merchantService: MerchantService;
-  let chainService: ChainService;
-  let tokenService: TokenService;
-  let paymentMethodService: PaymentMethodService;
-  let paymentService: PaymentService;
+  let merchantService: Partial<MerchantService>;
+  let chainService: Partial<ChainService>;
+  let tokenService: Partial<TokenService>;
+  let paymentMethodService: Partial<PaymentMethodService>;
+  let paymentService: Partial<PaymentService>;
 
   beforeEach(async () => {
     app = Fastify({ logger: false });
@@ -131,28 +131,32 @@ describe('POST /payments/create', () => {
 
     // Mock getDecimals and getTokenSymbolOnChain to return on-chain values
     blockchainService.getDecimals = vi.fn().mockResolvedValue(18);
-    blockchainService.getTokenSymbolOnChain = vi.fn().mockImplementation((_chainId: number, tokenAddress: string) => {
-      if (tokenAddress.toLowerCase() === '0xE4C687167705Abf55d709395f92e254bdF5825a2'.toLowerCase()) {
-        return Promise.resolve('SUT');
-      }
-      if (tokenAddress.toLowerCase() === '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'.toLowerCase()) {
-        return Promise.resolve('TEST');
-      }
-      return Promise.resolve('UNKNOWN');
-    });
+    blockchainService.getTokenSymbolOnChain = vi
+      .fn()
+      .mockImplementation((_chainId: number, tokenAddress: string) => {
+        if (
+          tokenAddress.toLowerCase() === '0xE4C687167705Abf55d709395f92e254bdF5825a2'.toLowerCase()
+        ) {
+          return Promise.resolve('SUT');
+        }
+        if (
+          tokenAddress.toLowerCase() === '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'.toLowerCase()
+        ) {
+          return Promise.resolve('TEST');
+        }
+        return Promise.resolve('UNKNOWN');
+      });
 
     // Mock DB Services
     merchantService = {
       findByMerchantKey: vi.fn().mockImplementation((key: string) => {
-        // Support all merchant keys used in tests
         if (key.startsWith('merchant_')) {
           return Promise.resolve({ ...mockMerchant, merchant_key: key });
         }
         return Promise.resolve(null);
       }),
-      // Add findByApiKey for auth middleware - return merchant based on merchantId in request
       findByApiKey: vi.fn().mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_001' }),
-    } as any;
+    };
 
     chainService = {
       findByNetworkId: vi.fn().mockImplementation((networkId: number) => {
@@ -160,7 +164,7 @@ describe('POST /payments/create', () => {
         if (networkId === 31337) return Promise.resolve(mockChain31337);
         return Promise.resolve(null);
       }),
-    } as any;
+    };
 
     tokenService = {
       findByAddress: vi.fn().mockImplementation((chainId: number) => {
@@ -168,25 +172,24 @@ describe('POST /payments/create', () => {
         if (chainId === 2) return Promise.resolve(mockToken31337);
         return Promise.resolve(null);
       }),
-    } as any;
+    };
 
     paymentMethodService = {
       findByMerchantAndToken: vi.fn().mockResolvedValue(mockPaymentMethod),
-    } as any;
+    };
 
     paymentService = {
       create: vi.fn().mockResolvedValue(mockPayment),
-    } as any;
+    };
 
-    // 실제 라우트 등록
     await createPaymentRoute(
       app,
       blockchainService,
-      merchantService,
-      chainService,
-      tokenService,
-      paymentMethodService,
-      paymentService
+      merchantService as MerchantService,
+      chainService as ChainService,
+      tokenService as TokenService,
+      paymentMethodService as PaymentMethodService,
+      paymentService as PaymentService
     );
   });
 
@@ -212,8 +215,8 @@ describe('POST /payments/create', () => {
       expect(body.success).toBe(true);
       expect(body.paymentId).toBeDefined();
       expect(body.tokenAddress).toBe('0xE4C687167705Abf55d709395f92e254bdF5825a2');
-      expect(body.tokenSymbol).toBe('SUT');       // From on-chain mock
-      expect(body.tokenDecimals).toBe(18);        // From on-chain mock
+      expect(body.tokenSymbol).toBe('SUT'); // From on-chain mock
+      expect(body.tokenDecimals).toBe(18); // From on-chain mock
       expect(body.gatewayAddress).toBeDefined();
       expect(body.forwarderAddress).toBeDefined();
       expect(body.amount).toBe('100000000000000000000'); // 100 * 10^18
@@ -223,7 +226,9 @@ describe('POST /payments/create', () => {
 
     it('Hardhat 체인 (chainId 31337)으로 최소 필수 정보만으로 결제를 생성할 수 있어야 함', async () => {
       // Update mock to return merchant_002 for this test
-      merchantService.findByApiKey = vi.fn().mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_002' });
+      merchantService.findByApiKey = vi
+        .fn()
+        .mockResolvedValue({ ...mockMerchant, merchant_key: 'merchant_002' });
 
       const minimalPayment = {
         merchantId: 'merchant_002',

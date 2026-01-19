@@ -15,7 +15,10 @@ const CreatePaymentMethodSchema = z.object({
 });
 
 const UpdatePaymentMethodSchema = z.object({
-  recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid recipient address format').optional(),
+  recipientAddress: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid recipient address format')
+    .optional(),
   is_enabled: z.boolean().optional(),
 });
 
@@ -101,10 +104,13 @@ export async function paymentMethodsRoute(
         }
 
         // Check if payment method already exists (including soft-deleted ones)
-        const existing = await paymentMethodService.findByMerchantAndTokenIncludingDeleted(merchant.id, token.id);
-        
+        const existing = await paymentMethodService.findByMerchantAndTokenIncludingDeleted(
+          merchant.id,
+          token.id
+        );
+
         let paymentMethod: MerchantPaymentMethod;
-        
+
         if (existing) {
           if (existing.is_deleted) {
             // Restore soft-deleted payment method with updated values
@@ -223,7 +229,7 @@ export async function paymentMethodsRoute(
           recipient_address?: string;
           is_enabled?: boolean;
         } = {};
-        
+
         if (validatedData.recipientAddress !== undefined) {
           updateData.recipient_address = validatedData.recipientAddress;
         }
@@ -340,58 +346,54 @@ export async function paymentMethodsRoute(
   );
 
   // GET /merchants/me/chains-tokens - Get available chains and tokens for selection
-  app.get(
-    '/merchants/me/chains-tokens',
-    { preHandler: authMiddleware },
-    async (request, reply) => {
-      try {
-        // Get all enabled chains
-        const chains = await chainService.findAll();
-        
-        // Extract chain IDs for bulk token query
-        const chainIds = chains.map(chain => chain.id);
-        
-        // Fetch all tokens for all chains in a single query
-        const allTokens = await tokenService.findAllForChains(chainIds, false);
-        
-        // Group tokens by chain_id using a Map for O(1) lookups
-        const tokensByChainId = new Map<number, Token[]>();
-        for (const token of allTokens) {
-          if (!tokensByChainId.has(token.chain_id)) {
-            tokensByChainId.set(token.chain_id, []);
-          }
-          tokensByChainId.get(token.chain_id)!.push(token);
-        }
-        
-        // Map chains with their tokens
-        const chainsWithTokens = chains.map(chain => {
-          const tokens = tokensByChainId.get(chain.id) || [];
-          return {
-            id: chain.id,
-            network_id: chain.network_id,
-            name: chain.name,
-            is_testnet: chain.is_testnet,
-            tokens: tokens.map(token => ({
-              id: token.id,
-              address: token.address,
-              symbol: token.symbol,
-              decimals: token.decimals,
-            })),
-          };
-        });
+  app.get('/merchants/me/chains-tokens', { preHandler: authMiddleware }, async (request, reply) => {
+    try {
+      // Get all enabled chains
+      const chains = await chainService.findAll();
 
-        return reply.code(200).send({
-          success: true,
-          chains: chainsWithTokens,
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to get chains and tokens';
-        request.log.error(error, 'Failed to get chains and tokens');
-        return reply.code(500).send({
-          code: 'INTERNAL_ERROR',
-          message,
-        });
+      // Extract chain IDs for bulk token query
+      const chainIds = chains.map((chain) => chain.id);
+
+      // Fetch all tokens for all chains in a single query
+      const allTokens = await tokenService.findAllForChains(chainIds, false);
+
+      // Group tokens by chain_id using a Map for O(1) lookups
+      const tokensByChainId = new Map<number, Token[]>();
+      for (const token of allTokens) {
+        if (!tokensByChainId.has(token.chain_id)) {
+          tokensByChainId.set(token.chain_id, []);
+        }
+        tokensByChainId.get(token.chain_id)?.push(token);
       }
+
+      // Map chains with their tokens
+      const chainsWithTokens = chains.map((chain) => {
+        const tokens = tokensByChainId.get(chain.id) || [];
+        return {
+          id: chain.id,
+          network_id: chain.network_id,
+          name: chain.name,
+          is_testnet: chain.is_testnet,
+          tokens: tokens.map((token) => ({
+            id: token.id,
+            address: token.address,
+            symbol: token.symbol,
+            decimals: token.decimals,
+          })),
+        };
+      });
+
+      return reply.code(200).send({
+        success: true,
+        chains: chainsWithTokens,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to get chains and tokens';
+      request.log.error(error, 'Failed to get chains and tokens');
+      return reply.code(500).send({
+        code: 'INTERNAL_ERROR',
+        message,
+      });
     }
-  );
+  });
 }

@@ -10,23 +10,23 @@ MSQPay API error codes and solutions.
 {
   "code": "ERROR_CODE",
   "message": "Error message",
-  "field": "fieldName",        // Optional
-  "value": "actualValue"       // Optional
+  "field": "fieldName", // Optional
+  "value": "actualValue" // Optional
 }
 ```
 
 ## HTTP Status Codes
 
-| HTTP Status | Error Type | Description |
-|-----------|----------|------|
-| 400 | validation_error | Input validation failed |
-| 400 | state_error | Invalid state transition |
-| 401 | authentication_error | Authentication/signature failed |
-| 404 | not_found_error | Resource not found |
-| 410 | expired_error | Resource expired |
-| 429 | rate_limit_error | Rate limit exceeded |
-| 500 | internal_error | Internal server error |
-| 503 | service_unavailable_error | Service unavailable |
+| HTTP Status | Error Type                | Description                     |
+| ----------- | ------------------------- | ------------------------------- |
+| 400         | validation_error          | Input validation failed         |
+| 400         | state_error               | Invalid state transition        |
+| 401         | authentication_error      | Authentication/signature failed |
+| 404         | not_found_error           | Resource not found              |
+| 410         | expired_error             | Resource expired                |
+| 429         | rate_limit_error          | Rate limit exceeded             |
+| 500         | internal_error            | Internal server error           |
+| 503         | service_unavailable_error | Service unavailable             |
 
 ## Common Error Codes
 
@@ -34,79 +34,79 @@ MSQPay API error codes and solutions.
 
 Input data validation failed
 
-| Code | Description | Solution |
-|------|------|----------|
-| `VALIDATION_ERROR` | General validation failure | Check input data |
-| `INVALID_REQUEST` | Invalid request format | Verify API format |
-| `PAYMENT_STORE_INVALID_ADDRESS` | Store address validation failed | Provide valid address |
+| Code                            | Description                     | Solution                    |
+| ------------------------------- | ------------------------------- | --------------------------- |
+| `VALIDATION_ERROR`              | General validation failure      | Check input data            |
+| `INVALID_REQUEST`               | Invalid request format          | Verify API format           |
+| `PAYMENT_STORE_INVALID_ADDRESS` | Store address validation failed | Provide valid address       |
 | `PAYMENT_TOKEN_INVALID_ADDRESS` | Token address validation failed | Provide valid token address |
-| `PAYMENT_AMOUNT_INVALID_ZERO` | Amount is zero | Provide positive amount |
-| `INVALID_TRANSACTION_DATA` | Transaction data error | Verify TX data |
-| `INVALID_GAS_ESTIMATE` | Gas estimation error | Recalculate gas value |
+| `PAYMENT_AMOUNT_INVALID_ZERO`   | Amount is zero                  | Provide positive amount     |
+| `INVALID_TRANSACTION_DATA`      | Transaction data error          | Verify TX data              |
+| `INVALID_GAS_ESTIMATE`          | Gas estimation error            | Recalculate gas value       |
 
 ### authentication_error (401)
 
 Authentication and signature verification failed
 
-| Code | Description | Solution |
-|------|------|----------|
-| `INVALID_SIGNATURE` | Signature verification failed | Regenerate EIP-712 signature |
-| `SIGNATURE_SIGNER_MISMATCH` | Signer mismatch | Sign with correct wallet |
+| Code                        | Description                   | Solution                     |
+| --------------------------- | ----------------------------- | ---------------------------- |
+| `INVALID_SIGNATURE`         | Signature verification failed | Regenerate EIP-712 signature |
+| `SIGNATURE_SIGNER_MISMATCH` | Signer mismatch               | Sign with correct wallet     |
 
 ### not_found_error (404)
 
 Resource not found
 
-| Code | Description | Solution |
-|------|------|----------|
-| `NOT_FOUND` | Payment information not found | Verify paymentId |
-| `PAYMENT_NOT_FOUND` | Payment not found | Use valid paymentId |
+| Code                | Description                   | Solution            |
+| ------------------- | ----------------------------- | ------------------- |
+| `NOT_FOUND`         | Payment information not found | Verify paymentId    |
+| `PAYMENT_NOT_FOUND` | Payment not found             | Use valid paymentId |
 
 ### state_error (400)
 
 Invalid state transition
 
-| Code | Description | Solution |
-|------|------|----------|
+| Code                        | Description               | Solution                     |
+| --------------------------- | ------------------------- | ---------------------------- |
 | `PAYMENT_ALREADY_PROCESSED` | Payment already processed | Prevent duplicate submission |
-| `PAYMENT_EXPIRED` | Payment expired | Create new payment |
+| `PAYMENT_EXPIRED`           | Payment expired           | Create new payment           |
 
 ### internal_error (500)
 
 Internal server error
 
-| Code | Description | Solution |
-|------|------|----------|
-| `INTERNAL_ERROR` | Server error | Retry or contact support |
-| `DATABASE_CONNECTION_FAILED` | DB connection failed | Retry after a moment |
-| `BLOCKCHAIN_RPC_ERROR` | RPC error | Retry after a moment |
+| Code                         | Description          | Solution                 |
+| ---------------------------- | -------------------- | ------------------------ |
+| `INTERNAL_ERROR`             | Server error         | Retry or contact support |
+| `DATABASE_CONNECTION_FAILED` | DB connection failed | Retry after a moment     |
+| `BLOCKCHAIN_RPC_ERROR`       | RPC error            | Retry after a moment     |
 
 ### service_unavailable_error (503)
 
 External dependency error
 
-| Code | Description | Solution |
-|------|------|----------|
-| `SERVICE_UNAVAILABLE` | Service unavailable | Retry after a moment |
+| Code                        | Description               | Solution             |
+| --------------------------- | ------------------------- | -------------------- |
+| `SERVICE_UNAVAILABLE`       | Service unavailable       | Retry after a moment |
 | `RELAY_SERVICE_UNAVAILABLE` | Relay service unavailable | Retry after a moment |
 
 ## Blockchain-Related Errors
 
 ### Token-Related
 
-| Code | Description | Solution |
-|------|------|----------|
-| `INSUFFICIENT_BALANCE` | Insufficient token balance | Add funds to balance |
-| `INSUFFICIENT_ALLOWANCE` | Insufficient approval | Token approval needed |
-| `TOKEN_TRANSFER_FAILED` | Token transfer failed | Check balance/approval |
+| Code                     | Description                | Solution               |
+| ------------------------ | -------------------------- | ---------------------- |
+| `INSUFFICIENT_BALANCE`   | Insufficient token balance | Add funds to balance   |
+| `INSUFFICIENT_ALLOWANCE` | Insufficient approval      | Token approval needed  |
+| `TOKEN_TRANSFER_FAILED`  | Token transfer failed      | Check balance/approval |
 
 ### Transaction-Related
 
-| Code | Description | Solution |
-|------|------|----------|
-| `TRANSACTION_REVERTED` | TX execution failed | Check gas/balance |
-| `GAS_LIMIT_EXCEEDED` | Gas limit exceeded | Increase gas limit |
-| `NONCE_TOO_LOW` | Nonce conflict | Reset wallet nonce |
+| Code                   | Description         | Solution           |
+| ---------------------- | ------------------- | ------------------ |
+| `TRANSACTION_REVERTED` | TX execution failed | Check gas/balance  |
+| `GAS_LIMIT_EXCEEDED`   | Gas limit exceeded  | Increase gas limit |
+| `NONCE_TOO_LOW`        | Nonce conflict      | Reset wallet nonce |
 
 ## Error Handling Examples
 
@@ -117,7 +117,7 @@ import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   environment: 'development',
-  apiKey: 'sk_test_abc123'
+  apiKey: 'sk_test_abc123',
 });
 
 try {
@@ -143,7 +143,7 @@ try {
         // Retry or contact support
         break;
       default:
-        // Handle other errors
+      // Handle other errors
     }
   }
 }
@@ -152,10 +152,7 @@ try {
 ### Retry Logic
 
 ```typescript
-async function retryableRequest<T>(
-  fn: () => Promise<T>,
-  maxRetries = 3
-): Promise<T> {
+async function retryableRequest<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   let lastError: Error;
 
   for (let i = 0; i < maxRetries; i++) {
@@ -169,17 +166,17 @@ async function retryableRequest<T>(
         const retryable = [
           'INTERNAL_ERROR',
           'SERVICE_UNAVAILABLE',
-          'BLOCKCHAIN_RPC_ERROR'
+          'BLOCKCHAIN_RPC_ERROR',
         ].includes(error.code);
 
         if (!retryable) {
-          throw error;  // Non-retryable error, throw immediately
+          throw error; // Non-retryable error, throw immediately
         }
       }
 
       // Exponential backoff
       const delay = Math.pow(2, i) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
@@ -187,9 +184,7 @@ async function retryableRequest<T>(
 }
 
 // Usage
-const payment = await retryableRequest(() =>
-  client.createPayment(params)
-);
+const payment = await retryableRequest(() => client.createPayment(params));
 ```
 
 ## Debugging Tips

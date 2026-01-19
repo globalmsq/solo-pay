@@ -1,7 +1,6 @@
 import { API_URLS, DEFAULT_HEADERS } from './constants';
 import { MSQPayError } from './errors';
 import type {
-  Environment,
   MSQPayConfig,
   CreatePaymentParams,
   CreatePaymentResponse,
@@ -13,7 +12,7 @@ import type {
   RelayStatusResponse,
   GetPaymentHistoryParams,
   PaymentHistoryResponse,
-  ErrorResponse
+  ErrorResponse,
 } from './types';
 
 export class MSQPayClient {
@@ -77,18 +76,18 @@ export class MSQPayClient {
   private async request<T>(
     method: string,
     path: string,
-    body?: unknown
+    body?: CreatePaymentParams | GaslessParams | RelayParams
   ): Promise<T> {
     const headers = {
       ...DEFAULT_HEADERS,
-      'x-api-key': this.apiKey
+      'x-api-key': this.apiKey,
     };
 
     const response = await fetch(`${this.apiUrl}${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
-      cache: 'no-store'
+      cache: 'no-store',
     });
 
     const data = (await response.json()) as T | ErrorResponse;
@@ -96,12 +95,7 @@ export class MSQPayClient {
     if (!response.ok) {
       const error = data as ErrorResponse;
       const statusCode = response.status;
-      throw new MSQPayError(
-        error.code,
-        error.message,
-        statusCode,
-        error.details
-      );
+      throw new MSQPayError(error.code, error.message, statusCode, error.details);
     }
 
     return data as T;

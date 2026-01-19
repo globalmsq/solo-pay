@@ -8,13 +8,14 @@ A step-by-step guide to deploying the MSQPay Payment API to various environments
 
 MSQPay uses the same HTTP API-based architecture across all environments. Environment switching is controlled solely through the `RELAYER_API_URL` environment variable:
 
-| Environment | Relay Service | API URL | Forwarder |
-|------|-------------|---------|-----------|
-| **Local (Docker Compose)** | Simple Relayer HTTP Service | http://simple-relayer:3001 | ERC2771Forwarder |
-| **Testnet (Polygon Amoy)** | OZ Defender API | https://api.defender.openzeppelin.com | ERC2771Forwarder |
-| **Mainnet (Polygon)** | OZ Defender API | https://api.defender.openzeppelin.com | ERC2771Forwarder |
+| Environment                | Relay Service               | API URL                               | Forwarder        |
+| -------------------------- | --------------------------- | ------------------------------------- | ---------------- |
+| **Local (Docker Compose)** | Simple Relayer HTTP Service | http://simple-relayer:3001            | ERC2771Forwarder |
+| **Testnet (Polygon Amoy)** | OZ Defender API             | https://api.defender.openzeppelin.com | ERC2771Forwarder |
+| **Mainnet (Polygon)**      | OZ Defender API             | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 
 **Environment Switching**: Controlled via `RELAYER_API_URL` environment variable
+
 - `http://simple-relayer:3001` → Local development environment (Simple Relayer Docker container)
 - `https://api.defender.openzeppelin.com` → Production environment (OZ Defender API)
 
@@ -63,6 +64,7 @@ NODE_ENV=development
 ```
 
 **Simple Relayer Service Environment Variables** (simple-relayer container):
+
 ```bash
 RELAYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 # Hardhat default account #0 private key
@@ -130,11 +132,11 @@ Pay Server supports multi-chain through the `chains.json` configuration file. Di
 
 #### Configuration File Types
 
-| File | Environment | Description |
-|------|------|------|
-| `chains.json` | Local | Hardhat local development |
-| `chains.testnet.json` | Testnet | Polygon Amoy testnet |
-| `chains.production.json` | Production | Polygon Mainnet |
+| File                     | Environment | Description               |
+| ------------------------ | ----------- | ------------------------- |
+| `chains.json`            | Local       | Hardhat local development |
+| `chains.testnet.json`    | Testnet     | Polygon Amoy testnet      |
+| `chains.production.json` | Production  | Polygon Mainnet           |
 
 #### Configuration File Structure
 
@@ -199,12 +201,14 @@ git commit -m "chore: add .env files to gitignore"
 ERC2771Forwarder is the core contract for processing Meta-Transactions.
 
 **Deploy with Hardhat Ignition**:
+
 ```bash
 cd contracts
 npx hardhat ignition deploy ignition/modules/Forwarder.ts --network amoy
 ```
 
 **Post-Deployment Verification**:
+
 1. Record deployed Forwarder address
 2. Verify contract on Polygonscan
 3. Set `FORWARDER_ADDRESS` environment variable
@@ -214,9 +218,10 @@ npx hardhat ignition deploy ignition/modules/Forwarder.ts --network amoy
 PaymentGateway must set Forwarder as trustedForwarder.
 
 **Specify Forwarder address in deployment script**:
+
 ```typescript
 // ignition/modules/PaymentGateway.ts
-const forwarderAddress = "0x..."; // Address from 2.1
+const forwarderAddress = '0x...'; // Address from 2.1
 await gateway.initialize(owner, forwarderAddress);
 ```
 
@@ -225,6 +230,7 @@ await gateway.initialize(owner, forwarderAddress);
 Relayer is the server wallet that submits Meta-Transactions.
 
 **Create Relayer Wallet**:
+
 1. Generate new Ethereum wallet (secure private key storage)
 2. Set private key as environment variable (`RELAYER_PRIVATE_KEY`)
 
@@ -240,13 +246,13 @@ Relayer is the server wallet that submits Meta-Transactions.
 
 ### 3.1 Public RPC Comparison
 
-| Provider | URL | Speed | Reliability | Cost |
-|--------|-----|------|--------|------|
-| **Polygon RPC** | `https://polygon-rpc.com` | Medium | High | Free |
-| **Infura** | `https://mainnet.infura.io/v3/{PROJECT_ID}` | Fast | High | Paid |
-| **Alchemy** | `https://polygon-mainnet.g.alchemy.com/v2/{API_KEY}` | Very Fast | Very High | Paid |
-| **QuickNode** | `https://polished-responsive-diagram.quiknode.pro/...` | Fast | High | Paid |
-| **Ankr** | `https://rpc.ankr.com/polygon` | Medium | Medium | Free |
+| Provider        | URL                                                    | Speed     | Reliability | Cost |
+| --------------- | ------------------------------------------------------ | --------- | ----------- | ---- |
+| **Polygon RPC** | `https://polygon-rpc.com`                              | Medium    | High        | Free |
+| **Infura**      | `https://mainnet.infura.io/v3/{PROJECT_ID}`            | Fast      | High        | Paid |
+| **Alchemy**     | `https://polygon-mainnet.g.alchemy.com/v2/{API_KEY}`   | Very Fast | Very High   | Paid |
+| **QuickNode**   | `https://polished-responsive-diagram.quiknode.pro/...` | Fast      | High        | Paid |
+| **Ankr**        | `https://rpc.ankr.com/polygon`                         | Medium    | Medium      | Free |
 
 ### 3.2 RPC Selection Criteria
 
@@ -407,7 +413,7 @@ services:
   api:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       BLOCKCHAIN_RPC_URL: https://polygon-rpc.com
       GATEWAY_ADDRESS: 0x...
@@ -416,7 +422,7 @@ services:
       NODE_ENV: production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -539,7 +545,7 @@ logger.error('RPC error', { error: 'Connection refused' });
 
 ### 7.2 Error Tracking (Sentry)
 
-```bash
+````bash
 # Install Sentry client
 npm install @sentry/node
 
@@ -559,7 +565,7 @@ try {
 } catch (error) {
   Sentry.captureException(error);
 }
-```
+````
 
 ### 7.3 Metrics Collection (Prometheus)
 
@@ -692,6 +698,7 @@ Error: Connection refused at BLOCKCHAIN_RPC_URL
 ```
 
 Solutions:
+
 1. Verify RPC URL (`BLOCKCHAIN_RPC_URL` environment variable)
 2. Check network connection
 3. Verify firewall settings
@@ -704,6 +711,7 @@ Error: Invalid signature - EIP-712 verification failed
 ```
 
 Solutions:
+
 1. Verify EIP-712 domain matches Forwarder contract
 2. Check chainId is correct
 3. Verify verifyingContract address is correct
@@ -717,6 +725,7 @@ Error: Insufficient balance for gas
 ```
 
 Solutions:
+
 1. Send POL to relayer wallet
 2. Verify sufficient balance (minimum 0.5 POL testnet, 5 POL mainnet)
 3. Re-evaluate transaction volume
