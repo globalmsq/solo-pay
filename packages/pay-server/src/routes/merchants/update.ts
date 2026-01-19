@@ -43,6 +43,7 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
             id: updatedMerchant.id,
             merchant_key: updatedMerchant.merchant_key,
             name: updatedMerchant.name,
+            chain_id: updatedMerchant.chain_id,
             webhook_url: updatedMerchant.webhook_url,
             is_enabled: updatedMerchant.is_enabled,
             created_at: updatedMerchant.created_at.toISOString(),

@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { MerchantPaymentMethod, Token } from '@prisma/client';
+import { MerchantPaymentMethod } from '@prisma/client';
 import { MerchantService } from '../../services/merchant.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { TokenService } from '../../services/token.service';
@@ -8,7 +8,6 @@ import { ChainService } from '../../services/chain.service';
 import { createAuthMiddleware } from '../../middleware/auth.middleware';
 
 const CreatePaymentMethodSchema = z.object({
-  chainId: z.number().int().positive(),
   tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid token address format'),
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid recipient address format'),
   is_enabled: z.boolean().optional().default(true),
@@ -85,21 +84,37 @@ export async function paymentMethodsRoute(
 
         const validatedData = CreatePaymentMethodSchema.parse(request.body);
 
-        // Find chain by network_id
-        const chain = await chainService.findByNetworkId(validatedData.chainId);
-        if (!chain) {
-          return reply.code(404).send({
-            code: 'CHAIN_NOT_FOUND',
-            message: 'Chain not found',
+        // Validate merchant has chain configured
+        if (!merchant.chain_id) {
+          return reply.code(400).send({
+            code: 'MERCHANT_CHAIN_NOT_CONFIGURED',
+            message: 'Merchant chain is not configured. Please configure merchant chain first.',
           });
         }
 
-        // Find token by chain_id and address
+        // Get merchant's chain
+        const chain = await chainService.findById(merchant.chain_id);
+        if (!chain) {
+          return reply.code(404).send({
+            code: 'CHAIN_NOT_FOUND',
+            message: 'Merchant chain not found',
+          });
+        }
+
+        // Find token by merchant's chain_id and address
         const token = await tokenService.findByAddress(chain.id, validatedData.tokenAddress);
         if (!token) {
           return reply.code(404).send({
             code: 'TOKEN_NOT_FOUND',
             message: 'Token not found',
+          });
+        }
+
+        // Validate that token's chain matches merchant's chain
+        if (token.chain_id !== merchant.chain_id) {
+          return reply.code(400).send({
+            code: 'CHAIN_MISMATCH',
+            message: `Token belongs to chain ${token.chain_id}, but merchant is configured for chain ${merchant.chain_id}`,
           });
         }
 
@@ -344,56 +359,4 @@ export async function paymentMethodsRoute(
       }
     }
   );
-
-  // GET /merchants/me/chains-tokens - Get available chains and tokens for selection
-  app.get('/merchants/me/chains-tokens', { preHandler: authMiddleware }, async (request, reply) => {
-    try {
-      // Get all enabled chains
-      const chains = await chainService.findAll();
-
-      // Extract chain IDs for bulk token query
-      const chainIds = chains.map((chain) => chain.id);
-
-      // Fetch all tokens for all chains in a single query
-      const allTokens = await tokenService.findAllForChains(chainIds, false);
-
-      // Group tokens by chain_id using a Map for O(1) lookups
-      const tokensByChainId = new Map<number, Token[]>();
-      for (const token of allTokens) {
-        if (!tokensByChainId.has(token.chain_id)) {
-          tokensByChainId.set(token.chain_id, []);
-        }
-        tokensByChainId.get(token.chain_id)?.push(token);
-      }
-
-      // Map chains with their tokens
-      const chainsWithTokens = chains.map((chain) => {
-        const tokens = tokensByChainId.get(chain.id) || [];
-        return {
-          id: chain.id,
-          network_id: chain.network_id,
-          name: chain.name,
-          is_testnet: chain.is_testnet,
-          tokens: tokens.map((token) => ({
-            id: token.id,
-            address: token.address,
-            symbol: token.symbol,
-            decimals: token.decimals,
-          })),
-        };
-      });
-
-      return reply.code(200).send({
-        success: true,
-        chains: chainsWithTokens,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to get chains and tokens';
-      request.log.error(error, 'Failed to get chains and tokens');
-      return reply.code(500).send({
-        code: 'INTERNAL_ERROR',
-        message,
-      });
-    }
-  });
 }

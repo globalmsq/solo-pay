@@ -56,7 +56,9 @@ export class NonceService {
       }
 
       throw new Error(
-        `Failed to get nonce for ${address}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get nonce for ${address}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
       );
     }
   }

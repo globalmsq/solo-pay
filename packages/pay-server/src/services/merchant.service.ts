@@ -4,12 +4,14 @@ import crypto from 'crypto';
 export interface CreateMerchantInput {
   merchant_key: string;
   name: string;
+  chain_id: number;
   api_key: string;
   webhook_url?: string;
 }
 
 export interface UpdateMerchantInput {
   name?: string;
+  chain_id?: number;
   webhook_url?: string;
   is_enabled?: boolean;
 }
@@ -28,6 +30,7 @@ export class MerchantService {
       data: {
         merchant_key: input.merchant_key,
         name: input.name,
+        chain_id: input.chain_id,
         api_key_hash: apiKeyHash,
         webhook_url: input.webhook_url,
         is_enabled: true,
@@ -69,6 +72,7 @@ export class MerchantService {
       where: { id },
       data: {
         ...(input.name !== undefined && { name: input.name }),
+        ...(input.chain_id !== undefined && { chain_id: input.chain_id }),
         ...(input.webhook_url !== undefined && { webhook_url: input.webhook_url }),
         ...(input.is_enabled !== undefined && { is_enabled: input.is_enabled }),
       },
