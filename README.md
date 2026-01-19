@@ -246,8 +246,8 @@ Key environment variables for the payment server:
 | -------------------- | ------------------------------------ | ----------------------------------------- |
 | `DATABASE_URL`       | MySQL connection string              | `mysql://user:pass@localhost:3306/msqpay` |
 | `REDIS_URL`          | Redis connection string (optional)   | `redis://localhost:6379`                  |
-| `RELAYER_API_URL`    | Relayer service endpoint             | `http://simple-relayer:3001`              |
-| `RELAYER_API_KEY`    | Relayer API key (production only)    | `sk_...`                                  |
+| `RELAY_API_URL`    | Relayer service endpoint             | `http://simple-relayer:3001`              |
+| `RELAY_API_KEY`      | Relayer API key (production only)    | `sk_...`                                  |
 | `RELAYER_API_SECRET` | Relayer API secret (production only) | `secret_...`                              |
 
 > **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the database `chains` table, not environment variables. See [Pay Server README](./packages/pay-server/README.md#multi-chain-configuration) for details.

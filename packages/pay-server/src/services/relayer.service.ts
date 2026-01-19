@@ -35,7 +35,7 @@ interface RelayerInfo {
  * - Production: msq-relayer-service API
  * - Local: simple-relayer HTTP 서비스 (simple-relayer:3001)
  *
- * 환경변수 RELAYER_API_URL만 변경하면 동일한 코드로 양쪽 환경에서 동작합니다.
+ * 환경변수 RELAY_API_URL만 변경하면 동일한 코드로 양쪽 환경에서 동작합니다.
  */
 export class RelayerService {
   private readonly baseUrl: string;

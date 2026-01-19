@@ -83,11 +83,11 @@ services:
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: https://rpc-amoy.polygon.technology
       # Option 1: simple-relayer (local)
-      # RELAYER_API_URL: http://simple-relayer:3001
+      # RELAY_API_URL: http://simple-relayer:3001
 
       # Option 2: relay-api (msq-relayer-service)
-      RELAYER_API_URL: http://relay-api:8080
-      RELAYER_API_KEY: ${RELAY_API_KEY:-amoy-dev-api-key}
+      RELAY_API_URL: http://relay-api:8080
+      RELAY_API_KEY: ${RELAY_API_KEY:-amoy-dev-api-key}
     depends_on:
       mysql:
         condition: service_healthy

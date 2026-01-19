@@ -30,7 +30,7 @@ phase: acceptance-criteria
 
 **TC-0.4**: 환경변수 적용 확인
 
-- **Given**: RELAYER_API_URL 환경변수가 설정됨
+- **Given**: RELAY_API_URL 환경변수가 설정됨
 - **When**: pay-server가 시작됨
 - **Then**: RelayerService가 해당 URL을 사용하여 연결함
 
@@ -116,7 +116,7 @@ phase: acceptance-criteria
 
 **TC-3.1**: RelayerService URL 변경
 
-- **Given**: RELAYER_API_URL이 simple-relayer URL로 설정됨
+- **Given**: RELAY_API_URL이 simple-relayer URL로 설정됨
 - **When**: pay-server에서 가스리스 트랜잭션을 요청함
 - **Then**: simple-relayer로 정상 전달됨
 
@@ -129,20 +129,20 @@ phase: acceptance-criteria
 **TC-3.3**: 환경변수 전환 테스트
 
 - **Given**: pay-server가 실행 중임
-- **When**: RELAYER_API_URL을 msq-relayer-service URL로 변경함
+- **When**: RELAY_API_URL을 msq-relayer-service URL로 변경함
 - **Then**: 코드 수정 없이 msq-relayer-service와 통신함
 
 ### TC-4: 인증 검증
 
 **TC-4.1**: X-API-Key 인증 성공
 
-- **Given**: RELAYER_API_KEY가 설정됨
+- **Given**: RELAY_API_KEY가 설정됨
 - **When**: 올바른 X-API-Key 헤더와 함께 요청을 보냄
 - **Then**: 요청이 정상 처리됨
 
 **TC-4.2**: X-API-Key 인증 실패
 
-- **Given**: RELAYER_API_KEY가 설정됨
+- **Given**: RELAY_API_KEY가 설정됨
 - **When**: 잘못된 X-API-Key 헤더와 함께 요청을 보냄
 - **Then**: 401 Unauthorized를 반환함
 
@@ -169,7 +169,7 @@ phase: acceptance-criteria
 **TC-5.3**: 릴레이어 전환 E2E
 
 - **Given**: 전체 스택이 실행 중임
-- **When**: RELAYER_API_URL을 외부 msq-relayer-service로 변경함
+- **When**: RELAY_API_URL을 외부 msq-relayer-service로 변경함
 - **Then**: 동일한 결제 플로우가 정상 동작함
 
 ## 품질 게이트 기준
@@ -252,7 +252,7 @@ curl -X POST http://localhost:3002/api/v1/relay/gasless -H "Content-Type: applic
 
 ```bash
 # 1. 환경변수 변경
-export RELAYER_API_URL=https://msq-relayer-service-url
+export RELAY_API_URL=https://msq-relayer-service-url
 
 # 2. pay-server 재시작
 docker-compose restart server

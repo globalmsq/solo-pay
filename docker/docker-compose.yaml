@@ -107,7 +107,7 @@ services:
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: http://hardhat-node:8545
       # Simple Relayer API URL (Local gasless relay)
-      RELAYER_API_URL: http://simple-relayer:3001
+      RELAY_API_URL: http://simple-relayer:3001
     depends_on:
       mysql:
         condition: service_healthy

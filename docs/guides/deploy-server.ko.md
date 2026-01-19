@@ -6,7 +6,7 @@ MSQPay 결제 API를 다양한 환경에 배포하기 위한 단계별 가이드
 
 ## 환경별 아키텍처 개요 (v4.0.0)
 
-MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용합니다. `RELAYER_API_URL` 환경변수만 변경하여 환경을 전환합니다:
+MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용합니다. `RELAY_API_URL` 환경변수만 변경하여 환경을 전환합니다:
 
 | 환경                       | Relay 서비스               | API URL                               | Forwarder        |
 | -------------------------- | -------------------------- | ------------------------------------- | ---------------- |
@@ -14,7 +14,7 @@ MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용�
 | **Testnet (Polygon Amoy)** | OZ Defender API            | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 | **Mainnet (Polygon)**      | OZ Defender API            | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 
-**환경 전환 방식**: `RELAYER_API_URL` 환경 변수로 제어
+**환경 전환 방식**: `RELAY_API_URL` 환경 변수로 제어
 
 - `http://simple-relayer:3001` → Local 개발 환경 (Simple Relayer Docker 컨테이너)
 - `https://api.defender.openzeppelin.com` → Production 환경 (OZ Defender API)
@@ -43,7 +43,7 @@ MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용�
 # ============================================
 # Relay Configuration (Simple Relayer HTTP 서비스)
 # ============================================
-RELAYER_API_URL=http://simple-relayer:3001
+RELAY_API_URL=http://simple-relayer:3001
 # Simple Relayer HTTP 서비스 URL (Docker 컨테이너)
 
 # ============================================
@@ -80,10 +80,10 @@ FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 # ============================================
 # Relay Configuration (OZ Defender API)
 # ============================================
-RELAYER_API_URL=https://api.defender.openzeppelin.com
+RELAY_API_URL=https://api.defender.openzeppelin.com
 # OZ Defender API URL
 
-RELAYER_API_KEY=your_defender_api_key_here
+RELAY_API_KEY=your_defender_api_key_here
 # OZ Defender API 키
 
 RELAYER_API_SECRET=your_defender_api_secret_here

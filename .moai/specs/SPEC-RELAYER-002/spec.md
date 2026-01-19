@@ -17,7 +17,7 @@ simple-defender 패키지를 simple-relayer로 리네이밍하고, msq-relayer-s
 
 1. **네이밍 통일**: defender 관련 모든 명칭을 relayer로 변경
 2. **API 호환성**: msq-relayer-service의 API 스펙과 완전 호환
-3. **무중단 전환**: pay-server가 RELAYER_API_URL 환경변수만 변경하면 릴레이어 서비스 전환 가능
+3. **무중단 전환**: pay-server가 RELAY_API_URL 환경변수만 변경하면 릴레이어 서비스 전환 가능
 4. **하위 호환성 유지 불필요**: 기존 defender API는 제거하고 새로운 relayer API로 완전 교체
 
 ## 환경 (Environment)
@@ -33,7 +33,7 @@ simple-defender 패키지를 simple-relayer로 리네이밍하고, msq-relayer-s
 
 - **패키지**: `packages/simple-relayer/` (`@msqpay/simple-relayer`)
 - **서비스 클래스**: `RelayerService` (pay-server 내부)
-- **환경변수**: `RELAYER_API_URL`, `RELAYER_API_KEY`, `RELAYER_API_SECRET`
+- **환경변수**: `RELAY_API_URL`, `RELAY_API_KEY`, `RELAYER_API_SECRET`
 - **Docker 서비스명**: `simple-relayer`
 
 ### API 엔드포인트 변경
@@ -118,8 +118,8 @@ simple-defender 패키지를 simple-relayer로 리네이밍하고, msq-relayer-s
 **REQ-0.3**: 환경변수 리네이밍
 - WHEN 시스템이 환경변수를 읽을 때
 - THE SYSTEM SHALL DEFENDER_* 환경변수를 RELAYER_*로 변경한다
-  - DEFENDER_API_URL -> RELAYER_API_URL
-  - DEFENDER_API_KEY -> RELAYER_API_KEY
+  - DEFENDER_API_URL -> RELAY_API_URL
+  - DEFENDER_API_KEY -> RELAY_API_KEY
   - DEFENDER_API_SECRET -> RELAYER_API_SECRET
 
 **REQ-0.4**: Docker 설정 업데이트
@@ -186,8 +186,8 @@ simple-defender 패키지를 simple-relayer로 리네이밍하고, msq-relayer-s
 
 **REQ-3.2**: 환경변수 적용
 - WHEN pay-server가 시작할 때
-- THE SYSTEM SHALL RELAYER_API_URL 환경변수를 사용한다
-- THE SYSTEM SHALL RELAYER_API_KEY 환경변수로 인증한다
+- THE SYSTEM SHALL RELAY_API_URL 환경변수를 사용한다
+- THE SYSTEM SHALL RELAY_API_KEY 환경변수로 인증한다
 
 ### Phase 4: 인증 지원
 

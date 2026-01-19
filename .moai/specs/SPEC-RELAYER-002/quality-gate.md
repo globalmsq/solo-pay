@@ -135,7 +135,7 @@
 ### Phase 0: 네이밍 리팩토링
 - REQ-0.1 ✓ 패키지 리네이밍: @msqpay/simple-relayer
 - REQ-0.2 ✓ 서비스 클래스: RelayerService
-- REQ-0.3 ✓ 환경변수: RELAYER_API_URL 등
+- REQ-0.3 ✓ 환경변수: RELAY_API_URL 등
 - REQ-0.4 ⚠️ Docker 설정: 부분 (출력 메시지에 SimpleDefender 유지)
 - REQ-0.5 ⚠️ 문서: SPEC 완벽하나 코드 주석 부족
 
