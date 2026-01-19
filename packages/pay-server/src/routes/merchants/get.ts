@@ -37,9 +37,7 @@ export async function getMerchantRoute(
       );
 
       // Get chain information for merchant
-      const chain = merchant.chain_id
-        ? await chainService.findById(merchant.chain_id)
-        : null;
+      const chain = merchant.chain_id ? await chainService.findById(merchant.chain_id) : null;
 
       // Return merchant information with payment methods
       return reply.code(200).send({
