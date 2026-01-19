@@ -359,5 +359,4 @@ export async function paymentMethodsRoute(
       }
     }
   );
-
 }
