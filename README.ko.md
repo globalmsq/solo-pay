@@ -242,13 +242,12 @@ ERC-20 토큰의 지갑 상태를 조회합니다:
 
 결제 서버의 주요 환경 변수:
 
-| 변수                 | 용도                            | 예시                                      |
-| -------------------- | ------------------------------- | ----------------------------------------- |
-| `DATABASE_URL`       | MySQL 연결 문자열               | `mysql://user:pass@localhost:3306/msqpay` |
-| `REDIS_URL`          | Redis 연결 문자열 (선택사항)    | `redis://localhost:6379`                  |
-| `RELAY_API_URL`      | Relayer 서비스 엔드포인트       | `http://simple-relayer:3001`              |
-| `RELAY_API_KEY`      | Relayer API 키 (프로덕션만)     | `sk_...`                                  |
-| `RELAYER_API_SECRET` | Relayer API 시크릿 (프로덕션만) | `secret_...`                              |
+| 변수            | 용도                         | 예시                                      |
+| --------------- | ---------------------------- | ----------------------------------------- |
+| `DATABASE_URL`  | MySQL 연결 문자열            | `mysql://user:pass@localhost:3306/msqpay` |
+| `REDIS_URL`     | Redis 연결 문자열 (선택사항) | `redis://localhost:6379`                  |
+| `RELAY_API_URL` | Relayer 서비스 엔드포인트    | `http://simple-relayer:3001`              |
+| `RELAY_API_KEY` | Relayer API 키 (프로덕션만)  | `sk_...`                                  |
 
 > **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 데이터베이스 `chains` 테이블에서 관리되며 환경변수로 설정하지 않습니다. 자세한 내용은 [Pay Server README](./packages/pay-server/README.ko.md#체인-설정)를 참고하세요.
 

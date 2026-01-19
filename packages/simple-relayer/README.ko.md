@@ -268,7 +268,6 @@ pnpm typecheck
    ```bash
    RELAY_API_URL=https://api.defender.openzeppelin.com
    RELAY_API_KEY=your-api-key
-   RELAYER_API_SECRET=your-api-secret
    ```
 
 ## 문서

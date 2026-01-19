@@ -41,7 +41,6 @@ phase: implementation-plan
 **0.3 환경변수 리네이밍**
 - [ ] `DEFENDER_API_URL` -> `RELAY_API_URL`
 - [ ] `DEFENDER_API_KEY` -> `RELAY_API_KEY`
-- [ ] `DEFENDER_API_SECRET` -> `RELAYER_API_SECRET`
 - [ ] pay-server 코드에서 환경변수 읽기 부분 수정
 
 **0.4 Docker 설정 업데이트**

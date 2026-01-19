@@ -86,9 +86,6 @@ RELAY_API_URL=https://api.defender.openzeppelin.com
 RELAY_API_KEY=your_defender_api_key_here
 # OZ Defender API key
 
-RELAYER_API_SECRET=your_defender_api_secret_here
-# OZ Defender API secret
-
 # ============================================
 # Blockchain Configuration (Required)
 # ============================================

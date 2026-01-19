@@ -76,7 +76,6 @@ REDIS_PORT=6379
 RELAY_API_URL=http://simple-relayer:3001  # Local development
 # RELAY_API_URL=https://api.defender.openzeppelin.com  # Production
 RELAY_API_KEY=  # Production only
-RELAYER_API_SECRET=  # Production only
 ```
 
 > **Note**: Chain configuration (RPC URLs, Contract addresses, etc.) is managed in the database `chains` table, not environment variables.
