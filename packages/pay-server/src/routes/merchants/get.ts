@@ -71,29 +71,4 @@ export async function getMerchantRoute(
       });
     }
   });
-
-  // GET /merchants/me/chains - Get all available chains for selection
-  app.get('/merchants/me/chains', { preHandler: authMiddleware }, async (request, reply) => {
-    try {
-      // Get all enabled chains
-      const chains = await chainService.findAll();
-
-      return reply.code(200).send({
-        success: true,
-        chains: chains.map((chain) => ({
-          id: chain.id,
-          network_id: chain.network_id,
-          name: chain.name,
-          is_testnet: chain.is_testnet,
-        })),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to get chains';
-      request.log.error(error, 'Failed to get chains');
-      return reply.code(500).send({
-        code: 'INTERNAL_ERROR',
-        message,
-      });
-    }
-  });
 }
