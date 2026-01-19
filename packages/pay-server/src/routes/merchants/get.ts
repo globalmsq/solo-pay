@@ -36,6 +36,11 @@ export async function getMerchantRoute(
         chainService
       );
 
+      // Get chain information for merchant
+      const chain = merchant.chain_id
+        ? await chainService.findById(merchant.chain_id)
+        : null;
+
       // Return merchant information with payment methods
       return reply.code(200).send({
         success: true,
@@ -43,6 +48,15 @@ export async function getMerchantRoute(
           id: merchant.id,
           merchant_key: merchant.merchant_key,
           name: merchant.name,
+          chain_id: merchant.chain_id,
+          chain: chain
+            ? {
+                id: chain.id,
+                network_id: chain.network_id,
+                name: chain.name,
+                is_testnet: chain.is_testnet,
+              }
+            : null,
           webhook_url: merchant.webhook_url,
           is_enabled: merchant.is_enabled,
           created_at: merchant.created_at.toISOString(),
@@ -53,6 +67,31 @@ export async function getMerchantRoute(
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to get merchant';
       request.log.error(error, 'Failed to get merchant');
+      return reply.code(500).send({
+        code: 'INTERNAL_ERROR',
+        message,
+      });
+    }
+  });
+
+  // GET /merchants/me/chains - Get all available chains for selection
+  app.get('/merchants/me/chains', { preHandler: authMiddleware }, async (request, reply) => {
+    try {
+      // Get all enabled chains
+      const chains = await chainService.findAll();
+
+      return reply.code(200).send({
+        success: true,
+        chains: chains.map((chain) => ({
+          id: chain.id,
+          network_id: chain.network_id,
+          name: chain.name,
+          is_testnet: chain.is_testnet,
+        })),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to get chains';
+      request.log.error(error, 'Failed to get chains');
       return reply.code(500).send({
         code: 'INTERNAL_ERROR',
         message,

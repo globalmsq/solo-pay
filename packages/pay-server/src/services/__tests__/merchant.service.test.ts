@@ -24,6 +24,7 @@ describe('MerchantService', () => {
     const merchantData = {
       merchant_key: `${TEST_PREFIX}001`,
       name: 'Test Merchant',
+      chain_id: 1,
       api_key: 'secret_key_12345',
     };
 
@@ -32,6 +33,7 @@ describe('MerchantService', () => {
       id: 1,
       merchant_key: merchantData.merchant_key,
       name: merchantData.name,
+      chain_id: merchantData.chain_id,
       api_key_hash: apiKeyHash,
       is_enabled: true,
       is_deleted: false,
@@ -60,6 +62,7 @@ describe('MerchantService', () => {
       id: 2,
       merchant_key: `${TEST_PREFIX}002`,
       name: 'Another Merchant',
+      chain_id: 1,
       api_key_hash: 'somehash',
       is_enabled: true,
       is_deleted: false,
@@ -84,6 +87,7 @@ describe('MerchantService', () => {
       id: 3,
       merchant_key: `${TEST_PREFIX}003`,
       name: 'Key-based Merchant',
+      chain_id: 1,
       api_key_hash: 'somehash',
       is_enabled: true,
       is_deleted: false,
@@ -110,6 +114,7 @@ describe('MerchantService', () => {
       id: 4,
       merchant_key: `${TEST_PREFIX}004`,
       name: 'Verification Merchant',
+      chain_id: 1,
       api_key_hash: apiKeyHash,
       is_enabled: true,
       is_deleted: false,
@@ -136,6 +141,7 @@ describe('MerchantService', () => {
         id: 5,
         merchant_key: `${TEST_PREFIX}findall_a`,
         name: 'Merchant A',
+        chain_id: 1,
         api_key_hash: 'hash_a',
         is_enabled: true,
         is_deleted: false,
@@ -148,6 +154,7 @@ describe('MerchantService', () => {
         id: 6,
         merchant_key: `${TEST_PREFIX}findall_b`,
         name: 'Merchant B',
+        chain_id: 1,
         api_key_hash: 'hash_b',
         is_enabled: true,
         is_deleted: false,
@@ -171,6 +178,7 @@ describe('MerchantService', () => {
       id: 7,
       merchant_key: `${TEST_PREFIX}update`,
       name: 'Updated Name',
+      chain_id: 1,
       api_key_hash: 'hash',
       is_enabled: true,
       is_deleted: false,
@@ -197,6 +205,7 @@ describe('MerchantService', () => {
       id: 8,
       merchant_key: `${TEST_PREFIX}delete`,
       name: 'Delete Test',
+      chain_id: 1,
       api_key_hash: 'hash',
       is_enabled: true,
       is_deleted: true,
@@ -232,6 +241,7 @@ describe('MerchantService', () => {
       id: 9,
       merchant_key: `${TEST_PREFIX}private`,
       name: 'Private Key Merchant',
+      chain_id: 1,
       api_key_hash: apiKeyHash,
       is_enabled: true,
       is_deleted: false,
@@ -246,6 +256,7 @@ describe('MerchantService', () => {
     const created = await merchantService.create({
       merchant_key: `${TEST_PREFIX}private`,
       name: 'Private Key Merchant',
+      chain_id: 1,
       api_key: 'private_key_123',
     });
 
@@ -261,6 +272,7 @@ describe('MerchantService', () => {
       merchantService.create({
         merchant_key: `${TEST_PREFIX}unique`,
         name: 'Unique Test',
+        chain_id: 1,
         api_key: 'unique_key',
       })
     ).rejects.toThrow();

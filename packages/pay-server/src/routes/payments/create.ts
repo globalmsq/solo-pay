@@ -92,7 +92,18 @@ export async function createPaymentRoute(
           });
         }
 
-        // 5. DB에서 Chain 조회 (network_id로)
+        // 5. Validate merchant's chain matches requested chain
+        if (merchant.chain_id) {
+          const merchantChain = await chainService.findById(merchant.chain_id);
+          if (merchantChain && merchantChain.network_id !== validatedData.chainId) {
+            return reply.code(400).send({
+              code: 'CHAIN_MISMATCH',
+              message: `Merchant is configured for chain ${merchantChain.network_id}, but payment requested for chain ${validatedData.chainId}`,
+            });
+          }
+        }
+
+        // 6. DB에서 Chain 조회 (network_id로)
         const chain = await chainService.findByNetworkId(validatedData.chainId);
         if (!chain) {
           return reply.code(404).send({
@@ -101,7 +112,7 @@ export async function createPaymentRoute(
           });
         }
 
-        // 6. DB에서 Token 조회 (chain.id + address로)
+        // 7. DB에서 Token 조회 (chain.id + address로)
         const token = await tokenService.findByAddress(chain.id, tokenAddress);
         if (!token) {
           return reply.code(404).send({
@@ -110,7 +121,15 @@ export async function createPaymentRoute(
           });
         }
 
-        // 7. DB에서 MerchantPaymentMethod 조회
+        // 8. Validate token's chain matches merchant's chain
+        if (merchant.chain_id && token.chain_id !== merchant.chain_id) {
+          return reply.code(400).send({
+            code: 'CHAIN_MISMATCH',
+            message: `Token belongs to chain ${token.chain_id}, but merchant is configured for chain ${merchant.chain_id}`,
+          });
+        }
+
+        // 9. DB에서 MerchantPaymentMethod 조회
         const paymentMethod = await paymentMethodService.findByMerchantAndToken(
           merchant.id,
           token.id

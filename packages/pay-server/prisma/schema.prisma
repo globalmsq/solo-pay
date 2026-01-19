@@ -70,6 +70,7 @@ model Merchant {
   id              Int      @id @default(autoincrement())
   merchant_key    String   @unique
   name            String
+  chain_id        Int      // logical reference to chains.id
   api_key_hash    String   // SHA-256 hash
   webhook_url     String?
   is_enabled      Boolean  @default(true)

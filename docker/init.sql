@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS merchants (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     merchant_key VARCHAR(255) NOT NULL UNIQUE COMMENT 'Public merchant identifier',
     name VARCHAR(255) NOT NULL,
+    chain_id INT NOT NULL COMMENT 'Logical reference to chains.id',
     api_key_hash VARCHAR(64) NOT NULL COMMENT 'SHA-256 hash of API key',
     webhook_url VARCHAR(500) NULL DEFAULT NULL,
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS merchants (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_merchant_key (merchant_key),
+    INDEX idx_chain_id (chain_id),
     INDEX idx_is_enabled (is_enabled)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -185,23 +187,22 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 
 -- Demo Merchant (id=1)
 -- API Key: 123 -> SHA-256 hash
-INSERT INTO merchants (merchant_key, name, api_key_hash, webhook_url) VALUES
-('merchant_demo_001', 'Demo Store', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo');
+-- chain_id=1 (Localhost chain)
+INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url) VALUES
+('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo');
 
 -- MetaStar Merchant (id=2)
 -- API Key: msq_sk_metastar_123 -> SHA-256 hash
-INSERT INTO merchants (merchant_key, name, api_key_hash, webhook_url) VALUES
-('merchant_metastar_001', 'Metastar Global', '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL);
+-- chain_id=3 (Amoy chain)
+INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url) VALUES
+('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL);
 
 -- Payment Methods
--- id=1: Demo Merchant + TEST on Localhost (token_id=1)
--- id=2: Demo Merchant + SUT on Amoy (token_id=3)
--- id=3: MetaStar + TEST on Localhost (token_id=1) - recipient: Hardhat Account #3 (for testing)
--- id=4: MetaStar + SUT on Amoy (token_id=3) - recipient: Hardhat Account #3 (update with real MetaStar wallet later)
+-- Note: Payment methods must use tokens from the merchant's chain
+-- id=1: Demo Merchant (chain_id=1) + TEST on Localhost (token_id=1, chain_id=1) ✅
+-- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3) ✅
 INSERT INTO merchant_payment_methods (merchant_id, token_id, recipient_address) VALUES
 (1, 1, '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'),
-(1, 3, '0x31d45F29071e73836F67ec9dFf53e8af67A74f39'),
-(2, 1, '0x90F79bf6EB2c4f870365E785982E1f101E93b906'),
 (2, 3, '0x90F79bf6EB2c4f870365E785982E1f101E93b906');
 
 -- Show created tables
