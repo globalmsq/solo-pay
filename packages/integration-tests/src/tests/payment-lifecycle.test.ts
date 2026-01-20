@@ -33,11 +33,7 @@ describe('Payment Lifecycle Integration', () => {
   beforeAll(async () => {
     const balance = await getTokenBalance(token.address, payerAddress);
     if (balance < parseUnits('1000', token.decimals)) {
-      await mintTokens(
-        token.address,
-        payerAddress,
-        parseUnits('10000', token.decimals)
-      );
+      await mintTokens(token.address, payerAddress, parseUnits('10000', token.decimals));
     }
   });
 

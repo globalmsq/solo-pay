@@ -252,7 +252,11 @@ describe('BlockchainService - Token validation methods', () => {
     });
 
     it('should return false for address mismatch', () => {
-      const result = service.validateToken(80002, 'SUT', '0x0000000000000000000000000000000000000000');
+      const result = service.validateToken(
+        80002,
+        'SUT',
+        '0x0000000000000000000000000000000000000000'
+      );
       expect(result).toBe(false);
     });
 
@@ -468,10 +472,7 @@ describe('BlockchainService - Blockchain interaction methods', () => {
     it('should return decimals from contract', async () => {
       mockClient.readContract.mockResolvedValue(6);
 
-      const result = await service.getDecimals(
-        80002,
-        '0xE4C687167705Abf55d709395f92e254bdF5825a2'
-      );
+      const result = await service.getDecimals(80002, '0xE4C687167705Abf55d709395f92e254bdF5825a2');
 
       expect(result).toBe(6);
     });
@@ -479,10 +480,7 @@ describe('BlockchainService - Blockchain interaction methods', () => {
     it('should return 18 as fallback when contract call fails', async () => {
       mockClient.readContract.mockRejectedValue(new Error('Contract error'));
 
-      const result = await service.getDecimals(
-        80002,
-        '0x0000000000000000000000000000000000000000'
-      );
+      const result = await service.getDecimals(80002, '0x0000000000000000000000000000000000000000');
 
       expect(result).toBe(18);
     });
@@ -644,11 +642,13 @@ describe('BlockchainService - Blockchain interaction methods', () => {
       });
 
       // Mock getTokenSymbolOnChain
-      mockClient.readContract.mockImplementation(async ({ functionName }: { functionName: string }) => {
-        if (functionName === 'processedPayments') return true;
-        if (functionName === 'symbol') return 'SUT';
-        return null;
-      });
+      mockClient.readContract.mockImplementation(
+        async ({ functionName }: { functionName: string }) => {
+          if (functionName === 'processedPayments') return true;
+          if (functionName === 'symbol') return 'SUT';
+          return null;
+        }
+      );
 
       const result = await service.getPaymentStatus(80002, '0x' + 'a'.repeat(64));
 

@@ -31,7 +31,11 @@ export function getWallet(privateKey: string): Wallet {
   return new Wallet(privateKey, provider);
 }
 
-export function getContract(address: string, abi: ethers.InterfaceAbi, signerOrProvider?: Wallet | JsonRpcProvider): Contract {
+export function getContract(
+  address: string,
+  abi: ethers.InterfaceAbi,
+  signerOrProvider?: Wallet | JsonRpcProvider
+): Contract {
   return new Contract(address, abi, signerOrProvider || getProvider());
 }
 

@@ -2,15 +2,15 @@ name: Integration Tests
 
 on:
   pull_request:
-    branches: ['main']
+    branches: ["main"]
     paths:
-      - 'packages/integration-tests/**'
-      - 'packages/pay-server/**'
-      - 'packages/simple-relayer/**'
-      - 'packages/sdk/**'
-      - 'contracts/**'
-      - 'docker/**'
-      - '.github/workflows/integration-tests.yml'
+      - "packages/integration-tests/**"
+      - "packages/pay-server/**"
+      - "packages/simple-relayer/**"
+      - "packages/sdk/**"
+      - "contracts/**"
+      - "docker/**"
+      - ".github/workflows/integration-tests.yml"
   workflow_dispatch:
 
 jobs:
@@ -28,10 +28,10 @@ jobs:
       RELAY_API_URL: http://127.0.0.1:3012
       RPC_URL: http://127.0.0.1:8545
       CHAIN_ID: 31337
-      FORWARDER_ADDRESS: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
       # Hardhat's publicly known test account #1 - DO NOT use on mainnet/testnet
       # See: https://hardhat.org/hardhat-network/docs/reference#initial-state
-      RELAYER_PRIVATE_KEY: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
+      RELAYER_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
 
     services:
       mysql:
@@ -68,24 +68,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
         run: |
-          pnpm --filter @msq/pay-contracts exec hardhat compile &
-          pnpm --filter @globalmsq/msqpay build &
-          wait
+          pnpm --filter @msq/pay-contracts exec hardhat compile
+          pnpm build
 
       - name: Initialize database
         run: |
           mysql -h 127.0.0.1 -u root -ppass msqpay < docker/init.sql
-
-      - name: Generate Prisma client
-        run: pnpm --filter @msq/pay-server exec prisma generate
 
       - name: Start Hardhat node
         run: |
@@ -101,7 +97,7 @@ jobs:
 
       - name: Update database with localhost RPC
         run: |
-          mysql -h 127.0.0.1 -u root -ppass msqpay -e "UPDATE chains SET rpc_url = 'http://127.0.0.1:8545' WHERE network_id = 31337;"
+          mysql -h 127.0.0.1 -u root -ppass msqpay -e "UPDATE chains SET rpc_url = '$BLOCKCHAIN_RPC_URL' WHERE network_id = $CHAIN_ID;"
 
       - name: Start pay-server
         env:
@@ -128,8 +124,8 @@ jobs:
         run: |
           echo "Waiting for services to be ready..."
           for i in {1..30}; do
-            if curl -sf http://127.0.0.1:3011/health > /dev/null 2>&1 && \
-               curl -sf http://127.0.0.1:3012/health > /dev/null 2>&1; then
+            if curl -sf $PAY_SERVER_URL/health > /dev/null 2>&1 && \
+               curl -sf $RELAY_API_URL/health > /dev/null 2>&1; then
               echo "All services ready!"
               break
             fi
@@ -140,14 +136,14 @@ jobs:
       - name: Check service health
         run: |
           echo "Checking Hardhat node..."
-          curl -sf http://127.0.0.1:8545 -X POST -H "Content-Type: application/json" \
+          curl -sf $BLOCKCHAIN_RPC_URL -X POST -H "Content-Type: application/json" \
             -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 
           echo "Checking pay-server..."
-          curl -sf http://127.0.0.1:3011/health
+          curl -sf $PAY_SERVER_URL/health
 
           echo "Checking simple-relayer..."
-          curl -sf http://127.0.0.1:3012/health
+          curl -sf $RELAY_API_URL/health
 
           echo "All services healthy!"
 

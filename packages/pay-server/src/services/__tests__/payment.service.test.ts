@@ -294,7 +294,9 @@ describe('PaymentService', () => {
   it('should throw error when updating status of non-existent payment', async () => {
     mockPrisma.payment.findUnique.mockResolvedValue(null);
 
-    await expect(paymentService.updateStatus(999, 'CONFIRMED')).rejects.toThrow('Payment not found');
+    await expect(paymentService.updateStatus(999, 'CONFIRMED')).rejects.toThrow(
+      'Payment not found'
+    );
   });
 
   describe('updateStatusByHash', () => {

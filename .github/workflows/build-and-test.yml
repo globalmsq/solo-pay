@@ -37,7 +37,7 @@ jobs:
           }
 
   typecheck:
-    name: Type Check
+    name: Build and Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,17 +54,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm --filter @msq/pay-server exec prisma generate
-
-      - name: Compile contracts (generate typechain-types)
-        run: pnpm --filter @msq/pay-contracts exec hardhat compile
+      - name: Build packages
+        run: |
+          pnpm --filter @msq/pay-contracts exec hardhat compile
+          pnpm build
 
       - name: Run type check
         run: pnpm typecheck
 
   test:
-    name: Test with Coverage
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,32 +80,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm --filter @msq/pay-server exec prisma generate
+      - name: Build packages
+        run: |
+          pnpm --filter @msq/pay-contracts exec hardhat compile
+          pnpm build
 
       - name: Run tests with coverage
         run: pnpm test:coverage
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Compile contracts (generate artifacts)
-        run: pnpm --filter @msq/pay-contracts exec hardhat compile
-
-      - name: Build all packages
-        run: pnpm build

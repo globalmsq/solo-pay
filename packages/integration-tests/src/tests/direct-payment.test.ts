@@ -24,11 +24,7 @@ describe('Direct Payment Integration', () => {
   beforeAll(async () => {
     const balance = await getTokenBalance(token.address, payerAddress);
     if (balance < parseUnits('1000', token.decimals)) {
-      await mintTokens(
-        token.address,
-        payerAddress,
-        parseUnits('10000', token.decimals)
-      );
+      await mintTokens(token.address, payerAddress, parseUnits('10000', token.decimals));
     }
   });
 
@@ -69,9 +65,7 @@ describe('Direct Payment Integration', () => {
     const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
     await tx.wait();
 
-    await expect(
-      gateway.pay(paymentId, token.address, amount, merchantAddress)
-    ).rejects.toThrow();
+    await expect(gateway.pay(paymentId, token.address, amount, merchantAddress)).rejects.toThrow();
   });
 
   it('should reject zero amount payment', async () => {
@@ -80,9 +74,7 @@ describe('Direct Payment Integration', () => {
     const wallet = getWallet(payerPrivateKey);
     const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-    await expect(
-      gateway.pay(paymentId, token.address, 0n, merchantAddress)
-    ).rejects.toThrow();
+    await expect(gateway.pay(paymentId, token.address, 0n, merchantAddress)).rejects.toThrow();
   });
 
   it('should reject payment with insufficient balance', async () => {
@@ -95,8 +87,6 @@ describe('Direct Payment Integration', () => {
     const wallet = getWallet(payerPrivateKey);
     const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-    await expect(
-      gateway.pay(paymentId, token.address, amount, merchantAddress)
-    ).rejects.toThrow();
+    await expect(gateway.pay(paymentId, token.address, amount, merchantAddress)).rejects.toThrow();
   });
 });

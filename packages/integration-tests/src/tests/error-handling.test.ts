@@ -25,11 +25,7 @@ describe('Error Handling Integration', () => {
   beforeAll(async () => {
     const balance = await getTokenBalance(token.address, payerAddress);
     if (balance < parseUnits('1000', token.decimals)) {
-      await mintTokens(
-        token.address,
-        payerAddress,
-        parseUnits('10000', token.decimals)
-      );
+      await mintTokens(token.address, payerAddress, parseUnits('10000', token.decimals));
     }
   });
 
@@ -39,9 +35,7 @@ describe('Error Handling Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      await expect(
-        gateway.pay(paymentId, token.address, 0n, merchantAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, token.address, 0n, merchantAddress)).rejects.toThrow();
     });
 
     it('should reject zero merchant address', async () => {

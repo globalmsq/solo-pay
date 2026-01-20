@@ -90,7 +90,8 @@ describe('RelayService', () => {
     it('0x 프리픽스 없는 private key도 정규화되어야 함', () => {
       const serviceWithoutPrefix = new RelayService({
         ...config,
-        relayerPrivateKey: 'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`,
+        relayerPrivateKey:
+          'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`,
       });
       expect(serviceWithoutPrefix).toBeDefined();
     });
@@ -108,7 +109,8 @@ describe('RelayService', () => {
       expect(() => {
         new RelayService({
           ...config,
-          relayerPrivateKey: '0xgg0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`,
+          relayerPrivateKey:
+            '0xgg0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`,
         });
       }).toThrow('relayerPrivateKey contains invalid hex characters');
     });

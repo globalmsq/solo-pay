@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import {
-  createTestClient,
-  TEST_MERCHANT,
-  type CreatePaymentParams,
-} from '../helpers/sdk';
+import { createTestClient, TEST_MERCHANT, type CreatePaymentParams } from '../helpers/sdk';
 import { getToken, getTokenForChain } from '../fixtures/token';
 import { getMerchant } from '../fixtures/merchant';
 import {
@@ -360,7 +356,9 @@ describe('SDK Integration', () => {
 
       expect(relayStatus.success).toBe(true);
       expect(relayStatus.relayRequestId).toBe(gaslessResponse.relayRequestId);
-      expect(['submitted', 'pending', 'mined', 'confirmed', 'failed']).toContain(relayStatus.status);
+      expect(['submitted', 'pending', 'mined', 'confirmed', 'failed']).toContain(
+        relayStatus.status
+      );
     });
   });
 
