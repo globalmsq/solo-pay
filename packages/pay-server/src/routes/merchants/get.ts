@@ -4,6 +4,7 @@ import { PaymentMethodService } from '../../services/payment-method.service';
 import { TokenService } from '../../services/token.service';
 import { ChainService } from '../../services/chain.service';
 import { createAuthMiddleware } from '../../middleware/auth.middleware';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getMerchantRoute(
   app: FastifyInstance,
@@ -15,7 +16,64 @@ export async function getMerchantRoute(
   // Auth middleware validates X-API-Key header and attaches merchant to request
   const authMiddleware = createAuthMiddleware(merchantService);
 
-  app.get('/merchants/me', { preHandler: authMiddleware }, async (request, reply) => {
+  app.get(
+    '/merchants/me',
+    {
+      schema: {
+        operationId: 'getCurrentMerchant',
+        tags: ['Merchants'],
+        summary: 'Get current merchant info',
+        description: 'Returns information about the authenticated merchant including payment methods',
+        security: [{ ApiKeyAuth: [] }],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              merchant: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  merchant_key: { type: 'string' },
+                  name: { type: 'string' },
+                  chain_id: { type: 'integer', nullable: true },
+                  chain: {
+                    type: 'object',
+                    nullable: true,
+                    properties: {
+                      id: { type: 'integer' },
+                      network_id: { type: 'integer' },
+                      name: { type: 'string' },
+                      is_testnet: { type: 'boolean' },
+                    },
+                  },
+                  webhook_url: { type: 'string', nullable: true },
+                  is_enabled: { type: 'boolean' },
+                  created_at: { type: 'string', format: 'date-time' },
+                  updated_at: { type: 'string', format: 'date-time' },
+                  payment_methods: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        token_address: { type: 'string' },
+                        token_symbol: { type: 'string' },
+                        is_enabled: { type: 'boolean' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
+    async (request, reply) => {
     try {
       // Merchant is guaranteed to exist after auth middleware
       const merchant = request.merchant;

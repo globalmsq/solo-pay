@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
+import { ErrorResponseSchema, TokenAllowanceResponseSchema } from '../../docs/schemas';
 
 export async function getTokenAllowanceRoute(
   app: FastifyInstance,
@@ -8,7 +9,43 @@ export async function getTokenAllowanceRoute(
   app.get<{
     Params: { tokenAddress: string };
     Querystring: { chainId: string; owner: string; spender: string };
-  }>('/tokens/:tokenAddress/allowance', async (request, reply) => {
+  }>(
+    '/tokens/:tokenAddress/allowance',
+    {
+      schema: {
+        operationId: 'getTokenAllowance',
+        tags: ['Tokens'],
+        summary: 'Get token allowance',
+        description: 'Returns the ERC20 token allowance for a spender address',
+        params: {
+          type: 'object',
+          properties: {
+            tokenAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'ERC20 token contract address',
+              example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+            },
+          },
+          required: ['tokenAddress'],
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            chainId: { type: 'string', description: 'Blockchain network ID', example: '31337' },
+            owner: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$', description: 'Token owner address', example: '0x90F79bf6EB2c4f870365E785982E1f101E93b906' },
+            spender: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$', description: 'Spender address (e.g., PaymentGateway)', example: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9' },
+          },
+          required: ['chainId', 'owner', 'spender'],
+        },
+        response: {
+          200: TokenAllowanceResponseSchema,
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const { tokenAddress } = request.params;
       const { chainId, owner, spender } = request.query;

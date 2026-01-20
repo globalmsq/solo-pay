@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getTransactionStatusRoute(
   app: FastifyInstance,
@@ -8,7 +9,58 @@ export async function getTransactionStatusRoute(
   app.get<{
     Params: { txHash: string };
     Querystring: { chainId: string };
-  }>('/transactions/:txHash/status', async (request, reply) => {
+  }>(
+    '/transactions/:txHash/status',
+    {
+      schema: {
+        operationId: 'getTransactionStatus',
+        tags: ['Transactions'],
+        summary: 'Get transaction status',
+        description: 'Returns the status of a blockchain transaction by its hash',
+        params: {
+          type: 'object',
+          properties: {
+            txHash: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{64}$',
+              description: 'Transaction hash',
+              example: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+            },
+          },
+          required: ['txHash'],
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            chainId: {
+              type: 'string',
+              description: 'Blockchain network ID',
+              example: '31337',
+            },
+          },
+          required: ['chainId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              data: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string', enum: ['pending', 'confirmed', 'failed'] },
+                  blockNumber: { type: 'integer', nullable: true },
+                  confirmations: { type: 'integer' },
+                },
+              },
+            },
+          },
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const { txHash } = request.params;
       const { chainId } = request.query;

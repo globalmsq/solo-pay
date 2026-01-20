@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
 import { RelayService } from '../../services/relay.service';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getPaymentHistoryRoute(
   app: FastifyInstance,
@@ -11,6 +12,49 @@ export async function getPaymentHistoryRoute(
 ) {
   app.get<{ Querystring: { chainId: string; payer: string; limit?: string } }>(
     '/payments/history',
+    {
+      schema: {
+        operationId: 'getPaymentHistory',
+        tags: ['Payments'],
+        summary: 'Get payment history',
+        description: 'Returns payment history for a payer address from blockchain events',
+        querystring: {
+          type: 'object',
+          properties: {
+            chainId: { type: 'string', description: 'Blockchain network ID', example: '31337' },
+            payer: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$', description: 'Payer wallet address' },
+            limit: { type: 'string', description: 'Block range limit (default: 1000)', example: '1000' },
+          },
+          required: ['chainId', 'payer'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    paymentId: { type: 'string' },
+                    payer: { type: 'string' },
+                    amount: { type: 'string' },
+                    token: { type: 'string' },
+                    blockNumber: { type: 'integer' },
+                    transactionHash: { type: 'string' },
+                    isGasless: { type: 'boolean' },
+                    relayId: { type: 'string', nullable: true },
+                  },
+                },
+              },
+            },
+          },
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       try {
         const { chainId, payer, limit } = request.query;

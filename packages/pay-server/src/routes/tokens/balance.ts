@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
+import { TokenBalanceResponseSchema, ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getTokenBalanceRoute(
   app: FastifyInstance,
@@ -8,7 +9,51 @@ export async function getTokenBalanceRoute(
   app.get<{
     Params: { tokenAddress: string };
     Querystring: { chainId: string; address: string };
-  }>('/tokens/:tokenAddress/balance', async (request, reply) => {
+  }>(
+    '/tokens/:tokenAddress/balance',
+    {
+      schema: {
+        operationId: 'getTokenBalance',
+        tags: ['Tokens'],
+        summary: 'Get token balance',
+        description: 'Returns the ERC20 token balance for a wallet address',
+        params: {
+          type: 'object',
+          properties: {
+            tokenAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'ERC20 token contract address',
+              example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+            },
+          },
+          required: ['tokenAddress'],
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            chainId: {
+              type: 'string',
+              description: 'Blockchain network ID',
+              example: '31337',
+            },
+            address: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'Wallet address to check balance',
+              example: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
+            },
+          },
+          required: ['chainId', 'address'],
+        },
+        response: {
+          200: TokenBalanceResponseSchema,
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const { tokenAddress } = request.params;
       const { chainId, address } = request.query;

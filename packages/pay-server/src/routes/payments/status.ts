@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
+import { PaymentStatusResponseSchema, ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getPaymentStatusRoute(
   app: FastifyInstance,
@@ -9,7 +10,44 @@ export async function getPaymentStatusRoute(
 ) {
   app.get<{
     Params: { id: string };
-  }>('/payments/:id/status', async (request, reply) => {
+  }>(
+    '/payments/:id/status',
+    {
+      schema: {
+        operationId: 'getPaymentStatus',
+        tags: ['Payments'],
+        summary: 'Get payment status',
+        description: `
+Retrieves the current status of a payment by its payment hash.
+
+**Status Values:**
+- \`CREATED\` - Payment created, awaiting on-chain transaction
+- \`PENDING\` - Transaction submitted, awaiting confirmation
+- \`CONFIRMED\` - Payment confirmed on-chain
+- \`FAILED\` - Payment failed
+
+**Note:** This endpoint syncs on-chain status with database status.
+        `,
+        params: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Payment hash (bytes32)',
+              pattern: '^0x[a-fA-F0-9]{64}$',
+            },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: PaymentStatusResponseSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const { id } = request.params;
 

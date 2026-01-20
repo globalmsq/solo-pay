@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { ChainService } from '../../services/chain.service';
 import { TokenService } from '../../services/token.service';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getChainsRoute(
   app: FastifyInstance,
@@ -8,7 +9,38 @@ export async function getChainsRoute(
   tokenService: TokenService
 ) {
   // GET /chains - Get all available chains (public endpoint)
-  app.get('/chains', async (request, reply) => {
+  app.get(
+    '/chains',
+    {
+      schema: {
+        operationId: 'getChains',
+        tags: ['Chains'],
+        summary: 'Get all chains',
+        description: 'Returns all available blockchain networks (public endpoint)',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              chains: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    network_id: { type: 'integer', example: 31337 },
+                    name: { type: 'string', example: 'Hardhat Local' },
+                    is_testnet: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       // Get all enabled chains
       const chains = await chainService.findAll();
@@ -33,7 +65,50 @@ export async function getChainsRoute(
   });
 
   // GET /chains/tokens - Get all available chains with their tokens (public endpoint)
-  app.get('/chains/tokens', async (request, reply) => {
+  app.get(
+    '/chains/tokens',
+    {
+      schema: {
+        operationId: 'getChainsWithTokens',
+        tags: ['Chains'],
+        summary: 'Get all chains with tokens',
+        description: 'Returns all available blockchain networks with their supported tokens (public endpoint)',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              chains: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    network_id: { type: 'integer', example: 31337 },
+                    name: { type: 'string', example: 'Hardhat Local' },
+                    is_testnet: { type: 'boolean' },
+                    tokens: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'integer' },
+                          address: { type: 'string', example: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' },
+                          symbol: { type: 'string', example: 'USDT' },
+                          decimals: { type: 'integer', example: 6 },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       // Get all enabled chains
       const allChains = await chainService.findAll();

@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { RelayerService } from '../../services/relayer.service';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
 /**
  * Get relay transaction status
@@ -9,6 +10,38 @@ import { RelayerService } from '../../services/relayer.service';
 export async function getRelayStatusRoute(app: FastifyInstance, relayerService: RelayerService) {
   app.get<{ Params: { relayRequestId: string } }>(
     '/payments/relay/:relayRequestId/status',
+    {
+      schema: {
+        operationId: 'getRelayStatus',
+        tags: ['Payments'],
+        summary: 'Get relay transaction status',
+        description: 'Polls the relayer service for the status of a gasless transaction',
+        params: {
+          type: 'object',
+          properties: {
+            relayRequestId: {
+              type: 'string',
+              description: 'Relay request ID returned from /payments/:id/gasless',
+            },
+          },
+          required: ['relayRequestId'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              relayRequestId: { type: 'string' },
+              transactionHash: { type: 'string', nullable: true },
+              status: { type: 'string', enum: ['pending', 'submitted', 'confirmed', 'failed'] },
+            },
+          },
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
     async (request, reply) => {
       try {
         const { relayRequestId } = request.params;
