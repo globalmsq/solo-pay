@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   getRedisClient,
   isRedisAvailable,

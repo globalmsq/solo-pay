@@ -42,7 +42,10 @@ const PAY_SERVER_URL = process.env.PAY_SERVER_URL || 'http://localhost:3011';
 describe('SDK Integration', () => {
   // Demo Merchant uses Localhost chain and TEST token
   const merchant = getMerchant('default');
-  const token = getTokenForChain(merchant.chainId)!; // Get matching token for merchant's chain
+  const token = getTokenForChain(merchant.chainId); // Get matching token for merchant's chain
+  if (!token) {
+    throw new Error(`Token not found for chain ${merchant.chainId}`);
+  }
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
 
@@ -472,8 +475,8 @@ describe('SDK Integration', () => {
       const matchingToken = getTokenForChain(merchant.chainId);
 
       expect(matchingToken).toBeDefined();
-      expect(matchingToken!.symbol).toBe('TEST');
-      expect(matchingToken!.networkId).toBe(31337);
+      expect(matchingToken?.symbol).toBe('TEST');
+      expect(matchingToken?.networkId).toBe(31337);
     });
 
     it('should verify MetaStar merchant is bound to Amoy chain', () => {
@@ -486,8 +489,8 @@ describe('SDK Integration', () => {
 
       // Token should be SUT on Amoy
       expect(metastarToken).toBeDefined();
-      expect(metastarToken!.symbol).toBe('SUT');
-      expect(metastarToken!.networkId).toBe(80002);
+      expect(metastarToken?.symbol).toBe('SUT');
+      expect(metastarToken?.networkId).toBe(80002);
     });
   });
 });

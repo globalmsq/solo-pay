@@ -89,15 +89,15 @@ jobs:
 
       - name: Start Hardhat node
         run: |
-          cd packages/pay-contracts
+          cd contracts
           pnpm exec hardhat node --hostname 0.0.0.0 &
           sleep 5
           echo "Hardhat node started"
 
       - name: Deploy contracts
         run: |
-          cd packages/pay-contracts
-          pnpm exec hardhat run scripts/deploy.ts --network localhost
+          cd contracts
+          pnpm exec hardhat run scripts/check-and-deploy.ts --network localhost
 
       - name: Update database with localhost RPC
         run: |
