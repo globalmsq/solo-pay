@@ -6,7 +6,7 @@ A step-by-step guide to deploying the MSQPay Payment API to various environments
 
 ## Environment Architecture Overview (v4.0.0)
 
-MSQPay uses the same HTTP API-based architecture across all environments. Environment switching is controlled solely through the `RELAYER_API_URL` environment variable:
+MSQPay uses the same HTTP API-based architecture across all environments. Environment switching is controlled solely through the `RELAY_API_URL` environment variable:
 
 | Environment                | Relay Service               | API URL                               | Forwarder        |
 | -------------------------- | --------------------------- | ------------------------------------- | ---------------- |
@@ -14,7 +14,7 @@ MSQPay uses the same HTTP API-based architecture across all environments. Enviro
 | **Testnet (Polygon Amoy)** | OZ Defender API             | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 | **Mainnet (Polygon)**      | OZ Defender API             | https://api.defender.openzeppelin.com | ERC2771Forwarder |
 
-**Environment Switching**: Controlled via `RELAYER_API_URL` environment variable
+**Environment Switching**: Controlled via `RELAY_API_URL` environment variable
 
 - `http://simple-relayer:3001` → Local development environment (Simple Relayer Docker container)
 - `https://api.defender.openzeppelin.com` → Production environment (OZ Defender API)
@@ -43,7 +43,7 @@ MSQPay uses the same HTTP API-based architecture across all environments. Enviro
 # ============================================
 # Relay Configuration (Simple Relayer HTTP Service)
 # ============================================
-RELAYER_API_URL=http://simple-relayer:3001
+RELAY_API_URL=http://simple-relayer:3001
 # Simple Relayer HTTP service URL (Docker container)
 
 # ============================================
@@ -80,14 +80,11 @@ FORWARDER_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 # ============================================
 # Relay Configuration (OZ Defender API)
 # ============================================
-RELAYER_API_URL=https://api.defender.openzeppelin.com
+RELAY_API_URL=https://api.defender.openzeppelin.com
 # OZ Defender API URL
 
-RELAYER_API_KEY=your_defender_api_key_here
+RELAY_API_KEY=your_defender_api_key_here
 # OZ Defender API key
-
-RELAYER_API_SECRET=your_defender_api_secret_here
-# OZ Defender API secret
 
 # ============================================
 # Blockchain Configuration (Required)

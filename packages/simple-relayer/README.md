@@ -179,10 +179,10 @@ Pay-Server selects Relayer service via environment variables:
 
 ```bash
 # Local development (Simple Relayer)
-RELAYER_API_URL=http://simple-relayer:3001
+RELAY_API_URL=http://simple-relayer:3001
 
 # Production (External Relayer service)
-RELAYER_API_URL=https://api.defender.openzeppelin.com
+RELAY_API_URL=https://api.defender.openzeppelin.com
 ```
 
 Pay-Server's `RelayService` calls the same API, enabling environment switching without code changes.
@@ -266,9 +266,8 @@ In production, always use professional **Relayer services** (e.g., OpenZeppelin 
 2. Create Relayer and issue API Key
 3. Configure Pay-Server environment variables:
    ```bash
-   RELAYER_API_URL=https://api.defender.openzeppelin.com
-   RELAYER_API_KEY=your-api-key
-   RELAYER_API_SECRET=your-api-secret
+   RELAY_API_URL=https://api.defender.openzeppelin.com
+   RELAY_API_KEY=your-api-key
    ```
 
 ## Documentation

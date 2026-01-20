@@ -73,10 +73,9 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 
 # Relayer Service
-RELAYER_API_URL=http://simple-relayer:3001  # Local development
-# RELAYER_API_URL=https://api.defender.openzeppelin.com  # Production
-RELAYER_API_KEY=  # Production only
-RELAYER_API_SECRET=  # Production only
+RELAY_API_URL=http://simple-relayer:3001  # Local development
+# RELAY_API_URL=https://api.defender.openzeppelin.com  # Production
+RELAY_API_KEY=  # Production only
 ```
 
 > **참고**: 체인 설정(RPC URL, Contract 주소 등)은 데이터베이스의 `chains` 테이블에서 관리됩니다. 환경변수가 아닙니다.

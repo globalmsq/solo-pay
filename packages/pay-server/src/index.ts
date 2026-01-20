@@ -44,8 +44,8 @@ let blockchainService: BlockchainService;
 // Initialize Relayer service for gasless transactions
 // Production: msq-relayer-service API
 // Local: http://simple-relayer:3001
-const relayerApiUrl = process.env.RELAYER_API_URL || 'http://localhost:3001';
-const relayerApiKey = process.env.RELAYER_API_KEY || '';
+const relayerApiUrl = process.env.RELAY_API_URL || 'http://localhost:3001';
+const relayerApiKey = process.env.RELAY_API_KEY || '';
 const relayerService = new RelayerService(relayerApiUrl, relayerApiKey);
 
 // Initialize other database services

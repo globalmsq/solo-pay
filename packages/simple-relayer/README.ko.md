@@ -179,10 +179,10 @@ Pay-Server는 환경변수로 Relayer 서비스를 선택합니다:
 
 ```bash
 # 로컬 개발 (Simple Relayer)
-RELAYER_API_URL=http://simple-relayer:3001
+RELAY_API_URL=http://simple-relayer:3001
 
 # 프로덕션 (외부 Relayer 서비스)
-RELAYER_API_URL=https://api.defender.openzeppelin.com
+RELAY_API_URL=https://api.defender.openzeppelin.com
 ```
 
 Pay-Server의 `RelayService`는 동일한 API를 호출하므로 코드 수정 없이 환경 전환이 가능합니다.
@@ -266,9 +266,8 @@ pnpm typecheck
 2. Relayer 생성 및 API Key 발급
 3. Pay-Server 환경변수 설정:
    ```bash
-   RELAYER_API_URL=https://api.defender.openzeppelin.com
-   RELAYER_API_KEY=your-api-key
-   RELAYER_API_SECRET=your-api-secret
+   RELAY_API_URL=https://api.defender.openzeppelin.com
+   RELAY_API_KEY=your-api-key
    ```
 
 ## 문서

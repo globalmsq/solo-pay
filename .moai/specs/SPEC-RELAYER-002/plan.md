@@ -39,9 +39,8 @@ phase: implementation-plan
 - [ ] `packages/pay-server/src/index.ts` import 경로 수정
 
 **0.3 환경변수 리네이밍**
-- [ ] `DEFENDER_API_URL` -> `RELAYER_API_URL`
-- [ ] `DEFENDER_API_KEY` -> `RELAYER_API_KEY`
-- [ ] `DEFENDER_API_SECRET` -> `RELAYER_API_SECRET`
+- [ ] `DEFENDER_API_URL` -> `RELAY_API_URL`
+- [ ] `DEFENDER_API_KEY` -> `RELAY_API_KEY`
 - [ ] pay-server 코드에서 환경변수 읽기 부분 수정
 
 **0.4 Docker 설정 업데이트**
@@ -153,8 +152,8 @@ pay-server의 RelayerService가 새로운 API를 사용하도록 수정
   - `nonce` 필드 추가
 
 **3.3 환경변수 적용**
-- [ ] `RELAYER_API_URL` 사용
-- [ ] `RELAYER_API_KEY` 사용
+- [ ] `RELAY_API_URL` 사용
+- [ ] `RELAY_API_KEY` 사용
 
 **3.4 검증**
 - [ ] pay-server 빌드 성공
@@ -169,7 +168,7 @@ X-API-Key 헤더 기반 인증 구현
 
 **4.1 인증 미들웨어 추가**
 - [ ] `X-API-Key` 헤더 추출
-- [ ] 환경변수 `RELAYER_API_KEY`와 비교
+- [ ] 환경변수 `RELAY_API_KEY`와 비교
 - [ ] 불일치 시 401 응답
 
 **4.2 개발 모드 예외 처리**
@@ -215,7 +214,7 @@ msq-relayer-service와 동일한 응답 형식 구현
 - [ ] Gasless 트랜잭션 End-to-End 테스트
 
 **Integration.2 외부 서비스 테스트**
-- [ ] RELAYER_API_URL을 msq-relayer-service로 변경
+- [ ] RELAY_API_URL을 msq-relayer-service로 변경
 - [ ] 동일한 테스트 시나리오 실행
 - [ ] 호환성 확인
 
@@ -292,6 +291,6 @@ RelayerService Client
 
 1. [ ] 모든 defender 용어가 relayer로 변경됨
 2. [ ] simple-relayer가 msq-relayer-service API 스펙과 100% 호환됨
-3. [ ] pay-server가 RELAYER_API_URL만 변경하면 릴레이어 전환 가능함
+3. [ ] pay-server가 RELAY_API_URL만 변경하면 릴레이어 전환 가능함
 4. [ ] 모든 테스트 통과
 5. [ ] Docker Compose로 전체 스택 정상 동작
