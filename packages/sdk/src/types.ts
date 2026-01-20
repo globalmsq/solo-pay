@@ -29,6 +29,7 @@ export interface ForwardRequest {
   to: string;
   value: string;
   gas: string;
+  nonce: string;
   deadline: string;
   data: string;
   signature: string;
@@ -75,17 +76,20 @@ export interface CreatePaymentResponse {
 export interface PaymentStatusResponse {
   success: true;
   data: {
-    id: string;
+    paymentId: string;
     userId: string;
     amount: number;
-    currency: 'USD' | 'EUR' | 'KRW';
     tokenAddress: string;
+    tokenSymbol: string;
     recipientAddress: string;
-    status: 'pending' | 'confirmed' | 'failed' | 'completed';
+    status: string;
     transactionHash?: string;
     blockNumber?: number;
     createdAt: string;
     updatedAt: string;
+    payment_hash: string;
+    network_id: number;
+    token_symbol: string;
   };
 }
 

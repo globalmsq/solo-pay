@@ -206,4 +206,181 @@ describe('TokenService', () => {
       })
     ).rejects.toThrow();
   });
+
+  describe('findByIds', () => {
+    it('should return empty array for empty ids', async () => {
+      const result = await tokenService.findByIds([]);
+      expect(result).toEqual([]);
+      expect(mockPrisma.token.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should find tokens by multiple ids', async () => {
+      const mockTokens = [
+        {
+          id: 8,
+          chain_id: chainId,
+          address: '0x1111111111111111111111111111111111111111',
+          symbol: 'TOKEN1',
+          decimals: 18,
+          is_enabled: true,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        },
+        {
+          id: 9,
+          chain_id: chainId,
+          address: '0x2222222222222222222222222222222222222222',
+          symbol: 'TOKEN2',
+          decimals: 6,
+          is_enabled: true,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        },
+      ];
+
+      mockPrisma.token.findMany.mockResolvedValue(mockTokens);
+
+      const result = await tokenService.findByIds([8, 9]);
+
+      expect(result.length).toBe(2);
+      expect(result[0].id).toBe(8);
+      expect(result[1].id).toBe(9);
+      expect(mockPrisma.token.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: [8, 9] },
+          is_deleted: false,
+        },
+      });
+    });
+  });
+
+  describe('findAllForChains', () => {
+    it('should return empty array for empty chainIds', async () => {
+      const result = await tokenService.findAllForChains([]);
+      expect(result).toEqual([]);
+      expect(mockPrisma.token.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should find tokens for multiple chains', async () => {
+      const mockTokens = [
+        {
+          id: 10,
+          chain_id: 1,
+          address: '0x3333333333333333333333333333333333333333',
+          symbol: 'USDC',
+          decimals: 6,
+          is_enabled: true,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        },
+        {
+          id: 11,
+          chain_id: 2,
+          address: '0x4444444444444444444444444444444444444444',
+          symbol: 'DAI',
+          decimals: 18,
+          is_enabled: true,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        },
+      ];
+
+      mockPrisma.token.findMany.mockResolvedValue(mockTokens);
+
+      const result = await tokenService.findAllForChains([1, 2]);
+
+      expect(result.length).toBe(2);
+      expect(mockPrisma.token.findMany).toHaveBeenCalledWith({
+        where: {
+          chain_id: { in: [1, 2] },
+          is_deleted: false,
+          is_enabled: true,
+        },
+        orderBy: { created_at: 'asc' },
+      });
+    });
+
+    it('should include disabled tokens when flag is set', async () => {
+      const mockTokens = [
+        {
+          id: 12,
+          chain_id: 1,
+          address: '0x5555555555555555555555555555555555555555',
+          symbol: 'DISABLED',
+          decimals: 18,
+          is_enabled: false,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        },
+      ];
+
+      mockPrisma.token.findMany.mockResolvedValue(mockTokens);
+
+      const result = await tokenService.findAllForChains([1], true);
+
+      expect(result.length).toBe(1);
+      expect(result[0].is_enabled).toBe(false);
+      expect(mockPrisma.token.findMany).toHaveBeenCalledWith({
+        where: {
+          chain_id: { in: [1] },
+          is_deleted: false,
+        },
+        orderBy: { created_at: 'asc' },
+      });
+    });
+  });
+
+  describe('findAllOnChain with includeDisabled', () => {
+    it('should include disabled tokens when flag is true', async () => {
+      const mockTokens = [
+        {
+          id: 13,
+          chain_id: chainId,
+          address: '0x6666666666666666666666666666666666666666',
+          symbol: 'ENABLED',
+          decimals: 18,
+          is_enabled: true,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        },
+        {
+          id: 14,
+          chain_id: chainId,
+          address: '0x7777777777777777777777777777777777777777',
+          symbol: 'DISABLED',
+          decimals: 6,
+          is_enabled: false,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        },
+      ];
+
+      mockPrisma.token.findMany.mockResolvedValue(mockTokens);
+
+      const result = await tokenService.findAllOnChain(chainId, true);
+
+      expect(result.length).toBe(2);
+      expect(mockPrisma.token.findMany).toHaveBeenCalledWith({
+        where: {
+          chain_id: chainId,
+          is_deleted: false,
+        },
+        orderBy: { created_at: 'asc' },
+      });
+    });
+  });
 });

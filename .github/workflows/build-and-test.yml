@@ -27,7 +27,14 @@ jobs:
         run: pnpm lint
 
       - name: Check Prettier formatting
-        run: pnpm exec prettier --check "**/*.{ts,tsx,js,json,md}"
+        run: |
+          pnpm exec prettier --check "**/*.{ts,tsx,js,json,md}" || {
+            echo "::group::Prettier diff"
+            pnpm exec prettier --write "**/*.{ts,tsx,js,json,md}"
+            git diff
+            echo "::endgroup::"
+            exit 1
+          }
 
   typecheck:
     name: Type Check
@@ -57,7 +64,7 @@ jobs:
         run: pnpm typecheck
 
   test:
-    name: Test
+    name: Test with Coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,8 +84,8 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @msq/pay-server exec prisma generate
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm test:coverage
 
   build:
     name: Build

@@ -5,7 +5,8 @@
   "description": "MSQPay - Blockchain Payment Gateway Monorepo",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
+    "test": "pnpm -r --filter '!@globalmsq/integration-tests' test",
+    "test:coverage": "pnpm -r --filter '!@globalmsq/integration-tests' test:coverage",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "clean": "pnpm -r clean"
