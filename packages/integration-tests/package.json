@@ -1,0 +1,29 @@
+{
+  "name": "@globalmsq/integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Integration tests for MSQPay monorepo",
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:setup": "docker compose -f ../../docker/docker-compose-integration-tests.yaml up -d --wait",
+    "test:teardown": "docker compose -f ../../docker/docker-compose-integration-tests.yaml down -v",
+    "test:ci": "pnpm test:setup && pnpm test; pnpm test:teardown",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@globalmsq/msqpay": "workspace:*",
+    "@msq/pay-contracts": "workspace:*",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.0.17",
+    "dotenv": "^16.4.0",
+    "ethers": "^6.13.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.14"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
