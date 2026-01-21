@@ -28,10 +28,10 @@ MSQ Pay Server provides a comprehensive payment API for blockchain-based transac
 - **Transaction Status**: Track payment and relay status in real-time
 
 ## Authentication
-All merchant API requests require an API key passed in the \`X-API-Key\` header.
+All merchant API requests require an API key passed in the \`x-api-key\` header.
 
 \`\`\`
-X-API-Key: your-api-key-here
+x-api-key: your-api-key-here
 \`\`\`
 
 ## Error Handling
@@ -86,7 +86,7 @@ All errors follow a consistent format:
         ApiKeyAuth: {
           type: 'apiKey',
           in: 'header',
-          name: 'X-API-Key',
+          name: 'x-api-key',
           description: 'Merchant API key for authentication.',
         },
       },
