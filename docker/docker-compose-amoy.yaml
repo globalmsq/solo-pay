@@ -6,7 +6,7 @@ services:
     image: mysql:8.0
     container_name: msqpay-mysql
     ports:
-      - "3306:3306"
+      - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: msqpay
@@ -18,7 +18,7 @@ services:
     networks:
       - msqpay-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppass"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-ppass']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -36,31 +36,31 @@ services:
       - msqpay-network
 
   # Simple Relayer Service (Gasless transaction relay for Amoy)
-  simple-relayer:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.packages
-      target: simple-relayer
-    container_name: msqpay-simple-relayer
-    ports:
-      - "3002:3001"
-    environment:
-      NODE_ENV: development
-      HOST: 0.0.0.0
-      PORT: 3001
-      # TODO: Set your relayer private key (DO NOT COMMIT!)
-      RELAYER_PRIVATE_KEY: "${RELAYER_PRIVATE_KEY}"
-      RPC_URL: https://rpc-amoy.polygon.technology
-      CHAIN_ID: 80002
-      FORWARDER_ADDRESS: "0xF034a404241707F347A952Cd4095f9035AF877Bf"
-    networks:
-      - msqpay-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3001/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
+  # simple-relayer:
+  #   build:
+  #     context: ..
+  #     dockerfile: docker/Dockerfile.packages
+  #     target: simple-relayer
+  #   container_name: msqpay-simple-relayer
+  #   ports:
+  #     - "3002:3001"
+  #   environment:
+  #     NODE_ENV: development
+  #     HOST: 0.0.0.0
+  #     PORT: 3001
+  #     # TODO: Set your relayer private key (DO NOT COMMIT!)
+  #     RELAYER_PRIVATE_KEY: "${RELAYER_PRIVATE_KEY}"
+  #     RPC_URL: https://rpc-amoy.polygon.technology
+  #     CHAIN_ID: 80002
+  #     FORWARDER_ADDRESS: "0xF034a404241707F347A952Cd4095f9035AF877Bf"
+  #   networks:
+  #     - msqpay-network
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3001/health"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
 
   # Payment Server (Fastify)
   server:
@@ -70,9 +70,9 @@ services:
       target: server
     container_name: msqpay-server
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
@@ -93,8 +93,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      simple-relayer:
-        condition: service_healthy
+      # simple-relayer:
+      #   condition: service_healthy
     networks:
       - msqpay-network
       - msq-network
@@ -107,9 +107,9 @@ services:
       target: demo
     container_name: msqpay-demo
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       # Chain Configuration (서버 런타임 환경변수 - /api/config에서 클라이언트에 전달)
       CHAIN_ID: 80002
       RPC_URL: https://rpc-amoy.polygon.technology
@@ -119,7 +119,7 @@ services:
       # Server-side API URL (Docker internal network)
       MSQPAY_API_URL: http://server:3001
       # Merchant API Key (same as docker-compose.yaml: merchant_demo_001)
-      MSQPAY_API_KEY: "123"
+      MSQPAY_API_KEY: '123'
     depends_on:
       - server
     networks:
