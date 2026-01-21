@@ -23,7 +23,8 @@ export async function getMerchantRoute(
         operationId: 'getCurrentMerchant',
         tags: ['Merchants'],
         summary: 'Get current merchant info',
-        description: 'Returns information about the authenticated merchant including payment methods',
+        description:
+          'Returns information about the authenticated merchant including payment methods',
         security: [{ ApiKeyAuth: [] }],
         response: {
           200: {
@@ -94,59 +95,60 @@ export async function getMerchantRoute(
       preHandler: authMiddleware,
     },
     async (request, reply) => {
-    try {
-      // Merchant is guaranteed to exist after auth middleware
-      const merchant = request.merchant;
-      if (!merchant) {
+      try {
+        // Merchant is guaranteed to exist after auth middleware
+        const merchant = request.merchant;
+        if (!merchant) {
+          return reply.code(500).send({
+            code: 'INTERNAL_ERROR',
+            message: 'Authentication context is missing',
+          });
+        }
+
+        // Get payment methods for this merchant
+        const paymentMethods = await paymentMethodService.findAllForMerchant(merchant.id);
+
+        // Enrich payment methods with token and chain information using optimized bulk queries
+        const validPaymentMethods = await paymentMethodService.enrichPaymentMethods(
+          paymentMethods,
+          tokenService,
+          chainService
+        );
+
+        // Get chain information for merchant
+        const chain = merchant.chain_id ? await chainService.findById(merchant.chain_id) : null;
+
+        // Return merchant information with payment methods
+        return reply.code(200).send({
+          success: true,
+          merchant: {
+            id: merchant.id,
+            merchant_key: merchant.merchant_key,
+            name: merchant.name,
+            chain_id: merchant.chain_id,
+            chain: chain
+              ? {
+                  id: chain.id,
+                  network_id: chain.network_id,
+                  name: chain.name,
+                  is_testnet: chain.is_testnet,
+                }
+              : null,
+            webhook_url: merchant.webhook_url,
+            is_enabled: merchant.is_enabled,
+            created_at: merchant.created_at.toISOString(),
+            updated_at: merchant.updated_at.toISOString(),
+            payment_methods: validPaymentMethods,
+          },
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to get merchant';
+        request.log.error(error, 'Failed to get merchant');
         return reply.code(500).send({
           code: 'INTERNAL_ERROR',
-          message: 'Authentication context is missing',
+          message,
         });
       }
-
-      // Get payment methods for this merchant
-      const paymentMethods = await paymentMethodService.findAllForMerchant(merchant.id);
-
-      // Enrich payment methods with token and chain information using optimized bulk queries
-      const validPaymentMethods = await paymentMethodService.enrichPaymentMethods(
-        paymentMethods,
-        tokenService,
-        chainService
-      );
-
-      // Get chain information for merchant
-      const chain = merchant.chain_id ? await chainService.findById(merchant.chain_id) : null;
-
-      // Return merchant information with payment methods
-      return reply.code(200).send({
-        success: true,
-        merchant: {
-          id: merchant.id,
-          merchant_key: merchant.merchant_key,
-          name: merchant.name,
-          chain_id: merchant.chain_id,
-          chain: chain
-            ? {
-                id: chain.id,
-                network_id: chain.network_id,
-                name: chain.name,
-                is_testnet: chain.is_testnet,
-              }
-            : null,
-          webhook_url: merchant.webhook_url,
-          is_enabled: merchant.is_enabled,
-          created_at: merchant.created_at.toISOString(),
-          updated_at: merchant.updated_at.toISOString(),
-          payment_methods: validPaymentMethods,
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to get merchant';
-      request.log.error(error, 'Failed to get merchant');
-      return reply.code(500).send({
-        code: 'INTERNAL_ERROR',
-        message,
-      });
     }
-  });
+  );
 }

@@ -44,36 +44,30 @@ export const CreatePaymentRequestSchema = {
   properties: {
     merchantId: {
       type: 'string',
-      minLength: 1,
       description: 'Unique merchant identifier (merchant_key)',
       example: 'merchant_demo_001',
     },
     amount: {
       type: 'number',
-      exclusiveMinimum: 0,
       description: 'Payment amount in base token units (e.g., 10.5 for 10.5 TEST)',
       example: 10,
     },
     chainId: {
       type: 'integer',
-      minimum: 1,
       description: 'Blockchain network ID',
       example: 31337,
     },
     tokenAddress: {
       type: 'string',
-      pattern: '^0x[a-fA-F0-9]{40}$',
       description: 'ERC20 token contract address',
       example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
     },
     recipientAddress: {
       type: 'string',
-      pattern: '^0x[a-fA-F0-9]{40}$',
       description: 'Recipient wallet address',
       example: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     },
   },
-  required: ['merchantId', 'amount', 'chainId', 'tokenAddress', 'recipientAddress'],
 } as const;
 
 export const CreatePaymentResponseSchema = {
@@ -130,7 +124,7 @@ export const PaymentStatusResponseSchema = {
       properties: {
         paymentId: { type: 'string', description: 'Payment ID (bytes32)' },
         userId: { type: 'string', description: 'Payer address' },
-        amount: { type: 'number', description: 'Amount in wei' },
+        amount: { type: 'string', description: 'Amount in wei' },
         tokenAddress: { type: 'string', description: 'Token contract address' },
         tokenSymbol: { type: 'string', description: 'Token symbol' },
         recipientAddress: { type: 'string', description: 'Recipient (merchant) address' },
@@ -159,12 +153,10 @@ export const ForwardRequestSchema = {
   properties: {
     from: {
       type: 'string',
-      pattern: '^0x[a-fA-F0-9]{40}$',
-      description: 'Sender address',
+      description: 'Sender address (0x + 40 hex chars)',
     },
     to: {
       type: 'string',
-      pattern: '^0x[a-fA-F0-9]{40}$',
       description: 'Target contract address (PaymentGateway)',
     },
     value: { type: 'string', description: 'ETH value (usually "0")' },
@@ -173,16 +165,13 @@ export const ForwardRequestSchema = {
     deadline: { type: 'string', description: 'Unix timestamp deadline' },
     data: {
       type: 'string',
-      pattern: '^0x',
       description: 'Encoded function call data (pay function)',
     },
     signature: {
       type: 'string',
-      pattern: '^0x',
       description: 'EIP-712 signature',
     },
   },
-  required: ['from', 'to', 'value', 'gas', 'nonce', 'deadline', 'data', 'signature'],
 } as const;
 
 export const GaslessRequestSchema = {
@@ -191,16 +180,15 @@ export const GaslessRequestSchema = {
     paymentId: {
       type: 'string',
       description: 'Payment hash from /payments/create',
-      example: '0xabcdef...',
+      example: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
     },
     forwarderAddress: {
       type: 'string',
-      pattern: '^0x[a-fA-F0-9]{40}$',
       description: 'ERC2771 Forwarder contract address',
+      example: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     },
     forwardRequest: ForwardRequestSchema,
   },
-  required: ['paymentId', 'forwarderAddress', 'forwardRequest'],
 } as const;
 
 export const GaslessResponseSchema = {
@@ -230,9 +218,9 @@ export const TokenBalanceQuerySchema = {
   type: 'object',
   properties: {
     chainId: {
-      type: 'string',
+      type: 'integer',
       description: 'Blockchain network ID',
-      example: '31337',
+      example: 31337,
     },
     address: {
       type: 'string',
@@ -264,8 +252,9 @@ export const TokenAllowanceQuerySchema = {
   type: 'object',
   properties: {
     chainId: {
-      type: 'string',
+      type: 'integer',
       description: 'Blockchain network ID',
+      example: 31337,
     },
     owner: {
       type: 'string',

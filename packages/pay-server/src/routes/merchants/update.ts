@@ -22,7 +22,11 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
           type: 'object',
           properties: {
             name: { type: 'string', description: 'Merchant display name' },
-            webhook_url: { type: 'string', format: 'uri', description: 'Webhook URL for payment notifications' },
+            webhook_url: {
+              type: 'string',
+              format: 'uri',
+              description: 'Webhook URL for payment notifications',
+            },
           },
         },
         response: {

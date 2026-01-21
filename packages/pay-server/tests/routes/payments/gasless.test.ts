@@ -87,7 +87,14 @@ describe('POST /payments/:id/gasless', () => {
   let merchantService: Partial<MerchantService>;
 
   beforeEach(async () => {
-    app = Fastify({ logger: false });
+    app = Fastify({
+      logger: false,
+      ajv: {
+        customOptions: {
+          keywords: ['example'],
+        },
+      },
+    });
     await app.register(cors);
 
     // Mock RelayerService

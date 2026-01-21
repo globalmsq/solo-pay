@@ -1,5 +1,6 @@
 import { FastifyDynamicSwaggerOptions } from '@fastify/swagger';
 import { FastifySwaggerUiOptions } from '@fastify/swagger-ui';
+import { ErrorResponseSchema, EthereumAddressSchema, PaymentHashSchema } from './schemas';
 
 /**
  * Swagger/OpenAPI configuration for MSQ Pay Server
@@ -90,43 +91,10 @@ All errors follow a consistent format:
         },
       },
       schemas: {
-        // Standard error response - used across all endpoints
-        ErrorResponse: {
-          type: 'object',
-          description: 'Standard error response format',
-          properties: {
-            code: {
-              type: 'string',
-              description: 'Machine-readable error code',
-              example: 'INVALID_REQUEST',
-            },
-            message: {
-              type: 'string',
-              description: 'Human-readable error message',
-              example: 'The request body is invalid',
-            },
-            details: {
-              type: 'object',
-              additionalProperties: true,
-              description: 'Additional error context (validation errors, etc.)',
-            },
-          },
-          required: ['code', 'message'],
-        },
-        // Ethereum address format
-        EthereumAddress: {
-          type: 'string',
-          pattern: '^0x[a-fA-F0-9]{40}$',
-          example: '0x1234567890abcdef1234567890abcdef12345678',
-          description: 'Ethereum address (0x + 40 hex characters)',
-        },
-        // Payment hash / ID format
-        PaymentHash: {
-          type: 'string',
-          pattern: '^0x[a-fA-F0-9]{64}$',
-          example: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-          description: 'Unique payment identifier (bytes32 hash)',
-        },
+        // Imported from schemas.ts - single source of truth
+        ErrorResponse: ErrorResponseSchema as Record<string, unknown>,
+        EthereumAddress: EthereumAddressSchema as Record<string, unknown>,
+        PaymentHash: PaymentHashSchema as Record<string, unknown>,
         // Transaction hash format
         TransactionHash: {
           type: 'string',

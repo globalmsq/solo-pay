@@ -133,8 +133,16 @@ export async function paymentMethodsRoute(
         body: {
           type: 'object',
           properties: {
-            tokenAddress: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$', description: 'ERC20 token address' },
-            recipientAddress: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$', description: 'Payment recipient address' },
+            tokenAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'ERC20 token address',
+            },
+            recipientAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'Payment recipient address',
+            },
             is_enabled: { type: 'boolean', default: true },
           },
           required: ['tokenAddress', 'recipientAddress'],

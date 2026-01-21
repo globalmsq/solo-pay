@@ -65,7 +65,6 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
             id: {
               type: 'string',
               description: 'Payment hash (bytes32)',
-              pattern: '^0x[a-fA-F0-9]{64}$',
             },
           },
           required: ['id'],

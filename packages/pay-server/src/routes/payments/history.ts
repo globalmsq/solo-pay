@@ -21,9 +21,17 @@ export async function getPaymentHistoryRoute(
         querystring: {
           type: 'object',
           properties: {
-            chainId: { type: 'string', description: 'Blockchain network ID', example: '31337' },
-            payer: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$', description: 'Payer wallet address' },
-            limit: { type: 'string', description: 'Block range limit (default: 1000)', example: '1000' },
+            chainId: { type: 'integer', description: 'Blockchain network ID', example: 31337 },
+            payer: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'Payer wallet address',
+            },
+            limit: {
+              type: 'string',
+              description: 'Block range limit (default: 1000)',
+              example: '1000',
+            },
           },
           required: ['chainId', 'payer'],
         },
@@ -48,7 +56,11 @@ export async function getPaymentHistoryRoute(
                     transactionHash: { type: 'string', description: 'Transaction hash' },
                     status: { type: 'string', description: 'Payment status' },
                     isGasless: { type: 'boolean', description: 'Whether payment was gasless' },
-                    relayId: { type: 'string', nullable: true, description: 'Relay request ID (gasless only)' },
+                    relayId: {
+                      type: 'string',
+                      nullable: true,
+                      description: 'Relay request ID (gasless only)',
+                    },
                   },
                 },
               },
