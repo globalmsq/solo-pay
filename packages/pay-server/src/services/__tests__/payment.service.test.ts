@@ -252,4 +252,242 @@ describe('PaymentService', () => {
     expect(created.token_symbol).toBe('ETH');
     expect(created.token_decimals).toBe(18);
   });
+
+  it('should find payment by id', async () => {
+    const mockPayment = {
+      id: 8,
+      payment_hash: '0x' + 'f'.repeat(64),
+      merchant_id: merchantId,
+      payment_method_id: paymentMethodId,
+      amount: new Decimal('8000000'),
+      token_decimals: 6,
+      token_symbol: 'USDC',
+      network_id: 31337,
+      status: PaymentStatus.CREATED,
+      payer_address: null,
+      tx_hash: null,
+      expires_at: new Date(Date.now() + 3600000),
+      created_at: new Date(),
+      updated_at: new Date(),
+      confirmed_at: null,
+    };
+
+    mockPrisma.payment.findUnique.mockResolvedValue(mockPayment);
+
+    const result = await paymentService.findById(8);
+
+    expect(result).toBeDefined();
+    expect(result?.id).toBe(8);
+    expect(mockPrisma.payment.findUnique).toHaveBeenCalledWith({
+      where: { id: 8 },
+    });
+  });
+
+  it('should return null when payment not found by id', async () => {
+    mockPrisma.payment.findUnique.mockResolvedValue(null);
+
+    const result = await paymentService.findById(999);
+
+    expect(result).toBeNull();
+  });
+
+  it('should throw error when updating status of non-existent payment', async () => {
+    mockPrisma.payment.findUnique.mockResolvedValue(null);
+
+    await expect(paymentService.updateStatus(999, 'CONFIRMED')).rejects.toThrow(
+      'Payment not found'
+    );
+  });
+
+  describe('updateStatusByHash', () => {
+    it('should update payment status by hash', async () => {
+      const paymentHash = '0x' + 'g'.repeat(64);
+      const mockExisting = {
+        id: 9,
+        payment_hash: paymentHash,
+        merchant_id: merchantId,
+        payment_method_id: paymentMethodId,
+        amount: new Decimal('9000000'),
+        token_decimals: 6,
+        token_symbol: 'USDC',
+        network_id: 31337,
+        status: PaymentStatus.CREATED,
+        payer_address: null,
+        tx_hash: null,
+        expires_at: new Date(Date.now() + 3600000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        confirmed_at: null,
+      };
+
+      const mockUpdated = {
+        ...mockExisting,
+        status: PaymentStatus.CONFIRMED,
+        tx_hash: '0x' + 'h'.repeat(64),
+        confirmed_at: new Date(),
+      };
+
+      mockPrisma.payment.findUnique.mockResolvedValue(mockExisting);
+      mockPrisma.payment.update.mockResolvedValue(mockUpdated);
+      mockPrisma.paymentEvent.create.mockResolvedValue({
+        id: 4,
+        payment_id: 9,
+        event_type: 'STATUS_CHANGED',
+        old_status: PaymentStatus.CREATED,
+        new_status: PaymentStatus.CONFIRMED,
+        metadata: null,
+        created_at: new Date(),
+      });
+
+      const result = await paymentService.updateStatusByHash(
+        paymentHash,
+        'CONFIRMED',
+        '0x' + 'h'.repeat(64)
+      );
+
+      expect(result.status).toBe('CONFIRMED');
+      expect(result.tx_hash).toBe('0x' + 'h'.repeat(64));
+      expect(result.confirmed_at).toBeDefined();
+    });
+
+    it('should throw error when payment not found by hash', async () => {
+      mockPrisma.payment.findUnique.mockResolvedValue(null);
+
+      await expect(
+        paymentService.updateStatusByHash('0x' + 'z'.repeat(64), 'CONFIRMED')
+      ).rejects.toThrow('Payment not found');
+    });
+
+    it('should update status without tx_hash', async () => {
+      const paymentHash = '0x' + 'i'.repeat(64);
+      const mockExisting = {
+        id: 10,
+        payment_hash: paymentHash,
+        merchant_id: merchantId,
+        payment_method_id: paymentMethodId,
+        amount: new Decimal('10000000'),
+        token_decimals: 6,
+        token_symbol: 'USDC',
+        network_id: 31337,
+        status: PaymentStatus.CREATED,
+        payer_address: null,
+        tx_hash: null,
+        expires_at: new Date(Date.now() + 3600000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        confirmed_at: null,
+      };
+
+      const mockUpdated = {
+        ...mockExisting,
+        status: PaymentStatus.FAILED,
+      };
+
+      mockPrisma.payment.findUnique.mockResolvedValue(mockExisting);
+      mockPrisma.payment.update.mockResolvedValue(mockUpdated);
+      mockPrisma.paymentEvent.create.mockResolvedValue({
+        id: 5,
+        payment_id: 10,
+        event_type: 'STATUS_CHANGED',
+        old_status: PaymentStatus.CREATED,
+        new_status: PaymentStatus.FAILED,
+        metadata: null,
+        created_at: new Date(),
+      });
+
+      const result = await paymentService.updateStatusByHash(paymentHash, 'FAILED');
+
+      expect(result.status).toBe('FAILED');
+      expect(result.tx_hash).toBeNull();
+    });
+  });
+
+  describe('setTxHash', () => {
+    it('should set transaction hash for payment', async () => {
+      const paymentHash = '0x' + 'j'.repeat(64);
+      const txHash = '0x' + 'k'.repeat(64);
+      const mockExisting = {
+        id: 11,
+        payment_hash: paymentHash,
+        merchant_id: merchantId,
+        payment_method_id: paymentMethodId,
+        amount: new Decimal('11000000'),
+        token_decimals: 6,
+        token_symbol: 'USDC',
+        network_id: 31337,
+        status: PaymentStatus.CREATED,
+        payer_address: null,
+        tx_hash: null,
+        expires_at: new Date(Date.now() + 3600000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        confirmed_at: null,
+      };
+
+      const mockUpdated = {
+        ...mockExisting,
+        tx_hash: txHash,
+      };
+
+      mockPrisma.payment.findUnique.mockResolvedValue(mockExisting);
+      mockPrisma.payment.update.mockResolvedValue(mockUpdated);
+
+      const result = await paymentService.setTxHash(11, txHash);
+
+      expect(result.tx_hash).toBe(txHash);
+      expect(mockPrisma.payment.update).toHaveBeenCalledWith({
+        where: { id: 11 },
+        data: { tx_hash: txHash },
+      });
+    });
+
+    it('should throw error when payment not found', async () => {
+      mockPrisma.payment.findUnique.mockResolvedValue(null);
+
+      await expect(paymentService.setTxHash(999, '0x' + 'l'.repeat(64))).rejects.toThrow(
+        'Payment not found'
+      );
+    });
+  });
+
+  describe('getPaymentWithChain', () => {
+    it('should return payment with chain information', async () => {
+      const paymentHash = '0x' + 'm'.repeat(64);
+      const mockPayment = {
+        id: 12,
+        payment_hash: paymentHash,
+        merchant_id: merchantId,
+        payment_method_id: paymentMethodId,
+        amount: new Decimal('12000000'),
+        token_decimals: 6,
+        token_symbol: 'USDC',
+        network_id: 31337,
+        status: PaymentStatus.CREATED,
+        payer_address: null,
+        tx_hash: null,
+        expires_at: new Date(Date.now() + 3600000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        confirmed_at: null,
+      };
+
+      mockPrisma.payment.findUnique.mockResolvedValue(mockPayment);
+
+      const result = await paymentService.getPaymentWithChain(paymentHash);
+
+      expect(result).toBeDefined();
+      expect(result?.payment).toEqual(mockPayment);
+      expect(result?.network_id).toBe(31337);
+      expect(result?.token_symbol).toBe('USDC');
+      expect(result?.token_decimals).toBe(6);
+    });
+
+    it('should return null when payment not found', async () => {
+      mockPrisma.payment.findUnique.mockResolvedValue(null);
+
+      const result = await paymentService.getPaymentWithChain('0x' + 'n'.repeat(64));
+
+      expect(result).toBeNull();
+    });
+  });
 });

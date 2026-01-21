@@ -18,6 +18,7 @@ vi.mock('viem', () => {
       readContract: mockReadContract,
     })),
     http: vi.fn(),
+    encodeFunctionData: vi.fn().mockReturnValue('0x' + 'd'.repeat(64)),
   };
 });
 
@@ -75,6 +76,43 @@ describe('RelayService', () => {
           chainId: 0,
         });
       }).toThrow('chainId must be positive');
+    });
+
+    it('잘못된 forwarderAddress로 생성 시 에러를 던져야 함', () => {
+      expect(() => {
+        new RelayService({
+          ...config,
+          forwarderAddress: 'invalid' as `0x${string}`,
+        });
+      }).toThrow('forwarderAddress must be hex string starting with 0x');
+    });
+
+    it('0x 프리픽스 없는 private key도 정규화되어야 함', () => {
+      const serviceWithoutPrefix = new RelayService({
+        ...config,
+        relayerPrivateKey:
+          'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`,
+      });
+      expect(serviceWithoutPrefix).toBeDefined();
+    });
+
+    it('빈 private key로 생성 시 에러를 던져야 함', () => {
+      expect(() => {
+        new RelayService({
+          ...config,
+          relayerPrivateKey: '' as `0x${string}`,
+        });
+      }).toThrow('relayerPrivateKey is required');
+    });
+
+    it('잘못된 hex 문자가 있는 private key로 생성 시 에러를 던져야 함', () => {
+      expect(() => {
+        new RelayService({
+          ...config,
+          relayerPrivateKey:
+            '0xgg0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as `0x${string}`,
+        });
+      }).toThrow('relayerPrivateKey contains invalid hex characters');
     });
   });
 
@@ -137,6 +175,197 @@ describe('RelayService', () => {
       const nonce = await relayService.getNonce(('0x' + 'a'.repeat(40)) as `0x${string}`);
 
       expect(typeof nonce).toBe('bigint');
+    });
+  });
+
+  describe('submitForwardRequest', () => {
+    it('ForwardRequest를 제출하고 레코드를 반환해야 함', async () => {
+      const result = await relayService.submitForwardRequest({
+        forwardRequest: {
+          from: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+          to: ('0x' + 'b'.repeat(40)) as `0x${string}`,
+          value: '0',
+          gas: '200000',
+          nonce: '0',
+          deadline: '1999999999',
+          data: '0x' as `0x${string}`,
+          signature: ('0x' + 'c'.repeat(130)) as `0x${string}`,
+        },
+      });
+
+      expect(result.transactionId).toContain('mock_tx_');
+      expect(['sent', 'mined', 'confirmed']).toContain(result.status);
+      expect(result.hash).toBeDefined();
+      expect(result.to).toBe(config.forwarderAddress);
+    });
+
+    it('gasLimit 옵션을 받아들여야 함', async () => {
+      const result = await relayService.submitForwardRequest({
+        forwardRequest: {
+          from: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+          to: ('0x' + 'b'.repeat(40)) as `0x${string}`,
+          value: '1000',
+          gas: '200000',
+          nonce: '0',
+          deadline: '1999999999',
+          data: '0x' as `0x${string}`,
+          signature: ('0x' + 'c'.repeat(130)) as `0x${string}`,
+        },
+        gasLimit: '600000',
+      });
+
+      expect(result.gasLimit).toBe('600000');
+      expect(result.value).toBe('1000');
+    });
+
+    it('너무 큰 deadline 값은 에러를 던져야 함', async () => {
+      await expect(
+        relayService.submitForwardRequest({
+          forwardRequest: {
+            from: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+            to: ('0x' + 'b'.repeat(40)) as `0x${string}`,
+            value: '0',
+            gas: '200000',
+            nonce: '0',
+            deadline: '99999999999999999999',
+            data: '0x' as `0x${string}`,
+            signature: ('0x' + 'c'.repeat(130)) as `0x${string}`,
+          },
+        })
+      ).rejects.toThrow('deadline value is too large for uint48');
+    });
+  });
+
+  describe('transaction failure scenarios', () => {
+    it('sendTransaction 실패 시 트랜잭션 상태가 failed로 설정되어야 함', async () => {
+      const { createWalletClient } = await import('viem');
+      const mockCreateWalletClient = vi.mocked(createWalletClient);
+      mockCreateWalletClient.mockReturnValueOnce({
+        sendTransaction: vi.fn().mockRejectedValue(new Error('Transaction failed')),
+      } as unknown as ReturnType<typeof createWalletClient>);
+
+      const failingService = new RelayService(config);
+
+      await expect(
+        failingService.submitTransaction({
+          to: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+          data: ('0x' + 'b'.repeat(64)) as `0x${string}`,
+        })
+      ).rejects.toThrow('Transaction failed');
+    });
+
+    it('submitForwardRequest sendTransaction 실패 시 트랜잭션 상태가 failed로 설정되어야 함', async () => {
+      const { createWalletClient } = await import('viem');
+      const mockCreateWalletClient = vi.mocked(createWalletClient);
+      mockCreateWalletClient.mockReturnValueOnce({
+        sendTransaction: vi.fn().mockRejectedValue(new Error('Forward request failed')),
+      } as unknown as ReturnType<typeof createWalletClient>);
+
+      const failingService = new RelayService(config);
+
+      await expect(
+        failingService.submitForwardRequest({
+          forwardRequest: {
+            from: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+            to: ('0x' + 'b'.repeat(40)) as `0x${string}`,
+            value: '0',
+            gas: '200000',
+            nonce: '0',
+            deadline: '1999999999',
+            data: '0x' as `0x${string}`,
+            signature: ('0x' + 'c'.repeat(130)) as `0x${string}`,
+          },
+        })
+      ).rejects.toThrow('Forward request failed');
+    });
+  });
+
+  describe('monitorTransaction scenarios', () => {
+    it('트랜잭션 영수증 실패 시 상태가 failed로 설정되어야 함', async () => {
+      const { createPublicClient, createWalletClient } = await import('viem');
+      const mockCreatePublicClient = vi.mocked(createPublicClient);
+      const mockCreateWalletClient = vi.mocked(createWalletClient);
+
+      mockCreateWalletClient.mockReturnValueOnce({
+        sendTransaction: vi.fn().mockResolvedValue('0x' + 'a'.repeat(64)),
+      } as unknown as ReturnType<typeof createWalletClient>);
+
+      mockCreatePublicClient.mockReturnValueOnce({
+        waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: 'reverted' }),
+        getBalance: vi.fn().mockResolvedValue(BigInt('1000000000000000000')),
+        readContract: vi.fn().mockResolvedValue(BigInt(0)),
+      } as unknown as ReturnType<typeof createPublicClient>);
+
+      const serviceWithRevert = new RelayService(config);
+      const result = await serviceWithRevert.submitTransaction({
+        to: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+        data: ('0x' + 'b'.repeat(64)) as `0x${string}`,
+      });
+
+      // 모니터링이 비동기로 실행되므로 약간의 대기 필요
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const updated = await serviceWithRevert.getTransaction(result.transactionId);
+      expect(updated.status).toBe('failed');
+    });
+
+    it('waitForTransactionReceipt 에러 시 상태가 failed로 설정되어야 함', async () => {
+      const { createPublicClient, createWalletClient } = await import('viem');
+      const mockCreatePublicClient = vi.mocked(createPublicClient);
+      const mockCreateWalletClient = vi.mocked(createWalletClient);
+
+      mockCreateWalletClient.mockReturnValueOnce({
+        sendTransaction: vi.fn().mockResolvedValue('0x' + 'a'.repeat(64)),
+      } as unknown as ReturnType<typeof createWalletClient>);
+
+      mockCreatePublicClient.mockReturnValueOnce({
+        waitForTransactionReceipt: vi.fn().mockRejectedValue(new Error('Timeout')),
+        getBalance: vi.fn().mockResolvedValue(BigInt('1000000000000000000')),
+        readContract: vi.fn().mockResolvedValue(BigInt(0)),
+      } as unknown as ReturnType<typeof createPublicClient>);
+
+      const serviceWithTimeout = new RelayService(config);
+      const result = await serviceWithTimeout.submitTransaction({
+        to: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+        data: ('0x' + 'b'.repeat(64)) as `0x${string}`,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const updated = await serviceWithTimeout.getTransaction(result.transactionId);
+      expect(updated.status).toBe('failed');
+    });
+
+    it('mined 상태에서 일정 시간 후 confirmed 상태로 전환되어야 함', async () => {
+      vi.useFakeTimers();
+
+      const { createPublicClient, createWalletClient } = await import('viem');
+      const mockCreatePublicClient = vi.mocked(createPublicClient);
+      const mockCreateWalletClient = vi.mocked(createWalletClient);
+
+      mockCreateWalletClient.mockReturnValueOnce({
+        sendTransaction: vi.fn().mockResolvedValue('0x' + 'a'.repeat(64)),
+      } as unknown as ReturnType<typeof createWalletClient>);
+
+      mockCreatePublicClient.mockReturnValueOnce({
+        waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: 'success' }),
+        getBalance: vi.fn().mockResolvedValue(BigInt('1000000000000000000')),
+        readContract: vi.fn().mockResolvedValue(BigInt(0)),
+      } as unknown as ReturnType<typeof createPublicClient>);
+
+      const serviceWithSuccess = new RelayService(config);
+      const result = await serviceWithSuccess.submitTransaction({
+        to: ('0x' + 'a'.repeat(40)) as `0x${string}`,
+        data: ('0x' + 'b'.repeat(64)) as `0x${string}`,
+      });
+
+      // 비동기 처리를 위해 promise 플러시
+      await vi.runAllTimersAsync();
+
+      const updated = await serviceWithSuccess.getTransaction(result.transactionId);
+      expect(updated.status).toBe('confirmed');
+
+      vi.useRealTimers();
     });
   });
 });

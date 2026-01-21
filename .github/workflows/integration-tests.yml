@@ -1,0 +1,164 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "packages/integration-tests/**"
+      - "packages/pay-server/**"
+      - "packages/simple-relayer/**"
+      - "packages/sdk/**"
+      - "contracts/**"
+      - "docker/**"
+      - ".github/workflows/integration-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: mysql://msqpay:pass@127.0.0.1:3306/msqpay
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      BLOCKCHAIN_RPC_URL: http://127.0.0.1:8545
+      PAY_SERVER_URL: http://127.0.0.1:3011
+      RELAY_API_URL: http://127.0.0.1:3012
+      RPC_URL: http://127.0.0.1:8545
+      CHAIN_ID: 31337
+      # Hardhat's publicly known test account #1 - DO NOT use on mainnet/testnet
+      # See: https://hardhat.org/hardhat-network/docs/reference#initial-state
+      RELAYER_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: pass
+          MYSQL_DATABASE: msqpay
+          MYSQL_USER: msqpay
+          MYSQL_PASSWORD: pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -ppass"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: |
+          pnpm --filter @msq/pay-contracts exec hardhat compile
+          pnpm build
+
+      - name: Initialize database
+        run: |
+          mysql -h 127.0.0.1 -u root -ppass msqpay < docker/init.sql
+
+      - name: Start Hardhat node
+        run: |
+          cd contracts
+          pnpm exec hardhat node --hostname 0.0.0.0 &
+          sleep 5
+          echo "Hardhat node started"
+
+      - name: Deploy contracts
+        run: |
+          cd contracts
+          pnpm exec hardhat run scripts/check-and-deploy.ts --network localhost
+
+      - name: Update database with localhost RPC
+        run: |
+          mysql -h 127.0.0.1 -u root -ppass msqpay -e "UPDATE chains SET rpc_url = '$BLOCKCHAIN_RPC_URL' WHERE network_id = $CHAIN_ID;"
+
+      - name: Start pay-server
+        env:
+          NODE_ENV: test
+          PORT: 3011
+        run: |
+          cd packages/pay-server
+          pnpm start &
+          sleep 5
+          echo "pay-server started"
+
+      - name: Start simple-relayer
+        env:
+          NODE_ENV: test
+          PORT: 3012
+          HOST: 0.0.0.0
+          FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+        run: |
+          cd packages/simple-relayer
+          pnpm start &
+          sleep 5
+          echo "simple-relayer started"
+
+      - name: Wait for services
+        run: |
+          echo "Waiting for services to be ready..."
+          for i in {1..30}; do
+            if curl -sf $PAY_SERVER_URL/health > /dev/null 2>&1 && \
+               curl -sf $RELAY_API_URL/health > /dev/null 2>&1; then
+              echo "All services ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+
+      - name: Check service health
+        run: |
+          echo "Checking Hardhat node..."
+          curl -sf $BLOCKCHAIN_RPC_URL -X POST -H "Content-Type: application/json" \
+            -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+
+          echo "Checking pay-server..."
+          curl -sf $PAY_SERVER_URL/health
+
+          echo "Checking simple-relayer..."
+          curl -sf $RELAY_API_URL/health
+
+          echo "All services healthy!"
+
+      - name: Run integration tests
+        working-directory: packages/integration-tests
+        run: pnpm test
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          echo "=== Process list ==="
+          ps aux | grep -E "(node|hardhat)" || true
+
+          echo "=== Pay-server logs (if any) ==="
+          cat /tmp/pay-server.log 2>/dev/null || true
+
+          echo "=== Simple-relayer logs (if any) ==="
+          cat /tmp/simple-relayer.log 2>/dev/null || true
