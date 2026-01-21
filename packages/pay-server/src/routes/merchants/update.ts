@@ -3,6 +3,7 @@ import { MerchantService } from '../../services/merchant.service';
 import { createAuthMiddleware } from '../../middleware/auth.middleware';
 import { UpdateMerchantRequest, UpdateMerchantSchema } from '../../schemas/merchant.schema';
 import { ZodError } from 'zod';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
 export async function updateMerchantRoute(app: FastifyInstance, merchantService: MerchantService) {
   // Auth middleware validates X-API-Key header and attaches merchant to request
@@ -10,7 +11,51 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
 
   app.patch<{ Body: UpdateMerchantRequest }>(
     '/merchants/me',
-    { preHandler: authMiddleware },
+    {
+      schema: {
+        operationId: 'updateCurrentMerchant',
+        tags: ['Merchants'],
+        summary: 'Update current merchant',
+        description: 'Updates the authenticated merchant information',
+        security: [{ ApiKeyAuth: [] }],
+        body: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Merchant display name' },
+            webhook_url: {
+              type: 'string',
+              format: 'uri',
+              description: 'Webhook URL for payment notifications',
+            },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              merchant: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  merchant_key: { type: 'string' },
+                  name: { type: 'string' },
+                  chain_id: { type: 'integer', nullable: true },
+                  webhook_url: { type: 'string', nullable: true },
+                  is_enabled: { type: 'boolean' },
+                  created_at: { type: 'string', format: 'date-time' },
+                  updated_at: { type: 'string', format: 'date-time' },
+                },
+              },
+            },
+          },
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
     async (request, reply) => {
       try {
         // Merchant is guaranteed to exist after auth middleware

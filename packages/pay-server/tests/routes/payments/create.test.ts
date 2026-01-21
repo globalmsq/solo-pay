@@ -123,7 +123,14 @@ describe('POST /payments/create', () => {
   let paymentService: Partial<PaymentService>;
 
   beforeEach(async () => {
-    app = Fastify({ logger: false });
+    app = Fastify({
+      logger: false,
+      ajv: {
+        customOptions: {
+          keywords: ['example'],
+        },
+      },
+    });
     await app.register(cors);
 
     // 실제 BlockchainService 인스턴스 생성

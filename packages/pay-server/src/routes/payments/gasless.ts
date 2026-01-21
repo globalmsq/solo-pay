@@ -11,6 +11,11 @@ import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
 import { MerchantService } from '../../services/merchant.service';
 import { createPaymentAuthMiddleware } from '../../middleware/auth.middleware';
+import {
+  GaslessRequestSchema as GaslessRequestDocSchema,
+  GaslessResponseSchema,
+  ErrorResponseSchema,
+} from '../../docs/schemas';
 
 export interface SubmitGaslessRequest {
   paymentId: string;
@@ -30,7 +35,50 @@ export async function submitGaslessRoute(
 
   app.post<{ Params: { id: string }; Body: SubmitGaslessRequest }>(
     '/payments/:id/gasless',
-    { preHandler: authMiddleware },
+    {
+      schema: {
+        operationId: 'submitGaslessPayment',
+        tags: ['Payments'],
+        summary: 'Submit gasless payment',
+        description: `
+Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
+
+**How it works:**
+1. User signs an EIP-712 typed data message off-chain
+2. Client submits the signed ForwardRequest to this endpoint
+3. Relayer submits the transaction on behalf of the user
+4. User pays with tokens, not ETH gas
+
+**Requirements:**
+- Valid payment ID from /payments/create
+- EIP-712 signature from the payer
+- Token approval for PaymentGateway contract
+
+**Security:**
+- Amount in forwardRequest.data is validated against DB amount
+- Signature format is validated before relay submission
+        `,
+        security: [{ ApiKeyAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Payment hash (bytes32)',
+            },
+          },
+          required: ['id'],
+        },
+        body: GaslessRequestDocSchema,
+        response: {
+          202: GaslessResponseSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
     async (request, reply) => {
       try {
         const { id } = request.params;

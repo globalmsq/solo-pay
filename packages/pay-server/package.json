@@ -16,8 +16,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@msq/pay-contracts": "workspace:*",
     "@fastify/cors": "^10.0.0",
+    "@fastify/swagger": "^9.6.1",
+    "@fastify/swagger-ui": "^5.2.4",
+    "@msq/pay-contracts": "workspace:*",
     "@prisma/client": "^6.0.0",
     "dotenv": "^16.4.0",
     "fastify": "^5.0.0",

@@ -6,6 +6,7 @@ import { PaymentMethodService } from '../../services/payment-method.service';
 import { TokenService } from '../../services/token.service';
 import { ChainService } from '../../services/chain.service';
 import { createAuthMiddleware } from '../../middleware/auth.middleware';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
 const CreatePaymentMethodSchema = z.object({
   tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid token address format'),
@@ -33,7 +34,58 @@ export async function paymentMethodsRoute(
   // GET /merchants/me/payment-methods - List all payment methods
   app.get(
     '/merchants/me/payment-methods',
-    { preHandler: authMiddleware },
+    {
+      schema: {
+        operationId: 'listPaymentMethods',
+        tags: ['Merchants'],
+        summary: 'List payment methods',
+        description: 'Returns all payment methods configured for the authenticated merchant',
+        security: [{ ApiKeyAuth: [] }],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              payment_methods: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    recipient_address: { type: 'string' },
+                    is_enabled: { type: 'boolean' },
+                    created_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
+                    token: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        address: { type: 'string' },
+                        symbol: { type: 'string' },
+                        decimals: { type: 'integer' },
+                        chain_id: { type: 'integer' },
+                      },
+                    },
+                    chain: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        network_id: { type: 'integer' },
+                        name: { type: 'string' },
+                        is_testnet: { type: 'boolean' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
     async (request, reply) => {
       try {
         const merchant = request.merchant;
@@ -71,7 +123,75 @@ export async function paymentMethodsRoute(
   // POST /merchants/me/payment-methods - Create payment method
   app.post<{ Body: z.infer<typeof CreatePaymentMethodSchema> }>(
     '/merchants/me/payment-methods',
-    { preHandler: authMiddleware },
+    {
+      schema: {
+        operationId: 'createPaymentMethod',
+        tags: ['Merchants'],
+        summary: 'Create payment method',
+        description: 'Creates a new payment method for the authenticated merchant',
+        security: [{ ApiKeyAuth: [] }],
+        body: {
+          type: 'object',
+          properties: {
+            tokenAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'ERC20 token address',
+            },
+            recipientAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description: 'Payment recipient address',
+            },
+            is_enabled: { type: 'boolean', default: true },
+          },
+          required: ['tokenAddress', 'recipientAddress'],
+        },
+        response: {
+          201: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              payment_method: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  recipient_address: { type: 'string' },
+                  is_enabled: { type: 'boolean' },
+                  created_at: { type: 'string', format: 'date-time' },
+                  updated_at: { type: 'string', format: 'date-time' },
+                  token: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer' },
+                      address: { type: 'string' },
+                      symbol: { type: 'string' },
+                      decimals: { type: 'integer' },
+                      chain_id: { type: 'integer' },
+                    },
+                  },
+                  chain: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer' },
+                      network_id: { type: 'integer' },
+                      name: { type: 'string' },
+                      is_testnet: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
     async (request, reply) => {
       try {
         const merchant = request.merchant;
@@ -195,7 +315,73 @@ export async function paymentMethodsRoute(
   // PATCH /merchants/me/payment-methods/:id - Update payment method
   app.patch<{ Params: { id: string }; Body: z.infer<typeof UpdatePaymentMethodSchema> }>(
     '/merchants/me/payment-methods/:id',
-    { preHandler: authMiddleware },
+    {
+      schema: {
+        operationId: 'updatePaymentMethod',
+        tags: ['Merchants'],
+        summary: 'Update payment method',
+        description: 'Updates an existing payment method',
+        security: [{ ApiKeyAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Payment method ID' },
+          },
+          required: ['id'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            recipientAddress: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' },
+            is_enabled: { type: 'boolean' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              payment_method: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  recipient_address: { type: 'string' },
+                  is_enabled: { type: 'boolean' },
+                  created_at: { type: 'string', format: 'date-time' },
+                  updated_at: { type: 'string', format: 'date-time' },
+                  token: {
+                    type: 'object',
+                    nullable: true,
+                    properties: {
+                      id: { type: 'integer' },
+                      address: { type: 'string' },
+                      symbol: { type: 'string' },
+                      decimals: { type: 'integer' },
+                      chain_id: { type: 'integer' },
+                    },
+                  },
+                  chain: {
+                    type: 'object',
+                    nullable: true,
+                    properties: {
+                      id: { type: 'integer' },
+                      network_id: { type: 'integer' },
+                      name: { type: 'string' },
+                      is_testnet: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
     async (request, reply) => {
       try {
         const merchant = request.merchant;
@@ -307,7 +493,36 @@ export async function paymentMethodsRoute(
   // DELETE /merchants/me/payment-methods/:id - Delete payment method
   app.delete<{ Params: { id: string } }>(
     '/merchants/me/payment-methods/:id',
-    { preHandler: authMiddleware },
+    {
+      schema: {
+        operationId: 'deletePaymentMethod',
+        tags: ['Merchants'],
+        summary: 'Delete payment method',
+        description: 'Soft-deletes a payment method',
+        security: [{ ApiKeyAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Payment method ID' },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              message: { type: 'string' },
+            },
+          },
+          400: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
     async (request, reply) => {
       try {
         const merchant = request.merchant;

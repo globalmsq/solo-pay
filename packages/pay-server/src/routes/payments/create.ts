@@ -11,6 +11,11 @@ import { TokenService } from '../../services/token.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { PaymentService } from '../../services/payment.service';
 import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
+import {
+  CreatePaymentRequestSchema,
+  CreatePaymentResponseSchema,
+  ErrorResponseSchema,
+} from '../../docs/schemas';
 
 export interface CreatePaymentRequest {
   merchantId: string;
@@ -34,7 +39,37 @@ export async function createPaymentRoute(
 
   app.post<{ Body: CreatePaymentRequest }>(
     '/payments/create',
-    { preHandler: authMiddleware },
+    {
+      schema: {
+        operationId: 'createPayment',
+        tags: ['Payments'],
+        summary: 'Create a new payment',
+        description: `
+Creates a new payment request for a merchant.
+
+**Flow:**
+1. Client calls this endpoint with payment details
+2. Server validates merchant, chain, and token configuration
+3. Server creates a payment record with unique payment hash
+4. Client uses the returned payment info to submit on-chain transaction
+
+**Notes:**
+- Payment expires after 30 minutes
+- Amount is converted to wei based on token decimals
+- Gasless payments use the returned forwarderAddress
+        `,
+        security: [{ ApiKeyAuth: [] }],
+        body: CreatePaymentRequestSchema,
+        response: {
+          201: CreatePaymentResponseSchema,
+          400: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+      preHandler: authMiddleware,
+    },
     async (request, reply) => {
       try {
         // 입력 검증

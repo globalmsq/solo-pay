@@ -1,7 +1,10 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 
 import { createLogger } from './lib/logger';
+import { swaggerConfig, swaggerUiConfig } from './docs/swagger.config';
 import { BlockchainService } from './services/blockchain.service';
 import { RelayerService } from './services/relayer.service';
 import { PaymentService } from './services/payment.service';
@@ -27,6 +30,12 @@ import { getChainsRoute } from './routes/chains/get';
 
 const server = Fastify({
   logger: true,
+  ajv: {
+    customOptions: {
+      // Allow OpenAPI keywords like 'example' in JSON Schema
+      keywords: ['example'],
+    },
+  },
 });
 
 const logger = createLogger('Server');
@@ -55,28 +64,67 @@ const tokenService = new TokenService(prisma);
 const paymentMethodService = new PaymentMethodService(prisma);
 const relayService = new RelayService(prisma);
 
-// Register CORS
-server.register(cors, {
-  origin: true, // Allow all origins in development
-});
-
-// Health check endpoint
-server.get('/health', async () => {
-  return { status: 'ok', timestamp: new Date().toISOString() };
-});
-
-// Root endpoint
-server.get('/', async () => {
-  return {
-    service: 'MSQ Pay Server',
-    version: '0.1.0',
-    status: 'running',
-    supportedChains: blockchainService.getSupportedChainIds(),
-  };
-});
-
 // Register routes
 const registerRoutes = async () => {
+  // Health check endpoint
+  server.get(
+    '/health',
+    {
+      schema: {
+        tags: ['Health'],
+        summary: 'Health check',
+        description: 'Returns server health status',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              status: { type: 'string', example: 'ok' },
+              timestamp: { type: 'string', format: 'date-time' },
+            },
+          },
+        },
+      },
+    },
+    async () => {
+      return { status: 'ok', timestamp: new Date().toISOString() };
+    }
+  );
+
+  // Root endpoint
+  server.get(
+    '/',
+    {
+      schema: {
+        tags: ['Health'],
+        summary: 'Server info',
+        description: 'Returns server information and supported chains',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              service: { type: 'string', example: 'MSQ Pay Server' },
+              version: { type: 'string', example: '0.1.0' },
+              status: { type: 'string', example: 'running' },
+              supportedChains: {
+                type: 'array',
+                items: { type: 'number' },
+                example: [80002, 137],
+              },
+            },
+          },
+        },
+      },
+    },
+    async () => {
+      return {
+        service: 'MSQ Pay Server',
+        version: '0.1.0',
+        status: 'running',
+        supportedChains: blockchainService.getSupportedChainIds(),
+      };
+    }
+  );
+
   await createPaymentRoute(
     server,
     blockchainService,
@@ -126,6 +174,15 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 // Start server
 const start = async () => {
   try {
+    // Register CORS
+    await server.register(cors, {
+      origin: true, // Allow all origins in development
+    });
+
+    // Register Swagger documentation (must be before routes)
+    await server.register(swagger, swaggerConfig);
+    await server.register(swaggerUi, swaggerUiConfig);
+
     // Load chain configuration from database
     logger.info('📋 Loading chain configuration from database...');
     const chainsWithTokens = await chainService.findAllWithTokens();
@@ -140,13 +197,18 @@ const start = async () => {
     blockchainService = new BlockchainService(chainsWithTokens);
     logger.info(`🔗 Supported chains: ${blockchainService.getSupportedChainIds().join(', ')}`);
 
+    // Register all routes
     await registerRoutes();
+
+    // Generate Swagger spec after all routes are registered
+    await server.ready();
 
     const port = Number(process.env.PORT) || 3001;
     const host = process.env.HOST || '0.0.0.0';
 
     await server.listen({ port, host });
     logger.info(`🚀 Server running on http://${host}:${port}`);
+    logger.info(`📚 Swagger UI available at http://${host}:${port}/api-docs`);
   } catch (err) {
     server.log.error(err);
     await disconnectPrisma();

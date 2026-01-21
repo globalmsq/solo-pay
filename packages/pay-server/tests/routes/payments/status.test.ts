@@ -33,7 +33,14 @@ describe('GET /payments/:id/status', () => {
   };
 
   beforeEach(async () => {
-    app = Fastify({ logger: false });
+    app = Fastify({
+      logger: false,
+      ajv: {
+        customOptions: {
+          keywords: ['example'],
+        },
+      },
+    });
     await app.register(cors);
 
     // Mock BlockchainService
