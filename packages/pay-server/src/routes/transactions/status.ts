@@ -50,7 +50,7 @@ export async function getTransactionStatusRoute(
                 properties: {
                   status: { type: 'string', enum: ['pending', 'confirmed', 'failed'] },
                   blockNumber: { type: 'integer', nullable: true },
-                  confirmations: { type: 'integer' },
+                  confirmations: { type: 'integer', nullable: true },
                 },
               },
             },

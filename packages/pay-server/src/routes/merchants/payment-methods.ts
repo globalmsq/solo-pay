@@ -54,12 +54,25 @@ export async function paymentMethodsRoute(
                     id: { type: 'integer' },
                     recipient_address: { type: 'string' },
                     is_enabled: { type: 'boolean' },
+                    created_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
                     token: {
                       type: 'object',
                       properties: {
+                        id: { type: 'integer' },
                         address: { type: 'string' },
                         symbol: { type: 'string' },
                         decimals: { type: 'integer' },
+                        chain_id: { type: 'integer' },
+                      },
+                    },
+                    chain: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        network_id: { type: 'integer' },
+                        name: { type: 'string' },
+                        is_testnet: { type: 'boolean' },
                       },
                     },
                   },
@@ -131,7 +144,35 @@ export async function paymentMethodsRoute(
             type: 'object',
             properties: {
               success: { type: 'boolean', example: true },
-              payment_method: { type: 'object' },
+              payment_method: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  recipient_address: { type: 'string' },
+                  is_enabled: { type: 'boolean' },
+                  created_at: { type: 'string', format: 'date-time' },
+                  updated_at: { type: 'string', format: 'date-time' },
+                  token: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer' },
+                      address: { type: 'string' },
+                      symbol: { type: 'string' },
+                      decimals: { type: 'integer' },
+                      chain_id: { type: 'integer' },
+                    },
+                  },
+                  chain: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer' },
+                      network_id: { type: 'integer' },
+                      name: { type: 'string' },
+                      is_testnet: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
             },
           },
           400: ErrorResponseSchema,
@@ -292,7 +333,37 @@ export async function paymentMethodsRoute(
             type: 'object',
             properties: {
               success: { type: 'boolean', example: true },
-              payment_method: { type: 'object' },
+              payment_method: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  recipient_address: { type: 'string' },
+                  is_enabled: { type: 'boolean' },
+                  created_at: { type: 'string', format: 'date-time' },
+                  updated_at: { type: 'string', format: 'date-time' },
+                  token: {
+                    type: 'object',
+                    nullable: true,
+                    properties: {
+                      id: { type: 'integer' },
+                      address: { type: 'string' },
+                      symbol: { type: 'string' },
+                      decimals: { type: 'integer' },
+                      chain_id: { type: 'integer' },
+                    },
+                  },
+                  chain: {
+                    type: 'object',
+                    nullable: true,
+                    properties: {
+                      id: { type: 'integer' },
+                      network_id: { type: 'integer' },
+                      name: { type: 'string' },
+                      is_testnet: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
             },
           },
           400: ErrorResponseSchema,

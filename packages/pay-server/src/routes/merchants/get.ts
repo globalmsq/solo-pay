@@ -57,9 +57,29 @@ export async function getMerchantRoute(
                       type: 'object',
                       properties: {
                         id: { type: 'integer' },
-                        token_address: { type: 'string' },
-                        token_symbol: { type: 'string' },
+                        recipient_address: { type: 'string' },
                         is_enabled: { type: 'boolean' },
+                        created_at: { type: 'string', format: 'date-time' },
+                        updated_at: { type: 'string', format: 'date-time' },
+                        token: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'integer' },
+                            address: { type: 'string' },
+                            symbol: { type: 'string' },
+                            decimals: { type: 'integer' },
+                            chain_id: { type: 'integer' },
+                          },
+                        },
+                        chain: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'integer' },
+                            network_id: { type: 'integer' },
+                            name: { type: 'string' },
+                            is_testnet: { type: 'boolean' },
+                          },
+                        },
                       },
                     },
                   },

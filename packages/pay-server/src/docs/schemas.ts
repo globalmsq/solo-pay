@@ -128,16 +128,23 @@ export const PaymentStatusResponseSchema = {
     data: {
       type: 'object',
       properties: {
-        payment_hash: { type: 'string' },
-        network_id: { type: 'integer' },
-        token_symbol: { type: 'string' },
+        paymentId: { type: 'string', description: 'Payment ID (bytes32)' },
+        userId: { type: 'string', description: 'Payer address' },
+        amount: { type: 'number', description: 'Amount in wei' },
+        tokenAddress: { type: 'string', description: 'Token contract address' },
+        tokenSymbol: { type: 'string', description: 'Token symbol' },
+        recipientAddress: { type: 'string', description: 'Recipient (merchant) address' },
         status: {
           type: 'string',
           enum: ['CREATED', 'PENDING', 'CONFIRMED', 'FAILED'],
+          description: 'Payment status from database',
         },
-        amount: { type: 'string' },
-        transactionHash: { type: 'string', nullable: true },
-        blockNumber: { type: 'integer', nullable: true },
+        createdAt: { type: 'string', description: 'Creation timestamp' },
+        updatedAt: { type: 'string', description: 'Last update timestamp' },
+        transactionHash: { type: 'string', nullable: true, description: 'Transaction hash' },
+        payment_hash: { type: 'string', description: 'Payment hash (bytes32)' },
+        network_id: { type: 'integer', description: 'Network/Chain ID' },
+        token_symbol: { type: 'string', description: 'Token symbol from DB' },
       },
     },
   },
@@ -200,18 +207,17 @@ export const GaslessResponseSchema = {
   type: 'object',
   properties: {
     success: { type: 'boolean', example: true },
-    relayId: {
+    relayRequestId: {
       type: 'string',
-      description: 'Relay job ID for tracking',
+      description: 'Relay request ID for tracking',
     },
     status: {
       type: 'string',
-      enum: ['submitted', 'pending', 'confirmed', 'failed'],
+      enum: ['submitted', 'pending', 'mined', 'confirmed', 'failed'],
     },
-    transactionHash: {
+    message: {
       type: 'string',
-      nullable: true,
-      description: 'Transaction hash (available after submission)',
+      description: 'Status message',
     },
   },
 } as const;
