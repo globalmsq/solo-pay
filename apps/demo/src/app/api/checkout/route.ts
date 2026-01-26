@@ -107,16 +107,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
       amount: totalAmount,
       chainId: merchantConfig.chainId,
-      recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
     });
 
     // 클라이언트에 결제 정보 반환
     // tokenSymbol, tokenDecimals는 결제 서버에서 on-chain 조회한 값 사용 (source of truth)
+    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
     return NextResponse.json(
       {
         success: true,
@@ -133,7 +134,6 @@ export async function POST(request: NextRequest) {
         // 결제 컨트랙트 정보 (결제 서버 응답)
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
-        recipientAddress: merchantConfig.recipientAddress,
       },
       { status: 201 }
     );

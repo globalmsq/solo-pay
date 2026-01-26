@@ -358,11 +358,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
       amount: totalAmount,
       chainId: merchantConfig.chainId,
-      recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
     });
 
@@ -379,7 +379,6 @@ export async function POST(request: NextRequest) {
         decimals: payment.tokenDecimals, // From on-chain via pay-server
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
-        recipientAddress: merchantConfig.recipientAddress,
       },
       { status: 201 }
     );

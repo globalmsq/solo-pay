@@ -57,9 +57,8 @@ const PAYMENT_GATEWAY_ABI = [
     name: 'pay',
     inputs: [
       { name: 'paymentId', type: 'bytes32' },
-      { name: 'token', type: 'address' },
+      { name: 'tokenAddress', type: 'address' },
       { name: 'amount', type: 'uint256' },
-      { name: 'merchant', type: 'address' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -327,12 +326,13 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
 
       // 1. Send payment TX to Contract using wagmi's writeContractAsync
       // wagmi handles chain switching internally when chainId is provided
+      // Note: Contract pays to treasury (set at deployment), not per-payment recipient
       const hash = await writeContractAsync({
         chainId: serverConfig.chainId,
         address: serverConfig.gatewayAddress as Address,
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'pay',
-        args: [paymentId, tokenAddress, amount, serverConfig.recipientAddress as Address],
+        args: [paymentId, tokenAddress, amount],
       });
 
       setPendingTxHash(hash);
@@ -376,10 +376,11 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       setCurrentPaymentId(paymentId);
 
       // 1. Encode the PaymentGateway.pay() function call
+      // Note: Contract pays to treasury (set at deployment), not per-payment recipient
       const payCallData = encodeFunctionData({
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'pay',
-        args: [paymentId, tokenAddress, amount, serverConfig.recipientAddress as Address],
+        args: [paymentId, tokenAddress, amount],
       });
 
       // 2. Create EIP-712 typed data for gasless payment forward request

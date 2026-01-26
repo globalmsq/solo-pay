@@ -14,17 +14,13 @@
  * - CHAIN_ID는 서버 런타임에 읽어서 docker-compose 환경변수 적용 가능
  */
 
-import { DEMO_MERCHANT_ADDRESS } from './constants';
-
 /**
  * 상점 설정 인터페이스
+ * Note: recipientAddress 제거됨 - 컨트랙트가 배포 시 설정된 treasury로 결제
  */
 export interface MerchantConfig {
   /** 상점 고유 식별자 */
   merchantId: string;
-
-  /** 결제 수령 주소 */
-  recipientAddress: `0x${string}`;
 
   /** 사용할 블록체인 체인 ID */
   chainId: number;
@@ -48,7 +44,6 @@ const CHAIN_CONFIGS: Record<number, Omit<MerchantConfig, 'merchantId'>> = {
   // Same address as msq-relayer-service SampleToken
   31337: {
     chainId: 31337,
-    recipientAddress: DEMO_MERCHANT_ADDRESS,
     tokenSymbol: 'TEST',
     tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
     tokenDecimals: 18,
@@ -56,7 +51,6 @@ const CHAIN_CONFIGS: Record<number, Omit<MerchantConfig, 'merchantId'>> = {
   // Polygon Amoy (chainId: 80002)
   80002: {
     chainId: 80002,
-    recipientAddress: '0x31d45F29071e73836F67ec9dFf53e8af67A74f39',
     tokenSymbol: 'SUT',
     tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     tokenDecimals: 18,
