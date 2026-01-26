@@ -6,8 +6,8 @@ type Payment @entity(immutable: true) {
   "Address of the payer"
   payer: Bytes!
 
-  "Address of the merchant (recipient)"
-  merchant: Bytes!
+  "Address of the treasury (recipient)"
+  treasury: Bytes!
 
   "ERC20 token address used for payment"
   token: Bytes!
@@ -34,9 +34,10 @@ enum GasMode {
   MetaTx
 }
 
-# Merchant statistics - aggregated data per merchant
-type MerchantStats @entity {
-  "Merchant address (lowercase)"
+# Treasury statistics - aggregated data for the treasury
+# Note: With fixed treasury, this tracks the single treasury's stats
+type TreasuryStats @entity {
+  "Treasury address (lowercase)"
   id: ID!
 
   "Total amount received across all payments"
@@ -89,9 +90,6 @@ type GlobalStats @entity {
 
   "Total volume across all tokens (note: mixed decimals)"
   totalVolume: BigInt!
-
-  "Number of unique merchants"
-  uniqueMerchants: Int!
 
   "Number of unique payers"
   uniquePayers: Int!

@@ -19,7 +19,7 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - Payment
-        - MerchantStats
+        - TreasuryStats
         - DailyVolume
         - TokenStats
         - GlobalStats

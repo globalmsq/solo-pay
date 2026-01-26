@@ -9,7 +9,7 @@ MSQ Pay Subgraph는 The Graph 프로토콜을 사용하여 PaymentGateway 스마
 Subgraph는 블록체인 이벤트를 실시간으로 인덱싱하여 다음과 같은 데이터를 제공합니다:
 
 - 개별 결제 기록
-- 상점별 통계
+- 트레저리 통계
 - 일별 거래량
 - 토큰별 통계
 - 전체 시스템 통계
@@ -17,7 +17,7 @@ Subgraph는 블록체인 이벤트를 실시간으로 인덱싱하여 다음과 
 ## 주요 기능
 
 - ✅ **실시간 인덱싱**: PaymentCompleted 이벤트 자동 수집
-- ✅ **통계 집계**: 상점, 토큰, 일별 통계 자동 계산
+- ✅ **통계 집계**: 트레저리, 토큰, 일별 통계 자동 계산
 - ✅ **GraphQL API**: 강력한 쿼리 및 필터링 기능
 - ✅ **가스 모드 구분**: Direct vs Gasless 결제 추적
 - ✅ **멀티체인 지원**: Polygon Amoy, Polygon Mainnet
@@ -32,7 +32,7 @@ Subgraph는 블록체인 이벤트를 실시간으로 인덱싱하여 다음과 
 type Payment @entity(immutable: true) {
   id: ID! # paymentId (hex string)
   payer: Bytes! # 결제자 주소
-  merchant: Bytes! # 상점 주소
+  treasury: Bytes! # 트레저리 주소
   token: Bytes! # 토큰 주소
   amount: BigInt! # 결제 금액
   timestamp: BigInt! # 블록 타임스탬프
@@ -42,13 +42,13 @@ type Payment @entity(immutable: true) {
 }
 ```
 
-### MerchantStats
+### TreasuryStats
 
-상점별 통계:
+트레저리 통계:
 
 ```graphql
-type MerchantStats @entity {
-  id: ID! # 상점 주소 (lowercase)
+type TreasuryStats @entity {
+  id: ID! # 트레저리 주소 (lowercase)
   totalReceived: BigInt! # 총 수령액
   paymentCount: Int! # 결제 건수
   lastPaymentAt: BigInt # 마지막 결제 시간
@@ -90,7 +90,6 @@ type GlobalStats @entity {
   id: ID! # "global"
   totalPayments: Int! # 총 결제 건수
   totalVolume: BigInt! # 총 거래량
-  uniqueMerchants: Int! # 고유 상점 수
   uniquePayers: Int! # 고유 결제자 수
 }
 ```
@@ -182,7 +181,7 @@ pnpm remove:local
   payments(first: 10, orderBy: timestamp, orderDirection: desc) {
     id
     payer
-    merchant
+    treasury
     token
     amount
     timestamp
@@ -192,11 +191,11 @@ pnpm remove:local
 }
 ```
 
-### 특정 상점의 통계
+### 트레저리 통계
 
 ```graphql
 {
-  merchantStats(id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8") {
+  treasuryStats(id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8") {
     totalReceived
     paymentCount
     lastPaymentAt
@@ -237,7 +236,6 @@ pnpm remove:local
   globalStats(id: "global") {
     totalPayments
     totalVolume
-    uniqueMerchants
     uniquePayers
   }
 }
@@ -251,7 +249,7 @@ pnpm remove:local
     first: 10
     skip: 0
     where: {
-      merchant: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
+      treasury: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
       gasMode: MetaTx
       timestamp_gte: 1704067200 # 2024-01-01 00:00:00 UTC
     }
@@ -290,14 +288,14 @@ subgraph/
 export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   // 1. Payment 엔티티 생성
   let payment = new Payment(event.params.paymentId.toHexString());
-  payment.payer = event.params.payer;
-  payment.merchant = event.params.merchant;
-  payment.token = event.params.token;
+  payment.payer = event.params.payerAddress;
+  payment.treasury = event.params.treasuryAddress;
+  payment.token = event.params.tokenAddress;
   payment.amount = event.params.amount;
   payment.timestamp = event.params.timestamp;
 
   // 2. 가스 모드 판단 (Direct vs MetaTx)
-  if (event.transaction.from.equals(event.params.payer)) {
+  if (event.transaction.from.equals(event.params.payerAddress)) {
     payment.gasMode = 'Direct';
   } else {
     payment.gasMode = 'MetaTx';
@@ -306,7 +304,7 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   payment.save();
 
   // 3. 통계 업데이트
-  updateMerchantStats(event);
+  updateTreasuryStats(event);
   updateDailyVolume(event);
   updateTokenStats(event);
   updateGlobalStats(event);
@@ -369,7 +367,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
       ) {
         id
         amount
-        merchant
+        treasury
         timestamp
         gasMode
       }
@@ -389,7 +387,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
 ### 대시보드에서 사용
 
 - 실시간 거래량 차트
-- 상점별 매출 순위
+- 트레저리 수익 추적
 - 토큰별 사용 통계
 - Direct vs Gasless 비율
 

@@ -9,7 +9,7 @@ MSQ Pay Subgraph indexes PaymentGateway smart contract events using The Graph pr
 The Subgraph indexes blockchain events in real-time to provide:
 
 - Individual payment records
-- Merchant statistics
+- Treasury statistics
 - Daily transaction volume
 - Token statistics
 - Global system statistics
@@ -17,7 +17,7 @@ The Subgraph indexes blockchain events in real-time to provide:
 ## Key Features
 
 - ✅ **Real-time Indexing**: Automatic collection of PaymentCompleted events
-- ✅ **Statistics Aggregation**: Automatic calculation of merchant, token, and daily statistics
+- ✅ **Statistics Aggregation**: Automatic calculation of treasury, token, and daily statistics
 - ✅ **GraphQL API**: Powerful querying and filtering capabilities
 - ✅ **Gas Mode Distinction**: Track Direct vs Gasless payments
 - ✅ **Multi-chain Support**: Polygon Amoy, Polygon Mainnet
@@ -32,7 +32,7 @@ Individual payment records:
 type Payment @entity(immutable: true) {
   id: ID! # paymentId (hex string)
   payer: Bytes! # Payer address
-  merchant: Bytes! # Merchant address
+  treasury: Bytes! # Treasury address
   token: Bytes! # Token address
   amount: BigInt! # Payment amount
   timestamp: BigInt! # Block timestamp
@@ -42,13 +42,13 @@ type Payment @entity(immutable: true) {
 }
 ```
 
-### MerchantStats
+### TreasuryStats
 
-Merchant statistics:
+Treasury statistics:
 
 ```graphql
-type MerchantStats @entity {
-  id: ID! # Merchant address (lowercase)
+type TreasuryStats @entity {
+  id: ID! # Treasury address (lowercase)
   totalReceived: BigInt! # Total received amount
   paymentCount: Int! # Number of payments
   lastPaymentAt: BigInt # Last payment time
@@ -90,7 +90,6 @@ type GlobalStats @entity {
   id: ID! # "global"
   totalPayments: Int! # Total payment count
   totalVolume: BigInt! # Total volume
-  uniqueMerchants: Int! # Unique merchant count
   uniquePayers: Int! # Unique payer count
 }
 ```
@@ -182,7 +181,7 @@ pnpm remove:local
   payments(first: 10, orderBy: timestamp, orderDirection: desc) {
     id
     payer
-    merchant
+    treasury
     token
     amount
     timestamp
@@ -192,11 +191,11 @@ pnpm remove:local
 }
 ```
 
-### Merchant Statistics
+### Treasury Statistics
 
 ```graphql
 {
-  merchantStats(id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8") {
+  treasuryStats(id: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8") {
     totalReceived
     paymentCount
     lastPaymentAt
@@ -237,7 +236,6 @@ pnpm remove:local
   globalStats(id: "global") {
     totalPayments
     totalVolume
-    uniqueMerchants
     uniquePayers
   }
 }
@@ -251,7 +249,7 @@ pnpm remove:local
     first: 10
     skip: 0
     where: {
-      merchant: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
+      treasury: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
       gasMode: MetaTx
       timestamp_gte: 1704067200 # 2024-01-01 00:00:00 UTC
     }
@@ -290,14 +288,14 @@ subgraph/
 export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   // 1. Create Payment entity
   let payment = new Payment(event.params.paymentId.toHexString());
-  payment.payer = event.params.payer;
-  payment.merchant = event.params.merchant;
-  payment.token = event.params.token;
+  payment.payer = event.params.payerAddress;
+  payment.treasury = event.params.treasuryAddress;
+  payment.token = event.params.tokenAddress;
   payment.amount = event.params.amount;
   payment.timestamp = event.params.timestamp;
 
   // 2. Determine gas mode (Direct vs MetaTx)
-  if (event.transaction.from.equals(event.params.payer)) {
+  if (event.transaction.from.equals(event.params.payerAddress)) {
     payment.gasMode = 'Direct';
   } else {
     payment.gasMode = 'MetaTx';
@@ -306,7 +304,7 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   payment.save();
 
   // 3. Update statistics
-  updateMerchantStats(event);
+  updateTreasuryStats(event);
   updateDailyVolume(event);
   updateTokenStats(event);
   updateGlobalStats(event);
@@ -369,7 +367,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
       ) {
         id
         amount
-        merchant
+        treasury
         timestamp
         gasMode
       }
@@ -389,7 +387,7 @@ async function getPaymentHistory(chainId: number, payer: string) {
 ### Dashboard Usage
 
 - Real-time transaction volume charts
-- Merchant revenue rankings
+- Treasury revenue tracking
 - Token usage statistics
 - Direct vs Gasless ratio
 
