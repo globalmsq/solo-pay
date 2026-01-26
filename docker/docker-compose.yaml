@@ -131,7 +131,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       # Chain Configuration (서버 런타임 환경변수 - /api/config에서 클라이언트에 전달)
       # RPC_URL은 브라우저에서 접근 가능한 URL 사용 (Docker 내부 이름 아님)
       CHAIN_ID: 31337

@@ -77,12 +77,12 @@ CREATE TABLE IF NOT EXISTS merchants (
 
 -- ============================================================
 -- TABLE 4: merchant_payment_methods - Payment settings per merchant
+-- Note: recipient_address removed - contract pays to treasury (set at deployment)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS merchant_payment_methods (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     merchant_id INT NOT NULL COMMENT 'Logical reference to merchants.id',
     token_id INT NOT NULL COMMENT 'Logical reference to tokens.id',
-    recipient_address VARCHAR(42) NOT NULL COMMENT 'Payment recipient address',
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
@@ -199,11 +199,12 @@ INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url) 
 
 -- Payment Methods
 -- Note: Payment methods must use tokens from the merchant's chain
--- id=1: Demo Merchant (chain_id=1) + TEST on Localhost (token_id=1, chain_id=1) ✅
--- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3) ✅
-INSERT INTO merchant_payment_methods (merchant_id, token_id, recipient_address) VALUES
-(1, 1, '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'),
-(2, 3, '0x90F79bf6EB2c4f870365E785982E1f101E93b906');
+-- Note: recipient_address removed - contract pays to treasury (set at deployment)
+-- id=1: Demo Merchant (chain_id=1) + TEST on Localhost (token_id=1, chain_id=1)
+-- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3)
+INSERT INTO merchant_payment_methods (merchant_id, token_id) VALUES
+(1, 1),
+(2, 3);
 
 -- Show created tables
 SHOW TABLES;

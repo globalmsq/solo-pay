@@ -9,7 +9,9 @@
     "test:coverage": "pnpm -r --filter '!@globalmsq/integration-tests' test:coverage",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "format": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
   },
   "keywords": [
     "blockchain",
