@@ -24,11 +24,11 @@ const client = new MSQPayClient({
 });
 
 // Create a payment
+// Note: Payment funds are sent to the treasury address set during contract deployment
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
   chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
@@ -69,11 +69,10 @@ Create a new payment.
 
 ```typescript
 const response = await client.createPayment({
-  userId: string;
+  merchantId: string;
   amount: number;
-  currency?: 'USD' | 'EUR' | 'KRW';
+  chainId: number;
   tokenAddress: string;
-  recipientAddress: string;
   description?: string;
 });
 
@@ -97,12 +96,12 @@ const status = await client.getPaymentStatus('pay-123');
 {
   success: true;
   data: {
-    id: string;
-    userId: string;
+    paymentId: string;
+    merchantId: string;
     amount: number;
-    currency: 'USD' | 'EUR' | 'KRW';
+    chainId: number;
     tokenAddress: string;
-    recipientAddress: string;
+    treasuryAddress: string;
     status: 'pending' | 'confirmed' | 'failed' | 'completed';
     transactionHash?: string;
     blockNumber?: number;
@@ -275,11 +274,10 @@ interface MSQPayConfig {
 }
 
 interface CreatePaymentParams {
-  userId: string;
+  merchantId: string;
   amount: number;
-  currency?: 'USD' | 'EUR' | 'KRW';
+  chainId: number;
   tokenAddress: string; // 0x + 40 hex characters
-  recipientAddress: string; // 0x + 40 hex characters
   description?: string;
 }
 
@@ -329,14 +327,13 @@ async function processPayment() {
   });
 
   try {
-    // Step 1: Create payment
+    // Step 1: Create payment (funds go to treasury set at contract deployment)
     console.log('Creating payment...');
     const payment = await client.createPayment({
       merchantId: 'merchant_001',
       amount: 100,
       chainId: 31337,
       tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     });
     console.log(`Payment created: ${payment.paymentId}`);
 

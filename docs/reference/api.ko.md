@@ -59,12 +59,14 @@ x-api-key: sk_test_abc123
 
 ```json
 {
+  "merchantId": "merchant_001",
   "amount": 100,
-  "currency": "SUT",
   "chainId": 80002,
-  "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2"
 }
 ```
+
+> **참고**: 결제금은 컨트랙트 배포 시 설정된 treasury 주소로 전송됩니다.
 
 #### 응답 (201 Created)
 
@@ -115,7 +117,7 @@ x-api-key: sk_test_abc123
   "tokenAddress": "0x...",
   "gatewayAddress": "0x...",
   "forwarderAddress": "0x...",
-  "recipientAddress": "0x..."
+  "treasuryAddress": "0x..."
 }
 ```
 
@@ -364,10 +366,10 @@ curl -X POST http://localhost:3001/payments/create \
   -H "Content-Type: application/json" \
   -H "x-api-key: sk_test_abc123" \
   -d '{
+    "merchantId": "merchant_001",
     "amount": 100,
-    "currency": "SUT",
     "chainId": 80002,
-    "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2"
   }'
 
 # 결제 상태 조회
@@ -387,12 +389,11 @@ const client = new MSQPayClient({
   apiKey: 'sk_test_abc123',
 });
 
-// 결제 생성
+// 결제 생성 (결제금은 컨트랙트 배포 시 설정된 treasury로 전송)
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
   chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
