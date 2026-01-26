@@ -81,12 +81,12 @@ describe('MSQPayClient', () => {
   });
 
   describe('createPayment', () => {
+    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
     const validParams: CreatePaymentParams = {
       merchantId: 'merchant_demo_001',
       amount: 1000,
       chainId: 31337,
       tokenAddress: '0x1234567890123456789012345678901234567890',
-      recipientAddress: '0x0987654321098765432109876543210987654321',
     };
 
     it('TC-001: should create payment successfully', async () => {
@@ -192,17 +192,20 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: true,
           data: {
-            id: 'pay-123',
+            paymentId: 'pay-123',
             userId: 'user-1',
             amount: 1000,
-            currency: 'USD',
             tokenAddress: '0x1234567890123456789012345678901234567890',
-            recipientAddress: '0x0987654321098765432109876543210987654321',
+            tokenSymbol: 'USDC',
+            treasuryAddress: '0x0987654321098765432109876543210987654321',
             status: 'completed',
             transactionHash: '0xabc123',
             blockNumber: 12345,
             createdAt: '2025-11-29T10:00:00Z',
             updatedAt: '2025-11-29T10:05:00Z',
+            payment_hash: '0xdef456',
+            network_id: 31337,
+            token_symbol: 'USDC',
           },
         }),
       });
@@ -210,7 +213,7 @@ describe('MSQPayClient', () => {
       const result = await client.getPaymentStatus('pay-123');
 
       expect(result.success).toBe(true);
-      expect(result.data.id).toBe('pay-123');
+      expect(result.data.paymentId).toBe('pay-123');
       expect(result.data.status).toBe('completed');
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3001/payments/pay-123/status',
@@ -247,15 +250,18 @@ describe('MSQPayClient', () => {
           json: async () => ({
             success: true,
             data: {
-              id: 'pay-123',
+              paymentId: 'pay-123',
               userId: 'user-1',
               amount: 1000,
-              currency: 'USD',
               tokenAddress: '0x1234567890123456789012345678901234567890',
-              recipientAddress: '0x0987654321098765432109876543210987654321',
+              tokenSymbol: 'USDC',
+              treasuryAddress: '0x0987654321098765432109876543210987654321',
               status,
               createdAt: '2025-11-29T10:00:00Z',
               updatedAt: '2025-11-29T10:05:00Z',
+              payment_hash: '0xdef456',
+              network_id: 31337,
+              token_symbol: 'USDC',
             },
           }),
         });
@@ -275,6 +281,7 @@ describe('MSQPayClient', () => {
         to: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
         value: '0',
         gas: '300000',
+        nonce: '1',
         deadline: '1735689600',
         data: '0x' + 'ab'.repeat(68),
         signature: '0x' + 'a'.repeat(130),
@@ -441,15 +448,18 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: true,
           data: {
-            id: 'pay-123',
+            paymentId: 'pay-123',
             userId: 'user-1',
             amount: 1000,
-            currency: 'USD',
             tokenAddress: '0x1234567890123456789012345678901234567890',
-            recipientAddress: '0x0987654321098765432109876543210987654321',
+            tokenSymbol: 'USDC',
+            treasuryAddress: '0x0987654321098765432109876543210987654321',
             status: 'pending',
             createdAt: '2025-11-29T10:00:00Z',
             updatedAt: '2025-11-29T10:00:00Z',
+            payment_hash: '0xdef456',
+            network_id: 31337,
+            token_symbol: 'USDC',
           },
         }),
       });
@@ -486,7 +496,6 @@ describe('MSQPayClient', () => {
           amount: 1000,
           chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
-          recipientAddress: '0x0987654321098765432109876543210987654321',
         });
       } catch (error) {
         expect((error as MSQPayError).message).toBe(errorMessage);
@@ -502,7 +511,6 @@ describe('MSQPayClient', () => {
           amount: 1000,
           chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
-          recipientAddress: '0x0987654321098765432109876543210987654321',
         })
       ).rejects.toThrow('Network error');
     });
@@ -524,7 +532,7 @@ describe('MSQPayClient', () => {
             {
               paymentId: '0xabc123',
               payer: '0x1234567890123456789012345678901234567890',
-              merchant: '0x0987654321098765432109876543210987654321',
+              treasury: '0x0987654321098765432109876543210987654321',
               token: '0xTokenAddress1234567890123456789012345678',
               tokenSymbol: 'USDC',
               decimals: 6,
@@ -566,7 +574,7 @@ describe('MSQPayClient', () => {
             {
               paymentId: '0xdef456',
               payer: '0x1234567890123456789012345678901234567890',
-              merchant: '0x0987654321098765432109876543210987654321',
+              treasury: '0x0987654321098765432109876543210987654321',
               token: '0xTokenAddress1234567890123456789012345678',
               tokenSymbol: 'TEST',
               decimals: 18,
@@ -690,7 +698,6 @@ describe('MSQPayClient', () => {
         amount: 1000,
         chainId: 31337,
         tokenAddress: '0x1234567890123456789012345678901234567890',
-        recipientAddress: '0x0987654321098765432109876543210987654321',
       };
 
       await client.createPayment(params);
@@ -708,15 +715,18 @@ describe('MSQPayClient', () => {
         json: async () => ({
           success: true,
           data: {
-            id: 'pay-123',
+            paymentId: 'pay-123',
             userId: 'user-1',
             amount: 1000,
-            currency: 'USD',
             tokenAddress: '0x1234567890123456789012345678901234567890',
-            recipientAddress: '0x0987654321098765432109876543210987654321',
+            tokenSymbol: 'USDC',
+            treasuryAddress: '0x0987654321098765432109876543210987654321',
             status: 'pending',
             createdAt: '2025-11-29T10:00:00Z',
             updatedAt: '2025-11-29T10:00:00Z',
+            payment_hash: '0xdef456',
+            network_id: 31337,
+            token_symbol: 'USDC',
           },
         }),
       });
