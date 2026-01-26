@@ -12,14 +12,11 @@ import {
 import { generatePaymentId } from '../helpers/signature';
 import { HARDHAT_ACCOUNTS, CONTRACT_ADDRESSES } from '../setup/wallets';
 import { getToken } from '../fixtures/token';
-import { getMerchant } from '../fixtures/merchant';
 
 describe('Error Handling Integration', () => {
   const token = getToken('mockUSDT');
-  const merchant = getMerchant('default');
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  const merchantAddress = merchant.recipientAddress;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
 
   beforeAll(async () => {
@@ -35,21 +32,7 @@ describe('Error Handling Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      await expect(gateway.pay(paymentId, token.address, 0n, merchantAddress)).rejects.toThrow();
-    });
-
-    it('should reject zero merchant address', async () => {
-      const paymentId = generatePaymentId(`ERROR_ZERO_MERCHANT_${Date.now()}`);
-      const amount = parseUnits('10', token.decimals);
-
-      await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
-
-      const wallet = getWallet(payerPrivateKey);
-      const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
-
-      await expect(
-        gateway.pay(paymentId, token.address, amount, ethers.ZeroAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, token.address, 0n)).rejects.toThrow();
     });
 
     it('should reject zero token address', async () => {
@@ -59,9 +42,7 @@ describe('Error Handling Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      await expect(
-        gateway.pay(paymentId, ethers.ZeroAddress, amount, merchantAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, ethers.ZeroAddress, amount)).rejects.toThrow();
     });
   });
 
@@ -73,9 +54,7 @@ describe('Error Handling Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      await expect(
-        gateway.pay(paymentId, token.address, amount, merchantAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, token.address, amount)).rejects.toThrow();
     });
 
     it('should reject payment with insufficient approval', async () => {
@@ -88,9 +67,7 @@ describe('Error Handling Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      await expect(
-        gateway.pay(paymentId, token.address, paymentAmount, merchantAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, token.address, paymentAmount)).rejects.toThrow();
     });
   });
 
@@ -105,9 +82,7 @@ describe('Error Handling Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      await expect(
-        gateway.pay(paymentId, token.address, amount, merchantAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, token.address, amount)).rejects.toThrow();
     });
   });
 
@@ -121,12 +96,10 @@ describe('Error Handling Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
+      const tx = await gateway.pay(paymentId, token.address, amount);
       await tx.wait();
 
-      await expect(
-        gateway.pay(paymentId, token.address, amount, merchantAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, token.address, amount)).rejects.toThrow();
     });
   });
 });

@@ -10,15 +10,14 @@ import {
 } from '../helpers/blockchain';
 import { HARDHAT_ACCOUNTS, CONTRACT_ADDRESSES } from '../setup/wallets';
 import { getToken } from '../fixtures/token';
-import { getMerchant } from '../fixtures/merchant';
 import { generatePaymentId } from '../helpers/signature';
 
 describe('Direct Payment Integration', () => {
   const token = getToken('mockUSDT');
-  const merchant = getMerchant('default');
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  const merchantAddress = merchant.recipientAddress;
+  // Treasury is set to merchant address (Account #2) during contract deployment
+  const treasuryAddress = HARDHAT_ACCOUNTS.merchant.address;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
 
   beforeAll(async () => {
@@ -33,24 +32,24 @@ describe('Direct Payment Integration', () => {
     const amount = parseUnits('100', token.decimals);
 
     const initialPayerBalance = await getTokenBalance(token.address, payerAddress);
-    const initialMerchantBalance = await getTokenBalance(token.address, merchantAddress);
+    const initialTreasuryBalance = await getTokenBalance(token.address, treasuryAddress);
 
     await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
 
     const wallet = getWallet(payerPrivateKey);
     const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-    const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
+    const tx = await gateway.pay(paymentId, token.address, amount);
     await tx.wait();
 
     const isProcessed = await gateway.isPaymentProcessed(paymentId);
     expect(isProcessed).toBe(true);
 
     const finalPayerBalance = await getTokenBalance(token.address, payerAddress);
-    const finalMerchantBalance = await getTokenBalance(token.address, merchantAddress);
+    const finalTreasuryBalance = await getTokenBalance(token.address, treasuryAddress);
 
     expect(finalPayerBalance).toBe(initialPayerBalance - amount);
-    expect(finalMerchantBalance).toBe(initialMerchantBalance + amount);
+    expect(finalTreasuryBalance).toBe(initialTreasuryBalance + amount);
   });
 
   it('should reject duplicate payment ID', async () => {
@@ -62,10 +61,10 @@ describe('Direct Payment Integration', () => {
     const wallet = getWallet(payerPrivateKey);
     const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-    const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
+    const tx = await gateway.pay(paymentId, token.address, amount);
     await tx.wait();
 
-    await expect(gateway.pay(paymentId, token.address, amount, merchantAddress)).rejects.toThrow();
+    await expect(gateway.pay(paymentId, token.address, amount)).rejects.toThrow();
   });
 
   it('should reject zero amount payment', async () => {
@@ -74,7 +73,7 @@ describe('Direct Payment Integration', () => {
     const wallet = getWallet(payerPrivateKey);
     const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-    await expect(gateway.pay(paymentId, token.address, 0n, merchantAddress)).rejects.toThrow();
+    await expect(gateway.pay(paymentId, token.address, 0n)).rejects.toThrow();
   });
 
   it('should reject payment with insufficient balance', async () => {
@@ -87,6 +86,6 @@ describe('Direct Payment Integration', () => {
     const wallet = getWallet(payerPrivateKey);
     const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-    await expect(gateway.pay(paymentId, token.address, amount, merchantAddress)).rejects.toThrow();
+    await expect(gateway.pay(paymentId, token.address, amount)).rejects.toThrow();
   });
 });

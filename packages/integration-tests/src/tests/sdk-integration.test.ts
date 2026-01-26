@@ -95,7 +95,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -116,7 +115,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -142,7 +140,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 50,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -173,7 +170,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 25,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -204,7 +200,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 10,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       });
 
@@ -218,7 +213,7 @@ describe('SDK Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(createResponse.gatewayAddress, PaymentGatewayABI, wallet);
 
-      const tx = await gateway.pay(paymentId, token.address, amount, merchant.recipientAddress);
+      const tx = await gateway.pay(paymentId, token.address, amount);
       await tx.wait();
 
       // 4. Verify on-chain
@@ -242,7 +237,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 5,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       });
 
@@ -255,12 +249,7 @@ describe('SDK Integration', () => {
       const forwarder = getContract(createResponse.forwarderAddress, ERC2771ForwarderABI);
       const nonce = await forwarder.nonces(payerAddress);
       const deadline = getDeadline(1);
-      const data = encodePayFunctionData(
-        paymentId,
-        token.address,
-        amount,
-        merchant.recipientAddress
-      );
+      const data = encodePayFunctionData(paymentId, token.address, amount);
 
       const request: ForwardRequest = {
         from: payerAddress,
@@ -308,7 +297,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 3,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       });
 
@@ -317,12 +305,7 @@ describe('SDK Integration', () => {
       const forwarder = getContract(createResponse.forwarderAddress, ERC2771ForwarderABI);
       const nonce = await forwarder.nonces(payerAddress);
       const deadline = getDeadline(1);
-      const data = encodePayFunctionData(
-        createResponse.paymentId,
-        token.address,
-        amount,
-        merchant.recipientAddress
-      );
+      const data = encodePayFunctionData(createResponse.paymentId, token.address, amount);
 
       const request: ForwardRequest = {
         from: payerAddress,
@@ -375,7 +358,6 @@ describe('SDK Integration', () => {
         merchantId: 'invalid_merchant_id',
         amount: 100,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -394,7 +376,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: 99999, // Invalid chain
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -427,7 +408,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: 80002, // Amoy - different from merchant's chain
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -449,7 +429,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: token.networkId, // Correct chain for merchant
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: sutAmoyToken.address, // Wrong token (from different chain)
       };
 

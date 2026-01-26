@@ -18,15 +18,14 @@ import {
 } from '../helpers/signature';
 import { HARDHAT_ACCOUNTS, CONTRACT_ADDRESSES } from '../setup/wallets';
 import { getToken } from '../fixtures/token';
-import { getMerchant } from '../fixtures/merchant';
 
 describe('Gasless Payment Integration', () => {
   const token = getToken('mockUSDT');
-  const merchant = getMerchant('default');
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const relayerPrivateKey = HARDHAT_ACCOUNTS.relayer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  const merchantAddress = merchant.recipientAddress;
+  // Treasury is set to merchant address (Account #2) during contract deployment
+  const treasuryAddress = HARDHAT_ACCOUNTS.merchant.address;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
   const forwarderAddress = CONTRACT_ADDRESSES.forwarder;
 
@@ -47,11 +46,11 @@ describe('Gasless Payment Integration', () => {
     const amount = parseUnits('100', token.decimals);
 
     const initialPayerBalance = await getTokenBalance(token.address, payerAddress);
-    const initialMerchantBalance = await getTokenBalance(token.address, merchantAddress);
+    const initialTreasuryBalance = await getTokenBalance(token.address, treasuryAddress);
 
     await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
 
-    const data = encodePayFunctionData(paymentId, token.address, amount, merchantAddress);
+    const data = encodePayFunctionData(paymentId, token.address, amount);
     const nonce = await getNonce(payerAddress);
     const deadline = getDeadline(1);
 
@@ -89,10 +88,10 @@ describe('Gasless Payment Integration', () => {
     expect(isProcessed).toBe(true);
 
     const finalPayerBalance = await getTokenBalance(token.address, payerAddress);
-    const finalMerchantBalance = await getTokenBalance(token.address, merchantAddress);
+    const finalTreasuryBalance = await getTokenBalance(token.address, treasuryAddress);
 
     expect(finalPayerBalance).toBe(initialPayerBalance - amount);
-    expect(finalMerchantBalance).toBe(initialMerchantBalance + amount);
+    expect(finalTreasuryBalance).toBe(initialTreasuryBalance + amount);
   });
 
   it('should reject expired deadline', async () => {
@@ -101,7 +100,7 @@ describe('Gasless Payment Integration', () => {
 
     await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
 
-    const data = encodePayFunctionData(paymentId, token.address, amount, merchantAddress);
+    const data = encodePayFunctionData(paymentId, token.address, amount);
     const nonce = await getNonce(payerAddress);
     const expiredDeadline = BigInt(Math.floor(Date.now() / 1000) - 3600);
 
@@ -139,7 +138,7 @@ describe('Gasless Payment Integration', () => {
 
     await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
 
-    const data = encodePayFunctionData(paymentId, token.address, amount, merchantAddress);
+    const data = encodePayFunctionData(paymentId, token.address, amount);
     const nonce = await getNonce(payerAddress);
     const deadline = getDeadline(1);
 
@@ -183,7 +182,7 @@ describe('Gasless Payment Integration', () => {
     const deadline = getDeadline(1);
 
     // First transaction
-    const data1 = encodePayFunctionData(paymentId1, token.address, amount, merchantAddress);
+    const data1 = encodePayFunctionData(paymentId1, token.address, amount);
     const request1: ForwardRequest = {
       from: payerAddress,
       to: gatewayAddress,
@@ -212,7 +211,7 @@ describe('Gasless Payment Integration', () => {
     await tx.wait();
 
     // Second transaction with same nonce (replay attack)
-    const data2 = encodePayFunctionData(paymentId2, token.address, amount, merchantAddress);
+    const data2 = encodePayFunctionData(paymentId2, token.address, amount);
     const request2: ForwardRequest = {
       from: payerAddress,
       to: gatewayAddress,

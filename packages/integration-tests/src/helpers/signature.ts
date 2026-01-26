@@ -70,11 +70,10 @@ export async function signForwardRequest(
 export function encodePayFunctionData(
   paymentId: string,
   tokenAddress: string,
-  amount: bigint,
-  merchantAddress: string
+  amount: bigint
 ): string {
   const iface = new Interface(PaymentGatewayABI);
-  return iface.encodeFunctionData('pay', [paymentId, tokenAddress, amount, merchantAddress]);
+  return iface.encodeFunctionData('pay', [paymentId, tokenAddress, amount]);
 }
 
 export function generatePaymentId(orderId: string): string {

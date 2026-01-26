@@ -18,15 +18,12 @@ import {
 } from '../helpers/signature';
 import { HARDHAT_ACCOUNTS, CONTRACT_ADDRESSES } from '../setup/wallets';
 import { getToken } from '../fixtures/token';
-import { getMerchant } from '../fixtures/merchant';
 
 describe('Payment Lifecycle Integration', () => {
   const token = getToken('mockUSDT');
-  const merchant = getMerchant('default');
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const relayerPrivateKey = HARDHAT_ACCOUNTS.relayer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  const merchantAddress = merchant.recipientAddress;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
   const forwarderAddress = CONTRACT_ADDRESSES.forwarder;
 
@@ -56,7 +53,7 @@ describe('Payment Lifecycle Integration', () => {
 
       const wallet = getWallet(payerPrivateKey);
       const gatewayWithSigner = getContract(gatewayAddress, PaymentGatewayABI, wallet);
-      const tx = await gatewayWithSigner.pay(paymentId, token.address, amount, merchantAddress);
+      const tx = await gatewayWithSigner.pay(paymentId, token.address, amount);
       await tx.wait();
 
       const afterProcessed = await gateway.isPaymentProcessed(paymentId);
@@ -76,7 +73,7 @@ describe('Payment Lifecycle Integration', () => {
 
       await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
 
-      const data = encodePayFunctionData(paymentId, token.address, amount, merchantAddress);
+      const data = encodePayFunctionData(paymentId, token.address, amount);
       const nonce = await getNonce(payerAddress);
       const deadline = getDeadline(1);
 
@@ -123,12 +120,10 @@ describe('Payment Lifecycle Integration', () => {
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
+      const tx = await gateway.pay(paymentId, token.address, amount);
       await tx.wait();
 
-      await expect(
-        gateway.pay(paymentId, token.address, amount, merchantAddress)
-      ).rejects.toThrow();
+      await expect(gateway.pay(paymentId, token.address, amount)).rejects.toThrow();
     });
 
     it('should correctly track multiple independent payments', async () => {
@@ -146,7 +141,7 @@ describe('Payment Lifecycle Integration', () => {
       for (const paymentId of paymentIds) {
         const wallet = getWallet(payerPrivateKey);
         const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
-        const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
+        const tx = await gateway.pay(paymentId, token.address, amount);
         await tx.wait();
       }
 
