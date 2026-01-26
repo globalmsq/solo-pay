@@ -62,11 +62,7 @@ export const CreatePaymentRequestSchema = {
       description: 'ERC20 token contract address',
       example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
     },
-    recipientAddress: {
-      type: 'string',
-      description: 'Recipient wallet address',
-      example: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-    },
+    // Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
   },
 } as const;
 
@@ -127,7 +123,10 @@ export const PaymentStatusResponseSchema = {
         amount: { type: 'string', description: 'Amount in wei' },
         tokenAddress: { type: 'string', description: 'Token contract address' },
         tokenSymbol: { type: 'string', description: 'Token symbol' },
-        recipientAddress: { type: 'string', description: 'Recipient (merchant) address' },
+        treasuryAddress: {
+          type: 'string',
+          description: 'Treasury address (set at contract deployment)',
+        },
         status: {
           type: 'string',
           enum: ['CREATED', 'PENDING', 'CONFIRMED', 'FAILED'],

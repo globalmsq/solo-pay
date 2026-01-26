@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { CreatePaymentSchema } from '../payment.schema';
 
 describe('payment.schema.ts - CreatePaymentSchema', () => {
+  // Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
   const validPayload = {
     merchantId: 'merchant_001',
     amount: 100,
     chainId: 80002,
     tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-    recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   };
 
   describe('Valid payloads', () => {
@@ -98,51 +98,20 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
-
-    it('should reject missing recipientAddress', () => {
-      const payload = { ...validPayload };
-      delete (payload as Partial<typeof validPayload>).recipientAddress;
-      const result = CreatePaymentSchema.safeParse(payload);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject invalid recipientAddress format', () => {
-      const testCases = [
-        'invalid-address',
-        '0x123', // too short
-        '0x' + 'a'.repeat(41), // 41 chars (should be 40)
-        'x' + 'a'.repeat(40), // missing 0x
-      ];
-      testCases.forEach((address) => {
-        const payload = { ...validPayload, recipientAddress: address };
-        const result = CreatePaymentSchema.safeParse(payload);
-        expect(result.success).toBe(false);
-      });
-    });
-
-    it('should accept valid Ethereum addresses (0x + 40 hex chars)', () => {
-      const testAddresses = [
-        '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-        '0x0000000000000000000000000000000000000000',
-        '0xffffffffffffffffffffffffffffffffffffffff',
-        '0x1234567890abcdef1234567890abcdef12345678',
-      ];
-      testAddresses.forEach((address) => {
-        const payload = { ...validPayload, recipientAddress: address };
-        const result = CreatePaymentSchema.safeParse(payload);
-        expect(result.success).toBe(true);
-      });
-    });
   });
 
   describe('Schema field requirements', () => {
-    it('should have required fields: merchantId, amount, chainId, tokenAddress, recipientAddress', () => {
+    it('should have required fields: merchantId, amount, chainId, tokenAddress', () => {
       const schema = CreatePaymentSchema.shape;
       expect(schema).toHaveProperty('merchantId');
       expect(schema).toHaveProperty('amount');
       expect(schema).toHaveProperty('chainId');
       expect(schema).toHaveProperty('tokenAddress');
-      expect(schema).toHaveProperty('recipientAddress');
+    });
+
+    it('should NOT have recipientAddress field (컨트랙트가 treasury로 고정 결제)', () => {
+      const schema = CreatePaymentSchema.shape;
+      expect(schema).not.toHaveProperty('recipientAddress');
     });
 
     it('should NOT require userId field (not in schema)', () => {

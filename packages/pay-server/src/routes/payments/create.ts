@@ -22,7 +22,6 @@ export interface CreatePaymentRequest {
   amount: number;
   chainId: number;
   tokenAddress: string;
-  recipientAddress: string;
 }
 
 export async function createPaymentRoute(

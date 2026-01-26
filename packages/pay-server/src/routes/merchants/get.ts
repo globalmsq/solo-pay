@@ -58,7 +58,6 @@ export async function getMerchantRoute(
                       type: 'object',
                       properties: {
                         id: { type: 'integer' },
-                        recipient_address: { type: 'string' },
                         is_enabled: { type: 'boolean' },
                         created_at: { type: 'string', format: 'date-time' },
                         updated_at: { type: 'string', format: 'date-time' },

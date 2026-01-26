@@ -2,21 +2,19 @@ import { PrismaClient, MerchantPaymentMethod } from '@prisma/client';
 import { TokenService } from './token.service';
 import { ChainService } from './chain.service';
 
+// Note: recipient_address removed - contract pays to treasury (set at deployment)
 export interface CreatePaymentMethodInput {
   merchant_id: number;
   token_id: number;
-  recipient_address: string;
   is_enabled?: boolean;
 }
 
 export interface UpdatePaymentMethodInput {
-  recipient_address?: string;
   is_enabled?: boolean;
 }
 
 export interface EnrichedPaymentMethod {
   id: number;
-  recipient_address: string;
   is_enabled: boolean;
   created_at: string;
   updated_at: string;
@@ -43,7 +41,6 @@ export class PaymentMethodService {
       data: {
         merchant_id: input.merchant_id,
         token_id: input.token_id,
-        recipient_address: input.recipient_address.toLowerCase(),
         is_enabled: input.is_enabled !== undefined ? input.is_enabled : true,
         is_deleted: false,
       },
@@ -84,14 +81,10 @@ export class PaymentMethodService {
     });
   }
 
-  async restore(
-    id: number,
-    input: { recipient_address: string; is_enabled: boolean }
-  ): Promise<MerchantPaymentMethod> {
+  async restore(id: number, input: { is_enabled: boolean }): Promise<MerchantPaymentMethod> {
     return this.prisma.merchantPaymentMethod.update({
       where: { id },
       data: {
-        recipient_address: input.recipient_address.toLowerCase(),
         is_enabled: input.is_enabled,
         is_deleted: false,
         deleted_at: null,
@@ -113,9 +106,6 @@ export class PaymentMethodService {
     return this.prisma.merchantPaymentMethod.update({
       where: { id },
       data: {
-        ...(input.recipient_address !== undefined && {
-          recipient_address: input.recipient_address.toLowerCase(),
-        }),
         ...(input.is_enabled !== undefined && { is_enabled: input.is_enabled }),
       },
     });
@@ -179,7 +169,6 @@ export class PaymentMethodService {
 
       enriched.push({
         id: pm.id,
-        recipient_address: pm.recipient_address,
         is_enabled: pm.is_enabled,
         created_at: pm.created_at.toISOString(),
         updated_at: pm.updated_at.toISOString(),

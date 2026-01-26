@@ -78,7 +78,6 @@ describe('BlockchainService', () => {
         amount: BigInt(100),
         currency: 'USD',
         tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
-        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
       const result = await blockchainService.recordPaymentOnChain(paymentData);
@@ -92,7 +91,6 @@ describe('BlockchainService', () => {
         amount: BigInt(100),
         currency: 'USD',
         tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
-        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
       await expect(
@@ -108,7 +106,6 @@ describe('BlockchainService', () => {
         amount: BigInt(0),
         currency: 'USD',
         tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
-        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
       await expect(blockchainService.recordPaymentOnChain(invalidData)).rejects.toThrow(
@@ -122,7 +119,6 @@ describe('BlockchainService', () => {
         amount: BigInt(100),
         currency: 'USD',
         tokenAddress: '' as Address,
-        recipientAddress: ('0x' + 'b'.repeat(40)) as Address,
       };
 
       await expect(blockchainService.recordPaymentOnChain(invalidData)).rejects.toThrow(
@@ -149,12 +145,12 @@ describe('BlockchainService', () => {
   });
 
   describe('estimateGasCost', () => {
+    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
     it('가스 비용을 추정해야 함', async () => {
       const gasCost = await blockchainService.estimateGasCost(
         31337,
         ('0x' + 'a'.repeat(40)) as Address,
-        BigInt(100),
-        ('0x' + 'b'.repeat(40)) as Address
+        BigInt(100)
       );
 
       expect(gasCost).toBe(BigInt('200000'));
@@ -164,8 +160,7 @@ describe('BlockchainService', () => {
       const gasCost = await blockchainService.estimateGasCost(
         31337,
         ('0x' + 'c'.repeat(40)) as Address,
-        BigInt(1000),
-        ('0x' + 'd'.repeat(40)) as Address
+        BigInt(1000)
       );
 
       expect(gasCost).toBe(BigInt('200000'));

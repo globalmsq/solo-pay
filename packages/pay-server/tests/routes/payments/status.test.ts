@@ -26,7 +26,7 @@ describe('GET /payments/:id/status', () => {
     amount: 1000000000000000000, // Must match mockPaymentData.amount for completed status
     tokenAddress: '0x' + 'a'.repeat(40),
     tokenSymbol: 'USDC',
-    recipientAddress: '0x' + 'b'.repeat(40),
+    treasuryAddress: '0x' + 'b'.repeat(40),
     status: 'pending',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

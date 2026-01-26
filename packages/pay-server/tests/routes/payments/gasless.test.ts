@@ -27,6 +27,7 @@ const mockMerchant = {
 };
 
 // 유효한 pay() calldata 생성 헬퍼
+// Note: Contract now pays to treasury (set at deployment), not per-payment merchant
 const createValidPayCalldata = (paymentId: string, amount: string) => {
   const paymentIdHash = keccak256(toHex(paymentId));
   return encodeFunctionData({
@@ -34,9 +35,8 @@ const createValidPayCalldata = (paymentId: string, amount: string) => {
     functionName: 'pay',
     args: [
       paymentIdHash, // bytes32 paymentId
-      '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`, // address token
+      '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`, // address tokenAddress
       BigInt(amount), // uint256 amount
-      '0x70997970C51812dc3A010C7d01b50e0d17dc79C8' as `0x${string}`, // address merchant
     ],
   });
 };

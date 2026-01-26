@@ -82,11 +82,11 @@ model Merchant {
   @@map("merchants")
 }
 
+// Note: recipient_address removed - contract pays to treasury (set at deployment)
 model MerchantPaymentMethod {
   id                Int      @id @default(autoincrement())
   merchant_id       Int      // logical reference
   token_id          Int      // logical reference
-  recipient_address String
   is_enabled        Boolean  @default(true)
   is_deleted        Boolean  @default(false)
   deleted_at        DateTime?

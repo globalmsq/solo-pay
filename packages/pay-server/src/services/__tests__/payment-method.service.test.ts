@@ -31,7 +31,6 @@ describe('PaymentMethodService', () => {
     const methodData = {
       merchant_id: merchantId,
       token_id: tokenId,
-      recipient_address: '0x742d35Cc6634C0532925a3b844Bc029e4b2A69e2',
     };
 
     const mockResult = {
@@ -51,9 +50,6 @@ describe('PaymentMethodService', () => {
     expect(result).toBeDefined();
     expect(result.merchant_id).toBe(merchantId);
     expect(result.token_id).toBe(tokenId);
-    expect(result.recipient_address.toLowerCase()).toBe(
-      '0x742d35Cc6634C0532925a3b844Bc029e4b2A69e2'.toLowerCase()
-    );
     expect(result.is_enabled).toBe(true);
     expect(result.is_deleted).toBe(false);
     expect(mockPrisma.merchantPaymentMethod.create).toHaveBeenCalledOnce();
@@ -65,7 +61,6 @@ describe('PaymentMethodService', () => {
       id: 2,
       merchant_id: merchantId,
       token_id: tokenId,
-      recipient_address: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       is_enabled: true,
       is_deleted: false,
       created_at: new Date(),
@@ -88,7 +83,6 @@ describe('PaymentMethodService', () => {
       id: 3,
       merchant_id: merchantId,
       token_id: tokenId,
-      recipient_address: '0x1234567890123456789012345678901234567890',
       is_enabled: true,
       is_deleted: false,
       created_at: new Date(),
@@ -113,7 +107,6 @@ describe('PaymentMethodService', () => {
         id: 4,
         merchant_id: merchantId,
         token_id: tokenId1,
-        recipient_address: '0x1111111111111111111111111111111111111111',
         is_enabled: true,
         is_deleted: false,
         created_at: new Date(),
@@ -137,8 +130,7 @@ describe('PaymentMethodService', () => {
       id: 5,
       merchant_id: merchantId,
       token_id: tokenId,
-      recipient_address: '0x4444444444444444444444444444444444444444',
-      is_enabled: true,
+      is_enabled: false,
       is_deleted: false,
       created_at: new Date(),
       updated_at: new Date(),
@@ -148,12 +140,10 @@ describe('PaymentMethodService', () => {
     mockPrisma.merchantPaymentMethod.update.mockResolvedValue(mockUpdated);
 
     const updated = await paymentMethodService.update(5, {
-      recipient_address: '0x4444444444444444444444444444444444444444',
+      is_enabled: false,
     });
 
-    expect(updated.recipient_address.toLowerCase()).toBe(
-      '0x4444444444444444444444444444444444444444'.toLowerCase()
-    );
+    expect(updated.is_enabled).toBe(false);
     expect(mockPrisma.merchantPaymentMethod.update).toHaveBeenCalledOnce();
   });
 
@@ -163,7 +153,6 @@ describe('PaymentMethodService', () => {
       id: 6,
       merchant_id: merchantId,
       token_id: tokenId,
-      recipient_address: '0x5555555555555555555555555555555555555555',
       is_enabled: true,
       is_deleted: true,
       created_at: new Date(),
@@ -194,7 +183,6 @@ describe('PaymentMethodService', () => {
         id: 7,
         merchant_id: merchantId,
         token_id: tokenId1,
-        recipient_address: '0x6666666666666666666666666666666666666666',
         is_enabled: true,
         is_deleted: false,
         created_at: new Date(),
@@ -219,7 +207,6 @@ describe('PaymentMethodService', () => {
       id: 8,
       merchant_id: merchantId,
       token_id: tokenId,
-      recipient_address: '0x7777777777777777777777777777777777777777',
       is_enabled: false,
       is_deleted: true,
       created_at: new Date(),
@@ -246,7 +233,6 @@ describe('PaymentMethodService', () => {
       id: 9,
       merchant_id: merchantId,
       token_id: tokenId,
-      recipient_address: '0x8888888888888888888888888888888888888888',
       is_enabled: true,
       is_deleted: false,
       created_at: new Date(),
@@ -257,7 +243,6 @@ describe('PaymentMethodService', () => {
     mockPrisma.merchantPaymentMethod.update.mockResolvedValue(mockRestored);
 
     const result = await paymentMethodService.restore(9, {
-      recipient_address: '0x8888888888888888888888888888888888888888',
       is_enabled: true,
     });
 
@@ -295,7 +280,6 @@ describe('PaymentMethodService', () => {
           id: 10,
           merchant_id: merchantId,
           token_id: tokenId,
-          recipient_address: '0x9999999999999999999999999999999999999999',
           is_enabled: true,
           is_deleted: false,
           created_at: new Date(),
@@ -364,7 +348,6 @@ describe('PaymentMethodService', () => {
           id: 11,
           merchant_id: merchantId,
           token_id: tokenId,
-          recipient_address: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
           is_enabled: true,
           is_deleted: false,
           created_at: new Date(),
@@ -397,7 +380,6 @@ describe('PaymentMethodService', () => {
           id: 12,
           merchant_id: merchantId,
           token_id: tokenId,
-          recipient_address: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
           is_enabled: true,
           is_deleted: false,
           created_at: new Date(),

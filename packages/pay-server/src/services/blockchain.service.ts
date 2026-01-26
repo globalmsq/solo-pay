@@ -30,9 +30,9 @@ export interface TokenConfig {
  */
 export interface PaymentHistoryItem {
   paymentId: string;
-  payer: string;
-  merchant: string;
-  token: string;
+  payerAddress: string;
+  treasuryAddress: string;
+  tokenAddress: string;
   tokenSymbol: string;
   decimals: number;
   amount: string;
@@ -45,7 +45,7 @@ export interface PaymentHistoryItem {
 
 // PaymentCompleted 이벤트 ABI
 const PAYMENT_COMPLETED_EVENT = parseAbiItem(
-  'event PaymentCompleted(bytes32 indexed paymentId, address indexed payer, address indexed merchant, address token, uint256 amount, uint256 timestamp)'
+  'event PaymentCompleted(bytes32 indexed paymentId, address indexed payerAddress, address indexed treasuryAddress, address tokenAddress, uint256 amount, uint256 timestamp)'
 );
 
 /**
@@ -53,9 +53,9 @@ const PAYMENT_COMPLETED_EVENT = parseAbiItem(
  */
 interface PaymentCompletedEventArgs {
   paymentId: string;
-  payer: string;
-  merchant: string;
-  token: string;
+  payerAddress: string;
+  treasuryAddress: string;
+  tokenAddress: string;
   amount: bigint;
   timestamp: bigint;
 }
@@ -346,11 +346,11 @@ export class BlockchainService {
         if (paymentDetails) {
           return {
             paymentId,
-            userId: paymentDetails.payer,
+            userId: paymentDetails.payerAddress,
             amount: Number(paymentDetails.amount),
-            tokenAddress: paymentDetails.token,
+            tokenAddress: paymentDetails.tokenAddress,
             tokenSymbol: paymentDetails.tokenSymbol,
-            recipientAddress: paymentDetails.merchant,
+            treasuryAddress: paymentDetails.treasuryAddress,
             status: 'completed',
             createdAt: paymentDetails.timestamp,
             updatedAt: now,
@@ -366,7 +366,7 @@ export class BlockchainService {
         amount: 0,
         tokenAddress: '',
         tokenSymbol: '',
-        recipientAddress: '',
+        treasuryAddress: '',
         status: 'pending',
         createdAt: now,
         updatedAt: now,
@@ -381,7 +381,7 @@ export class BlockchainService {
         amount: 0,
         tokenAddress: '',
         tokenSymbol: '',
-        recipientAddress: '',
+        treasuryAddress: '',
         status: 'pending',
         createdAt: now,
         updatedAt: now,
@@ -396,9 +396,9 @@ export class BlockchainService {
     chainId: number,
     paymentId: string
   ): Promise<{
-    payer: string;
-    merchant: string;
-    token: string;
+    payerAddress: string;
+    treasuryAddress: string;
+    tokenAddress: string;
     tokenSymbol: string;
     amount: string;
     timestamp: string;
@@ -433,7 +433,7 @@ export class BlockchainService {
       }
       const block = await client.getBlock({ blockHash: log.blockHash });
       const args = log.args as PaymentCompletedEventArgs;
-      const tokenAddress = args.token || '';
+      const tokenAddress = args.tokenAddress || '';
 
       // 온체인에서 토큰 심볼 조회
       const tokenSymbol = tokenAddress
@@ -441,9 +441,9 @@ export class BlockchainService {
         : 'UNKNOWN';
 
       return {
-        payer: args.payer || '',
-        merchant: args.merchant || '',
-        token: tokenAddress,
+        payerAddress: args.payerAddress || '',
+        treasuryAddress: args.treasuryAddress || '',
+        tokenAddress,
         tokenSymbol,
         amount: (args.amount || BigInt(0)).toString(),
         timestamp: new Date(Number(block.timestamp) * 1000).toISOString(),
@@ -457,13 +457,13 @@ export class BlockchainService {
 
   /**
    * 결제를 스마트 컨트랙트에 기록
+   * Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
    */
   async recordPaymentOnChain(paymentData: {
     userId: string;
     amount: bigint;
     currency: string;
     tokenAddress: Address;
-    recipientAddress: Address;
     description?: string;
   }): Promise<string> {
     try {
@@ -512,13 +512,13 @@ export class BlockchainService {
 
   /**
    * 가스 비용 추정
+   * Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
    */
   /* eslint-disable @typescript-eslint/no-unused-vars */
   async estimateGasCost(
     _chainId: number,
     _tokenAddress: Address,
-    _amount: bigint,
-    _recipientAddress: Address
+    _amount: bigint
   ): Promise<bigint> {
     /* eslint-enable @typescript-eslint/no-unused-vars */
     // 실제 구현에서는 eth_estimateGas 호출
@@ -642,7 +642,7 @@ export class BlockchainService {
         address: contractAddress,
         event: PAYMENT_COMPLETED_EVENT,
         args: {
-          payer: payerAddress as Address,
+          payerAddress: payerAddress as Address,
         },
         fromBlock,
         toBlock: 'latest',
@@ -654,7 +654,7 @@ export class BlockchainService {
         logsWithBlockHash.map(async (log) => {
           const block = await client.getBlock({ blockHash: log.blockHash as `0x${string}` });
           const args = log.args as PaymentCompletedEventArgs;
-          const tokenAddress = args.token || '';
+          const tokenAddress = args.tokenAddress || '';
           // 온체인에서 토큰 심볼과 decimals 조회
           const tokenSymbol = tokenAddress
             ? await this.getTokenSymbolOnChain(chainId, tokenAddress)
@@ -663,9 +663,9 @@ export class BlockchainService {
 
           return {
             paymentId: args.paymentId || '',
-            payer: args.payer || '',
-            merchant: args.merchant || '',
-            token: tokenAddress,
+            payerAddress: args.payerAddress || '',
+            treasuryAddress: args.treasuryAddress || '',
+            tokenAddress,
             tokenSymbol,
             decimals,
             amount: (args.amount || BigInt(0)).toString(),
