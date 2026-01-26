@@ -12,6 +12,7 @@ import {IPaymentGateway} from "./interfaces/IPaymentGateway.sol";
 
 /**
  * @title PaymentGatewayV1
+ * @author MSQ Team
  * @notice Multi-service blockchain payment gateway supporting direct and meta-transactions
  * @dev Uses UUPS proxy pattern for upgradeability and ERC2771 for meta-transaction support
  *
@@ -41,82 +42,105 @@ contract PaymentGatewayV1 is
     /// @notice Whether token whitelist is enforced
     bool public enforceTokenWhitelist;
 
+    /// @notice Address of the treasury
+    address public treasuryAddress;
+
     /// @dev Reserved storage gap for future upgrades
     uint256[47] private __gap;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address trustedForwarder) ERC2771ContextUpgradeable(trustedForwarder) {
+    constructor(address trustedForwarderAddress) ERC2771ContextUpgradeable(trustedForwarderAddress) {
         _disableInitializers();
     }
 
     /**
      * @notice Initialize the contract
      * @param owner Address of the contract owner
+     * @param treasury Address of the treasury
      */
-    function initialize(address owner) public initializer {
+    function initialize(address owner, address treasury) public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(owner);
         __ReentrancyGuard_init();
 
         enforceTokenWhitelist = false;
+        _setTreasury(treasury);
+    }
+
+    /**
+     * @notice Internal function to set treasury address
+     * @dev Emits TreasuryChanged event
+     * @param newTreasuryAddress The new treasury address
+     */
+    function _setTreasury(address newTreasuryAddress) internal {
+        require(newTreasuryAddress != address(0), "PG: invalid treasury");
+        address oldTreasuryAddress = treasuryAddress;
+        treasuryAddress = newTreasuryAddress;
+        emit TreasuryChanged(oldTreasuryAddress, newTreasuryAddress);
+    }
+
+    /**
+     * @notice Set the treasury address
+     * @dev Only callable by owner
+     * @param newTreasuryAddress The new treasury address
+     */
+    function setTreasury(address newTreasuryAddress) external onlyOwner {
+        _setTreasury(newTreasuryAddress);
     }
 
     /**
      * @notice Process a payment
-     * @dev Transfers ERC20 tokens from the payer to the merchant
+     * @dev Transfers ERC20 tokens from the payer to the treasury
      *      Uses _msgSender() to support both direct calls and meta-transactions
      * @param paymentId Unique identifier for this payment (should be hash of order ID)
-     * @param token Address of the ERC20 token to transfer
+     * @param tokenAddress Address of the ERC20 token to transfer
      * @param amount Amount to transfer (in token's smallest unit)
-     * @param merchant Address to receive the payment
      */
     function pay(
         bytes32 paymentId,
-        address token,
-        uint256 amount,
-        address merchant
+        address tokenAddress,
+        uint256 amount
     ) external nonReentrant {
-        _processPayment(paymentId, token, amount, merchant, _msgSender());
+        _processPayment(paymentId, tokenAddress, amount, _msgSender());
     }
 
     /**
-     * @dev Internal function to process payment
+     * @notice Internal function to process payment
+     * @dev Validates inputs, marks payment as processed, transfers tokens, emits event
      * @param paymentId Unique payment identifier
-     * @param token Token address
+     * @param tokenAddress Token address
      * @param amount Payment amount
-     * @param merchant Recipient address
-     * @param payer Address of the payer
+     * @param payerAddress Address of the payer
      */
     function _processPayment(
         bytes32 paymentId,
-        address token,
+        address tokenAddress,
         uint256 amount,
-        address merchant,
-        address payer
+        address payerAddress
     ) internal {
         // Validation
-        require(!processedPayments[paymentId], "PaymentGateway: already processed");
-        require(amount > 0, "PaymentGateway: amount must be > 0");
-        require(merchant != address(0), "PaymentGateway: invalid merchant");
-        require(token != address(0), "PaymentGateway: invalid token");
+        require(treasuryAddress != address(0), "PG: treasury not set");
+        require(!processedPayments[paymentId], "PG: already processed");
+        require(amount > 0, "PG: amount must be > 0");
+        require(tokenAddress != address(0), "PG: invalid token");
 
         // Check token whitelist if enforced
         if (enforceTokenWhitelist) {
-            require(supportedTokens[token], "PaymentGateway: token not supported");
+            require(supportedTokens[tokenAddress], "PG: token not supported");
         }
 
         // Mark as processed before transfer (reentrancy protection)
         processedPayments[paymentId] = true;
 
-        // Transfer tokens from payer to merchant
-        IERC20(token).safeTransferFrom(payer, merchant, amount);
+        // Transfer tokens from payer to treasury
+        IERC20(tokenAddress).safeTransferFrom(payerAddress, treasuryAddress, amount);
 
         // Emit event
         emit PaymentCompleted(
             paymentId,
-            payer,
-            merchant,
-            token,
+            payerAddress,
+            treasuryAddress,
+            tokenAddress,
             amount,
             block.timestamp
         );
@@ -125,16 +149,16 @@ contract PaymentGatewayV1 is
     /**
      * @notice Set whether a token is supported
      * @dev Only callable by owner
-     * @param token The token address
+     * @param tokenAddress The token address
      * @param supported Whether the token should be supported
      */
     function setSupportedToken(
-        address token,
+        address tokenAddress,
         bool supported
     ) external onlyOwner {
-        require(token != address(0), "PaymentGateway: invalid token");
-        supportedTokens[token] = supported;
-        emit TokenSupportChanged(token, supported);
+        require(tokenAddress != address(0), "PG: invalid token");
+        supportedTokens[tokenAddress] = supported;
+        emit TokenSupportChanged(tokenAddress, supported);
     }
 
     /**
@@ -149,19 +173,19 @@ contract PaymentGatewayV1 is
     /**
      * @notice Batch set supported tokens
      * @dev Only callable by owner, useful for initial setup
-     * @param tokens Array of token addresses
+     * @param tokenAddresses Array of token addresses
      * @param supported Array of support statuses
      */
     function batchSetSupportedTokens(
-        address[] calldata tokens,
+        address[] calldata tokenAddresses,
         bool[] calldata supported
     ) external onlyOwner {
-        require(tokens.length == supported.length, "PaymentGateway: length mismatch");
+        require(tokenAddresses.length == supported.length, "PG: length mismatch");
 
-        for (uint256 i = 0; i < tokens.length; i++) {
-            require(tokens[i] != address(0), "PaymentGateway: invalid token");
-            supportedTokens[tokens[i]] = supported[i];
-            emit TokenSupportChanged(tokens[i], supported[i]);
+        for (uint256 i = 0; i < tokenAddresses.length; ++i) {
+            require(tokenAddresses[i] != address(0), "PG: invalid token");
+            supportedTokens[tokenAddresses[i]] = supported[i];
+            emit TokenSupportChanged(tokenAddresses[i], supported[i]);
         }
     }
 

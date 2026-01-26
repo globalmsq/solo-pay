@@ -5,6 +5,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title MockERC20
+ * @author MSQ Team
  * @notice Mock ERC20 token for testing purposes
  */
 contract MockERC20 is ERC20 {
@@ -18,6 +19,10 @@ contract MockERC20 is ERC20 {
         _decimals = decimalsValue;
     }
 
+    /**
+     * @notice Returns the number of decimals used for token amounts
+     * @return The number of decimals
+     */
     function decimals() public view override returns (uint8) {
         return _decimals;
     }

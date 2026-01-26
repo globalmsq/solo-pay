@@ -6,7 +6,7 @@ import type { PaymentGatewayV1, MockERC20, ERC2771Forwarder } from '../typechain
 describe('PaymentGatewayV1', function () {
   // Test fixtures
   async function deployFixture() {
-    const [owner, merchant, payer, other] = await ethers.getSigners();
+    const [owner, treasury, payer, other] = await ethers.getSigners();
 
     // Deploy mock ERC20 token
     const MockToken = await ethers.getContractFactory('MockERC20');
@@ -22,9 +22,9 @@ describe('PaymentGatewayV1', function () {
     const forwarder = (await Forwarder.deploy('MSQPayForwarder')) as unknown as ERC2771Forwarder;
     await forwarder.waitForDeployment();
 
-    // Deploy PaymentGatewayV1 via proxy
+    // Deploy PaymentGatewayV1 via proxy (owner and treasury)
     const PaymentGateway = await ethers.getContractFactory('PaymentGatewayV1');
-    const gateway = (await upgrades.deployProxy(PaymentGateway, [owner.address], {
+    const gateway = (await upgrades.deployProxy(PaymentGateway, [owner.address, treasury.address], {
       kind: 'uups',
       initializer: 'initialize',
       constructorArgs: [await forwarder.getAddress()],
@@ -36,7 +36,7 @@ describe('PaymentGatewayV1', function () {
       forwarder,
       token,
       owner,
-      merchant,
+      treasury,
       payer,
       other,
     };
@@ -61,7 +61,7 @@ describe('PaymentGatewayV1', function () {
 
   describe('Direct Payment', function () {
     it('Should process payment successfully', async function () {
-      const { gateway, token, merchant, payer } = await loadFixture(deployFixture);
+      const { gateway, token, treasury, payer } = await loadFixture(deployFixture);
 
       const paymentId = ethers.id('ORDER_001');
       const amount = ethers.parseEther('100');
@@ -70,14 +70,12 @@ describe('PaymentGatewayV1', function () {
       await token.connect(payer).approve(await gateway.getAddress(), amount);
 
       // Make payment
-      await expect(
-        gateway.connect(payer).pay(paymentId, await token.getAddress(), amount, merchant.address)
-      )
+      await expect(gateway.connect(payer).pay(paymentId, await token.getAddress(), amount))
         .to.emit(gateway, 'PaymentCompleted')
         .withArgs(
           paymentId,
           payer.address,
-          merchant.address,
+          treasury.address,
           await token.getAddress(),
           amount,
           (timestamp: bigint) => timestamp > 0n
@@ -85,12 +83,12 @@ describe('PaymentGatewayV1', function () {
 
       expect(await gateway.processedPayments(paymentId)).to.equal(true);
 
-      // Verify token transfer
-      expect(await token.balanceOf(merchant.address)).to.equal(amount);
+      // Verify token transfer to treasury
+      expect(await token.balanceOf(treasury.address)).to.equal(amount);
     });
 
     it('Should reject duplicate payment ID', async function () {
-      const { gateway, token, merchant, payer } = await loadFixture(deployFixture);
+      const { gateway, token, payer } = await loadFixture(deployFixture);
 
       const paymentId = ethers.id('ORDER_002');
       const amount = ethers.parseEther('50');
@@ -98,48 +96,33 @@ describe('PaymentGatewayV1', function () {
       await token.connect(payer).approve(await gateway.getAddress(), amount * 2n);
 
       // First payment
-      await gateway
-        .connect(payer)
-        .pay(paymentId, await token.getAddress(), amount, merchant.address);
+      await gateway.connect(payer).pay(paymentId, await token.getAddress(), amount);
 
       // Second payment with same ID should fail
       await expect(
-        gateway.connect(payer).pay(paymentId, await token.getAddress(), amount, merchant.address)
-      ).to.be.revertedWith('PaymentGateway: already processed');
+        gateway.connect(payer).pay(paymentId, await token.getAddress(), amount)
+      ).to.be.revertedWith('PG: already processed');
     });
 
     it('Should reject zero amount', async function () {
-      const { gateway, token, merchant, payer } = await loadFixture(deployFixture);
+      const { gateway, token, payer } = await loadFixture(deployFixture);
 
       const paymentId = ethers.id('ORDER_003');
 
       await expect(
-        gateway.connect(payer).pay(paymentId, await token.getAddress(), 0, merchant.address)
-      ).to.be.revertedWith('PaymentGateway: amount must be > 0');
-    });
-
-    it('Should reject zero merchant address', async function () {
-      const { gateway, token, payer } = await loadFixture(deployFixture);
-
-      const paymentId = ethers.id('ORDER_004');
-      const amount = ethers.parseEther('10');
-
-      await token.connect(payer).approve(await gateway.getAddress(), amount);
-
-      await expect(
-        gateway.connect(payer).pay(paymentId, await token.getAddress(), amount, ethers.ZeroAddress)
-      ).to.be.revertedWith('PaymentGateway: invalid merchant');
+        gateway.connect(payer).pay(paymentId, await token.getAddress(), 0)
+      ).to.be.revertedWith('PG: amount must be > 0');
     });
 
     it('Should reject zero token address', async function () {
-      const { gateway, merchant, payer } = await loadFixture(deployFixture);
+      const { gateway, payer } = await loadFixture(deployFixture);
 
       const paymentId = ethers.id('ORDER_005');
       const amount = ethers.parseEther('10');
 
       await expect(
-        gateway.connect(payer).pay(paymentId, ethers.ZeroAddress, amount, merchant.address)
-      ).to.be.revertedWith('PaymentGateway: invalid token');
+        gateway.connect(payer).pay(paymentId, ethers.ZeroAddress, amount)
+      ).to.be.revertedWith('PG: invalid token');
     });
   });
 
@@ -163,7 +146,7 @@ describe('PaymentGatewayV1', function () {
     });
 
     it('Should enforce whitelist when enabled', async function () {
-      const { gateway, token, merchant, payer, owner } = await loadFixture(deployFixture);
+      const { gateway, token, payer, owner } = await loadFixture(deployFixture);
 
       // Enable whitelist enforcement
       await gateway.connect(owner).setEnforceTokenWhitelist(true);
@@ -175,16 +158,17 @@ describe('PaymentGatewayV1', function () {
 
       // Should fail - token not whitelisted
       await expect(
-        gateway.connect(payer).pay(paymentId, await token.getAddress(), amount, merchant.address)
-      ).to.be.revertedWith('PaymentGateway: token not supported');
+        gateway.connect(payer).pay(paymentId, await token.getAddress(), amount)
+      ).to.be.revertedWith('PG: token not supported');
 
       // Add token to whitelist
       await gateway.connect(owner).setSupportedToken(await token.getAddress(), true);
 
       // Now should succeed
-      await expect(
-        gateway.connect(payer).pay(paymentId, await token.getAddress(), amount, merchant.address)
-      ).to.emit(gateway, 'PaymentCompleted');
+      await expect(gateway.connect(payer).pay(paymentId, await token.getAddress(), amount)).to.emit(
+        gateway,
+        'PaymentCompleted'
+      );
     });
 
     it('Should batch set supported tokens', async function () {
@@ -202,7 +186,7 @@ describe('PaymentGatewayV1', function () {
 
   describe('Meta Transaction', function () {
     it('Should process meta-transaction via forwarder', async function () {
-      const { gateway, forwarder, token, merchant, payer } = await loadFixture(deployFixture);
+      const { gateway, forwarder, token, treasury, payer } = await loadFixture(deployFixture);
 
       const paymentId = ethers.id('META_ORDER_001');
       const amount = ethers.parseEther('25');
@@ -210,12 +194,11 @@ describe('PaymentGatewayV1', function () {
       // Approve token spending
       await token.connect(payer).approve(await gateway.getAddress(), amount);
 
-      // Encode the pay function call
+      // Encode the pay function call (no merchant - uses treasury)
       const data = gateway.interface.encodeFunctionData('pay', [
         paymentId,
         await token.getAddress(),
         amount,
-        merchant.address,
       ]);
 
       // Get nonce for payer (OZ v5 format)
@@ -269,7 +252,7 @@ describe('PaymentGatewayV1', function () {
       await expect(forwarder.execute(requestData)).to.emit(gateway, 'PaymentCompleted');
 
       expect(await gateway.processedPayments(paymentId)).to.equal(true);
-      expect(await token.balanceOf(merchant.address)).to.equal(amount);
+      expect(await token.balanceOf(treasury.address)).to.equal(amount);
     });
   });
 
@@ -305,7 +288,7 @@ describe('PaymentGatewayV1', function () {
 
   describe('View Functions', function () {
     it('Should return correct payment status', async function () {
-      const { gateway, token, merchant, payer } = await loadFixture(deployFixture);
+      const { gateway, token, payer } = await loadFixture(deployFixture);
 
       const paymentId = ethers.id('VIEW_ORDER_001');
       const amount = ethers.parseEther('10');
@@ -313,9 +296,7 @@ describe('PaymentGatewayV1', function () {
       expect(await gateway.isPaymentProcessed(paymentId)).to.equal(false);
 
       await token.connect(payer).approve(await gateway.getAddress(), amount);
-      await gateway
-        .connect(payer)
-        .pay(paymentId, await token.getAddress(), amount, merchant.address);
+      await gateway.connect(payer).pay(paymentId, await token.getAddress(), amount);
 
       expect(await gateway.isPaymentProcessed(paymentId)).to.equal(true);
     });

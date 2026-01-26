@@ -3,46 +3,53 @@ pragma solidity ^0.8.24;
 
 /**
  * @title IPaymentGateway
+ * @author MSQ Team
  * @notice Interface for the PaymentGateway contract
  */
 interface IPaymentGateway {
+
+    /**
+     * @notice Event emitted when the treasury address is changed
+     * @param oldTreasuryAddress Previous treasury address
+     * @param newTreasuryAddress New treasury address
+     */
+    event TreasuryChanged(address indexed oldTreasuryAddress, address indexed newTreasuryAddress);
+
     /**
      * @notice Emitted when a payment is completed
      * @param paymentId Unique identifier for the payment
-     * @param payer Address of the user who paid
-     * @param merchant Address of the recipient
-     * @param token Address of the ERC20 token used
+     * @param payerAddress Address of the user who paid
+     * @param treasuryAddress Address of the recipient
+     * @param tokenAddress Address of the ERC20 token used
      * @param amount Amount transferred
      * @param timestamp Block timestamp when payment was processed
      */
     event PaymentCompleted(
         bytes32 indexed paymentId,
-        address indexed payer,
-        address indexed merchant,
-        address token,
+        address indexed payerAddress,
+        address indexed treasuryAddress,
+        address tokenAddress,
         uint256 amount,
         uint256 timestamp
     );
 
     /**
      * @notice Emitted when token support status changes
-     * @param token Address of the token
+     * @param tokenAddress Address of the token
      * @param supported Whether the token is now supported
      */
-    event TokenSupportChanged(address indexed token, bool supported);
+    event TokenSupportChanged(address indexed tokenAddress, bool indexed supported);
 
     /**
      * @notice Process a direct payment (user pays gas)
      * @param paymentId Unique identifier for this payment
-     * @param token Address of the ERC20 token to transfer
+     * @param tokenAddress Address of the ERC20 token to transfer
      * @param amount Amount to transfer (in token's smallest unit)
-     * @param merchant Address to receive the payment
      */
     function pay(
         bytes32 paymentId,
-        address token,
-        uint256 amount,
-        address merchant
+        address tokenAddress,
+        uint256 amount
     ) external;
 
     /**
@@ -54,15 +61,15 @@ interface IPaymentGateway {
 
     /**
      * @notice Check if a token is supported
-     * @param token The token address to check
+     * @param tokenAddress The token address to check
      * @return True if the token is supported
      */
-    function supportedTokens(address token) external view returns (bool);
+    function supportedTokens(address tokenAddress) external view returns (bool);
 
     /**
      * @notice Set whether a token is supported (admin only)
-     * @param token The token address
+     * @param tokenAddress The token address
      * @param supported Whether the token should be supported
      */
-    function setSupportedToken(address token, bool supported) external;
+    function setSupportedToken(address tokenAddress, bool supported) external;
 }

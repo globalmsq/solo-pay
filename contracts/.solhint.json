@@ -6,7 +6,6 @@
     "no-empty-blocks": "off",
     "reason-string": "off",
     "no-inline-assembly": "off",
-    "gas-custom-errors": "off",
-    "no-unused-imports": "off"
+    "gas-custom-errors": "off"
   }
 }
