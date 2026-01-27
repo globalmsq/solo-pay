@@ -11,10 +11,11 @@ Receive real-time notifications when payment status changes.
 When you set up a Webhook, you can receive HTTP POST requests to your specified URL whenever payment status changes.
 
 ::: tip Why Use Webhooks?
+
 - **Real-time notifications**: Immediate notification on status change
 - **Server resource savings**: No polling needed
 - **Reliability**: Built-in retry mechanism
-:::
+  :::
 
 ## Setup (Coming Soon)
 
@@ -35,13 +36,13 @@ When you set up a Webhook, you can receive HTTP POST requests to your specified 
 
 ## Event Types
 
-| Event | Description | When Triggered |
-|-------|-------------|----------------|
-| `payment.created` | Payment created | Right after payment creation |
-| `payment.pending` | Transaction sent | TX included in block |
-| `payment.confirmed` | Payment complete | After block confirmation |
-| `payment.failed` | Payment failed | When TX fails |
-| `payment.expired` | Payment expired | After 30 minutes |
+| Event               | Description      | When Triggered               |
+| ------------------- | ---------------- | ---------------------------- |
+| `payment.created`   | Payment created  | Right after payment creation |
+| `payment.pending`   | Transaction sent | TX included in block         |
+| `payment.confirmed` | Payment complete | After block confirmation     |
+| `payment.failed`    | Payment failed   | When TX fails                |
+| `payment.expired`   | Payment expired  | After 30 minutes             |
 
 ## Payload Structure
 
@@ -68,24 +69,24 @@ When you set up a Webhook, you can receive HTTP POST requests to your specified 
 
 ## Headers
 
-| Header | Description |
-|--------|-------------|
-| `Content-Type` | `application/json` |
-| `X-MSQPay-Signature` | HMAC-SHA256 signature |
+| Header               | Description                            |
+| -------------------- | -------------------------------------- |
+| `Content-Type`       | `application/json`                     |
+| `X-MSQPay-Signature` | HMAC-SHA256 signature                  |
 | `X-MSQPay-Timestamp` | Request creation time (Unix timestamp) |
-| `X-MSQPay-Event` | Event type |
+| `X-MSQPay-Event`     | Event type                             |
 
 ## Retry Policy
 
 Webhook delivery failures are retried with exponential backoff.
 
-| Retry | Wait Time |
-|-------|-----------|
-| 1st | 1 minute |
-| 2nd | 5 minutes |
-| 3rd | 30 minutes |
-| 4th | 2 hours |
-| 5th | 24 hours |
+| Retry | Wait Time  |
+| ----- | ---------- |
+| 1st   | 1 minute   |
+| 2nd   | 5 minutes  |
+| 3rd   | 30 minutes |
+| 4th   | 2 hours    |
+| 5th   | 24 hours   |
 
 After 5 failures, the event is discarded.
 
@@ -97,17 +98,17 @@ Until Webhook is implemented, you can check status using polling.
 // Payment status polling example
 const pollPaymentStatus = async (paymentId: string) => {
   while (true) {
-    const result = await client.getPaymentStatus(paymentId)
-    const status = result.data.status
+    const result = await client.getPaymentStatus(paymentId);
+    const status = result.data.status;
 
     if (status === 'CONFIRMED' || status === 'FAILED' || status === 'EXPIRED') {
-      return status
+      return status;
     }
 
     // Wait 2 seconds before retry
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
-}
+};
 ```
 
 ## Next Steps

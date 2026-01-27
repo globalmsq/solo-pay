@@ -25,8 +25,8 @@ const payment = await client.createPayment({
   amount: 10.5,
   chainId: 80002,
   tokenAddress: '0x...',
-  recipientAddress: '0x...'
-})
+  recipientAddress: '0x...',
+});
 
 // Pass paymentId, forwarderAddress to frontend
 ```
@@ -38,17 +38,17 @@ Request signature from the user on the frontend.
 ### wagmi Example
 
 ```typescript
-import { useSignTypedData } from 'wagmi'
+import { useSignTypedData } from 'wagmi';
 
-const { signTypedDataAsync } = useSignTypedData()
+const { signTypedDataAsync } = useSignTypedData();
 
 // Get current nonce from Forwarder
 const nonce = await publicClient.readContract({
   address: FORWARDER_ADDRESS,
   abi: ForwarderABI,
   functionName: 'nonces',
-  args: [userAddress]
-})
+  args: [userAddress],
+});
 
 // Build Forward Request
 const forwardRequest = {
@@ -61,17 +61,17 @@ const forwardRequest = {
   data: encodeFunctionData({
     abi: PaymentGatewayABI,
     functionName: 'payWithSignature',
-    args: [paymentHash, tokenAddress, amount]
-  })
-}
+    args: [paymentHash, tokenAddress, amount],
+  }),
+};
 
 // EIP-712 Signature
 const signature = await signTypedDataAsync({
   domain: {
     name: 'MSQPay Forwarder',
     version: '1',
-    chainId: 80002,  // Polygon Amoy
-    verifyingContract: FORWARDER_ADDRESS
+    chainId: 80002, // Polygon Amoy
+    verifyingContract: FORWARDER_ADDRESS,
   },
   types: {
     ForwardRequest: [
@@ -81,12 +81,12 @@ const signature = await signTypedDataAsync({
       { name: 'gas', type: 'uint256' },
       { name: 'nonce', type: 'uint256' },
       { name: 'deadline', type: 'uint48' },
-      { name: 'data', type: 'bytes' }
-    ]
+      { name: 'data', type: 'bytes' },
+    ],
   },
   primaryType: 'ForwardRequest',
-  message: forwardRequest
-})
+  message: forwardRequest,
+});
 ```
 
 ### User's Wallet Display
@@ -130,11 +130,11 @@ const result = await client.submitGasless({
     nonce: forwardRequest.nonce.toString(),
     deadline: forwardRequest.deadline.toString(),
     data: forwardRequest.data,
-    signature: signature  // signature is included in forwardRequest
-  }
-})
+    signature: signature, // signature is included in forwardRequest
+  },
+});
 
-console.log(result.relayRequestId)  // relay_abc123
+console.log(result.relayRequestId); // relay_abc123
 ```
 
 ### REST API Usage
@@ -175,17 +175,17 @@ curl -X POST http://localhost:3001/payments/0xabc123.../gasless \
 ### Check Relay Status
 
 ```typescript
-const relayStatus = await client.getRelayStatus('relay_abc123')
+const relayStatus = await client.getRelayStatus('relay_abc123');
 
-console.log(relayStatus.status)  // submitted | pending | mined | confirmed | failed
+console.log(relayStatus.status); // submitted | pending | mined | confirmed | failed
 ```
 
 ### Check Payment Status
 
 ```typescript
-const paymentStatus = await client.getPaymentStatus('0xabc123...')
+const paymentStatus = await client.getPaymentStatus('0xabc123...');
 
-console.log(paymentStatus.data.status)  // CREATED | PENDING | CONFIRMED | FAILED
+console.log(paymentStatus.data.status); // CREATED | PENDING | CONFIRMED | FAILED
 ```
 
 ## Full Code Example
@@ -264,38 +264,38 @@ function GaslessPayment({ paymentId, forwarderAddress, gatewayAddress, amount, t
 ### Backend (Node.js)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 
 app.post('/api/gasless', async (req, res) => {
-  const { paymentId, forwarderAddress, forwardRequest } = req.body
+  const { paymentId, forwarderAddress, forwardRequest } = req.body;
 
   try {
     const result = await client.submitGasless({
       paymentId,
       forwarderAddress,
-      forwardRequest
-    })
+      forwardRequest,
+    });
 
-    res.json({ success: true, relayRequestId: result.relayRequestId })
+    res.json({ success: true, relayRequestId: result.relayRequestId });
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message })
+    res.status(400).json({ success: false, error: error.message });
   }
-})
+});
 ```
 
 ## Error Handling
 
-| Error Code | Cause | Solution |
-|------------|-------|----------|
-| `INVALID_SIGNATURE` | Signature verification failed | Check domain and types |
-| `NONCE_MISMATCH` | Nonce mismatch | Get latest nonce and retry |
-| `DEADLINE_EXPIRED` | Signature expired | Request new signature |
-| `INSUFFICIENT_ALLOWANCE` | Token approval insufficient | Run approve first |
+| Error Code               | Cause                         | Solution                   |
+| ------------------------ | ----------------------------- | -------------------------- |
+| `INVALID_SIGNATURE`      | Signature verification failed | Check domain and types     |
+| `NONCE_MISMATCH`         | Nonce mismatch                | Get latest nonce and retry |
+| `DEADLINE_EXPIRED`       | Signature expired             | Request new signature      |
+| `INSUFFICIENT_ALLOWANCE` | Token approval insufficient   | Run approve first          |
 
 ## Next Steps
 

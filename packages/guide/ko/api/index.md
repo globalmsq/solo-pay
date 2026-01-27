@@ -4,11 +4,11 @@ MSQPay REST API 전체 명세입니다.
 
 ## Base URL
 
-| 환경 | URL |
-|------|-----|
-| Production | `https://api.msqpay.com` |
-| Staging | `https://staging-api.msqpay.com` |
-| Development | `http://localhost:3001` |
+| 환경        | URL                              |
+| ----------- | -------------------------------- |
+| Production  | `https://api.msqpay.com`         |
+| Staging     | `https://staging-api.msqpay.com` |
+| Development | `http://localhost:3001`          |
 
 ## 인증
 
@@ -58,13 +58,13 @@ curl -H "x-api-key: sk_test_xxxxx" https://api.msqpay.com/...
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `merchantId` | string | ✓ | 가맹점 고유 식별자 (merchant_key) |
-| `amount` | number | ✓ | 결제 금액 (토큰 단위, 예: 10.5 USDC) |
-| `chainId` | number | ✓ | 블록체인 네트워크 ID |
-| `tokenAddress` | address | ✓ | ERC-20 토큰 컨트랙트 주소 |
-| `recipientAddress` | address | ✓ | 결제 수령 주소 |
+| 필드               | 타입    | 필수 | 설명                                 |
+| ------------------ | ------- | ---- | ------------------------------------ |
+| `merchantId`       | string  | ✓    | 가맹점 고유 식별자 (merchant_key)    |
+| `amount`           | number  | ✓    | 결제 금액 (토큰 단위, 예: 10.5 USDC) |
+| `chainId`          | number  | ✓    | 블록체인 네트워크 ID                 |
+| `tokenAddress`     | address | ✓    | ERC-20 토큰 컨트랙트 주소            |
+| `recipientAddress` | address | ✓    | 결제 수령 주소                       |
 
 **Response (201)**
 
@@ -119,11 +119,11 @@ curl -H "x-api-key: sk_test_xxxxx" https://api.msqpay.com/...
 
 **Query Parameters**
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `chainId` | number | ✓ | 블록체인 네트워크 ID |
-| `payer` | address | ✓ | 결제자 지갑 주소 |
-| `limit` | number | | 조회 개수 |
+| 필드      | 타입    | 필수 | 설명                 |
+| --------- | ------- | ---- | -------------------- |
+| `chainId` | number  | ✓    | 블록체인 네트워크 ID |
+| `payer`   | address | ✓    | 결제자 지갑 주소     |
+| `limit`   | number  |      | 조회 개수            |
 
 **Response (200)**
 
@@ -173,12 +173,12 @@ Gasless 결제를 제출합니다.
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `paymentId` | string | ✓ | 결제 해시 (bytes32) |
-| `forwarderAddress` | address | ✓ | ERC2771 Forwarder 컨트랙트 주소 |
-| `forwardRequest` | object | ✓ | EIP-712 서명된 요청 데이터 |
-| `forwardRequest.signature` | string | ✓ | EIP-712 서명 |
+| 필드                       | 타입    | 필수 | 설명                            |
+| -------------------------- | ------- | ---- | ------------------------------- |
+| `paymentId`                | string  | ✓    | 결제 해시 (bytes32)             |
+| `forwarderAddress`         | address | ✓    | ERC2771 Forwarder 컨트랙트 주소 |
+| `forwardRequest`           | object  | ✓    | EIP-712 서명된 요청 데이터      |
+| `forwardRequest.signature` | string  | ✓    | EIP-712 서명                    |
 
 **Response (202)**
 
@@ -268,10 +268,10 @@ Relay 요청 상태를 조회합니다.
 
 **Query Parameters**
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `chainId` | number | ✓ | 블록체인 네트워크 ID |
-| `address` | address | ✓ | 지갑 주소 |
+| 필드      | 타입    | 필수 | 설명                 |
+| --------- | ------- | ---- | -------------------- |
+| `chainId` | number  | ✓    | 블록체인 네트워크 ID |
+| `address` | address | ✓    | 지갑 주소            |
 
 **Response (200)**
 
@@ -292,11 +292,11 @@ Relay 요청 상태를 조회합니다.
 
 **Query Parameters**
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `chainId` | number | ✓ | 블록체인 네트워크 ID |
-| `owner` | address | ✓ | 소유자 주소 |
-| `spender` | address | ✓ | 승인받은 주소 (PaymentGateway) |
+| 필드      | 타입    | 필수 | 설명                           |
+| --------- | ------- | ---- | ------------------------------ |
+| `chainId` | number  | ✓    | 블록체인 네트워크 ID           |
+| `owner`   | address | ✓    | 소유자 주소                    |
+| `spender` | address | ✓    | 승인받은 주소 (PaymentGateway) |
 
 **Response (200)**
 

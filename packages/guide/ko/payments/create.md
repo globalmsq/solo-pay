@@ -34,11 +34,11 @@
 ```typescript
 const payment = await client.createPayment({
   merchantId: 'merchant_demo_001',
-  amount: 10.5,                    // 10.5 USDC (토큰 단위)
-  chainId: 80002,                  // Polygon Amoy
+  amount: 10.5, // 10.5 USDC (토큰 단위)
+  chainId: 80002, // Polygon Amoy
   tokenAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-})
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+});
 ```
 
 ## REST API 사용
@@ -58,13 +58,13 @@ curl -X POST http://localhost:3001/payments/create \
 
 ## 요청 파라미터
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `merchantId` | `string` | ✓ | 가맹점 고유 식별자 (merchant_key) |
-| `amount` | `number` | ✓ | 결제 금액 (토큰 단위, 예: 10.5 USDC) |
-| `chainId` | `number` | ✓ | 블록체인 네트워크 ID |
-| `tokenAddress` | `address` | ✓ | ERC-20 토큰 컨트랙트 주소 |
-| `recipientAddress` | `address` | ✓ | 결제 수령 주소 |
+| 필드               | 타입      | 필수 | 설명                                 |
+| ------------------ | --------- | ---- | ------------------------------------ |
+| `merchantId`       | `string`  | ✓    | 가맹점 고유 식별자 (merchant_key)    |
+| `amount`           | `number`  | ✓    | 결제 금액 (토큰 단위, 예: 10.5 USDC) |
+| `chainId`          | `number`  | ✓    | 블록체인 네트워크 ID                 |
+| `tokenAddress`     | `address` | ✓    | ERC-20 토큰 컨트랙트 주소            |
+| `recipientAddress` | `address` | ✓    | 결제 수령 주소                       |
 
 ::: tip 금액 입력
 금액은 토큰 단위로 입력합니다. 서버에서 자동으로 wei 단위로 변환합니다.
@@ -102,13 +102,13 @@ curl -X POST http://localhost:3001/payments/create \
 
 ## 응답 필드 설명
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `paymentId` | `string` | 결제 고유 식별자 (bytes32 해시) |
-| `amount` | `string` | wei 단위로 변환된 금액 |
-| `gatewayAddress` | `address` | PaymentGateway 컨트랙트 주소 |
-| `forwarderAddress` | `address` | ERC2771 Forwarder 주소 (Gasless용) |
-| `expiresAt` | `datetime` | 결제 만료 시각 (생성 후 30분) |
+| 필드               | 타입       | 설명                               |
+| ------------------ | ---------- | ---------------------------------- |
+| `paymentId`        | `string`   | 결제 고유 식별자 (bytes32 해시)    |
+| `amount`           | `string`   | wei 단위로 변환된 금액             |
+| `gatewayAddress`   | `address`  | PaymentGateway 컨트랙트 주소       |
+| `forwarderAddress` | `address`  | ERC2771 Forwarder 주소 (Gasless용) |
+| `expiresAt`        | `datetime` | 결제 만료 시각 (생성 후 30분)      |
 
 ## 결제 생성 후
 
@@ -126,8 +126,8 @@ await writeContract({
   address: gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, tokenAddress, amount]
-})
+  args: [paymentId, tokenAddress, amount],
+});
 ```
 
 ### 2. Gasless 결제

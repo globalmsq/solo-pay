@@ -204,38 +204,38 @@ case 'payment.expired':
 ## 전체 이벤트 핸들러 예시
 
 ```typescript
-import { verifyWebhookSignature, WebhookEvent } from '@globalmsq/msqpay'
+import { verifyWebhookSignature, WebhookEvent } from '@globalmsq/msqpay';
 
 async function handleWebhook(event: WebhookEvent) {
-  const { event: eventType, data } = event
+  const { event: eventType, data } = event;
 
   switch (eventType) {
     case 'payment.created':
-      await updateOrderStatus(data.merchantOrderId, 'PENDING_PAYMENT')
-      break
+      await updateOrderStatus(data.merchantOrderId, 'PENDING_PAYMENT');
+      break;
 
     case 'payment.pending':
-      await saveTransactionHash(data.merchantOrderId, data.txHash)
-      break
+      await saveTransactionHash(data.merchantOrderId, data.txHash);
+      break;
 
     case 'payment.confirmed':
-      await completeOrder(data.merchantOrderId)
-      await sendNotification(data.payerAddress, '결제 완료')
-      await generateReceipt(data)
-      break
+      await completeOrder(data.merchantOrderId);
+      await sendNotification(data.payerAddress, '결제 완료');
+      await generateReceipt(data);
+      break;
 
     case 'payment.failed':
-      await updateOrderStatus(data.merchantOrderId, 'PAYMENT_FAILED')
-      await sendNotification(data.payerAddress, `결제 실패: ${data.failureReason}`)
-      break
+      await updateOrderStatus(data.merchantOrderId, 'PAYMENT_FAILED');
+      await sendNotification(data.payerAddress, `결제 실패: ${data.failureReason}`);
+      break;
 
     case 'payment.expired':
-      await cancelOrder(data.merchantOrderId)
-      await sendNotification(data.payerAddress, '결제 만료')
-      break
+      await cancelOrder(data.merchantOrderId);
+      await sendNotification(data.payerAddress, '결제 만료');
+      break;
 
     default:
-      console.log('Unknown event:', eventType)
+      console.log('Unknown event:', eventType);
   }
 }
 ```

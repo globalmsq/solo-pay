@@ -7,10 +7,11 @@ Users can pay with just a signature, without gas fees.
 Gasless payments use the **ERC-2771 meta-transaction** standard. Users can pay with ERC-20 tokens without needing native tokens (MATIC, ETH, etc.).
 
 ::: tip Use Cases
+
 - New user onboarding (first payment without gas)
 - Better UX (complete payment with just a signature)
 - Eliminate gas fee volatility
-:::
+  :::
 
 ## Regular Payment vs Gasless Payment
 
@@ -66,13 +67,13 @@ submitted ────▶ pending ────▶ mined ────▶ confirme
                 failed
 ```
 
-| Status | Description |
-|--------|-------------|
-| `submitted` | Relay request submitted |
-| `pending` | Transaction pending |
-| `mined` | Transaction included in block |
-| `confirmed` | Block confirmation complete |
-| `failed` | Transaction failed |
+| Status      | Description                   |
+| ----------- | ----------------------------- |
+| `submitted` | Relay request submitted       |
+| `pending`   | Transaction pending           |
+| `mined`     | Transaction included in block |
+| `confirmed` | Block confirmation complete   |
+| `failed`    | Transaction failed            |
 
 ## Limitations
 
@@ -82,12 +83,12 @@ submitted ────▶ pending ────▶ mined ────▶ confirme
 
 ## Supported Chains
 
-| Chain | Forwarder Address | Supported |
-|-------|-------------------|-----------|
-| Polygon | `0x...` | ✓ |
-| Polygon Amoy | `0x...` | ✓ |
-| Ethereum | `0x...` | ✓ |
-| Sepolia | `0x...` | ✓ |
+| Chain        | Forwarder Address | Supported |
+| ------------ | ----------------- | --------- |
+| Polygon      | `0x...`           | ✓         |
+| Polygon Amoy | `0x...`           | ✓         |
+| Ethereum     | `0x...`           | ✓         |
+| Sepolia      | `0x...`           | ✓         |
 
 ## Next Steps
 

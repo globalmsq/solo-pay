@@ -6,9 +6,9 @@ Check the current status of a payment.
 
 ```typescript
 // Check status by paymentId
-const result = await client.getPaymentStatus('0xabc123...')
+const result = await client.getPaymentStatus('0xabc123...');
 
-console.log(result.data.status)  // CREATED | PENDING | CONFIRMED | FAILED | EXPIRED
+console.log(result.data.status); // CREATED | PENDING | CONFIRMED | FAILED | EXPIRED
 ```
 
 ## REST API Usage
@@ -53,13 +53,13 @@ CREATED ──────────▶ PENDING ──────────
 
 ## Status Description
 
-| Status | Description | Next Action |
-|--------|-------------|-------------|
-| `CREATED` | Payment created, waiting for user action | User proceeds with payment |
-| `PENDING` | Transaction sent, waiting for block confirmation | Wait (usually a few seconds) |
-| `CONFIRMED` | Payment complete, block confirmed | Process completion |
-| `FAILED` | Transaction failed | Create new payment |
-| `EXPIRED` | Expired after 30 minutes | Create new payment |
+| Status      | Description                                      | Next Action                  |
+| ----------- | ------------------------------------------------ | ---------------------------- |
+| `CREATED`   | Payment created, waiting for user action         | User proceeds with payment   |
+| `PENDING`   | Transaction sent, waiting for block confirmation | Wait (usually a few seconds) |
+| `CONFIRMED` | Payment complete, block confirmed                | Process completion           |
+| `FAILED`    | Transaction failed                               | Create new payment           |
+| `EXPIRED`   | Expired after 30 minutes                         | Create new payment           |
 
 ## Response Fields by Status
 
@@ -143,17 +143,17 @@ Query the status periodically.
 ```typescript
 const pollPaymentStatus = async (paymentId: string) => {
   while (true) {
-    const result = await client.getPaymentStatus(paymentId)
-    const status = result.data.status
+    const result = await client.getPaymentStatus(paymentId);
+    const status = result.data.status;
 
     if (status === 'CONFIRMED' || status === 'FAILED' || status === 'EXPIRED') {
-      return status
+      return status;
     }
 
     // Wait 2 seconds before retry
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
-}
+};
 ```
 
 ::: warning Polling Guidelines

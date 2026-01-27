@@ -25,8 +25,8 @@ const payment = await client.createPayment({
   amount: 10.5,
   chainId: 80002,
   tokenAddress: '0x...',
-  recipientAddress: '0x...'
-})
+  recipientAddress: '0x...',
+});
 
 // paymentId, forwarderAddress를 프론트엔드로 전달
 ```
@@ -38,17 +38,17 @@ const payment = await client.createPayment({
 ### wagmi 사용 예시
 
 ```typescript
-import { useSignTypedData } from 'wagmi'
+import { useSignTypedData } from 'wagmi';
 
-const { signTypedDataAsync } = useSignTypedData()
+const { signTypedDataAsync } = useSignTypedData();
 
 // Forwarder에서 현재 nonce 조회
 const nonce = await publicClient.readContract({
   address: FORWARDER_ADDRESS,
   abi: ForwarderABI,
   functionName: 'nonces',
-  args: [userAddress]
-})
+  args: [userAddress],
+});
 
 // Forward Request 구성
 const forwardRequest = {
@@ -61,17 +61,17 @@ const forwardRequest = {
   data: encodeFunctionData({
     abi: PaymentGatewayABI,
     functionName: 'payWithSignature',
-    args: [paymentHash, tokenAddress, amount]
-  })
-}
+    args: [paymentHash, tokenAddress, amount],
+  }),
+};
 
 // EIP-712 서명
 const signature = await signTypedDataAsync({
   domain: {
     name: 'MSQPay Forwarder',
     version: '1',
-    chainId: 80002,  // Polygon Amoy
-    verifyingContract: FORWARDER_ADDRESS
+    chainId: 80002, // Polygon Amoy
+    verifyingContract: FORWARDER_ADDRESS,
   },
   types: {
     ForwardRequest: [
@@ -81,12 +81,12 @@ const signature = await signTypedDataAsync({
       { name: 'gas', type: 'uint256' },
       { name: 'nonce', type: 'uint256' },
       { name: 'deadline', type: 'uint48' },
-      { name: 'data', type: 'bytes' }
-    ]
+      { name: 'data', type: 'bytes' },
+    ],
   },
   primaryType: 'ForwardRequest',
-  message: forwardRequest
-})
+  message: forwardRequest,
+});
 ```
 
 ### 서명 요청 시 사용자 화면
@@ -130,11 +130,11 @@ const result = await client.submitGasless({
     nonce: forwardRequest.nonce.toString(),
     deadline: forwardRequest.deadline.toString(),
     data: forwardRequest.data,
-    signature: signature  // signature는 forwardRequest 안에 포함
-  }
-})
+    signature: signature, // signature는 forwardRequest 안에 포함
+  },
+});
 
-console.log(result.relayRequestId)  // relay_abc123
+console.log(result.relayRequestId); // relay_abc123
 ```
 
 ### REST API 사용
@@ -175,17 +175,17 @@ curl -X POST http://localhost:3001/payments/0xabc123.../gasless \
 ### Relay 상태 조회
 
 ```typescript
-const relayStatus = await client.getRelayStatus('relay_abc123')
+const relayStatus = await client.getRelayStatus('relay_abc123');
 
-console.log(relayStatus.status)  // submitted | pending | mined | confirmed | failed
+console.log(relayStatus.status); // submitted | pending | mined | confirmed | failed
 ```
 
 ### 결제 상태 조회
 
 ```typescript
-const paymentStatus = await client.getPaymentStatus('0xabc123...')
+const paymentStatus = await client.getPaymentStatus('0xabc123...');
 
-console.log(paymentStatus.data.status)  // CREATED | PENDING | CONFIRMED | FAILED
+console.log(paymentStatus.data.status); // CREATED | PENDING | CONFIRMED | FAILED
 ```
 
 ## 전체 코드 예시
@@ -264,38 +264,38 @@ function GaslessPayment({ paymentId, forwarderAddress, gatewayAddress, amount, t
 ### 백엔드 (Node.js)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 
 app.post('/api/gasless', async (req, res) => {
-  const { paymentId, forwarderAddress, forwardRequest } = req.body
+  const { paymentId, forwarderAddress, forwardRequest } = req.body;
 
   try {
     const result = await client.submitGasless({
       paymentId,
       forwarderAddress,
-      forwardRequest
-    })
+      forwardRequest,
+    });
 
-    res.json({ success: true, relayRequestId: result.relayRequestId })
+    res.json({ success: true, relayRequestId: result.relayRequestId });
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message })
+    res.status(400).json({ success: false, error: error.message });
   }
-})
+});
 ```
 
 ## 에러 처리
 
-| 에러 코드 | 원인 | 해결 방법 |
-|----------|------|----------|
-| `INVALID_SIGNATURE` | 서명 검증 실패 | 도메인, 타입 확인 |
-| `NONCE_MISMATCH` | 논스 불일치 | 최신 논스 조회 후 재시도 |
-| `DEADLINE_EXPIRED` | 서명 유효기간 만료 | 새 서명 요청 |
-| `INSUFFICIENT_ALLOWANCE` | 토큰 승인 부족 | approve 먼저 실행 |
+| 에러 코드                | 원인               | 해결 방법                |
+| ------------------------ | ------------------ | ------------------------ |
+| `INVALID_SIGNATURE`      | 서명 검증 실패     | 도메인, 타입 확인        |
+| `NONCE_MISMATCH`         | 논스 불일치        | 최신 논스 조회 후 재시도 |
+| `DEADLINE_EXPIRED`       | 서명 유효기간 만료 | 새 서명 요청             |
+| `INSUFFICIENT_ALLOWANCE` | 토큰 승인 부족     | approve 먼저 실행        |
 
 ## 다음 단계
 

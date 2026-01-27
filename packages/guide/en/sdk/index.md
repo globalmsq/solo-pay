@@ -28,21 +28,21 @@ yarn add @globalmsq/msqpay
 ## Initialization
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 ```
 
 ## Configuration Options
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `apiKey` | `string` | ✓ | API Key |
-| `environment` | `string` | ✓ | `development` \| `staging` \| `production` \| `custom` |
-| `apiUrl` | `string` | | Custom API URL (required for `custom` environment) |
+| Option        | Type     | Required | Description                                            |
+| ------------- | -------- | -------- | ------------------------------------------------------ |
+| `apiKey`      | `string` | ✓        | API Key                                                |
+| `environment` | `string` | ✓        | `development` \| `staging` \| `production` \| `custom` |
+| `apiUrl`      | `string` |          | Custom API URL (required for `custom` environment)     |
 
 ## Environment Configuration
 
@@ -51,8 +51,8 @@ const client = new MSQPayClient({
 ```typescript
 const client = new MSQPayClient({
   apiKey: 'sk_test_...',
-  environment: 'development'
-})
+  environment: 'development',
+});
 // Endpoint: http://localhost:3001
 ```
 
@@ -61,8 +61,8 @@ const client = new MSQPayClient({
 ```typescript
 const client = new MSQPayClient({
   apiKey: 'sk_test_...',
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 // Endpoint: https://staging-api.msqpay.com
 ```
 
@@ -71,8 +71,8 @@ const client = new MSQPayClient({
 ```typescript
 const client = new MSQPayClient({
   apiKey: 'sk_live_...',
-  environment: 'production'
-})
+  environment: 'production',
+});
 // Endpoint: https://api.msqpay.com
 ```
 
@@ -82,19 +82,19 @@ const client = new MSQPayClient({
 const client = new MSQPayClient({
   apiKey: 'sk_test_...',
   environment: 'custom',
-  apiUrl: 'https://my-custom-server.com'
-})
+  apiUrl: 'https://my-custom-server.com',
+});
 ```
 
 ## Basic Usage
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay'
+import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 
 // Create payment
 const payment = await client.createPayment({
@@ -102,18 +102,20 @@ const payment = await client.createPayment({
   amount: 10.5,
   chainId: 80002,
   tokenAddress: '0x...',
-  recipientAddress: '0x...'
-})
+  recipientAddress: '0x...',
+});
 
 // Check payment status
-const status = await client.getPaymentStatus(payment.paymentId)
+const status = await client.getPaymentStatus(payment.paymentId);
 
 // Submit gasless payment
 const result = await client.submitGasless({
   paymentId: payment.paymentId,
   forwarderAddress: payment.forwarderAddress,
-  forwardRequest: { /* signature data */ }
-})
+  forwardRequest: {
+    /* signature data */
+  },
+});
 ```
 
 ## TypeScript Support
@@ -126,21 +128,21 @@ import type {
   CreatePaymentParams,
   CreatePaymentResponse,
   GaslessParams,
-  GaslessResponse
-} from '@globalmsq/msqpay'
+  GaslessResponse,
+} from '@globalmsq/msqpay';
 
 const config: MSQPayConfig = {
   apiKey: 'sk_test_...',
-  environment: 'staging'
-}
+  environment: 'staging',
+};
 
 const params: CreatePaymentParams = {
   merchantId: 'merchant_demo_001',
   amount: 10.5,
   chainId: 80002,
   tokenAddress: '0x...',
-  recipientAddress: '0x...'
-}
+  recipientAddress: '0x...',
+};
 ```
 
 ## Next Steps

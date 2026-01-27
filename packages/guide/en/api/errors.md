@@ -4,16 +4,16 @@ Error codes returned in API responses and how to resolve them.
 
 ## HTTP Status Codes
 
-| Code | Description |
-|------|-------------|
-| 200 | Success |
-| 201 | Created successfully |
-| 202 | Accepted (async processing) |
-| 400 | Bad request (parameter error) |
-| 401 | Authentication failed (API Key error) |
-| 403 | Forbidden |
-| 404 | Resource not found |
-| 500 | Server error |
+| Code | Description                           |
+| ---- | ------------------------------------- |
+| 200  | Success                               |
+| 201  | Created successfully                  |
+| 202  | Accepted (async processing)           |
+| 400  | Bad request (parameter error)         |
+| 401  | Authentication failed (API Key error) |
+| 403  | Forbidden                             |
+| 404  | Resource not found                    |
+| 500  | Server error                          |
 
 ## Error Response Format
 
@@ -40,6 +40,7 @@ API Key is invalid or missing.
 ```
 
 **Solution**
+
 - Check `x-api-key` header
 - Verify API Key in dashboard
 - Use correct key for environment (test vs live)
@@ -66,6 +67,7 @@ Input data validation failed.
 ```
 
 **Solution**
+
 - Check `details` field to see which field is invalid
 - Ensure all required parameters are included
 
@@ -81,6 +83,7 @@ Chain is not supported.
 ```
 
 **Solution**
+
 - Check supported chains via `GET /chains` API
 - Verify chainId value
 
@@ -96,6 +99,7 @@ Token is not supported.
 ```
 
 **Solution**
+
 - Check supported token list
 - Verify token address for typos
 - Confirm token is enabled on the chain
@@ -112,6 +116,7 @@ Chain configuration doesn't match.
 ```
 
 **Solution**
+
 - Verify merchant's configured chain matches request chain
 - Confirm token belongs to the correct chain
 
@@ -131,6 +136,7 @@ Merchant not found.
 ```
 
 **Solution**
+
 - Verify `merchantId` value
 - Confirm merchant is registered
 
@@ -146,6 +152,7 @@ Payment not found.
 ```
 
 **Solution**
+
 - Verify payment ID (paymentId)
 - Confirm payment belongs to the merchant
 
@@ -161,6 +168,7 @@ Token not found.
 ```
 
 **Solution**
+
 - Verify token address
 - Confirm token is registered on the chain
 
@@ -176,6 +184,7 @@ Payment method not configured.
 ```
 
 **Solution**
+
 - Verify token is configured as payment method for merchant
 - Configure payment method in dashboard
 
@@ -195,6 +204,7 @@ Merchant is disabled.
 ```
 
 **Solution**
+
 - Check merchant status in dashboard
 - Contact administrator
 
@@ -210,6 +220,7 @@ Payment method is disabled.
 ```
 
 **Solution**
+
 - Enable payment method in dashboard
 
 ---
@@ -228,6 +239,7 @@ Payment status is invalid.
 ```
 
 **Solution**
+
 - Check payment status first
 - Prevent duplicate requests for completed payments
 
@@ -247,6 +259,7 @@ EIP-712 signature verification failed.
 ```
 
 **Solution**
+
 - Verify signature format (hex string starting with `0x`)
 - Verify domain (name, version, chainId, verifyingContract)
 - Verify type definitions
@@ -267,6 +280,7 @@ Internal server error.
 ```
 
 **Solution**
+
 - Retry after a moment
 - Contact support@msqpay.com if issue persists
 

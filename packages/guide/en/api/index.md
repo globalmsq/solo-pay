@@ -4,11 +4,11 @@ Complete MSQPay REST API specification.
 
 ## Base URL
 
-| Environment | URL |
-|-------------|-----|
-| Production | `https://api.msqpay.com` |
-| Staging | `https://staging-api.msqpay.com` |
-| Development | `http://localhost:3001` |
+| Environment | URL                              |
+| ----------- | -------------------------------- |
+| Production  | `https://api.msqpay.com`         |
+| Staging     | `https://staging-api.msqpay.com` |
+| Development | `http://localhost:3001`          |
 
 ## Authentication
 
@@ -58,13 +58,13 @@ Creates a payment.
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `merchantId` | string | ✓ | Merchant unique identifier (merchant_key) |
-| `amount` | number | ✓ | Payment amount (token units, e.g., 10.5 USDC) |
-| `chainId` | number | ✓ | Blockchain network ID |
-| `tokenAddress` | address | ✓ | ERC-20 token contract address |
-| `recipientAddress` | address | ✓ | Payment recipient address |
+| Field              | Type    | Required | Description                                   |
+| ------------------ | ------- | -------- | --------------------------------------------- |
+| `merchantId`       | string  | ✓        | Merchant unique identifier (merchant_key)     |
+| `amount`           | number  | ✓        | Payment amount (token units, e.g., 10.5 USDC) |
+| `chainId`          | number  | ✓        | Blockchain network ID                         |
+| `tokenAddress`     | address | ✓        | ERC-20 token contract address                 |
+| `recipientAddress` | address | ✓        | Payment recipient address                     |
 
 **Response (201)**
 
@@ -119,11 +119,11 @@ Retrieves payment history.
 
 **Query Parameters**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `chainId` | number | ✓ | Blockchain network ID |
-| `payer` | address | ✓ | Payer wallet address |
-| `limit` | number | | Number of records |
+| Field     | Type    | Required | Description           |
+| --------- | ------- | -------- | --------------------- |
+| `chainId` | number  | ✓        | Blockchain network ID |
+| `payer`   | address | ✓        | Payer wallet address  |
+| `limit`   | number  |          | Number of records     |
 
 **Response (200)**
 
@@ -173,12 +173,12 @@ Submits a gasless payment.
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `paymentId` | string | ✓ | Payment hash (bytes32) |
-| `forwarderAddress` | address | ✓ | ERC2771 Forwarder contract address |
-| `forwardRequest` | object | ✓ | EIP-712 signed request data |
-| `forwardRequest.signature` | string | ✓ | EIP-712 signature |
+| Field                      | Type    | Required | Description                        |
+| -------------------------- | ------- | -------- | ---------------------------------- |
+| `paymentId`                | string  | ✓        | Payment hash (bytes32)             |
+| `forwarderAddress`         | address | ✓        | ERC2771 Forwarder contract address |
+| `forwardRequest`           | object  | ✓        | EIP-712 signed request data        |
+| `forwardRequest.signature` | string  | ✓        | EIP-712 signature                  |
 
 **Response (202)**
 
@@ -268,10 +268,10 @@ Retrieves token balance.
 
 **Query Parameters**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `chainId` | number | ✓ | Blockchain network ID |
-| `address` | address | ✓ | Wallet address |
+| Field     | Type    | Required | Description           |
+| --------- | ------- | -------- | --------------------- |
+| `chainId` | number  | ✓        | Blockchain network ID |
+| `address` | address | ✓        | Wallet address        |
 
 **Response (200)**
 
@@ -292,11 +292,11 @@ Retrieves token allowance.
 
 **Query Parameters**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `chainId` | number | ✓ | Blockchain network ID |
-| `owner` | address | ✓ | Owner address |
-| `spender` | address | ✓ | Approved address (PaymentGateway) |
+| Field     | Type    | Required | Description                       |
+| --------- | ------- | -------- | --------------------------------- |
+| `chainId` | number  | ✓        | Blockchain network ID             |
+| `owner`   | address | ✓        | Owner address                     |
+| `spender` | address | ✓        | Approved address (PaymentGateway) |
 
 **Response (200)**
 

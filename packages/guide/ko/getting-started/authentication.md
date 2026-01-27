@@ -15,30 +15,30 @@ API Key는 한 번만 표시됩니다. 분실 시 새로 발급해야 합니다.
 
 ## API Key 종류
 
-| 종류 | 접두사 | 용도 |
-|------|--------|------|
+| 종류     | 접두사     | 용도          |
+| -------- | ---------- | ------------- |
 | Test Key | `sk_test_` | 테스트넷 환경 |
-| Live Key | `sk_live_` | 메인넷 환경 |
+| Live Key | `sk_live_` | 메인넷 환경   |
 
 ## 사용 방법
 
 ### SDK 사용 시
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 // 기본 설정 (staging 환경)
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY,
-  environment: 'staging'  // 'production' | 'staging' | 'custom'
-})
+  environment: 'staging', // 'production' | 'staging' | 'custom'
+});
 
 // 커스텀 URL 사용 시
 const customClient = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY,
   environment: 'custom',
-  baseUrl: 'https://your-custom-api.com'
-})
+  baseUrl: 'https://your-custom-api.com',
+});
 ```
 
 ### REST API 직접 호출 시
@@ -68,8 +68,8 @@ MSQPAY_API_KEY=sk_test_xxxxx
 ```typescript [사용]
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 ```
 
 :::

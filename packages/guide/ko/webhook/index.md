@@ -11,10 +11,11 @@ Webhook 기능은 현재 개발 중입니다. 아래 문서는 예정된 기능 
 Webhook을 설정하면 결제 상태가 변경될 때 지정한 URL로 HTTP POST 요청을 받을 수 있습니다.
 
 ::: tip 왜 Webhook을 사용해야 하나요?
+
 - **실시간 알림**: 상태 변경 즉시 알림
 - **서버 리소스 절약**: 폴링 불필요
 - **신뢰성**: 재시도 메커니즘 내장
-:::
+  :::
 
 ## 설정 방법 (예정)
 
@@ -35,13 +36,13 @@ Webhook을 설정하면 결제 상태가 변경될 때 지정한 URL로 HTTP POS
 
 ## 이벤트 타입
 
-| 이벤트 | 설명 | 발생 시점 |
-|--------|------|----------|
-| `payment.created` | 결제 생성됨 | 결제 생성 직후 |
-| `payment.pending` | 트랜잭션 전송됨 | TX가 블록에 포함됨 |
-| `payment.confirmed` | 결제 완료 | 블록 확정 후 |
-| `payment.failed` | 결제 실패 | TX 실패 시 |
-| `payment.expired` | 결제 만료 | 30분 초과 시 |
+| 이벤트              | 설명            | 발생 시점          |
+| ------------------- | --------------- | ------------------ |
+| `payment.created`   | 결제 생성됨     | 결제 생성 직후     |
+| `payment.pending`   | 트랜잭션 전송됨 | TX가 블록에 포함됨 |
+| `payment.confirmed` | 결제 완료       | 블록 확정 후       |
+| `payment.failed`    | 결제 실패       | TX 실패 시         |
+| `payment.expired`   | 결제 만료       | 30분 초과 시       |
 
 ## Payload 구조
 
@@ -68,24 +69,24 @@ Webhook을 설정하면 결제 상태가 변경될 때 지정한 URL로 HTTP POS
 
 ## 헤더
 
-| 헤더 | 설명 |
-|------|------|
-| `Content-Type` | `application/json` |
-| `X-MSQPay-Signature` | HMAC-SHA256 서명 |
+| 헤더                 | 설명                            |
+| -------------------- | ------------------------------- |
+| `Content-Type`       | `application/json`              |
+| `X-MSQPay-Signature` | HMAC-SHA256 서명                |
 | `X-MSQPay-Timestamp` | 요청 생성 시각 (Unix timestamp) |
-| `X-MSQPay-Event` | 이벤트 타입 |
+| `X-MSQPay-Event`     | 이벤트 타입                     |
 
 ## 재시도 정책
 
 Webhook 전송 실패 시 지수 백오프로 재시도합니다.
 
 | 재시도 | 대기 시간 |
-|--------|----------|
-| 1차 | 1분 |
-| 2차 | 5분 |
-| 3차 | 30분 |
-| 4차 | 2시간 |
-| 5차 | 24시간 |
+| ------ | --------- |
+| 1차    | 1분       |
+| 2차    | 5분       |
+| 3차    | 30분      |
+| 4차    | 2시간     |
+| 5차    | 24시간    |
 
 5회 실패 후 해당 이벤트는 폐기됩니다.
 
@@ -97,17 +98,17 @@ Webhook이 구현되기 전까지는 폴링 방식으로 상태를 확인할 수
 // 결제 상태 폴링 예시
 const pollPaymentStatus = async (paymentId: string) => {
   while (true) {
-    const result = await client.getPaymentStatus(paymentId)
-    const status = result.data.status
+    const result = await client.getPaymentStatus(paymentId);
+    const status = result.data.status;
 
     if (status === 'CONFIRMED' || status === 'FAILED' || status === 'EXPIRED') {
-      return status
+      return status;
     }
 
     // 2초 대기 후 재시도
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
-}
+};
 ```
 
 ## 다음 단계

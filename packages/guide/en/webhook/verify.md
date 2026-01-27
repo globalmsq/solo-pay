@@ -19,26 +19,26 @@ In production environments, you **must** verify signatures.
 ### Using SDK (Recommended)
 
 ```typescript
-import { verifyWebhookSignature } from '@globalmsq/msqpay'
+import { verifyWebhookSignature } from '@globalmsq/msqpay';
 
 app.post('/webhook', (req, res) => {
   const isValid = verifyWebhookSignature({
     payload: req.body,
     signature: req.headers['x-msqpay-signature'],
     timestamp: req.headers['x-msqpay-timestamp'],
-    secret: process.env.WEBHOOK_SECRET!
-  })
+    secret: process.env.WEBHOOK_SECRET!,
+  });
 
   if (!isValid) {
-    return res.status(401).send('Invalid signature')
+    return res.status(401).send('Invalid signature');
   }
 
   // Handle event
-  const event = req.body
-  console.log(event.event, event.data)
+  const event = req.body;
+  console.log(event.event, event.data);
 
-  res.status(200).send('OK')
-})
+  res.status(200).send('OK');
+});
 ```
 
 ### Manual Implementation
@@ -52,7 +52,7 @@ signature = HMAC-SHA256(timestamp + '.' + JSON.stringify(payload), secret)
 Verification code:
 
 ```typescript
-import crypto from 'crypto'
+import crypto from 'crypto';
 
 function verifySignature(
   payload: object,
@@ -61,24 +61,18 @@ function verifySignature(
   secret: string
 ): boolean {
   // Timestamp verification (within 5 minutes)
-  const now = Math.floor(Date.now() / 1000)
-  const requestTime = parseInt(timestamp, 10)
+  const now = Math.floor(Date.now() / 1000);
+  const requestTime = parseInt(timestamp, 10);
 
   if (Math.abs(now - requestTime) > 300) {
-    return false  // Prevent replay attacks
+    return false; // Prevent replay attacks
   }
 
   // Signature verification
-  const signedPayload = `${timestamp}.${JSON.stringify(payload)}`
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex')
+  const signedPayload = `${timestamp}.${JSON.stringify(payload)}`;
+  const expectedSignature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  )
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 }
 ```
 
@@ -87,107 +81,110 @@ function verifySignature(
 ### Express.js
 
 ```typescript
-import express from 'express'
-import { verifyWebhookSignature } from '@globalmsq/msqpay'
+import express from 'express';
+import { verifyWebhookSignature } from '@globalmsq/msqpay';
 
-const app = express()
+const app = express();
 
 // Raw body needed
-app.use('/webhook', express.json({
-  verify: (req, res, buf) => {
-    req.rawBody = buf.toString()
-  }
-}))
+app.use(
+  '/webhook',
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString();
+    },
+  })
+);
 
 app.post('/webhook', (req, res) => {
   const isValid = verifyWebhookSignature({
     payload: req.body,
     signature: req.headers['x-msqpay-signature'] as string,
     timestamp: req.headers['x-msqpay-timestamp'] as string,
-    secret: process.env.WEBHOOK_SECRET!
-  })
+    secret: process.env.WEBHOOK_SECRET!,
+  });
 
   if (!isValid) {
-    return res.status(401).send('Invalid signature')
+    return res.status(401).send('Invalid signature');
   }
 
   // Handle event
-  handleEvent(req.body)
+  handleEvent(req.body);
 
-  res.status(200).send('OK')
-})
+  res.status(200).send('OK');
+});
 ```
 
 ### Next.js API Route
 
 ```typescript
 // pages/api/webhook.ts
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { verifyWebhookSignature } from '@globalmsq/msqpay'
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { verifyWebhookSignature } from '@globalmsq/msqpay';
 
 export const config = {
   api: {
-    bodyParser: true
-  }
-}
+    bodyParser: true,
+  },
+};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).end()
+    return res.status(405).end();
   }
 
   const isValid = verifyWebhookSignature({
     payload: req.body,
     signature: req.headers['x-msqpay-signature'] as string,
     timestamp: req.headers['x-msqpay-timestamp'] as string,
-    secret: process.env.WEBHOOK_SECRET!
-  })
+    secret: process.env.WEBHOOK_SECRET!,
+  });
 
   if (!isValid) {
-    return res.status(401).json({ error: 'Invalid signature' })
+    return res.status(401).json({ error: 'Invalid signature' });
   }
 
   // Handle event
-  const { event, data } = req.body
+  const { event, data } = req.body;
 
   switch (event) {
     case 'payment.confirmed':
       // Complete order
-      break
+      break;
     case 'payment.failed':
       // Handle failure
-      break
+      break;
   }
 
-  res.status(200).json({ received: true })
+  res.status(200).json({ received: true });
 }
 ```
 
 ### Fastify
 
 ```typescript
-import Fastify from 'fastify'
-import { verifyWebhookSignature } from '@globalmsq/msqpay'
+import Fastify from 'fastify';
+import { verifyWebhookSignature } from '@globalmsq/msqpay';
 
-const app = Fastify()
+const app = Fastify();
 
 app.post('/webhook', async (request, reply) => {
   const isValid = verifyWebhookSignature({
     payload: request.body,
     signature: request.headers['x-msqpay-signature'] as string,
     timestamp: request.headers['x-msqpay-timestamp'] as string,
-    secret: process.env.WEBHOOK_SECRET!
-  })
+    secret: process.env.WEBHOOK_SECRET!,
+  });
 
   if (!isValid) {
-    return reply.status(401).send({ error: 'Invalid signature' })
+    return reply.status(401).send({ error: 'Invalid signature' });
   }
 
   // Handle event
-  handleEvent(request.body)
+  handleEvent(request.body);
 
-  return { received: true }
-})
+  return { received: true };
+});
 ```
 
 ## Important Notes
@@ -208,16 +205,16 @@ app.post('/webhook', async (request, reply) => {
 - Prevent duplicate processing using `paymentId`
 
 ```typescript
-const processedEvents = new Set<string>()
+const processedEvents = new Set<string>();
 
 function handleEvent(event: WebhookEvent) {
-  const eventKey = `${event.data.paymentId}:${event.event}`
+  const eventKey = `${event.data.paymentId}:${event.event}`;
 
   if (processedEvents.has(eventKey)) {
-    return  // Already processed
+    return; // Already processed
   }
 
-  processedEvents.add(eventKey)
+  processedEvents.add(eventKey);
   // Process event...
 }
 ```

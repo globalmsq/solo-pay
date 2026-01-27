@@ -35,11 +35,11 @@ Payment creation is the first step in MSQPay integration. Created payments **aut
 ```typescript
 const payment = await client.createPayment({
   merchantId: 'merchant_demo_001',
-  amount: 10.5,                    // 10.5 USDC (token units)
-  chainId: 80002,                  // Polygon Amoy
+  amount: 10.5, // 10.5 USDC (token units)
+  chainId: 80002, // Polygon Amoy
   tokenAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-})
+  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+});
 ```
 
 ## REST API Usage
@@ -59,13 +59,13 @@ curl -X POST http://localhost:3001/payments/create \
 
 ## Request Parameters
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `merchantId` | `string` | ✓ | Merchant unique identifier (merchant_key) |
-| `amount` | `number` | ✓ | Payment amount (token units, e.g., 10.5 USDC) |
-| `chainId` | `number` | ✓ | Blockchain network ID |
-| `tokenAddress` | `address` | ✓ | ERC-20 token contract address |
-| `recipientAddress` | `address` | ✓ | Payment recipient address |
+| Field              | Type      | Required | Description                                   |
+| ------------------ | --------- | -------- | --------------------------------------------- |
+| `merchantId`       | `string`  | ✓        | Merchant unique identifier (merchant_key)     |
+| `amount`           | `number`  | ✓        | Payment amount (token units, e.g., 10.5 USDC) |
+| `chainId`          | `number`  | ✓        | Blockchain network ID                         |
+| `tokenAddress`     | `address` | ✓        | ERC-20 token contract address                 |
+| `recipientAddress` | `address` | ✓        | Payment recipient address                     |
 
 ::: tip Amount Input
 Enter amounts in token units. The server automatically converts to wei.
@@ -103,13 +103,13 @@ Example: 10.5 USDC → 10500000 (6 decimals)
 
 ## Response Field Description
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `paymentId` | `string` | Payment unique identifier (bytes32 hash) |
-| `amount` | `string` | Amount converted to wei |
-| `gatewayAddress` | `address` | PaymentGateway contract address |
-| `forwarderAddress` | `address` | ERC2771 Forwarder address (for Gasless) |
-| `expiresAt` | `datetime` | Payment expiration time (30 min after creation) |
+| Field              | Type       | Description                                     |
+| ------------------ | ---------- | ----------------------------------------------- |
+| `paymentId`        | `string`   | Payment unique identifier (bytes32 hash)        |
+| `amount`           | `string`   | Amount converted to wei                         |
+| `gatewayAddress`   | `address`  | PaymentGateway contract address                 |
+| `forwarderAddress` | `address`  | ERC2771 Forwarder address (for Gasless)         |
+| `expiresAt`        | `datetime` | Payment expiration time (30 min after creation) |
 
 ## After Payment Creation
 
@@ -127,8 +127,8 @@ await writeContract({
   address: gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, tokenAddress, amount]
-})
+  args: [paymentId, tokenAddress, amount],
+});
 ```
 
 ### 2. Gasless Payment

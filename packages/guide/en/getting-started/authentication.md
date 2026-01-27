@@ -15,8 +15,8 @@ API Key is only displayed once. If lost, you'll need to issue a new one.
 
 ## API Key Types
 
-| Type | Prefix | Purpose |
-|------|--------|---------|
+| Type     | Prefix     | Purpose             |
+| -------- | ---------- | ------------------- |
 | Test Key | `sk_test_` | Testnet environment |
 | Live Key | `sk_live_` | Mainnet environment |
 
@@ -25,20 +25,20 @@ API Key is only displayed once. If lost, you'll need to issue a new one.
 ### With SDK
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 // Default configuration (staging environment)
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY,
-  environment: 'staging'  // 'production' | 'staging' | 'custom'
-})
+  environment: 'staging', // 'production' | 'staging' | 'custom'
+});
 
 // With custom URL
 const customClient = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY,
   environment: 'custom',
-  baseUrl: 'https://your-custom-api.com'
-})
+  baseUrl: 'https://your-custom-api.com',
+});
 ```
 
 ### Direct REST API Calls
@@ -68,8 +68,8 @@ MSQPAY_API_KEY=sk_test_xxxxx
 ```typescript [Usage]
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 ```
 
 :::

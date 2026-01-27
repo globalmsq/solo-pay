@@ -7,12 +7,12 @@
 ```typescript
 // 결제 내역 조회
 const result = await client.getPaymentHistory({
-  chainId: 80002,           // 필수: 체인 ID
-  payer: '0x1234...',       // 필수: 결제자 지갑 주소
-  limit: 10                 // 선택: 조회 개수
-})
+  chainId: 80002, // 필수: 체인 ID
+  payer: '0x1234...', // 필수: 결제자 지갑 주소
+  limit: 10, // 선택: 조회 개수
+});
 
-console.log(result.data)  // 결제 목록 배열
+console.log(result.data); // 결제 목록 배열
 ```
 
 ## REST API 사용
@@ -24,11 +24,11 @@ curl -X GET "http://localhost:3001/payments/history?chainId=80002&payer=0x...&li
 
 ## 요청 파라미터
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `chainId` | `number` | ✓ | 블록체인 네트워크 ID |
-| `payer` | `address` | ✓ | 결제자 지갑 주소 |
-| `limit` | `number` | | 조회 개수 |
+| 필드      | 타입      | 필수 | 설명                 |
+| --------- | --------- | ---- | -------------------- |
+| `chainId` | `number`  | ✓    | 블록체인 네트워크 ID |
+| `payer`   | `address` | ✓    | 결제자 지갑 주소     |
+| `limit`   | `number`  |      | 조회 개수            |
 
 ## 응답
 
@@ -73,28 +73,28 @@ curl -X GET "http://localhost:3001/payments/history?chainId=80002&payer=0x...&li
 ## 사용 예시
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 
 // 결제 내역 조회
 async function fetchPaymentHistory() {
   const result = await client.getPaymentHistory({
     chainId: 80002,
     payer: '0x1234567890abcdef...',
-    limit: 10
-  })
+    limit: 10,
+  });
 
   if (result.success) {
     for (const payment of result.data) {
-      console.log(`결제 ID: ${payment.paymentId}`)
-      console.log(`금액: ${payment.amount} ${payment.tokenSymbol}`)
-      console.log(`상태: ${payment.status}`)
-      console.log(`Gasless: ${payment.isGasless ? '예' : '아니오'}`)
-      console.log('---')
+      console.log(`결제 ID: ${payment.paymentId}`);
+      console.log(`금액: ${payment.amount} ${payment.tokenSymbol}`);
+      console.log(`상태: ${payment.status}`);
+      console.log(`Gasless: ${payment.isGasless ? '예' : '아니오'}`);
+      console.log('---');
     }
   }
 }

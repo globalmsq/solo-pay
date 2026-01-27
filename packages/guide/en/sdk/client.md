@@ -12,35 +12,35 @@ const payment = await client.createPayment({
   amount: 10.5,
   chainId: 80002,
   tokenAddress: '0x...',
-  recipientAddress: '0x...'
-})
+  recipientAddress: '0x...',
+});
 ```
 
 **Parameters**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `merchantId` | `string` | ✓ | Merchant unique identifier (merchant_key) |
-| `amount` | `number` | ✓ | Payment amount (in token units, e.g., 10.5 USDC) |
-| `chainId` | `number` | ✓ | Blockchain network ID |
-| `tokenAddress` | `string` | ✓ | ERC-20 token contract address |
-| `recipientAddress` | `string` | ✓ | Payment recipient address |
+| Name               | Type     | Required | Description                                      |
+| ------------------ | -------- | -------- | ------------------------------------------------ |
+| `merchantId`       | `string` | ✓        | Merchant unique identifier (merchant_key)        |
+| `amount`           | `number` | ✓        | Payment amount (in token units, e.g., 10.5 USDC) |
+| `chainId`          | `number` | ✓        | Blockchain network ID                            |
+| `tokenAddress`     | `string` | ✓        | ERC-20 token contract address                    |
+| `recipientAddress` | `string` | ✓        | Payment recipient address                        |
 
 **Return Value**
 
 ```typescript
 {
-  success: boolean
-  paymentId: string        // bytes32 hash
-  chainId: number
-  tokenAddress: string
-  tokenSymbol: string
-  tokenDecimals: number
-  gatewayAddress: string
-  forwarderAddress: string
-  amount: string           // in wei
-  status: string
-  expiresAt: string
+  success: boolean;
+  paymentId: string; // bytes32 hash
+  chainId: number;
+  tokenAddress: string;
+  tokenSymbol: string;
+  tokenDecimals: number;
+  gatewayAddress: string;
+  forwarderAddress: string;
+  amount: string; // in wei
+  status: string;
+  expiresAt: string;
 }
 ```
 
@@ -49,14 +49,14 @@ const payment = await client.createPayment({
 Retrieves the payment status.
 
 ```typescript
-const status = await client.getPaymentStatus('0xabc123...')
+const status = await client.getPaymentStatus('0xabc123...');
 ```
 
 **Parameters**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `paymentId` | `string` | ✓ | Payment ID (bytes32 hash) |
+| Name        | Type     | Required | Description               |
+| ----------- | -------- | -------- | ------------------------- |
+| `paymentId` | `string` | ✓        | Payment ID (bytes32 hash) |
 
 **Return Value**
 
@@ -87,37 +87,37 @@ Retrieves payment history.
 const history = await client.getPaymentHistory({
   chainId: 80002,
   payer: '0x...',
-  limit: 10
-})
+  limit: 10,
+});
 ```
 
 **Parameters**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `chainId` | `number` | ✓ | Blockchain network ID |
-| `payer` | `string` | ✓ | Payer wallet address |
-| `limit` | `number` | | Number of records to retrieve |
+| Name      | Type     | Required | Description                   |
+| --------- | -------- | -------- | ----------------------------- |
+| `chainId` | `number` | ✓        | Blockchain network ID         |
+| `payer`   | `string` | ✓        | Payer wallet address          |
+| `limit`   | `number` |          | Number of records to retrieve |
 
 **Return Value**
 
 ```typescript
 {
-  success: true
+  success: true;
   data: Array<{
-    paymentId: string
-    payer: string
-    merchant: string
-    token: string
-    tokenSymbol: string
-    decimals: number
-    amount: string
-    timestamp: string
-    transactionHash: string
-    status: string
-    isGasless: boolean
-    relayId?: string
-  }>
+    paymentId: string;
+    payer: string;
+    merchant: string;
+    token: string;
+    tokenSymbol: string;
+    decimals: number;
+    amount: string;
+    timestamp: string;
+    transactionHash: string;
+    status: string;
+    isGasless: boolean;
+    relayId?: string;
+  }>;
 }
 ```
 
@@ -137,19 +137,19 @@ const result = await client.submitGasless({
     nonce: '1',
     deadline: '1706281200',
     data: '0x...',
-    signature: '0x...'
-  }
-})
+    signature: '0x...',
+  },
+});
 ```
 
 **Parameters**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `paymentId` | `string` | ✓ | Payment ID (bytes32 hash) |
-| `forwarderAddress` | `string` | ✓ | ERC2771 Forwarder contract address |
-| `forwardRequest` | `object` | ✓ | EIP-712 signed request data |
-| `forwardRequest.signature` | `string` | ✓ | EIP-712 signature |
+| Name                       | Type     | Required | Description                        |
+| -------------------------- | -------- | -------- | ---------------------------------- |
+| `paymentId`                | `string` | ✓        | Payment ID (bytes32 hash)          |
+| `forwarderAddress`         | `string` | ✓        | ERC2771 Forwarder contract address |
+| `forwardRequest`           | `object` | ✓        | EIP-712 signed request data        |
+| `forwardRequest.signature` | `string` | ✓        | EIP-712 signature                  |
 
 For more details, see the [Gasless Payments](/en/gasless/) guide.
 
@@ -157,10 +157,10 @@ For more details, see the [Gasless Payments](/en/gasless/) guide.
 
 ```typescript
 {
-  success: true
-  relayRequestId: string
-  status: 'submitted' | 'mined' | 'failed'
-  message: string
+  success: true;
+  relayRequestId: string;
+  status: 'submitted' | 'mined' | 'failed';
+  message: string;
 }
 ```
 
@@ -169,14 +169,14 @@ For more details, see the [Gasless Payments](/en/gasless/) guide.
 Retrieves the relay request status.
 
 ```typescript
-const status = await client.getRelayStatus('relay_abc123')
+const status = await client.getRelayStatus('relay_abc123');
 ```
 
 **Parameters**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `relayRequestId` | `string` | ✓ | Relay request ID |
+| Name             | Type     | Required | Description      |
+| ---------------- | -------- | -------- | ---------------- |
+| `relayRequestId` | `string` | ✓        | Relay request ID |
 
 **Return Value**
 

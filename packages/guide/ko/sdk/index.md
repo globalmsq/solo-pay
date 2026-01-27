@@ -28,21 +28,21 @@ yarn add @globalmsq/msqpay
 ## 초기화
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 ```
 
 ## 설정 옵션
 
-| 옵션 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| `apiKey` | `string` | ✓ | API Key |
-| `environment` | `string` | ✓ | `development` \| `staging` \| `production` \| `custom` |
-| `apiUrl` | `string` | | 커스텀 API URL (`custom` 환경에서 필수) |
+| 옵션          | 타입     | 필수 | 설명                                                   |
+| ------------- | -------- | ---- | ------------------------------------------------------ |
+| `apiKey`      | `string` | ✓    | API Key                                                |
+| `environment` | `string` | ✓    | `development` \| `staging` \| `production` \| `custom` |
+| `apiUrl`      | `string` |      | 커스텀 API URL (`custom` 환경에서 필수)                |
 
 ## 환경별 설정
 
@@ -51,8 +51,8 @@ const client = new MSQPayClient({
 ```typescript
 const client = new MSQPayClient({
   apiKey: 'sk_test_...',
-  environment: 'development'
-})
+  environment: 'development',
+});
 // 연결 주소: http://localhost:3001
 ```
 
@@ -61,8 +61,8 @@ const client = new MSQPayClient({
 ```typescript
 const client = new MSQPayClient({
   apiKey: 'sk_test_...',
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 // 연결 주소: https://staging-api.msqpay.com
 ```
 
@@ -71,8 +71,8 @@ const client = new MSQPayClient({
 ```typescript
 const client = new MSQPayClient({
   apiKey: 'sk_live_...',
-  environment: 'production'
-})
+  environment: 'production',
+});
 // 연결 주소: https://api.msqpay.com
 ```
 
@@ -82,19 +82,19 @@ const client = new MSQPayClient({
 const client = new MSQPayClient({
   apiKey: 'sk_test_...',
   environment: 'custom',
-  apiUrl: 'https://my-custom-server.com'
-})
+  apiUrl: 'https://my-custom-server.com',
+});
 ```
 
 ## 기본 사용법
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay'
+import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 
 // 결제 생성
 const payment = await client.createPayment({
@@ -102,18 +102,20 @@ const payment = await client.createPayment({
   amount: 10.5,
   chainId: 80002,
   tokenAddress: '0x...',
-  recipientAddress: '0x...'
-})
+  recipientAddress: '0x...',
+});
 
 // 결제 상태 조회
-const status = await client.getPaymentStatus(payment.paymentId)
+const status = await client.getPaymentStatus(payment.paymentId);
 
 // Gasless 결제 제출
 const result = await client.submitGasless({
   paymentId: payment.paymentId,
   forwarderAddress: payment.forwarderAddress,
-  forwardRequest: { /* 서명 데이터 */ }
-})
+  forwardRequest: {
+    /* 서명 데이터 */
+  },
+});
 ```
 
 ## TypeScript 지원
@@ -126,21 +128,21 @@ import type {
   CreatePaymentParams,
   CreatePaymentResponse,
   GaslessParams,
-  GaslessResponse
-} from '@globalmsq/msqpay'
+  GaslessResponse,
+} from '@globalmsq/msqpay';
 
 const config: MSQPayConfig = {
   apiKey: 'sk_test_...',
-  environment: 'staging'
-}
+  environment: 'staging',
+};
 
 const params: CreatePaymentParams = {
   merchantId: 'merchant_demo_001',
   amount: 10.5,
   chainId: 80002,
   tokenAddress: '0x...',
-  recipientAddress: '0x...'
-}
+  recipientAddress: '0x...',
+};
 ```
 
 ## 다음 단계

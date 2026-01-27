@@ -6,9 +6,9 @@
 
 ```typescript
 // paymentId로 상태 조회
-const result = await client.getPaymentStatus('0xabc123...')
+const result = await client.getPaymentStatus('0xabc123...');
 
-console.log(result.data.status)  // CREATED | PENDING | CONFIRMED | FAILED | EXPIRED
+console.log(result.data.status); // CREATED | PENDING | CONFIRMED | FAILED | EXPIRED
 ```
 
 ## REST API 사용
@@ -53,13 +53,13 @@ CREATED ──────────▶ PENDING ──────────
 
 ## 상태 설명
 
-| 상태 | 설명 | 다음 액션 |
-|------|------|----------|
-| `CREATED` | 결제 생성됨, 사용자 액션 대기 | 사용자가 결제 진행 |
-| `PENDING` | 트랜잭션 전송됨, 블록 확정 대기 | 대기 (보통 수 초) |
-| `CONFIRMED` | 결제 완료, 블록 확정됨 | 완료 처리 |
-| `FAILED` | 트랜잭션 실패 | 새 결제 생성 |
-| `EXPIRED` | 30분 초과로 만료 | 새 결제 생성 |
+| 상태        | 설명                            | 다음 액션          |
+| ----------- | ------------------------------- | ------------------ |
+| `CREATED`   | 결제 생성됨, 사용자 액션 대기   | 사용자가 결제 진행 |
+| `PENDING`   | 트랜잭션 전송됨, 블록 확정 대기 | 대기 (보통 수 초)  |
+| `CONFIRMED` | 결제 완료, 블록 확정됨          | 완료 처리          |
+| `FAILED`    | 트랜잭션 실패                   | 새 결제 생성       |
+| `EXPIRED`   | 30분 초과로 만료                | 새 결제 생성       |
 
 ## 상태별 응답 필드
 
@@ -143,17 +143,17 @@ CREATED ──────────▶ PENDING ──────────
 ```typescript
 const pollPaymentStatus = async (paymentId: string) => {
   while (true) {
-    const result = await client.getPaymentStatus(paymentId)
-    const status = result.data.status
+    const result = await client.getPaymentStatus(paymentId);
+    const status = result.data.status;
 
     if (status === 'CONFIRMED' || status === 'FAILED' || status === 'EXPIRED') {
-      return status
+      return status;
     }
 
     // 2초 대기 후 재시도
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
-}
+};
 ```
 
 ::: warning 폴링 주의사항

@@ -7,10 +7,11 @@
 Gasless 결제는 **ERC-2771 메타트랜잭션** 표준을 사용합니다. 사용자는 네이티브 토큰(MATIC, ETH 등) 없이도 ERC-20 토큰으로 결제할 수 있습니다.
 
 ::: tip 사용 사례
+
 - 신규 사용자 온보딩 (가스비 없이 첫 결제)
 - 더 나은 UX (서명만으로 결제 완료)
 - 가스비 변동성 제거
-:::
+  :::
 
 ## 일반 결제 vs Gasless 결제
 
@@ -66,13 +67,13 @@ submitted ────▶ pending ────▶ mined ────▶ confirme
                 failed
 ```
 
-| 상태 | 설명 |
-|------|------|
-| `submitted` | Relay 요청이 제출됨 |
-| `pending` | 트랜잭션 대기 중 |
-| `mined` | 트랜잭션이 블록에 포함됨 |
-| `confirmed` | 블록 확정 완료 |
-| `failed` | 트랜잭션 실패 |
+| 상태        | 설명                     |
+| ----------- | ------------------------ |
+| `submitted` | Relay 요청이 제출됨      |
+| `pending`   | 트랜잭션 대기 중         |
+| `mined`     | 트랜잭션이 블록에 포함됨 |
+| `confirmed` | 블록 확정 완료           |
+| `failed`    | 트랜잭션 실패            |
 
 ## 제한 사항
 
@@ -82,12 +83,12 @@ submitted ────▶ pending ────▶ mined ────▶ confirme
 
 ## 지원 체인
 
-| 체인 | Forwarder 주소 | 지원 |
-|------|----------------|------|
-| Polygon | `0x...` | ✓ |
-| Polygon Amoy | `0x...` | ✓ |
-| Ethereum | `0x...` | ✓ |
-| Sepolia | `0x...` | ✓ |
+| 체인         | Forwarder 주소 | 지원 |
+| ------------ | -------------- | ---- |
+| Polygon      | `0x...`        | ✓    |
+| Polygon Amoy | `0x...`        | ✓    |
+| Ethereum     | `0x...`        | ✓    |
+| Sepolia      | `0x...`        | ✓    |
 
 ## 다음 단계
 

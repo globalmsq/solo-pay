@@ -34,8 +34,8 @@ features:
 
 ## Supported Chains {#supported-chains}
 
-| Chain | Mainnet | Testnet |
-|-------|---------|---------|
-| Polygon | ✓ | Amoy |
-| Ethereum | ✓ | Sepolia |
-| BNB Chain | ✓ | Testnet |
+| Chain     | Mainnet | Testnet |
+| --------- | ------- | ------- |
+| Polygon   | ✓       | Amoy    |
+| Ethereum  | ✓       | Sepolia |
+| BNB Chain | ✓       | Testnet |

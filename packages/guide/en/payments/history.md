@@ -7,12 +7,12 @@ Retrieve payment history for a specific address.
 ```typescript
 // Get payment history
 const result = await client.getPaymentHistory({
-  chainId: 80002,           // Required: Chain ID
-  payer: '0x1234...',       // Required: Payer wallet address
-  limit: 10                 // Optional: Number of records
-})
+  chainId: 80002, // Required: Chain ID
+  payer: '0x1234...', // Required: Payer wallet address
+  limit: 10, // Optional: Number of records
+});
 
-console.log(result.data)  // Array of payments
+console.log(result.data); // Array of payments
 ```
 
 ## REST API Usage
@@ -24,11 +24,11 @@ curl -X GET "http://localhost:3001/payments/history?chainId=80002&payer=0x...&li
 
 ## Request Parameters
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `chainId` | `number` | ✓ | Blockchain network ID |
-| `payer` | `address` | ✓ | Payer wallet address |
-| `limit` | `number` | | Number of records to retrieve |
+| Field     | Type      | Required | Description                   |
+| --------- | --------- | -------- | ----------------------------- |
+| `chainId` | `number`  | ✓        | Blockchain network ID         |
+| `payer`   | `address` | ✓        | Payer wallet address          |
+| `limit`   | `number`  |          | Number of records to retrieve |
 
 ## Response
 
@@ -73,28 +73,28 @@ curl -X GET "http://localhost:3001/payments/history?chainId=80002&payer=0x...&li
 ## Usage Example
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay'
+import { MSQPayClient } from '@globalmsq/msqpay';
 
 const client = new MSQPayClient({
   apiKey: process.env.MSQPAY_API_KEY!,
-  environment: 'staging'
-})
+  environment: 'staging',
+});
 
 // Fetch payment history
 async function fetchPaymentHistory() {
   const result = await client.getPaymentHistory({
     chainId: 80002,
     payer: '0x1234567890abcdef...',
-    limit: 10
-  })
+    limit: 10,
+  });
 
   if (result.success) {
     for (const payment of result.data) {
-      console.log(`Payment ID: ${payment.paymentId}`)
-      console.log(`Amount: ${payment.amount} ${payment.tokenSymbol}`)
-      console.log(`Status: ${payment.status}`)
-      console.log(`Gasless: ${payment.isGasless ? 'Yes' : 'No'}`)
-      console.log('---')
+      console.log(`Payment ID: ${payment.paymentId}`);
+      console.log(`Amount: ${payment.amount} ${payment.tokenSymbol}`);
+      console.log(`Status: ${payment.status}`);
+      console.log(`Gasless: ${payment.isGasless ? 'Yes' : 'No'}`);
+      console.log('---');
     }
   }
 }
