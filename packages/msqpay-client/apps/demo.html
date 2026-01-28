@@ -1,472 +1,501 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MSQPay Demo</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    
-    .container {
-      background: white;
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      padding: 40px;
-      max-width: 500px;
-      width: 100%;
-    }
-    
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-    
-    .subtitle {
-      color: #6b7280;
-      text-align: center;
-      margin-bottom: 32px;
-      font-size: 14px;
-    }
-    
-    .status {
-      padding: 12px 16px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      font-size: 14px;
-      text-align: center;
-    }
-    
-    .status.info {
-      background: #eff6ff;
-      color: #1e40af;
-    }
-    
-    .status.success {
-      background: #f0fdf4;
-      color: #166534;
-    }
-    
-    .status.error {
-      background: #fef2f2;
-      color: #991b1b;
-    }
-    
-    .info-section {
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .info-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .info-item:last-child {
-      border-bottom: none;
-    }
-    
-    .info-label {
-      font-weight: 500;
-      color: #6b7280;
-    }
-    
-    .info-value {
-      color: #111827;
-      font-weight: 600;
-      word-break: break-all;
-    }
-    
-    .merchant-info {
-      background: #f0f9ff;
-      border: 1px solid #bae6fd;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .merchant-info h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 12px;
-    }
-    
-    .button-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    button {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-    
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    .btn-secondary {
-      background: #f3f4f6;
-      color: #111827;
-    }
-    
-    .btn-secondary:hover:not(:disabled) {
-      background: #e5e7eb;
-    }
-    
-    .btn-danger {
-      background: #ef4444;
-      color: white;
-    }
-    
-    .btn-danger:hover:not(:disabled) {
-      background: #dc2626;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>MSQPay Demo</h1>
-    <p class="subtitle">Direct and Gasless Payments</p>
-    
-    <div id="status" class="status info">Ready to connect</div>
-    
-    <!-- Merchant Info (shown before connect) -->
-    <div id="merchantInfo" class="merchant-info" style="display: none;">
-      <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 12px;">Merchant Information</h3>
-      <div class="info-item">
-        <span class="info-label">Network:</span>
-        <span class="info-value" id="merchantNetwork">-</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">Supported Tokens:</span>
-        <span class="info-value" id="merchantTokens">-</span>
-      </div>
-    </div>
-    
-    <div id="info" class="info-section" style="display: none;">
-      <div class="info-item">
-        <span class="info-label">Address:</span>
-        <span class="info-value" id="address">-</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">Network:</span>
-        <span class="info-value" id="network">-</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">Balance:</span>
-        <span class="info-value" id="balance">-</span>
-      </div>
-    </div>
-    
-    <div class="button-group">
-      <button id="connectBtn" class="btn-primary">Connect Wallet</button>
-      <button id="disconnectBtn" class="btn-secondary" style="display: none;">Disconnect</button>
-      <button id="payDirectBtn" class="btn-primary" style="display: none;" disabled>Direct Payment (100 TEST)</button>
-      <button id="payGaslessBtn" class="btn-primary" style="display: none;" disabled>Gasless Payment (100 TEST)</button>
-    </div>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MSQPay Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-  <!-- Load ethers.js from jsDelivr CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
-  
-  <!-- MetaMask SDK for mobile support (shows browser/mobile dialog) -->
-  <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
-  
-  <!-- Load MSQPay - wait for ethers to be ready -->
-  <script>
-    (function() {
-      function loadMSQPay() {
-        if (typeof ethers === 'undefined') {
-          setTimeout(loadMSQPay, 100);
-          return;
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+
+      .subtitle {
+        color: #6b7280;
+        text-align: center;
+        margin-bottom: 32px;
+        font-size: 14px;
+      }
+
+      .status {
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        text-align: center;
+      }
+
+      .status.info {
+        background: #eff6ff;
+        color: #1e40af;
+      }
+
+      .status.success {
+        background: #f0fdf4;
+        color: #166534;
+      }
+
+      .status.error {
+        background: #fef2f2;
+        color: #991b1b;
+      }
+
+      .info-section {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        font-weight: 500;
+        color: #6b7280;
+      }
+
+      .info-value {
+        color: #111827;
+        font-weight: 600;
+        word-break: break-all;
+      }
+
+      .merchant-info {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .merchant-info h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 12px;
+      }
+
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      button {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: #f3f4f6;
+        color: #111827;
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: #e5e7eb;
+      }
+
+      .btn-danger {
+        background: #ef4444;
+        color: white;
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: #dc2626;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>MSQPay Demo</h1>
+      <p class="subtitle">Direct and Gasless Payments</p>
+
+      <div id="status" class="status info">Ready to connect</div>
+
+      <!-- Merchant Info (shown before connect) -->
+      <div id="merchantInfo" class="merchant-info" style="display: none">
+        <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 12px">
+          Merchant Information
+        </h3>
+        <div class="info-item">
+          <span class="info-label">Network:</span>
+          <span class="info-value" id="merchantNetwork">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Supported Tokens:</span>
+          <span class="info-value" id="merchantTokens">-</span>
+        </div>
+      </div>
+
+      <div id="info" class="info-section" style="display: none">
+        <div class="info-item">
+          <span class="info-label">Address:</span>
+          <span class="info-value" id="address">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Network:</span>
+          <span class="info-value" id="network">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Balance:</span>
+          <span class="info-value" id="balance">-</span>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button id="connectBtn" class="btn-primary">Connect Wallet</button>
+        <button id="disconnectBtn" class="btn-secondary" style="display: none">Disconnect</button>
+        <button id="payDirectBtn" class="btn-primary" style="display: none" disabled>
+          Direct Payment (100 TEST)
+        </button>
+        <button id="payGaslessBtn" class="btn-primary" style="display: none" disabled>
+          Gasless Payment (100 TEST)
+        </button>
+      </div>
+    </div>
+
+    <!-- Load ethers.js from jsDelivr CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+
+    <!-- MetaMask SDK for mobile support (shows browser/mobile dialog) -->
+    <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+
+    <!-- Load MSQPay - wait for ethers to be ready -->
+    <script>
+      (function () {
+        function loadMSQPay() {
+          if (typeof ethers === 'undefined') {
+            setTimeout(loadMSQPay, 100);
+            return;
+          }
+
+          const scripts = ['../dist/msqpay.min.js', '../dist/msqpay.js'];
+          let loaded = false;
+
+          function loadScript(src, onError) {
+            if (loaded) return;
+            const script = document.createElement('script');
+            script.src = src;
+            script.onerror = onError;
+            script.onload = function () {
+              loaded = true;
+            };
+            document.head.appendChild(script);
+          }
+
+          loadScript(scripts[0], () => loadScript(scripts[1], () => {}));
         }
-        
-        const scripts = ['../dist/msqpay.min.js', '../dist/msqpay.js'];
-        let loaded = false;
-        
-        function loadScript(src, onError) {
-          if (loaded) return;
-          const script = document.createElement('script');
-          script.src = src;
-          script.onerror = onError;
-          script.onload = function() {
-            loaded = true;
-          };
-          document.head.appendChild(script);
+
+        loadMSQPay();
+      })();
+    </script>
+
+    <script>
+      const statusEl = document.getElementById('status');
+      const merchantInfoEl = document.getElementById('merchantInfo');
+      const merchantNetworkEl = document.getElementById('merchantNetwork');
+      const merchantTokensEl = document.getElementById('merchantTokens');
+      const infoEl = document.getElementById('info');
+      const addressEl = document.getElementById('address');
+      const networkEl = document.getElementById('network');
+      const balanceEl = document.getElementById('balance');
+      const connectBtn = document.getElementById('connectBtn');
+      const disconnectBtn = document.getElementById('disconnectBtn');
+      const payDirectBtn = document.getElementById('payDirectBtn');
+      const payGaslessBtn = document.getElementById('payGaslessBtn');
+
+      function updateStatus(message, type = 'info') {
+        statusEl.textContent = message;
+        statusEl.className = `status ${type}`;
+      }
+
+      function updateMerchantInfo(networkId, tokens) {
+        if (networkId) {
+          merchantNetworkEl.textContent = networkId;
+          merchantInfoEl.style.display = 'block';
         }
-        
-        loadScript(scripts[0], () => loadScript(scripts[1], () => {}));
-      }
-      
-      loadMSQPay();
-    })();
-  </script>
-  
-  <script>
-    const statusEl = document.getElementById('status');
-    const merchantInfoEl = document.getElementById('merchantInfo');
-    const merchantNetworkEl = document.getElementById('merchantNetwork');
-    const merchantTokensEl = document.getElementById('merchantTokens');
-    const infoEl = document.getElementById('info');
-    const addressEl = document.getElementById('address');
-    const networkEl = document.getElementById('network');
-    const balanceEl = document.getElementById('balance');
-    const connectBtn = document.getElementById('connectBtn');
-    const disconnectBtn = document.getElementById('disconnectBtn');
-    const payDirectBtn = document.getElementById('payDirectBtn');
-    const payGaslessBtn = document.getElementById('payGaslessBtn');
-    
-    function updateStatus(message, type = 'info') {
-      statusEl.textContent = message;
-      statusEl.className = `status ${type}`;
-    }
-    
-    function updateMerchantInfo(networkId, tokens) {
-      if (networkId) {
-        merchantNetworkEl.textContent = networkId;
-        merchantInfoEl.style.display = 'block';
-      }
-      
-      if (tokens && tokens.length > 0) {
-        merchantTokensEl.textContent = tokens.join(', ');
-        merchantInfoEl.style.display = 'block';
-      }
-    }
-    
-    function updateInfo() {
-      if (MSQPay.isConnected()) {
-        infoEl.style.display = 'block';
-        merchantInfoEl.style.display = 'none'; // Hide merchant info when connected
-        addressEl.textContent = MSQPay.getAddress()?.slice(0, 6) + '...' + MSQPay.getAddress()?.slice(-4) || '-';
-        networkEl.textContent = MSQPay.getChainId() || '-';
-        
-        // Get balance
-        const tokens = MSQPay.getSupportedTokens();
-        if (tokens.length > 0) {
-          MSQPay.getBalance(tokens[0])
-            .then(balance => {
-              balanceEl.textContent = `${balance} ${tokens[0]}`;
-            })
-            .catch(() => {
-              balanceEl.textContent = 'N/A';
-            });
+
+        if (tokens && tokens.length > 0) {
+          merchantTokensEl.textContent = tokens.join(', ');
+          merchantInfoEl.style.display = 'block';
         }
-        
-        connectBtn.style.display = 'none';
-        disconnectBtn.style.display = 'block';
-        payDirectBtn.style.display = 'block';
-        payGaslessBtn.style.display = 'block';
-        payDirectBtn.disabled = false;
-        payGaslessBtn.disabled = false;
-      } else {
-        infoEl.style.display = 'none';
-        merchantInfoEl.style.display = 'block'; // Show merchant info when not connected
-        connectBtn.style.display = 'block';
-        disconnectBtn.style.display = 'none';
-        payDirectBtn.style.display = 'none';
-        payGaslessBtn.style.display = 'none';
       }
-    }
-    
-    // Wait for MSQPay to be ready
-    function initMSQPay() {
-      if (typeof MSQPay === 'undefined') {
-        setTimeout(initMSQPay, 100);
-        return;
-      }
-      
-      MSQPay.init({
-        apiUrl: 'http://localhost:3001',
-        apiKey: '123'
-      }).then(() => {
-        const paymentMethods = MSQPay.getPaymentMethods();
-        const tokens = MSQPay.getSupportedTokens();
-        const networkId = MSQPay.getMerchantNetworkId();
-        console.log('Initialized. Payment methods:', paymentMethods);
-        console.log('Available tokens:', tokens);
-        
-        // Update merchant info
-        updateMerchantInfo(networkId, tokens);
-        
-        // Check if auto-reconnected
+
+      function updateInfo() {
         if (MSQPay.isConnected()) {
-          updateStatus('Wallet reconnected automatically', 'success');
-        } else if (tokens.length === 0) {
-          updateStatus('Initialized but no payment methods found. Check API connection.', 'error');
-        } else {
-          updateStatus('Initialized. Click "Connect Wallet" to start', 'info');
-        }
-        updateInfo();
-      }).catch(error => {
-        updateStatus('Initialization failed: ' + error.message, 'error');
-        console.error('Init error:', error);
-      });
-    }
-    
-    // Listen for ready event or check immediately
-    if (typeof MSQPay !== 'undefined') {
-      initMSQPay();
-    } else {
-      window.addEventListener('msqpay:ready', initMSQPay);
-      setTimeout(initMSQPay, 1000);
-    }
-    
-    // Connect
-    connectBtn.addEventListener('click', async () => {
-      try {
-        updateStatus('Connecting...', 'info');
-        const result = await MSQPay.connect();
-        updateStatus('Connected successfully!', 'success');
-        updateInfo();
-      } catch (error) {
-        updateStatus('Connection failed: ' + error.message, 'error');
-      }
-    });
-    
-    // Disconnect
-    disconnectBtn.addEventListener('click', async () => {
-      try {
-        await MSQPay.disconnect();
-        updateStatus('Disconnected', 'info');
-        updateInfo();
-      } catch (error) {
-        updateStatus('Disconnect failed: ' + error.message, 'error');
-      }
-    });
-    
-    // Listen for disconnect event from wallet extension
-    window.addEventListener('msqpay:disconnected', () => {
-      updateStatus('Wallet disconnected', 'info');
-      updateInfo();
-    });
-    
-    // Listen for account changed event
-    window.addEventListener('msqpay:accountChanged', (event) => {
-      updateStatus('Account changed: ' + event.detail.address.slice(0, 6) + '...' + event.detail.address.slice(-4), 'info');
-      updateInfo();
-    });
+          infoEl.style.display = 'block';
+          merchantInfoEl.style.display = 'none'; // Hide merchant info when connected
+          const address = MSQPay.getAddress();
+          addressEl.textContent = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '-';
+          networkEl.textContent = MSQPay.getChainId() || '-';
 
-    // Listen for auto-reconnect event
-    window.addEventListener('msqpay:connected', (event) => {
-      updateStatus('Wallet reconnected automatically', 'success');
-      updateInfo();
-    });
-    
-    // Pay Direct
-    payDirectBtn.addEventListener('click', async () => {
-      try {
-        const paymentMethods = MSQPay.getPaymentMethods();
-        const tokens = MSQPay.getSupportedTokens();
-        
-        console.log('Payment methods:', paymentMethods);
-        console.log('Supported tokens:', tokens);
-        
-        if (tokens.length === 0) {
-          updateStatus('No payment methods available. Please check API connection and API key.', 'error');
-          console.error('No payment methods found. Payment methods array:', paymentMethods);
+          // Get balance
+          const tokens = MSQPay.getSupportedTokens();
+          if (tokens.length > 0) {
+            MSQPay.getBalance(tokens[0])
+              .then((balance) => {
+                balanceEl.textContent = `${balance} ${tokens[0]}`;
+              })
+              .catch(() => {
+                balanceEl.textContent = 'N/A';
+              });
+          }
+
+          connectBtn.style.display = 'none';
+          disconnectBtn.style.display = 'block';
+          payDirectBtn.style.display = 'block';
+          payGaslessBtn.style.display = 'block';
+          payDirectBtn.disabled = false;
+          payGaslessBtn.disabled = false;
+        } else {
+          infoEl.style.display = 'none';
+          merchantInfoEl.style.display = 'block'; // Show merchant info when not connected
+          connectBtn.style.display = 'block';
+          disconnectBtn.style.display = 'none';
+          payDirectBtn.style.display = 'none';
+          payGaslessBtn.style.display = 'none';
+        }
+      }
+
+      // Wait for MSQPay to be ready
+      function initMSQPay() {
+        if (typeof MSQPay === 'undefined') {
+          setTimeout(initMSQPay, 100);
           return;
         }
-        
-        updateStatus('Processing direct payment...', 'info');
-        payDirectBtn.disabled = true;
-        payGaslessBtn.disabled = true;
-        
-        const result = await MSQPay.createPayment({
-          amount: 100,
-          currency: tokens[0],
-          showDialog: true
-        });
-        
-        updateStatus('Payment successful! TX: ' + result.txHash.slice(0, 10) + '...', 'success');
-        updateInfo();
-        payDirectBtn.disabled = false;
-        payGaslessBtn.disabled = false;
-      } catch (error) {
-        updateStatus('Payment failed: ' + error.message, 'error');
-        payDirectBtn.disabled = false;
-        payGaslessBtn.disabled = false;
+
+        MSQPay.init({
+          apiUrl: 'http://localhost:3001',
+          apiKey: '123',
+        })
+          .then(() => {
+            const paymentMethods = MSQPay.getPaymentMethods();
+            const tokens = MSQPay.getSupportedTokens();
+            const networkId = MSQPay.getMerchantNetworkId();
+            console.log('Initialized. Payment methods:', paymentMethods);
+            console.log('Available tokens:', tokens);
+
+            // Update merchant info
+            updateMerchantInfo(networkId, tokens);
+
+            // Check if auto-reconnected
+            if (MSQPay.isConnected()) {
+              updateStatus('Wallet reconnected automatically', 'success');
+            } else if (tokens.length === 0) {
+              updateStatus(
+                'Initialized but no payment methods found. Check API connection.',
+                'error'
+              );
+            } else {
+              updateStatus('Initialized. Click "Connect Wallet" to start', 'info');
+            }
+            updateInfo();
+          })
+          .catch((error) => {
+            updateStatus('Initialization failed: ' + error.message, 'error');
+            console.error('Init error:', error);
+          });
       }
-    });
-    
-    // Pay Gasless
-    payGaslessBtn.addEventListener('click', async () => {
-      try {
-        const paymentMethods = MSQPay.getPaymentMethods();
-        const tokens = MSQPay.getSupportedTokens();
-        
-        console.log('Payment methods:', paymentMethods);
-        console.log('Supported tokens:', tokens);
-        
-        if (tokens.length === 0) {
-          updateStatus('No payment methods available. Please check API connection and API key.', 'error');
-          console.error('No payment methods found. Payment methods array:', paymentMethods);
-          return;
+
+      // Listen for ready event or check immediately
+      if (typeof MSQPay !== 'undefined') {
+        initMSQPay();
+      } else {
+        window.addEventListener('msqpay:ready', initMSQPay);
+        setTimeout(initMSQPay, 1000);
+      }
+
+      // Connect
+      connectBtn.addEventListener('click', async () => {
+        try {
+          updateStatus('Connecting...', 'info');
+          const result = await MSQPay.connect();
+          updateStatus('Connected successfully!', 'success');
+          updateInfo();
+        } catch (error) {
+          updateStatus('Connection failed: ' + error.message, 'error');
         }
-        
-        updateStatus('Processing gasless payment...', 'info');
-        payDirectBtn.disabled = true;
-        payGaslessBtn.disabled = true;
-        
-        const result = await MSQPay.createGaslessPayment({
-          amount: 100,
-          currency: tokens[0],
-          showDialog: true
-        });
-        
-        updateStatus('Gasless payment successful! TX: ' + result.txHash.slice(0, 10) + '...', 'success');
+      });
+
+      // Disconnect
+      disconnectBtn.addEventListener('click', async () => {
+        try {
+          await MSQPay.disconnect();
+          updateStatus('Disconnected', 'info');
+          updateInfo();
+        } catch (error) {
+          updateStatus('Disconnect failed: ' + error.message, 'error');
+        }
+      });
+
+      // Listen for disconnect event from wallet extension
+      window.addEventListener('msqpay:disconnected', () => {
+        updateStatus('Wallet disconnected', 'info');
         updateInfo();
-        payDirectBtn.disabled = false;
-        payGaslessBtn.disabled = false;
-      } catch (error) {
-        updateStatus('Gasless payment failed: ' + error.message, 'error');
-        payDirectBtn.disabled = false;
-        payGaslessBtn.disabled = false;
-      }
-    });
-  </script>
-</body>
+      });
+
+      // Listen for account changed event
+      window.addEventListener('msqpay:accountChanged', (event) => {
+        updateStatus(
+          'Account changed: ' +
+            event.detail.address.slice(0, 6) +
+            '...' +
+            event.detail.address.slice(-4),
+          'info'
+        );
+        updateInfo();
+      });
+
+      // Listen for auto-reconnect event
+      window.addEventListener('msqpay:connected', (event) => {
+        updateStatus('Wallet reconnected automatically', 'success');
+        updateInfo();
+      });
+
+      // Pay Direct
+      payDirectBtn.addEventListener('click', async () => {
+        try {
+          const paymentMethods = MSQPay.getPaymentMethods();
+          const tokens = MSQPay.getSupportedTokens();
+
+          console.log('Payment methods:', paymentMethods);
+          console.log('Supported tokens:', tokens);
+
+          if (tokens.length === 0) {
+            updateStatus(
+              'No payment methods available. Please check API connection and API key.',
+              'error'
+            );
+            console.error('No payment methods found. Payment methods array:', paymentMethods);
+            return;
+          }
+
+          updateStatus('Processing direct payment...', 'info');
+          payDirectBtn.disabled = true;
+          payGaslessBtn.disabled = true;
+
+          const result = await MSQPay.createPayment({
+            amount: 100,
+            currency: tokens[0],
+            showDialog: true,
+          });
+
+          updateStatus('Payment successful! TX: ' + result.txHash.slice(0, 10) + '...', 'success');
+          updateInfo();
+          payDirectBtn.disabled = false;
+          payGaslessBtn.disabled = false;
+        } catch (error) {
+          updateStatus('Payment failed: ' + error.message, 'error');
+          payDirectBtn.disabled = false;
+          payGaslessBtn.disabled = false;
+        }
+      });
+
+      // Pay Gasless
+      payGaslessBtn.addEventListener('click', async () => {
+        try {
+          const paymentMethods = MSQPay.getPaymentMethods();
+          const tokens = MSQPay.getSupportedTokens();
+
+          console.log('Payment methods:', paymentMethods);
+          console.log('Supported tokens:', tokens);
+
+          if (tokens.length === 0) {
+            updateStatus(
+              'No payment methods available. Please check API connection and API key.',
+              'error'
+            );
+            console.error('No payment methods found. Payment methods array:', paymentMethods);
+            return;
+          }
+
+          updateStatus('Processing gasless payment...', 'info');
+          payDirectBtn.disabled = true;
+          payGaslessBtn.disabled = true;
+
+          const result = await MSQPay.createGaslessPayment({
+            amount: 100,
+            currency: tokens[0],
+            showDialog: true,
+          });
+
+          updateStatus(
+            'Gasless payment successful! TX: ' + result.txHash.slice(0, 10) + '...',
+            'success'
+          );
+          updateInfo();
+          payDirectBtn.disabled = false;
+          payGaslessBtn.disabled = false;
+        } catch (error) {
+          updateStatus('Gasless payment failed: ' + error.message, 'error');
+          payDirectBtn.disabled = false;
+          payGaslessBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
 </html>

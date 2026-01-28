@@ -445,7 +445,8 @@ export class MSQPay {
         // Fallback: direct merchant_key in response
         this.merchantKey = data.merchant_key;
       }
-    } catch {
+    } catch (error: unknown) {
+      console.warn('MSQPay: Failed to fetch merchant info. Please check API URL and key.', error);
       // Silent fail - not critical for initialization
     }
   }
@@ -503,7 +504,8 @@ export class MSQPay {
             this.merchantNetworkId;
         }
       }
-    } catch {
+    } catch (error: unknown) {
+      console.warn('MSQPay: Failed to fetch payment methods. Please check API URL and key.', error);
       this.paymentMethods = [];
     }
   }
@@ -529,9 +531,9 @@ export class MSQPay {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: `0x${networkId.toString(16)}` }],
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if (error.code === 4902) {
+    } catch (error: unknown) {
+      const err = error as { code?: number; message?: string };
+      if (err.code === 4902) {
         // Network not found, add it
         const networkConfig = this.getNetworkConfig(networkId);
         if (!networkConfig) {
@@ -782,9 +784,9 @@ export class MSQPay {
         payment,
         txHash: tx.hash,
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if (dialog) dialog.showError(error?.message || String(error));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (dialog) dialog.showError(message);
       throw error;
     }
   }
@@ -1366,9 +1368,9 @@ export class MSQPay {
         relayRequestId,
         gasless: true,
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if (dialog) dialog.showError(error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (dialog) dialog.showError(message);
       throw error;
     }
   }

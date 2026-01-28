@@ -137,8 +137,8 @@ export class WalletDetector {
         // Fallback to extension
         // IMPORTANT: Check providers array FIRST when multiple wallets installed
         if (Array.isArray(window.ethereum?.providers)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const mmProvider = window.ethereum.providers.find(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic wallet provider types
             (p: any) => p.isMetaMask && !p.isTrust && !p.isTrustWallet
           );
           if (mmProvider) {
@@ -171,8 +171,8 @@ export class WalletDetector {
 
         // Check providers array FIRST when multiple wallets installed
         if (Array.isArray(window.ethereum?.providers)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const twProvider = window.ethereum.providers.find(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic wallet provider types
             (p: any) => (p.isTrust || p.isTrustWallet) && !p.isMetaMask
           );
           if (twProvider) {
