@@ -35,7 +35,10 @@ export default defineConfig(
     },
     rules: {
       'no-console': ['warn', { allow: ['error', 'warn'] }],
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/no-extraneous-class': 'off',
       'no-case-declarations': 'off',
       '@typescript-eslint/no-explicit-any': 'warn', // CDN globals require any

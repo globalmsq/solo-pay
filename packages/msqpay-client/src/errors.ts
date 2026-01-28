@@ -6,7 +6,10 @@
  * Base error class for MSQPay SDK
  */
 export class MSQPayError extends Error {
-  constructor(message: string, public code?: string | number) {
+  constructor(
+    message: string,
+    public code?: string | number
+  ) {
     super(message);
     this.name = this.constructor.name;
     Error.captureStackTrace?.(this, this.constructor);
@@ -71,7 +74,11 @@ export class PaymentError extends MSQPayError {
  * ```
  */
 export class NetworkError extends MSQPayError {
-  constructor(message: string, public chainId?: number, code?: string | number) {
+  constructor(
+    message: string,
+    public chainId?: number,
+    code?: string | number
+  ) {
     super(message, code);
   }
 }
@@ -86,7 +93,11 @@ export class NetworkError extends MSQPayError {
  * ```
  */
 export class APIError extends MSQPayError {
-  constructor(message: string, public statusCode?: number, code?: string | number) {
+  constructor(
+    message: string,
+    public statusCode?: number,
+    code?: string | number
+  ) {
     super(message, code);
   }
 }

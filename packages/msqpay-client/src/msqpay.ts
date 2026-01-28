@@ -77,7 +77,10 @@ export class MSQPay {
     // Get ethers from global scope (loaded via CDN or external)
     this.ethers = typeof ethers !== 'undefined' ? ethers : null;
     if (!this.ethers) {
-      throw new WalletConnectionError('ethers.js is required. Please load it before MSQPay.', 'ETHERS_NOT_LOADED');
+      throw new WalletConnectionError(
+        'ethers.js is required. Please load it before MSQPay.',
+        'ETHERS_NOT_LOADED'
+      );
     }
   }
 
@@ -204,14 +207,14 @@ export class MSQPay {
       }
 
       // Check if wallet is already connected (eth_accounts doesn't prompt)
-      const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+      const accounts = (await ethereum.request({ method: 'eth_accounts' })) as string[];
 
       if (!accounts || accounts.length === 0) {
         return; // Wallet not connected
       }
 
       // Get chain ID
-      const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+      const chainIdHex = (await ethereum.request({ method: 'eth_chainId' })) as string;
       this.currentChainId = parseInt(chainIdHex, 16);
 
       // Switch network if needed
@@ -282,7 +285,9 @@ export class MSQPay {
     this.walletDetector.mmsdk = this.mmsdk;
 
     // Get provider
-    const ethereum = this.walletDetector.getProviderForWallet(selectedWalletType) as EIP1193Provider | null;
+    const ethereum = this.walletDetector.getProviderForWallet(
+      selectedWalletType
+    ) as EIP1193Provider | null;
     if (!ethereum) {
       throw new WalletNotFoundError(selectedWalletType);
     }
@@ -290,22 +295,19 @@ export class MSQPay {
     // Request accounts
     let accounts: string[];
     try {
-      accounts = await ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+      accounts = (await ethereum.request({ method: 'eth_requestAccounts' })) as string[];
     } catch (error: unknown) {
       const err = error as { code?: number; message?: string };
       if (err?.code === ERROR_CODES.WALLET_REQUEST_PENDING) {
         await new Promise((resolve) => setTimeout(resolve, TIMING.WALLET_REQUEST_RETRY_DELAY));
-        accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+        accounts = (await ethereum.request({ method: 'eth_accounts' })) as string[];
         if (!accounts || accounts.length === 0) {
           throw new WalletConnectionError('Please approve the connection request in your wallet');
         }
       } else if (err?.code === ERROR_CODES.USER_REJECTED) {
         throw new WalletConnectionError('Connection rejected by user.', ERROR_CODES.USER_REJECTED);
       } else {
-        throw new WalletConnectionError(
-          err?.message || 'Failed to connect wallet',
-          err?.code
-        );
+        throw new WalletConnectionError(err?.message || 'Failed to connect wallet', err?.code);
       }
     }
 
@@ -314,7 +316,7 @@ export class MSQPay {
     }
 
     // Get chain ID
-    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+    const chainIdHex = (await ethereum.request({ method: 'eth_chainId' })) as string;
     this.currentChainId = parseInt(chainIdHex, 16);
 
     // Switch network if needed
@@ -533,7 +535,11 @@ export class MSQPay {
         // Network not found, add it
         const networkConfig = this.getNetworkConfig(networkId);
         if (!networkConfig) {
-          throw new NetworkError(`Network ${networkId} is not supported`, networkId, 'UNSUPPORTED_NETWORK');
+          throw new NetworkError(
+            `Network ${networkId} is not supported`,
+            networkId,
+            'UNSUPPORTED_NETWORK'
+          );
         }
 
         await ethereum.request({
@@ -546,7 +552,7 @@ export class MSQPay {
     }
 
     // Update chain ID
-    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+    const chainIdHex = (await ethereum.request({ method: 'eth_chainId' })) as string;
     this.currentChainId = parseInt(chainIdHex, 16);
   }
 
@@ -657,7 +663,11 @@ export class MSQPay {
    * });
    * ```
    */
-  async createPayment({ amount, currency, showDialog = true }: CreatePaymentOptions): Promise<PaymentResult> {
+  async createPayment({
+    amount,
+    currency,
+    showDialog = true,
+  }: CreatePaymentOptions): Promise<PaymentResult> {
     let dialog = null;
 
     try {
@@ -711,7 +721,10 @@ export class MSQPay {
       const amountWei = this.ethers.parseUnits(String(amount), decimals);
 
       if (balanceWei < amountWei) {
-        throw new PaymentError(`Insufficient balance. You have ${balance} ${currency}`, 'INSUFFICIENT_BALANCE');
+        throw new PaymentError(
+          `Insufficient balance. You have ${balance} ${currency}`,
+          'INSUFFICIENT_BALANCE'
+        );
       }
 
       // Step 2: Create payment
@@ -779,7 +792,13 @@ export class MSQPay {
   /**
    * Request create payment
    */
-  async requestCreatePayment({ amount, currency }: { amount: number | string; currency: string }): Promise<Payment> {
+  async requestCreatePayment({
+    amount,
+    currency,
+  }: {
+    amount: number | string;
+    currency: string;
+  }): Promise<Payment> {
     if (!this.config.apiUrl || !this.config.apiKey) {
       throw new APIError('API URL and API key are required', undefined, 'API_CONFIG_MISSING');
     }
@@ -790,10 +809,10 @@ export class MSQPay {
         .map((pm) => pm.token?.symbol)
         .filter(Boolean)
         .join(', ');
-        throw new PaymentError(
-          `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`,
-          'PAYMENT_METHOD_NOT_FOUND'
-        );
+      throw new PaymentError(
+        `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`,
+        'PAYMENT_METHOD_NOT_FOUND'
+      );
     }
 
     const { token, chain } = paymentMethod;
@@ -803,7 +822,11 @@ export class MSQPay {
 
     const merchantId = this.merchantKey || this.config.merchantId;
     if (!merchantId) {
-      throw new APIError('Merchant ID is required. Please ensure merchant info is loaded.', undefined, 'MERCHANT_ID_MISSING');
+      throw new APIError(
+        'Merchant ID is required. Please ensure merchant info is loaded.',
+        undefined,
+        'MERCHANT_ID_MISSING'
+      );
     }
 
     // Get chainId from chain object (API returns network_id)
@@ -946,7 +969,10 @@ export class MSQPay {
 
     const paymentMethod = this.paymentMethods.find((pm) => pm.token?.symbol === currency);
     if (!paymentMethod) {
-      throw new PaymentError(`Payment method for ${currency} not found`, 'PAYMENT_METHOD_NOT_FOUND');
+      throw new PaymentError(
+        `Payment method for ${currency} not found`,
+        'PAYMENT_METHOD_NOT_FOUND'
+      );
     }
 
     if (!paymentMethod.token?.address) {
@@ -1034,7 +1060,11 @@ export class MSQPay {
    */
   async ensureCorrectNetwork(): Promise<void> {
     if (!this.merchantNetworkId) {
-      throw new NetworkError('Merchant network not configured', undefined, 'NETWORK_NOT_CONFIGURED');
+      throw new NetworkError(
+        'Merchant network not configured',
+        undefined,
+        'NETWORK_NOT_CONFIGURED'
+      );
     }
     if (!this.isCorrectNetwork()) {
       await this.switchNetwork(this.merchantNetworkId);
@@ -1115,7 +1145,13 @@ export class MSQPay {
    * });
    * ```
    */
-  async createGaslessPayment({ amount, currency, showDialog = true, deadline, gasLimit }: CreateGaslessPaymentOptions): Promise<PaymentResult> {
+  async createGaslessPayment({
+    amount,
+    currency,
+    showDialog = true,
+    deadline,
+    gasLimit,
+  }: CreateGaslessPaymentOptions): Promise<PaymentResult> {
     let dialog = null;
 
     try {
@@ -1169,7 +1205,10 @@ export class MSQPay {
       const amountWei = this.ethers.parseUnits(String(amount), decimals);
 
       if (balanceWei < amountWei) {
-        throw new PaymentError(`Insufficient balance. You have ${balance} ${currency}`, 'INSUFFICIENT_BALANCE');
+        throw new PaymentError(
+          `Insufficient balance. You have ${balance} ${currency}`,
+          'INSUFFICIENT_BALANCE'
+        );
       }
 
       // Step 2: Create payment
@@ -1180,7 +1219,10 @@ export class MSQPay {
         throw new PaymentError('Gateway address not configured', 'GATEWAY_NOT_CONFIGURED');
       }
       if (!payment.forwarderAddress) {
-        throw new PaymentError('Forwarder address not configured. Gasless payments may not be supported.', 'FORWARDER_NOT_CONFIGURED');
+        throw new PaymentError(
+          'Forwarder address not configured. Gasless payments may not be supported.',
+          'FORWARDER_NOT_CONFIGURED'
+        );
       }
 
       const tokenAddress = payment.tokenAddress || token.address;
@@ -1226,7 +1268,11 @@ export class MSQPay {
       ]);
 
       if (!this.merchantNetworkId) {
-        throw new NetworkError('Merchant network ID not configured', undefined, 'NETWORK_NOT_CONFIGURED');
+        throw new NetworkError(
+          'Merchant network ID not configured',
+          undefined,
+          'NETWORK_NOT_CONFIGURED'
+        );
       }
       const domain = {
         name: 'MSQForwarder',
@@ -1337,7 +1383,11 @@ export class MSQPay {
    * @throws {APIError} If API request fails
    * @throws {PaymentError} If request validation fails
    */
-  async submitGaslessPayment(paymentId: string, forwarderAddress: string, forwardRequest: ForwardRequest): Promise<RelayResponse> {
+  async submitGaslessPayment(
+    paymentId: string,
+    forwarderAddress: string,
+    forwardRequest: ForwardRequest
+  ): Promise<RelayResponse> {
     if (!this.config.apiUrl || !this.config.apiKey) {
       throw new APIError('API URL and API key are required');
     }

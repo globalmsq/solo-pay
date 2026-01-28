@@ -27,7 +27,9 @@ export class WalletDetector {
   initEIP6963(): void {
     if (typeof window === 'undefined') return;
 
-    window.addEventListener('eip6963:announceProvider', ((event: CustomEvent<EIP6963ProviderDetail>) => {
+    window.addEventListener('eip6963:announceProvider', ((
+      event: CustomEvent<EIP6963ProviderDetail>
+    ) => {
       this.detectedProviders.push(event.detail);
     }) as EventListener);
 
@@ -136,7 +138,9 @@ export class WalletDetector {
         // IMPORTANT: Check providers array FIRST when multiple wallets installed
         if (Array.isArray(window.ethereum?.providers)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const mmProvider = window.ethereum.providers.find((p: any) => p.isMetaMask && !p.isTrust && !p.isTrustWallet);
+          const mmProvider = window.ethereum.providers.find(
+            (p: any) => p.isMetaMask && !p.isTrust && !p.isTrustWallet
+          );
           if (mmProvider) {
             return mmProvider;
           }
@@ -168,7 +172,9 @@ export class WalletDetector {
         // Check providers array FIRST when multiple wallets installed
         if (Array.isArray(window.ethereum?.providers)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const twProvider = window.ethereum.providers.find((p: any) => (p.isTrust || p.isTrustWallet) && !p.isMetaMask);
+          const twProvider = window.ethereum.providers.find(
+            (p: any) => (p.isTrust || p.isTrustWallet) && !p.isMetaMask
+          );
           if (twProvider) {
             return twProvider;
           }

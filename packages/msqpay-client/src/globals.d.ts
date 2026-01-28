@@ -29,10 +29,12 @@ declare namespace MetaMaskSDK {
 // Window extensions
 interface Window {
   ethers?: typeof ethers;
-  MetaMaskSDK?: typeof MetaMaskSDK | {
-    MetaMaskSDK?: typeof MetaMaskSDK;
-    default?: typeof MetaMaskSDK;
-  };
+  MetaMaskSDK?:
+    | typeof MetaMaskSDK
+    | {
+        MetaMaskSDK?: typeof MetaMaskSDK;
+        default?: typeof MetaMaskSDK;
+      };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   MSQPay?: any; // MSQPay instance - defined in index.ts
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
