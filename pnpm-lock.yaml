@@ -241,6 +241,12 @@ importers:
       terser-webpack-plugin:
         specifier: ^5.3.10
         version: 5.3.16(webpack@5.104.1)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.4(typescript@5.9.3)(webpack@5.104.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
       webpack:
         specifier: ^5.90.0
         version: 5.104.1(webpack-cli@5.1.4)
@@ -7755,6 +7761,10 @@ packages:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
 
+  source-map@0.7.6:
+    resolution: {integrity: sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ==}
+    engines: {node: '>= 12'}
+
   split-ca@1.0.1:
     resolution: {integrity: sha512-Q5thBSxp5t8WPTTJQS59LrGqOZqOsrhDGDVm8azCqIBjSBd7nd9o2PM+mDulQQkh8h//4U6hFZnc/mul8t5pWQ==}
 
@@ -8111,6 +8121,13 @@ packages:
 
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
+
+  ts-loader@9.5.4:
+    resolution: {integrity: sha512-nCz0rEwunlTZiy6rXFByQU1kVVpCIgUpc/psFiKVrUwrizdnIbRFu8w7bxhUF0X613DYwT4XzrZHpVyMe758hQ==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      typescript: '*'
+      webpack: ^5.0.0
 
   ts-node@10.9.2:
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
@@ -18833,6 +18850,8 @@ snapshots:
 
   source-map@0.6.1: {}
 
+  source-map@0.7.6: {}
+
   split-ca@1.0.1: {}
 
   split-on-first@1.1.0: {}
@@ -19230,6 +19249,16 @@ snapshots:
       typescript: 5.9.3
 
   ts-interface-checker@0.1.13: {}
+
+  ts-loader@9.5.4(typescript@5.9.3)(webpack@5.104.1):
+    dependencies:
+      chalk: 4.1.2
+      enhanced-resolve: 5.18.4
+      micromatch: 4.0.8
+      semver: 7.7.3
+      source-map: 0.7.6
+      typescript: 5.9.3
+      webpack: 5.104.1(webpack-cli@5.1.4)
 
   ts-node@10.9.2(@types/node@20.19.29)(typescript@5.9.3):
     dependencies:

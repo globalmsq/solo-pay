@@ -2,22 +2,41 @@
  * Progress Dialog Component - Clean Implementation (No jQuery)
  */
 
-import { BLOCK_EXPLORERS, GASLESS_STEPS } from './constants.js';
+import { BLOCK_EXPLORERS, GASLESS_STEPS, PaymentStep } from './constants';
+
+export interface ProgressDialogOptions {
+  amount: number | string;
+  currency: string;
+  steps: Record<string, PaymentStep>;
+  networkId?: number;
+}
+
+export interface UpdateStepExtra {
+  txHash?: string;
+}
 
 export class ProgressDialog {
-  constructor({ amount, currency, steps, networkId }) {
+  amount: number | string;
+  currency: string;
+  steps: Record<string, PaymentStep>;
+  networkId?: number;
+  isGasless: boolean;
+  dialog: HTMLElement | null;
+
+  constructor({ amount, currency, steps, networkId }: ProgressDialogOptions) {
     this.amount = amount;
     this.currency = currency;
     this.steps = steps;
     this.networkId = networkId;
     // Check if steps is GASLESS_STEPS by comparing structure
-    this.isGasless = steps === GASLESS_STEPS || (steps && steps.SIGNING && steps.RELAYING);
+    this.isGasless = steps === GASLESS_STEPS || !!(steps && steps.SIGNING && steps.RELAYING);
+    this.dialog = null;
 
     this.createDialog();
     this.injectStyles();
   }
 
-  createDialog() {
+  createDialog(): void {
     const existing = document.getElementById('msqpay-progress-dialog');
     if (existing) existing.remove();
 
@@ -82,33 +101,35 @@ export class ProgressDialog {
     document.body.insertAdjacentHTML('beforeend', html);
     this.dialog = document.getElementById('msqpay-progress-dialog');
 
-    const closeBtn = this.dialog.querySelector('.msqpay-progress-close');
-    closeBtn.addEventListener('click', () => this.remove());
+    const closeBtn = this.dialog?.querySelector('.msqpay-progress-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.remove());
+    }
   }
 
-  show() {
+  show(): void {
     if (this.dialog) {
       this.dialog.style.display = 'flex';
     }
   }
 
-  hide() {
+  hide(): void {
     if (this.dialog) {
       this.dialog.style.display = 'none';
     }
   }
 
-  remove() {
+  remove(): void {
     if (this.dialog && this.dialog.parentNode) {
       this.dialog.remove();
     }
   }
 
-  updateStep(stepInfo, extra = {}) {
+  updateStep(stepInfo: PaymentStep, extra: UpdateStepExtra = {}): void {
     if (!this.dialog) return;
 
     const percent = (stepInfo.step / stepInfo.total) * 100;
-    const progressFill = this.dialog.querySelector('.msqpay-progress-fill');
+    const progressFill = this.dialog.querySelector('.msqpay-progress-fill') as HTMLElement;
     const stepNumber = this.dialog.querySelector('.msqpay-progress-step-number');
     const stepMessage = this.dialog.querySelector('.msqpay-progress-step-message');
     const stepItems = this.dialog.querySelectorAll('.msqpay-progress-step-item');
@@ -118,7 +139,7 @@ export class ProgressDialog {
     if (stepMessage) stepMessage.textContent = stepInfo.message;
 
     stepItems.forEach((item) => {
-      const itemStep = parseInt(item.getAttribute('data-step'));
+      const itemStep = parseInt(item.getAttribute('data-step') || '0');
       const icon = item.querySelector('.msqpay-progress-step-icon');
       item.classList.remove('active', 'completed');
 
@@ -133,8 +154,8 @@ export class ProgressDialog {
 
     if (extra.txHash && this.isValidTxHash(extra.txHash)) {
       const explorerUrl = this.getExplorerTxUrl(extra.txHash);
-      const txHashEl = this.dialog.querySelector('.msqpay-progress-tx-hash');
-      const txLink = this.dialog.querySelector('.msqpay-progress-tx-link');
+      const txHashEl = this.dialog.querySelector('.msqpay-progress-tx-hash') as HTMLElement;
+      const txLink = this.dialog.querySelector('.msqpay-progress-tx-link') as HTMLAnchorElement;
 
       if (txHashEl && txLink) {
         txLink.textContent = extra.txHash.slice(0, 10) + '...' + extra.txHash.slice(-8);
@@ -146,12 +167,12 @@ export class ProgressDialog {
     }
   }
 
-  showSuccess(txHash) {
+  showSuccess(txHash: string): void {
     if (!this.dialog) return;
 
     const stepItems = this.dialog.querySelectorAll('.msqpay-progress-step-item');
-    const progressFill = this.dialog.querySelector('.msqpay-progress-fill');
-    const result = this.dialog.querySelector('.msqpay-progress-result');
+    const progressFill = this.dialog.querySelector('.msqpay-progress-fill') as HTMLElement;
+    const result = this.dialog.querySelector('.msqpay-progress-result') as HTMLElement;
 
     stepItems.forEach((item) => {
       item.classList.add('completed');
@@ -172,10 +193,10 @@ export class ProgressDialog {
     }
   }
 
-  showError(message) {
+  showError(message: string): void {
     if (!this.dialog) return;
 
-    const result = this.dialog.querySelector('.msqpay-progress-result');
+    const result = this.dialog.querySelector('.msqpay-progress-result') as HTMLElement;
     if (result) {
       result.className = 'msqpay-progress-result error';
       result.innerHTML = '<strong>Payment Failed</strong><br>' + this.escapeHtml(message);
@@ -183,7 +204,7 @@ export class ProgressDialog {
     }
   }
 
-  getExplorerTxUrl(txHash) {
+  getExplorerTxUrl(txHash: string): string | null {
     if (!this.networkId || !txHash || !this.isValidTxHash(txHash)) {
       return null;
     }
@@ -194,18 +215,18 @@ export class ProgressDialog {
     return `${explorer}/tx/${txHash}`;
   }
 
-  isValidTxHash(hash) {
+  isValidTxHash(hash: string): boolean {
     return typeof hash === 'string' && /^0x[a-fA-F0-9]{64}$/.test(hash);
   }
 
-  escapeHtml(text) {
+  escapeHtml(text: string): string {
     if (typeof text !== 'string') return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  injectStyles() {
+  injectStyles(): void {
     if (document.getElementById('msqpay-progress-styles')) return;
 
     const style = document.createElement('style');

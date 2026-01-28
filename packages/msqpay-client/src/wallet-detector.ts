@@ -2,9 +2,19 @@
  * Wallet Detection - Clean implementation
  */
 
-import { WALLET_TYPES } from './constants.js';
+import { WALLET_TYPES, WalletType } from './constants';
+import type { EIP1193Provider } from './types';
+
+export interface Wallet {
+  type: WalletType;
+  name: string;
+  icon: string;
+}
 
 export class WalletDetector {
+  detectedProviders: EIP6963ProviderDetail[];
+  mmsdk: MetaMaskSDK.MetaMaskSDK | null;
+
   constructor() {
     this.detectedProviders = [];
     this.mmsdk = null;
@@ -14,12 +24,12 @@ export class WalletDetector {
   /**
    * Initialize EIP-6963 provider discovery
    */
-  initEIP6963() {
+  initEIP6963(): void {
     if (typeof window === 'undefined') return;
 
-    window.addEventListener('eip6963:announceProvider', (event) => {
+    window.addEventListener('eip6963:announceProvider', ((event: CustomEvent<EIP6963ProviderDetail>) => {
       this.detectedProviders.push(event.detail);
-    });
+    }) as EventListener);
 
     window.dispatchEvent(new Event('eip6963:requestProvider'));
   }
@@ -27,7 +37,7 @@ export class WalletDetector {
   /**
    * Check if MetaMask is available
    */
-  isMetaMaskAvailable() {
+  isMetaMaskAvailable(): boolean {
     if (typeof window === 'undefined') return false;
 
     // Check extension
@@ -37,7 +47,8 @@ export class WalletDetector {
 
     // Check providers array
     if (Array.isArray(window.ethereum?.providers)) {
-      return window.ethereum.providers.some((p) => p.isMetaMask);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return window.ethereum.providers.some((p: any) => p.isMetaMask);
     }
 
     // Check EIP-6963
@@ -49,7 +60,7 @@ export class WalletDetector {
   /**
    * Check if Trust Wallet is available
    */
-  isTrustWalletAvailable() {
+  isTrustWalletAvailable(): boolean {
     if (typeof window === 'undefined') return false;
 
     // Check window.trustwallet (lowercase)
@@ -65,7 +76,8 @@ export class WalletDetector {
 
     // Check providers array
     if (Array.isArray(window.ethereum?.providers)) {
-      return window.ethereum.providers.some((p) => p.isTrust || p.isTrustWallet);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return window.ethereum.providers.some((p: any) => p.isTrust || p.isTrustWallet);
     }
 
     // Check EIP-6963
@@ -77,8 +89,8 @@ export class WalletDetector {
   /**
    * Get available wallets
    */
-  getAvailableWallets() {
-    const wallets = [];
+  getAvailableWallets(): Wallet[] {
+    const wallets: Wallet[] = [];
 
     if (this.isMetaMaskAvailable()) {
       wallets.push({
@@ -101,10 +113,12 @@ export class WalletDetector {
 
   /**
    * Get provider for wallet type
+   * @param walletType - The wallet type to get provider for
+   * @returns EIP-1193 compatible provider or null if not available
    */
-  getProviderForWallet(walletType) {
+  getProviderForWallet(walletType: WalletType): EIP1193Provider | null {
     switch (walletType) {
-      case WALLET_TYPES.METAMASK:
+      case WALLET_TYPES.METAMASK: {
         // MetaMask SDK will show browser/mobile dialog automatically when eth_requestAccounts is called
         // Prefer SDK provider for MetaMask (like msqpay.js) - this shows browser/mobile dialog
         if (this.mmsdk) {
@@ -121,9 +135,8 @@ export class WalletDetector {
         // Fallback to extension
         // IMPORTANT: Check providers array FIRST when multiple wallets installed
         if (Array.isArray(window.ethereum?.providers)) {
-          const mmProvider = window.ethereum.providers.find(
-            (p) => p.isMetaMask && !p.isTrust && !p.isTrustWallet
-          );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const mmProvider = window.ethereum.providers.find((p: any) => p.isMetaMask && !p.isTrust && !p.isTrustWallet);
           if (mmProvider) {
             return mmProvider;
           }
@@ -145,17 +158,17 @@ export class WalletDetector {
             !p.info.name.toLowerCase().includes('trust')
         );
         return mmProvider?.provider || null;
+      }
 
-      case WALLET_TYPES.TRUST:
+      case WALLET_TYPES.TRUST: {
         // Check window.trustwallet first (most reliable)
         if (window.trustwallet) return window.trustwallet;
         if (window.trustWallet) return window.trustWallet;
 
         // Check providers array FIRST when multiple wallets installed
         if (Array.isArray(window.ethereum?.providers)) {
-          const twProvider = window.ethereum.providers.find(
-            (p) => (p.isTrust || p.isTrustWallet) && !p.isMetaMask
-          );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const twProvider = window.ethereum.providers.find((p: any) => (p.isTrust || p.isTrustWallet) && !p.isMetaMask);
           if (twProvider) {
             return twProvider;
           }
@@ -177,6 +190,7 @@ export class WalletDetector {
             !p.info.name.toLowerCase().includes('metamask')
         );
         return twProvider?.provider || null;
+      }
 
       default:
         return window.ethereum || null;

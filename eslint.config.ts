@@ -10,35 +10,36 @@ export default defineConfig(
   {
     files: ['apps/demo/**/*.{ts,tsx}'],
   },
-  // JavaScript files (msqpay-client)
+  // TypeScript files (msqpay-client)
   {
-    files: ['packages/msqpay-client/src/**/*.js'],
+    files: ['packages/msqpay-client/src/**/*.ts'],
     languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
+      parserOptions: { project: false }, // Faster linting without type checking
       globals: {
+        // Browser globals
         window: 'readonly',
         document: 'readonly',
         navigator: 'readonly',
         console: 'readonly',
-        ethers: 'readonly',
-        MetaMaskSDK: 'readonly',
-        CustomEvent: 'readonly',
-        Event: 'readonly',
         fetch: 'readonly',
         setTimeout: 'readonly',
         clearInterval: 'readonly',
         setInterval: 'readonly',
         requestAnimationFrame: 'readonly',
+        CustomEvent: 'readonly',
+        Event: 'readonly',
+        // CDN-loaded dependencies
+        ethers: 'readonly',
+        MetaMaskSDK: 'readonly',
       },
     },
     rules: {
       'no-console': ['warn', { allow: ['error', 'warn'] }],
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-undef': 'error',
-      '@typescript-eslint/no-unused-vars': 'off', // Disable TS rule for JS files
-      '@typescript-eslint/no-extraneous-class': 'off', // Allow static-only classes
-      'no-case-declarations': 'off', // Allow declarations in case blocks (we use braces)
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-extraneous-class': 'off',
+      'no-case-declarations': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn', // CDN globals require any
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
   },
   globalIgnores([
@@ -51,6 +52,8 @@ export default defineConfig(
     '**/cache/**',
     '**/typechain-types/**',
     '**/subgraph/generated/**',
+    '**/webpack.config.js',
+    'packages/msqpay-client/apps/**',
   ]),
   {
     languageOptions: {

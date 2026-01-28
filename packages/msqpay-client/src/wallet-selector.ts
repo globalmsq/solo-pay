@@ -2,11 +2,19 @@
  * Wallet Selector UI Component - Clean and Modern
  */
 
+import { WalletConnectionError } from './errors';
+
+export interface Wallet {
+  type: string;
+  name: string;
+  icon: string;
+}
+
 export class WalletSelector {
   /**
    * Show wallet selector dialog
    */
-  static show(wallets) {
+  static show(wallets: Wallet[]): Promise<string> {
     return new Promise((resolve, reject) => {
       // Remove existing dialog
       const existing = document.getElementById('msqpay-wallet-selector');
@@ -60,15 +68,17 @@ export class WalletSelector {
 
       // Close handlers
       const closeBtn = header.querySelector('.msqpay-wallet-selector-close');
-      closeBtn.addEventListener('click', () => {
-        overlay.remove();
-        reject(new Error('Wallet selection cancelled'));
-      });
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          overlay.remove();
+          reject(new WalletConnectionError('Wallet selection cancelled', 'USER_CANCELLED'));
+        });
+      }
 
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
           overlay.remove();
-          reject(new Error('Wallet selection cancelled'));
+          reject(new WalletConnectionError('Wallet selection cancelled', 'USER_CANCELLED'));
         }
       });
 
@@ -88,7 +98,7 @@ export class WalletSelector {
   /**
    * Inject CSS styles
    */
-  static injectStyles() {
+  static injectStyles(): void {
     if (document.getElementById('msqpay-wallet-selector-styles')) return;
 
     const style = document.createElement('style');
@@ -221,7 +231,7 @@ export class WalletSelector {
   /**
    * Escape HTML
    */
-  static escapeHtml(text) {
+  static escapeHtml(text: string): string {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;

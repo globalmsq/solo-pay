@@ -2,9 +2,9 @@
  * MSQPay Core Class - Clean Implementation
  */
 
-import { WalletDetector } from './wallet-detector.js';
-import { WalletSelector } from './wallet-selector.js';
-import { ProgressDialog } from './progress-dialog.js';
+import { WalletDetector } from './wallet-detector';
+import { WalletSelector } from './wallet-selector';
+import { ProgressDialog } from './progress-dialog';
 import {
   WALLET_TYPES,
   ERC20_ABI,
@@ -12,10 +12,54 @@ import {
   FORWARDER_ABI,
   PAYMENT_STEPS,
   GASLESS_STEPS,
-} from './constants.js';
+  WalletType,
+  TIMING,
+  DEFAULTS,
+  ERROR_CODES,
+} from './constants';
+import type {
+  MSQPayConfig,
+  PaymentMethod,
+  Payment,
+  ConnectOptions,
+  ConnectResult,
+  CreatePaymentOptions,
+  CreateGaslessPaymentOptions,
+  PaymentResult,
+  ForwardRequest,
+  RelayResponse,
+  RelayResult,
+  NetworkConfig,
+  Token,
+  EIP1193Provider,
+  EthersProvider,
+  EthersSigner,
+} from './types';
+import {
+  WalletConnectionError,
+  WalletNotFoundError,
+  PaymentError,
+  NetworkError,
+  APIError,
+} from './errors';
 
 export class MSQPay {
-  constructor(config = {}) {
+  config: MSQPayConfig;
+  walletDetector: WalletDetector;
+  provider: EthersProvider | null;
+  signer: EthersSigner | null;
+  connectedAddress: string | null;
+  currentChainId: number | null;
+  currentWalletType: WalletType | null;
+  merchantNetworkId: number | null;
+  paymentMethods: PaymentMethod[];
+  merchantKey: string | null;
+  // MetaMaskSDK instance - CDN-loaded, type unavailable
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mmsdk: any;
+  ethers: typeof ethers | null;
+
+  constructor(config: MSQPayConfig = {}) {
     this.config = config;
     this.walletDetector = new WalletDetector();
 
@@ -33,30 +77,57 @@ export class MSQPay {
     // Get ethers from global scope (loaded via CDN or external)
     this.ethers = typeof ethers !== 'undefined' ? ethers : null;
     if (!this.ethers) {
-      throw new Error('ethers.js is required. Please load it before MSQPay.');
+      throw new WalletConnectionError('ethers.js is required. Please load it before MSQPay.', 'ETHERS_NOT_LOADED');
     }
   }
 
   /**
-   * Initialize MSQPay
+   * Initialize MSQPay SDK
+   *
+   * @param config - Configuration options for MSQPay
+   * @throws {APIError} If API connection fails
+   * @example
+   * ```typescript
+   * await msqpay.init({
+   *   apiUrl: 'https://api.example.com',
+   *   apiKey: 'your-api-key',
+   *   infuraAPIKey: 'your-infura-key'
+   * });
+   * ```
    */
-  async init(config = {}) {
+  async init(config: MSQPayConfig = {}): Promise<void> {
     this.config = { ...this.config, ...config };
 
     // Initialize MetaMask SDK for mobile support (like msqpay.js)
     // SDK will show browser/mobile dialog when eth_requestAccounts is called
-    if (typeof MetaMaskSDK !== 'undefined') {
+    // Handle different ways MetaMaskSDK might be exposed (CDN bundles vary)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let MetaMaskSDKClass: any = null; // CDN bundle exposes SDK in different ways
+    if (typeof window !== 'undefined') {
+      // Try different ways the SDK might be exposed
+      if (window.MetaMaskSDK) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const wmmsdk = window.MetaMaskSDK as any;
+        MetaMaskSDKClass = wmmsdk.MetaMaskSDK || wmmsdk.default || window.MetaMaskSDK;
+      } else if (typeof MetaMaskSDK !== 'undefined') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const metaMaskSDK = MetaMaskSDK as any;
+        MetaMaskSDKClass = metaMaskSDK.MetaMaskSDK || metaMaskSDK.default || MetaMaskSDK;
+      }
+    }
+
+    if (MetaMaskSDKClass) {
       try {
-        this.mmsdk = new MetaMaskSDK.MetaMaskSDK({
+        this.mmsdk = new MetaMaskSDKClass({
           dappMetadata: {
-            name: config.dappName || 'MSQPay',
+            name: config.dappName || DEFAULTS.DAPP_NAME,
             url: typeof window !== 'undefined' ? window.location.origin : '',
           },
           infuraAPIKey: config.infuraAPIKey,
           checkInstallationImmediately: false,
           useDeeplink: true,
           communicationLayerPreference: 'socket',
-          openDeeplink: (link) => {
+          openDeeplink: (link: string) => {
             if (
               typeof window !== 'undefined' &&
               /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -68,20 +139,23 @@ export class MSQPay {
           },
         });
 
-        await this.mmsdk.init();
+        if (this.mmsdk) {
+          await this.mmsdk.init();
 
-        const sdkProvider = this.mmsdk.getProvider();
-        if (sdkProvider) {
-          sdkProvider.on('connect', (info) => {
-            this.currentChainId = parseInt(info.chainId, 16);
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('msqpay:sdkConnected', { detail: info }));
-            }
-          });
+          const sdkProvider = this.mmsdk.getProvider();
+          if (sdkProvider) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            sdkProvider.on('connect', (info: any) => {
+              this.currentChainId = parseInt(info.chainId, 16);
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('msqpay:sdkConnected', { detail: info }));
+              }
+            });
+          }
         }
       } catch {
-        console.warn('MetaMask SDK initialization failed:', error);
         // Continue without SDK - extension will still work
+        // Silent fail - SDK is optional for extension-only usage
       }
     }
 
@@ -130,14 +204,14 @@ export class MSQPay {
       }
 
       // Check if wallet is already connected (eth_accounts doesn't prompt)
-      const accounts = await ethereum.request({ method: 'eth_accounts' });
+      const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
 
       if (!accounts || accounts.length === 0) {
         return; // Wallet not connected
       }
 
       // Get chain ID
-      const chainIdHex = await ethereum.request({ method: 'eth_chainId' });
+      const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
       this.currentChainId = parseInt(chainIdHex, 16);
 
       // Switch network if needed
@@ -150,9 +224,11 @@ export class MSQPay {
       }
 
       // Setup provider and signer
-      this.provider = new this.ethers.BrowserProvider(ethereum);
-      this.signer = await this.provider.getSigner();
-      this.connectedAddress = accounts[0];
+      if (ethereum && this.ethers) {
+        this.provider = new this.ethers.BrowserProvider(ethereum);
+        this.signer = await this.provider.getSigner();
+      }
+      this.connectedAddress = accounts[0] as string;
       this.currentWalletType = walletType;
 
       // Setup event listeners
@@ -180,57 +256,65 @@ export class MSQPay {
   /**
    * Connect wallet
    */
-  async connect(options = {}) {
+  async connect(options: ConnectOptions = {}): Promise<ConnectResult> {
     const { walletType, showSelector = true } = options;
 
     const availableWallets = this.walletDetector.getAvailableWallets();
 
     if (availableWallets.length === 0) {
-      throw new Error('No wallet detected. Please install MetaMask or Trust Wallet.');
+      throw new WalletNotFoundError();
     }
 
     let selectedWalletType = walletType;
 
     // Show selector if multiple wallets and no wallet type specified
     if (!selectedWalletType && availableWallets.length > 1 && showSelector) {
-      selectedWalletType = await WalletSelector.show(availableWallets);
+      selectedWalletType = (await WalletSelector.show(availableWallets)) as WalletType;
     } else if (!selectedWalletType) {
       selectedWalletType = availableWallets[0].type;
+    }
+
+    if (!selectedWalletType) {
+      throw new WalletConnectionError('No wallet selected', 'NO_WALLET_SELECTED');
     }
 
     // Update wallet detector's mmsdk reference
     this.walletDetector.mmsdk = this.mmsdk;
 
     // Get provider
-    const ethereum = this.walletDetector.getProviderForWallet(selectedWalletType);
+    const ethereum = this.walletDetector.getProviderForWallet(selectedWalletType) as EIP1193Provider | null;
     if (!ethereum) {
-      throw new Error('Selected wallet is not available.');
+      throw new WalletNotFoundError(selectedWalletType);
     }
 
     // Request accounts
-    let accounts;
+    let accounts: string[];
     try {
-      accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    } catch (error) {
-      if (error.code === -32002) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        accounts = await ethereum.request({ method: 'eth_accounts' });
+      accounts = await ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+    } catch (error: unknown) {
+      const err = error as { code?: number; message?: string };
+      if (err?.code === ERROR_CODES.WALLET_REQUEST_PENDING) {
+        await new Promise((resolve) => setTimeout(resolve, TIMING.WALLET_REQUEST_RETRY_DELAY));
+        accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
         if (!accounts || accounts.length === 0) {
-          throw new Error('Please approve the connection request in your wallet');
+          throw new WalletConnectionError('Please approve the connection request in your wallet');
         }
-      } else if (error.code === 4001) {
-        throw new Error('Connection rejected by user.');
+      } else if (err?.code === ERROR_CODES.USER_REJECTED) {
+        throw new WalletConnectionError('Connection rejected by user.', ERROR_CODES.USER_REJECTED);
       } else {
-        throw error;
+        throw new WalletConnectionError(
+          err?.message || 'Failed to connect wallet',
+          err?.code
+        );
       }
     }
 
-    if (!accounts || accounts.length === 0) {
-      throw new Error('No accounts found. Please unlock your wallet.');
+    if (!accounts || (accounts as string[]).length === 0) {
+      throw new WalletConnectionError('No accounts found. Please unlock your wallet.');
     }
 
     // Get chain ID
-    const chainIdHex = await ethereum.request({ method: 'eth_chainId' });
+    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
     this.currentChainId = parseInt(chainIdHex, 16);
 
     // Switch network if needed
@@ -239,14 +323,21 @@ export class MSQPay {
     }
 
     // Setup provider and signer
+    if (!ethereum || !this.ethers) {
+      throw new WalletConnectionError('Wallet provider not available');
+    }
     this.provider = new this.ethers.BrowserProvider(ethereum);
     this.signer = await this.provider.getSigner();
-    this.connectedAddress = accounts[0];
+    this.connectedAddress = accounts[0] as string;
     this.currentWalletType = selectedWalletType;
 
     // Setup event listeners
     ethereum.on('accountsChanged', this.handleAccountsChanged.bind(this));
     ethereum.on('chainChanged', this.handleChainChanged.bind(this));
+
+    if (!this.connectedAddress || this.currentChainId === null || !this.currentWalletType) {
+      throw new WalletConnectionError('Failed to connect wallet');
+    }
 
     return {
       address: this.connectedAddress,
@@ -256,9 +347,18 @@ export class MSQPay {
   }
 
   /**
-   * Disconnect wallet
+   * Disconnect from the connected wallet
+   * Revokes permissions and removes event listeners
+   *
+   * @example
+   * ```typescript
+   * await msqpay.disconnect();
+   * ```
    */
-  async disconnect() {
+  async disconnect(): Promise<void> {
+    if (!this.currentWalletType) {
+      return;
+    }
     const ethereum = this.walletDetector.getProviderForWallet(this.currentWalletType);
 
     if (ethereum) {
@@ -309,7 +409,7 @@ export class MSQPay {
   /**
    * Fetch merchant info
    */
-  async fetchMerchantInfo() {
+  async fetchMerchantInfo(): Promise<void> {
     if (!this.config.apiUrl || !this.config.apiKey) {
       return;
     }
@@ -407,12 +507,19 @@ export class MSQPay {
   }
 
   /**
-   * Switch network
+   * Switch wallet to specified network
+   *
+   * @param networkId - Chain ID to switch to
+   * @throws {WalletConnectionError} If wallet not connected
+   * @throws {NetworkError} If network is not supported
    */
-  async switchNetwork(networkId) {
+  async switchNetwork(networkId: number): Promise<void> {
+    if (!this.currentWalletType) {
+      throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
+    }
     const ethereum = this.walletDetector.getProviderForWallet(this.currentWalletType);
     if (!ethereum) {
-      throw new Error('Wallet not connected');
+      throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
     }
 
     try {
@@ -420,12 +527,13 @@ export class MSQPay {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: `0x${networkId.toString(16)}` }],
       });
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       if (error.code === 4902) {
         // Network not found, add it
         const networkConfig = this.getNetworkConfig(networkId);
         if (!networkConfig) {
-          throw new Error(`Network ${networkId} is not supported`);
+          throw new NetworkError(`Network ${networkId} is not supported`, networkId, 'UNSUPPORTED_NETWORK');
         }
 
         await ethereum.request({
@@ -438,15 +546,18 @@ export class MSQPay {
     }
 
     // Update chain ID
-    const chainIdHex = await ethereum.request({ method: 'eth_chainId' });
+    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
     this.currentChainId = parseInt(chainIdHex, 16);
   }
 
   /**
-   * Get network config
+   * Get network configuration for specified chain ID
    * Uses infuraAPIKey if provided to avoid rate limiting
+   *
+   * @param networkId - Chain ID
+   * @returns Network configuration or null if not supported
    */
-  getNetworkConfig(networkId) {
+  getNetworkConfig(networkId: number): NetworkConfig | null {
     // Use infuraAPIKey if provided, otherwise use public endpoint (may be rate limited)
     const infuraKey = this.config.infuraAPIKey || '';
     const mainnetRpc = infuraKey
@@ -456,7 +567,7 @@ export class MSQPay {
       ? `https://sepolia.infura.io/v3/${infuraKey}`
       : 'https://sepolia.infura.io/v3/';
 
-    const networks = {
+    const networks: Record<number, NetworkConfig> = {
       1: {
         chainName: 'Ethereum Mainnet',
         rpcUrls: [mainnetRpc],
@@ -495,16 +606,17 @@ export class MSQPay {
   /**
    * Handle accounts changed
    */
-  handleAccountsChanged(accounts) {
+  handleAccountsChanged(accounts: string[]): void {
     if (accounts.length === 0) {
       // User disconnected from wallet extension
       this.disconnect();
     } else if (accounts[0] !== this.connectedAddress) {
       // User switched account
-      this.connectedAddress = accounts[0];
+      this.connectedAddress = accounts[0] as string;
       // Update signer with new address
       if (this.provider) {
-        this.provider.getSigner().then((signer) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.provider.getSigner().then((signer: any) => {
           this.signer = signer;
         });
       }
@@ -522,20 +634,35 @@ export class MSQPay {
   /**
    * Handle chain changed
    */
-  handleChainChanged(chainId) {
+  handleChainChanged(chainId: string): void {
     this.currentChainId = parseInt(chainId, 16);
     window.location.reload();
   }
 
   /**
-   * Create payment (direct)
+   * Create direct payment (user pays gas)
+   *
+   * @param options - Payment options
+   * @param options.amount - Payment amount
+   * @param options.currency - Token symbol (e.g., 'USDT', 'ETH')
+   * @param options.showDialog - Show progress dialog (default: true)
+   * @returns Payment result with txHash
+   * @throws {WalletConnectionError} If wallet not connected
+   * @throws {PaymentError} If payment validation or processing fails
+   * @example
+   * ```typescript
+   * const result = await msqpay.createPayment({
+   *   amount: 100,
+   *   currency: 'USDT'
+   * });
+   * ```
    */
-  async createPayment({ amount, currency, showDialog = true }) {
+  async createPayment({ amount, currency, showDialog = true }: CreatePaymentOptions): Promise<PaymentResult> {
     let dialog = null;
 
     try {
       if (!this.isConnected()) {
-        throw new Error('Please connect your wallet first');
+        throw new WalletConnectionError('Please connect your wallet first', 'WALLET_NOT_CONNECTED');
       }
 
       const paymentMethod = this.paymentMethods.find((pm) => pm.token?.symbol === currency);
@@ -544,14 +671,15 @@ export class MSQPay {
           .map((pm) => pm.token?.symbol)
           .filter(Boolean)
           .join(', ');
-        throw new Error(
-          `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`
+        throw new PaymentError(
+          `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`,
+          'PAYMENT_METHOD_NOT_FOUND'
         );
       }
 
       const { token, chain } = paymentMethod;
       if (!token || !chain) {
-        throw new Error('Invalid payment method configuration');
+        throw new PaymentError('Invalid payment method configuration', 'INVALID_PAYMENT_METHOD');
       }
 
       // Show progress dialog
@@ -560,7 +688,7 @@ export class MSQPay {
           amount,
           currency,
           steps: PAYMENT_STEPS,
-          networkId: this.merchantNetworkId,
+          networkId: this.merchantNetworkId ?? undefined,
         });
         dialog.show();
       }
@@ -576,11 +704,14 @@ export class MSQPay {
       // Check balance
       const balance = await this.getBalance(currency);
       const decimals = token.decimals || 18;
+      if (!this.ethers) {
+        throw new WalletConnectionError('ethers.js not available', 'ETHERS_NOT_AVAILABLE');
+      }
       const balanceWei = this.ethers.parseUnits(balance, decimals);
       const amountWei = this.ethers.parseUnits(String(amount), decimals);
 
       if (balanceWei < amountWei) {
-        throw new Error(`Insufficient balance. You have ${balance} ${currency}`);
+        throw new PaymentError(`Insufficient balance. You have ${balance} ${currency}`, 'INSUFFICIENT_BALANCE');
       }
 
       // Step 2: Create payment
@@ -588,7 +719,7 @@ export class MSQPay {
       const payment = await this.requestCreatePayment({ amount, currency });
 
       if (!payment.gatewayAddress) {
-        throw new Error('Gateway address not configured');
+        throw new PaymentError('Gateway address not configured', 'GATEWAY_NOT_CONFIGURED');
       }
 
       const tokenAddress = payment.tokenAddress || token.address;
@@ -599,6 +730,9 @@ export class MSQPay {
 
       // Step 3: Approve token
       if (dialog) dialog.updateStep(PAYMENT_STEPS.APPROVING);
+      if (!this.ethers || !this.signer || !this.connectedAddress) {
+        throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
+      }
       const tokenContract = new this.ethers.Contract(tokenAddress, ERC20_ABI, this.signer);
       const currentAllowance = await tokenContract.allowance(this.connectedAddress, gatewayAddress);
 
@@ -610,6 +744,9 @@ export class MSQPay {
 
       // Step 4: Execute payment
       if (dialog) dialog.updateStep(PAYMENT_STEPS.WALLET_CONFIRM);
+      if (!this.ethers || !this.signer) {
+        throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
+      }
       const gatewayContract = new this.ethers.Contract(
         gatewayAddress,
         PAYMENT_GATEWAY_ABI,
@@ -632,8 +769,9 @@ export class MSQPay {
         payment,
         txHash: tx.hash,
       };
-    } catch (error) {
-      if (dialog) dialog.showError(error.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (dialog) dialog.showError(error?.message || String(error));
       throw error;
     }
   }
@@ -641,9 +779,9 @@ export class MSQPay {
   /**
    * Request create payment
    */
-  async requestCreatePayment({ amount, currency }) {
+  async requestCreatePayment({ amount, currency }: { amount: number | string; currency: string }): Promise<Payment> {
     if (!this.config.apiUrl || !this.config.apiKey) {
-      throw new Error('API URL and API key are required');
+      throw new APIError('API URL and API key are required', undefined, 'API_CONFIG_MISSING');
     }
 
     const paymentMethod = this.paymentMethods.find((pm) => pm.token?.symbol === currency);
@@ -652,47 +790,50 @@ export class MSQPay {
         .map((pm) => pm.token?.symbol)
         .filter(Boolean)
         .join(', ');
-      throw new Error(
-        `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`
-      );
+        throw new PaymentError(
+          `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`,
+          'PAYMENT_METHOD_NOT_FOUND'
+        );
     }
 
     const { token, chain } = paymentMethod;
     if (!token || !chain) {
-      throw new Error('Invalid payment method configuration');
+      throw new PaymentError('Invalid payment method configuration', 'INVALID_PAYMENT_METHOD');
     }
 
     const merchantId = this.merchantKey || this.config.merchantId;
     if (!merchantId) {
-      throw new Error('Merchant ID is required. Please ensure merchant info is loaded.');
+      throw new APIError('Merchant ID is required. Please ensure merchant info is loaded.', undefined, 'MERCHANT_ID_MISSING');
     }
 
     // Get chainId from chain object (API returns network_id)
     const chainId = chain.network_id || chain.networkId || chain.chain_id || chain.chainId;
     if (!chainId) {
-      throw new Error(
-        `Chain ID not found in payment method. Chain object: ${JSON.stringify(chain)}`
+      throw new PaymentError(
+        `Chain ID not found in payment method. Chain object: ${JSON.stringify(chain)}`,
+        'CHAIN_ID_MISSING'
       );
     }
 
     // Get token address
     const tokenAddress = token.address;
     if (!tokenAddress || !/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
-      throw new Error(`Invalid token address: ${tokenAddress}`);
+      throw new PaymentError(`Invalid token address: ${tokenAddress}`, 'INVALID_TOKEN_ADDRESS');
     }
 
     // Get recipient address
     const recipientAddress = paymentMethod.recipient_address || paymentMethod.recipientAddress;
     if (!recipientAddress || !/^0x[a-fA-F0-9]{40}$/.test(recipientAddress)) {
-      throw new Error(
-        `Invalid recipient address: ${recipientAddress || 'missing'}. Payment method: ${JSON.stringify(paymentMethod)}`
+      throw new PaymentError(
+        `Invalid recipient address: ${recipientAddress || 'missing'}. Payment method: ${JSON.stringify(paymentMethod)}`,
+        'INVALID_RECIPIENT_ADDRESS'
       );
     }
 
     // Validate amount
     const amountNum = Number(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      throw new Error(`Invalid amount: ${amount}`);
+      throw new PaymentError(`Invalid amount: ${amount}`);
     }
 
     const requestBody = {
@@ -716,7 +857,7 @@ export class MSQPay {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage =
         errorData.message || errorData.code || `Failed to create payment: ${response.statusText}`;
-      throw new Error(errorMessage);
+      throw new APIError(errorMessage, response.status);
     }
 
     const data = await response.json();
@@ -726,9 +867,22 @@ export class MSQPay {
   /**
    * Poll payment status
    */
-  async pollPaymentStatus(paymentId, maxAttempts = 60, interval = 3000) {
+  /**
+   * Poll payment status until confirmed or timeout
+   *
+   * @param paymentId - Payment ID to poll
+   * @param maxAttempts - Maximum polling attempts (default: 60)
+   * @param interval - Polling interval in milliseconds (default: 3000)
+   * @returns Payment status string
+   * @throws {PaymentError} If payment fails or times out
+   */
+  async pollPaymentStatus(
+    paymentId: string,
+    maxAttempts = TIMING.PAYMENT_STATUS_MAX_ATTEMPTS,
+    interval = TIMING.PAYMENT_STATUS_POLL_INTERVAL
+  ): Promise<string> {
     // Wait a bit before starting to poll (give server time to process)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, TIMING.PAYMENT_STATUS_POLL_INITIAL_DELAY));
 
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise((resolve) => setTimeout(resolve, interval));
@@ -740,19 +894,23 @@ export class MSQPay {
       }
 
       if (status === 'FAILED' || status === 'EXPIRED') {
-        throw new Error(`Payment ${status.toLowerCase()}`);
+        throw new PaymentError(`Payment ${status.toLowerCase()}`, status);
       }
     }
 
-    throw new Error('Payment confirmation timeout');
+    throw new PaymentError('Payment confirmation timeout', 'PAYMENT_TIMEOUT');
   }
 
   /**
-   * Get payment status
+   * Get payment status from API
+   *
+   * @param paymentId - Payment ID
+   * @returns Payment status string
+   * @throws {APIError} If API request fails
    */
-  async getPaymentStatus(paymentId) {
+  async getPaymentStatus(paymentId: string): Promise<string> {
     if (!this.config.apiUrl || !this.config.apiKey) {
-      throw new Error('API URL and API key are required');
+      throw new APIError('API URL and API key are required', undefined, 'API_CONFIG_MISSING');
     }
 
     const response = await fetch(`${this.config.apiUrl}/payments/${paymentId}/status`, {
@@ -763,7 +921,7 @@ export class MSQPay {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get payment status: ${response.statusText}`);
+      throw new APIError(`Failed to get payment status: ${response.statusText}`, response.status);
     }
 
     const data = await response.json();
@@ -773,16 +931,30 @@ export class MSQPay {
   /**
    * Get balance
    */
-  async getBalance(currency) {
+  /**
+   * Get token balance for connected wallet
+   *
+   * @param currency - Token symbol (e.g., 'USDT', 'ETH')
+   * @returns Formatted balance string
+   * @throws {WalletConnectionError} If wallet not connected
+   * @throws {PaymentError} If payment method not found
+   */
+  async getBalance(currency: string): Promise<string> {
     if (!this.isConnected()) {
-      throw new Error('Please connect your wallet first');
+      throw new WalletConnectionError('Please connect your wallet first', 'WALLET_NOT_CONNECTED');
     }
 
     const paymentMethod = this.paymentMethods.find((pm) => pm.token?.symbol === currency);
     if (!paymentMethod) {
-      throw new Error(`Payment method for ${currency} not found`);
+      throw new PaymentError(`Payment method for ${currency} not found`, 'PAYMENT_METHOD_NOT_FOUND');
     }
 
+    if (!paymentMethod.token?.address) {
+      throw new PaymentError('Token address not found', 'TOKEN_ADDRESS_MISSING');
+    }
+    if (!this.ethers || !this.provider || !this.connectedAddress) {
+      throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
+    }
     const tokenContract = new this.ethers.Contract(
       paymentMethod.token.address,
       ERC20_ABI,
@@ -805,14 +977,16 @@ export class MSQPay {
   /**
    * Get supported tokens
    */
-  getSupportedTokens() {
-    return this.paymentMethods.map((pm) => pm.token?.symbol).filter(Boolean);
+  getSupportedTokens(): string[] {
+    return this.paymentMethods
+      .map((pm) => pm.token?.symbol)
+      .filter((symbol): symbol is string => typeof symbol === 'string' && symbol.length > 0);
   }
 
   /**
    * Get connected address
    */
-  getAddress() {
+  getAddress(): string | null {
     return this.connectedAddress;
   }
 
@@ -826,21 +1000,25 @@ export class MSQPay {
   /**
    * Get current wallet type
    */
-  getWalletType() {
+  getWalletType(): WalletType | null {
     return this.currentWalletType;
   }
 
   /**
    * Get ethers signer instance
+   * @returns Ethers signer instance (CDN-loaded, type unavailable)
    */
-  getSigner() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSigner(): any {
     return this.signer;
   }
 
   /**
    * Get ethers provider instance
+   * @returns Ethers provider instance (CDN-loaded, type unavailable)
    */
-  getProvider() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getProvider(): any {
     return this.provider;
   }
 
@@ -854,9 +1032,9 @@ export class MSQPay {
   /**
    * Ensure wallet is connected to merchant's network, switch if needed
    */
-  async ensureCorrectNetwork() {
+  async ensureCorrectNetwork(): Promise<void> {
     if (!this.merchantNetworkId) {
-      throw new Error('Merchant network not configured');
+      throw new NetworkError('Merchant network not configured', undefined, 'NETWORK_NOT_CONFIGURED');
     }
     if (!this.isCorrectNetwork()) {
       await this.switchNetwork(this.merchantNetworkId);
@@ -866,7 +1044,7 @@ export class MSQPay {
   /**
    * Get token info by symbol
    */
-  getTokenBySymbol(symbol) {
+  getTokenBySymbol(symbol: string): Token | null {
     const method = this.paymentMethods.find((pm) => pm.token?.symbol === symbol);
     return method?.token || null;
   }
@@ -874,7 +1052,7 @@ export class MSQPay {
   /**
    * Get merchant network ID
    */
-  getMerchantNetworkId() {
+  getMerchantNetworkId(): number | null {
     return this.merchantNetworkId;
   }
 
@@ -888,7 +1066,7 @@ export class MSQPay {
   /**
    * Check if MetaMask is available
    */
-  isMetaMaskAvailable() {
+  isMetaMaskAvailable(): boolean {
     return this.walletDetector.isMetaMaskAvailable();
   }
 
@@ -900,12 +1078,15 @@ export class MSQPay {
   }
 
   /**
-   * Show wallet selector (wrapper for WalletSelector.show)
+   * Show wallet selector dialog
+   *
+   * @returns Selected wallet type
+   * @throws {WalletNotFoundError} If no wallets available
    */
-  async showWalletSelector() {
+  async showWalletSelector(): Promise<string> {
     const wallets = this.walletDetector.getAvailableWallets();
     if (wallets.length === 0) {
-      throw new Error('No wallets available');
+      throw new WalletNotFoundError();
     }
     if (wallets.length === 1) {
       return wallets[0].type;
@@ -915,23 +1096,31 @@ export class MSQPay {
 
   /**
    * Create gasless payment (meta-transaction - relayer pays gas)
+   *
+   * @param options - Payment options
+   * @param options.amount - Payment amount
+   * @param options.currency - Token symbol (e.g., 'USDT', 'ETH')
+   * @param options.showDialog - Show progress dialog (default: true)
+   * @param options.deadline - Custom deadline in seconds (overrides config.gaslessDeadline)
+   * @param options.gasLimit - Custom gas limit (overrides config.gaslessGasLimit)
+   * @returns Payment result with txHash and relayRequestId
+   * @throws {WalletConnectionError} If wallet not connected
+   * @throws {PaymentError} If payment validation or processing fails
+   * @example
+   * ```typescript
+   * const result = await msqpay.createGaslessPayment({
+   *   amount: 100,
+   *   currency: 'USDT',
+   *   deadline: 900 // 15 minutes
+   * });
+   * ```
    */
-  /**
-   * Create gasless payment (meta-transaction)
-   * @param {Object} options - Payment options
-   * @param {number|string} options.amount - Payment amount
-   * @param {string} options.currency - Token symbol (e.g., 'USDT', 'ETH')
-   * @param {boolean} [options.showDialog=true] - Show progress dialog
-   * @param {number} [options.deadline] - Custom deadline in seconds (overrides config.gaslessDeadline)
-   * @param {number|string} [options.gasLimit] - Custom gas limit (overrides config.gaslessGasLimit)
-   * @returns {Promise<Object>} Payment result with txHash
-   */
-  async createGaslessPayment({ amount, currency, showDialog = true, deadline, gasLimit }) {
+  async createGaslessPayment({ amount, currency, showDialog = true, deadline, gasLimit }: CreateGaslessPaymentOptions): Promise<PaymentResult> {
     let dialog = null;
 
     try {
       if (!this.isConnected()) {
-        throw new Error('Please connect your wallet first');
+        throw new WalletConnectionError('Please connect your wallet first', 'WALLET_NOT_CONNECTED');
       }
 
       const paymentMethod = this.paymentMethods.find((pm) => pm.token?.symbol === currency);
@@ -940,14 +1129,15 @@ export class MSQPay {
           .map((pm) => pm.token?.symbol)
           .filter(Boolean)
           .join(', ');
-        throw new Error(
-          `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`
+        throw new PaymentError(
+          `Payment method for ${currency} not found. Available: ${availableTokens || 'none'}`,
+          'PAYMENT_METHOD_NOT_FOUND'
         );
       }
 
       const { token, chain } = paymentMethod;
       if (!token || !chain) {
-        throw new Error('Invalid payment method configuration');
+        throw new PaymentError('Invalid payment method configuration', 'INVALID_PAYMENT_METHOD');
       }
 
       // Show progress dialog
@@ -956,7 +1146,7 @@ export class MSQPay {
           amount,
           currency,
           steps: GASLESS_STEPS,
-          networkId: this.merchantNetworkId,
+          networkId: this.merchantNetworkId ?? undefined,
         });
         dialog.show();
       }
@@ -972,11 +1162,14 @@ export class MSQPay {
       // Check balance
       const balance = await this.getBalance(currency);
       const decimals = token.decimals || 18;
+      if (!this.ethers) {
+        throw new WalletConnectionError('ethers.js not available', 'ETHERS_NOT_AVAILABLE');
+      }
       const balanceWei = this.ethers.parseUnits(balance, decimals);
       const amountWei = this.ethers.parseUnits(String(amount), decimals);
 
       if (balanceWei < amountWei) {
-        throw new Error(`Insufficient balance. You have ${balance} ${currency}`);
+        throw new PaymentError(`Insufficient balance. You have ${balance} ${currency}`, 'INSUFFICIENT_BALANCE');
       }
 
       // Step 2: Create payment
@@ -984,10 +1177,10 @@ export class MSQPay {
       const payment = await this.requestCreatePayment({ amount, currency });
 
       if (!payment.gatewayAddress) {
-        throw new Error('Gateway address not configured');
+        throw new PaymentError('Gateway address not configured', 'GATEWAY_NOT_CONFIGURED');
       }
       if (!payment.forwarderAddress) {
-        throw new Error('Forwarder address not configured. Gasless payments may not be supported.');
+        throw new PaymentError('Forwarder address not configured. Gasless payments may not be supported.', 'FORWARDER_NOT_CONFIGURED');
       }
 
       const tokenAddress = payment.tokenAddress || token.address;
@@ -999,6 +1192,9 @@ export class MSQPay {
 
       // Step 3: Approve token
       if (dialog) dialog.updateStep(GASLESS_STEPS.APPROVING);
+      if (!this.ethers || !this.signer || !this.connectedAddress) {
+        throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
+      }
       const tokenContract = new this.ethers.Contract(tokenAddress, ERC20_ABI, this.signer);
       const currentAllowance = await tokenContract.allowance(this.connectedAddress, gatewayAddress);
 
@@ -1011,6 +1207,9 @@ export class MSQPay {
       // Step 4: Sign EIP-712
       if (dialog) dialog.updateStep(GASLESS_STEPS.SIGNING);
 
+      if (!this.ethers || !this.provider || !this.connectedAddress) {
+        throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
+      }
       const forwarderContract = new this.ethers.Contract(
         forwarderAddress,
         FORWARDER_ABI,
@@ -1026,6 +1225,9 @@ export class MSQPay {
         recipientAddress,
       ]);
 
+      if (!this.merchantNetworkId) {
+        throw new NetworkError('Merchant network ID not configured', undefined, 'NETWORK_NOT_CONFIGURED');
+      }
       const domain = {
         name: 'MSQForwarder',
         version: '1',
@@ -1045,14 +1247,17 @@ export class MSQPay {
         ],
       };
 
-      // Use custom deadline if provided, otherwise use config, fallback to 600 seconds (10 minutes)
-      const deadlineSeconds = deadline ?? this.config.gaslessDeadline ?? 600;
+      // Use custom deadline if provided, otherwise use config, fallback to default
+      const deadlineSeconds = deadline ?? this.config.gaslessDeadline ?? DEFAULTS.GASLESS_DEADLINE;
       const deadlineTimestamp = BigInt(Math.floor(Date.now() / 1000) + deadlineSeconds);
 
-      // Use custom gas limit if provided, otherwise use config, fallback to 300000
-      const gasLimitValue = gasLimit ?? this.config.gaslessGasLimit ?? 300000;
+      // Use custom gas limit if provided, otherwise use config, fallback to default
+      const gasLimitValue = gasLimit ?? this.config.gaslessGasLimit ?? DEFAULTS.GASLESS_GAS_LIMIT;
       const gasLimitBigInt = BigInt(gasLimitValue);
 
+      if (!this.connectedAddress || !this.signer) {
+        throw new WalletConnectionError('Wallet not connected', 'WALLET_NOT_CONNECTED');
+      }
       const forwardMessage = {
         from: this.connectedAddress,
         to: gatewayAddress,
@@ -1065,7 +1270,7 @@ export class MSQPay {
 
       const signature = await this.signer.signTypedData(domain, types, forwardMessage);
 
-      const forwardRequest = {
+      const forwardRequest: ForwardRequest = {
         from: this.connectedAddress,
         to: gatewayAddress,
         value: '0',
@@ -1085,7 +1290,7 @@ export class MSQPay {
       );
 
       if (!relayResponse.relayRequestId) {
-        throw new Error('Failed to get relay request ID');
+        throw new APIError('Failed to get relay request ID', undefined, 'RELAY_REQUEST_ID_MISSING');
       }
 
       const relayRequestId = relayResponse.relayRequestId;
@@ -1094,7 +1299,7 @@ export class MSQPay {
       const relayResult = await this.waitForRelayTransaction(relayRequestId);
 
       if (relayResult.status?.toLowerCase() === 'failed') {
-        throw new Error('Gasless payment relay failed');
+        throw new PaymentError('Gasless payment relay failed');
       }
 
       const txHash = relayResult.transactionHash;
@@ -1103,6 +1308,9 @@ export class MSQPay {
       if (dialog) dialog.updateStep(GASLESS_STEPS.CONFIRMING, { txHash });
       await this.pollPaymentStatus(paymentId);
 
+      if (!txHash) {
+        throw new PaymentError('Transaction hash not available');
+      }
       if (dialog) dialog.showSuccess(txHash);
 
       return {
@@ -1112,35 +1320,43 @@ export class MSQPay {
         relayRequestId,
         gasless: true,
       };
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       if (dialog) dialog.showError(error.message);
       throw error;
     }
   }
 
   /**
-   * Submit gasless payment to relay
+   * Submit gasless payment to relay service
+   *
+   * @param paymentId - Payment ID
+   * @param forwarderAddress - Forwarder contract address
+   * @param forwardRequest - EIP-712 signed forward request
+   * @returns Relay response with relayRequestId
+   * @throws {APIError} If API request fails
+   * @throws {PaymentError} If request validation fails
    */
-  async submitGaslessPayment(paymentId, forwarderAddress, forwardRequest) {
+  async submitGaslessPayment(paymentId: string, forwarderAddress: string, forwardRequest: ForwardRequest): Promise<RelayResponse> {
     if (!this.config.apiUrl || !this.config.apiKey) {
-      throw new Error('API URL and API key are required');
+      throw new APIError('API URL and API key are required');
     }
 
     // Validate forwardRequest fields
     if (!forwardRequest.from || !/^0x[a-fA-F0-9]{40}$/.test(forwardRequest.from)) {
-      throw new Error(`Invalid from address: ${forwardRequest.from}`);
+      throw new PaymentError(`Invalid from address: ${forwardRequest.from}`);
     }
     if (!forwardRequest.to || !/^0x[a-fA-F0-9]{40}$/.test(forwardRequest.to)) {
-      throw new Error(`Invalid to address: ${forwardRequest.to}`);
+      throw new PaymentError(`Invalid to address: ${forwardRequest.to}`);
     }
     if (!forwardRequest.signature || !forwardRequest.signature.startsWith('0x')) {
-      throw new Error(`Invalid signature: ${forwardRequest.signature}`);
+      throw new PaymentError(`Invalid signature: ${forwardRequest.signature}`);
     }
     if (!forwardRequest.data || !forwardRequest.data.startsWith('0x')) {
-      throw new Error(`Invalid data: ${forwardRequest.data}`);
+      throw new PaymentError(`Invalid data: ${forwardRequest.data}`);
     }
     if (!forwarderAddress || !/^0x[a-fA-F0-9]{40}$/.test(forwarderAddress)) {
-      throw new Error(`Invalid forwarder address: ${forwarderAddress}`);
+      throw new PaymentError(`Invalid forwarder address: ${forwarderAddress}`);
     }
 
     // API expects: { paymentId, forwarderAddress, forwardRequest }
@@ -1174,7 +1390,7 @@ export class MSQPay {
         errorData.message ||
         errorData.code ||
         `Failed to submit gasless payment: ${response.statusText}`;
-      throw new Error(errorMessage);
+      throw new APIError(errorMessage, response.status);
     }
 
     const data = await response.json();
@@ -1182,11 +1398,15 @@ export class MSQPay {
   }
 
   /**
-   * Get relay status
+   * Get relay transaction status
+   *
+   * @param relayRequestId - Relay request ID
+   * @returns Relay result with status and transaction hash
+   * @throws {APIError} If API request fails
    */
-  async getRelayStatus(relayRequestId) {
+  async getRelayStatus(relayRequestId: string): Promise<RelayResult> {
     if (!this.config.apiUrl || !this.config.apiKey) {
-      throw new Error('API URL and API key are required');
+      throw new APIError('API URL and API key are required', undefined, 'API_CONFIG_MISSING');
     }
 
     const response = await fetch(`${this.config.apiUrl}/payments/relay/${relayRequestId}/status`, {
@@ -1197,7 +1417,7 @@ export class MSQPay {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get relay status: ${response.statusText}`);
+      throw new APIError(`Failed to get relay status: ${response.statusText}`, response.status);
     }
 
     const data = await response.json();
@@ -1205,9 +1425,19 @@ export class MSQPay {
   }
 
   /**
-   * Wait for relay transaction
+   * Wait for relay transaction to complete
+   *
+   * @param relayRequestId - Relay request ID
+   * @param timeout - Timeout in milliseconds (default: 120000)
+   * @param interval - Polling interval in milliseconds (default: 3000)
+   * @returns Relay result with status and transaction hash
+   * @throws {PaymentError} If relay fails or times out
    */
-  async waitForRelayTransaction(relayRequestId, timeout = 120000, interval = 3000) {
+  async waitForRelayTransaction(
+    relayRequestId: string,
+    timeout = TIMING.RELAY_STATUS_TIMEOUT,
+    interval = TIMING.RELAY_STATUS_POLL_INTERVAL
+  ): Promise<RelayResult> {
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeout) {
@@ -1221,13 +1451,14 @@ export class MSQPay {
       }
 
       if (status === 'failed') {
-        throw new Error('Relay transaction failed');
+        throw new PaymentError('Relay transaction failed', 'RELAY_FAILED');
       }
     }
 
-    throw new Error('Relay transaction confirmation timeout');
+    throw new PaymentError('Relay transaction confirmation timeout', 'RELAY_TIMEOUT');
   }
 }
 
-// Export WALLET_TYPES
-MSQPay.WALLET_TYPES = WALLET_TYPES;
+// Export WALLET_TYPES as static property
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(MSQPay as any).WALLET_TYPES = WALLET_TYPES;

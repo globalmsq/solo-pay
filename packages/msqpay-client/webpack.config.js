@@ -5,7 +5,7 @@ module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
 
   return {
-    entry: './src/index.js',
+    entry: './src/index.ts',
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: isProduction ? 'msqpay.min.js' : 'msqpay.js',
@@ -43,27 +43,21 @@ module.exports = (env, argv) => {
     },
     mode: argv.mode || 'production',
     resolve: {
-      extensions: ['.js'],
+      extensions: ['.ts', '.js'],
     },
     module: {
       rules: [
         {
-          test: /\.js$/,
+          test: /\.ts$/,
           exclude: /node_modules/,
           use: {
-            loader: 'babel-loader',
+            loader: 'ts-loader',
             options: {
-              presets: [
-                [
-                  '@babel/preset-env',
-                  {
-                    targets: {
-                      browsers: ['> 1%', 'last 2 versions'],
-                    },
-                    modules: false,
-                  },
-                ],
-              ],
+              transpileOnly: true,
+              compilerOptions: {
+                module: 'ESNext',
+                target: 'ES2022',
+              },
             },
           },
         },
