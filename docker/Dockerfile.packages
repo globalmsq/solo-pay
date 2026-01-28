@@ -184,3 +184,40 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Run server
 CMD ["node", "dist/server.js"]
+
+# ============================================
+# Guide Dependencies Stage
+# ============================================
+FROM base AS guide-deps
+
+# Copy guide package.json
+COPY packages/guide/package.json ./packages/guide/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --filter @msqpay/guide
+
+# ============================================
+# Guide Builder Stage
+# ============================================
+FROM guide-deps AS guide-builder
+
+# Copy guide source
+COPY packages/guide ./packages/guide
+
+WORKDIR /app/packages/guide
+
+# Build static files
+RUN pnpm build
+
+# ============================================
+# Guide Runtime Stage (nginx)
+# ============================================
+FROM nginx:alpine AS guide
+
+# Copy built static files
+COPY --from=guide-builder /app/packages/guide/.vitepress/dist /usr/share/nginx/html
+
+# Expose port
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
