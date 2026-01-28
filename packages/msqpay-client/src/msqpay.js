@@ -80,6 +80,7 @@ export class MSQPay {
           });
         }
       } catch {
+        console.warn('MetaMask SDK initialization failed:', error);
         // Continue without SDK - extension will still work
       }
     }
@@ -443,18 +444,28 @@ export class MSQPay {
 
   /**
    * Get network config
+   * Uses infuraAPIKey if provided to avoid rate limiting
    */
   getNetworkConfig(networkId) {
+    // Use infuraAPIKey if provided, otherwise use public endpoint (may be rate limited)
+    const infuraKey = this.config.infuraAPIKey || '';
+    const mainnetRpc = infuraKey
+      ? `https://mainnet.infura.io/v3/${infuraKey}`
+      : 'https://mainnet.infura.io/v3/';
+    const sepoliaRpc = infuraKey
+      ? `https://sepolia.infura.io/v3/${infuraKey}`
+      : 'https://sepolia.infura.io/v3/';
+
     const networks = {
       1: {
         chainName: 'Ethereum Mainnet',
-        rpcUrls: ['https://mainnet.infura.io/v3/'],
+        rpcUrls: [mainnetRpc],
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         blockExplorerUrls: ['https://etherscan.io'],
       },
       11155111: {
         chainName: 'Sepolia Testnet',
-        rpcUrls: ['https://sepolia.infura.io/v3/'],
+        rpcUrls: [sepoliaRpc],
         nativeCurrency: { name: 'Sepolia ETH', symbol: 'ETH', decimals: 18 },
         blockExplorerUrls: ['https://sepolia.etherscan.io'],
       },
@@ -905,7 +916,17 @@ export class MSQPay {
   /**
    * Create gasless payment (meta-transaction - relayer pays gas)
    */
-  async createGaslessPayment({ amount, currency, showDialog = true }) {
+  /**
+   * Create gasless payment (meta-transaction)
+   * @param {Object} options - Payment options
+   * @param {number|string} options.amount - Payment amount
+   * @param {string} options.currency - Token symbol (e.g., 'USDT', 'ETH')
+   * @param {boolean} [options.showDialog=true] - Show progress dialog
+   * @param {number} [options.deadline] - Custom deadline in seconds (overrides config.gaslessDeadline)
+   * @param {number|string} [options.gasLimit] - Custom gas limit (overrides config.gaslessGasLimit)
+   * @returns {Promise<Object>} Payment result with txHash
+   */
+  async createGaslessPayment({ amount, currency, showDialog = true, deadline, gasLimit }) {
     let dialog = null;
 
     try {
@@ -1024,15 +1045,21 @@ export class MSQPay {
         ],
       };
 
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
+      // Use custom deadline if provided, otherwise use config, fallback to 600 seconds (10 minutes)
+      const deadlineSeconds = deadline ?? this.config.gaslessDeadline ?? 600;
+      const deadlineTimestamp = BigInt(Math.floor(Date.now() / 1000) + deadlineSeconds);
+
+      // Use custom gas limit if provided, otherwise use config, fallback to 300000
+      const gasLimitValue = gasLimit ?? this.config.gaslessGasLimit ?? 300000;
+      const gasLimitBigInt = BigInt(gasLimitValue);
 
       const forwardMessage = {
         from: this.connectedAddress,
         to: gatewayAddress,
         value: BigInt(0),
-        gas: BigInt(300000),
+        gas: gasLimitBigInt,
         nonce: nonce,
-        deadline: deadline,
+        deadline: deadlineTimestamp,
         data: payCallData,
       };
 
@@ -1042,9 +1069,9 @@ export class MSQPay {
         from: this.connectedAddress,
         to: gatewayAddress,
         value: '0',
-        gas: '300000',
+        gas: gasLimitValue.toString(),
         nonce: nonce.toString(),
-        deadline: deadline.toString(),
+        deadline: deadlineTimestamp.toString(),
         data: payCallData,
         signature: signature,
       };
