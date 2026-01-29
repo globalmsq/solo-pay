@@ -108,6 +108,26 @@ export const CreatePaymentResponseSchema = {
       description: 'Payment expiration time (ISO 8601)',
       example: '2024-01-20T12:30:00.000Z',
     },
+    recipientAddress: {
+      type: 'string',
+      description: 'Recipient address (merchant wallet to receive payment)',
+      example: '0x1234567890abcdef1234567890abcdef12345678',
+    },
+    merchantId: {
+      type: 'string',
+      description: 'Merchant identifier (bytes32, keccak256 of merchant_key)',
+      example: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+    },
+    feeBps: {
+      type: 'integer',
+      description: 'Fee in basis points (0-10000, where 10000 = 100%)',
+      example: 100,
+    },
+    serverSignature: {
+      type: 'string',
+      description: 'Server EIP-712 signature for payment authorization',
+      example: '0x1234...abcd',
+    },
   },
 } as const;
 

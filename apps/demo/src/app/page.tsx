@@ -16,12 +16,37 @@ export default function Home() {
   const { disconnect } = useDisconnect();
   const walletChainId = chain?.id;
 
-  // Auto-disconnect if connected to wrong or unsupported network
+  console.log('[Page] Render:', {
+    isConnected,
+    walletChainId,
+    chainConfigId: chainConfig?.chainId,
+  });
+
+  // Track connection state changes
+  const prevConnected = useRef(isConnected);
   useEffect(() => {
-    if (!chainConfig || !isConnected) return;
-    // Disconnect if on unsupported chain (undefined) or wrong chain
-    if (walletChainId === undefined || walletChainId !== chainConfig.chainId) {
+    if (prevConnected.current !== isConnected) {
+      console.log('[Page] Connection state CHANGED:', prevConnected.current, '->', isConnected);
+      if (prevConnected.current === true && isConnected === false) {
+        console.log('[Page] ⚠️ DISCONNECT DETECTED - stack trace:');
+        console.trace();
+      }
+      prevConnected.current = isConnected;
+    }
+  }, [isConnected]);
+
+  // Auto-disconnect if connected to wrong network
+  useEffect(() => {
+    console.log('useEffect triggered:', { chainConfig, isConnected, walletChainId });
+    if (!chainConfig || !isConnected || !walletChainId) {
+      console.log('Early return - waiting for data');
+      return;
+    }
+    if (walletChainId !== chainConfig.chainId) {
+      console.log('Disconnecting - chain mismatch:', walletChainId, '!==', chainConfig.chainId);
       disconnect();
+    } else {
+      console.log('Chain matches - no disconnect');
     }
   }, [chainConfig, walletChainId, isConnected, disconnect]);
 
@@ -103,8 +128,8 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Payment history */}
-          {isConnected && (
+          {/* Payment history - only show when connected to correct chain */}
+          {isConnected && walletChainId === chainConfig?.chainId && (
             <section className="lg:w-1/3">
               <h2 className="text-2xl font-semibold mb-6">Your Payment History</h2>
               <PaymentHistory ref={paymentHistoryRef} />

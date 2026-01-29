@@ -65,25 +65,37 @@ const customClient = new MSQPayClient({
 
 ### createPayment(params)
 
-Create a new payment.
+Create a new payment. The server generates an EIP-712 signature that authorizes the payment parameters.
 
 ```typescript
 const response = await client.createPayment({
-  merchantId: string;
-  amount: number;
-  chainId: number;
-  tokenAddress: string;
-  description?: string;
+  merchantId: string;       // Merchant identifier
+  amount: number;           // Payment amount (in token units)
+  chainId: number;          // Blockchain network ID
+  tokenAddress: string;     // ERC20 token contract address
 });
 
 // Response
 {
   success: true;
-  paymentId: string;
-  transactionHash: string;
+  paymentId: string;           // Unique payment hash (bytes32)
+  chainId: number;             // Blockchain network ID
+  tokenAddress: string;        // Token contract address
+  tokenSymbol: string;         // Token symbol (from on-chain)
+  tokenDecimals: number;       // Token decimals (from on-chain)
+  gatewayAddress: string;      // PaymentGateway contract address
+  forwarderAddress: string;    // ERC2771Forwarder address
+  amount: string;              // Amount in wei
   status: 'pending';
+  expiresAt: string;           // Expiration time (ISO 8601)
+  recipientAddress?: string;   // Merchant's wallet address
+  merchantId?: string;         // Merchant ID (bytes32)
+  feeBps?: number;             // Fee in basis points (0-10000)
+  serverSignature?: string;    // Server EIP-712 signature
 }
 ```
+
+**Note**: The `recipientAddress`, `merchantId`, `feeBps`, and `serverSignature` fields are used for server-signed payment verification on the smart contract.
 
 ### getPaymentStatus(paymentId)
 
@@ -178,7 +190,7 @@ const response = await client.getPaymentHistory({
     {
       paymentId: string;        // Payment ID (bytes32 hash)
       payer: string;            // Payer address
-      merchant: string;         // Merchant address
+      treasury: string;         // Treasury address that received fees
       token: string;            // Token contract address
       tokenSymbol: string;      // Token symbol (e.g., "USDC")
       decimals: number;         // Token decimals
@@ -274,11 +286,28 @@ interface MSQPayConfig {
 }
 
 interface CreatePaymentParams {
-  merchantId: string;
-  amount: number;
-  chainId: number;
+  merchantId: string; // Merchant identifier key
+  amount: number; // Payment amount (in token units)
+  chainId: number; // Blockchain network ID
   tokenAddress: string; // 0x + 40 hex characters
-  description?: string;
+}
+
+interface CreatePaymentResponse {
+  success: boolean;
+  paymentId: string;
+  chainId: number;
+  tokenAddress: string;
+  tokenSymbol: string;
+  tokenDecimals: number;
+  gatewayAddress: string;
+  forwarderAddress: string;
+  amount: string; // wei
+  status: string;
+  expiresAt: string;
+  recipientAddress?: string;
+  merchantId?: string; // bytes32
+  feeBps?: number; // 0-10000
+  serverSignature?: string;
 }
 
 interface GaslessParams {
@@ -300,18 +329,18 @@ interface GetPaymentHistoryParams {
 }
 
 interface PaymentHistoryItem {
-  paymentId: string;
-  payer: string;
-  merchant: string;
-  token: string;
-  tokenSymbol: string;
-  decimals: number;
-  amount: string;
-  timestamp: string;
-  transactionHash: string;
-  status: string;
-  isGasless: boolean;
-  relayId?: string;
+  paymentId: string; // Payment ID (bytes32 hash)
+  payer: string; // Payer wallet address
+  treasury: string; // Treasury address that received fees
+  token: string; // Token contract address
+  tokenSymbol: string; // Token symbol
+  decimals: number; // Token decimals
+  amount: string; // Amount in wei
+  timestamp: string; // Unix timestamp
+  transactionHash: string; // Transaction hash
+  status: string; // Payment status
+  isGasless: boolean; // Whether gasless payment
+  relayId?: string; // Relay request ID (if gasless)
 }
 ```
 

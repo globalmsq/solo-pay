@@ -19,11 +19,21 @@ export const HARDHAT_ACCOUNTS = {
     address: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
     privateKey: '0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6',
   },
+  // Server signer for payment authorization (Account #4)
+  signer: {
+    address: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+    privateKey: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a',
+  },
+  // Merchant recipient wallet for receiving payments (Account #5)
+  merchantRecipient: {
+    address: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
+    privateKey: '0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba',
+  },
 } as const;
 
 /**
- * 배포된 컨트랙트 주소 (init.sql과 동기화됨)
- * Deployment order: Forwarder → MockERC20 → GatewayV1 → Proxy
+ * 배포된 컨트랙트 주소 (scripts/check-and-deploy.ts로 배포됨)
+ * Deployment order: Forwarder (nonce 0) → MockERC20 (nonce 1) → GatewayV1 (nonce 2) → Proxy (nonce 3)
  */
 export const CONTRACT_ADDRESSES = {
   forwarder: '0x5FbDB2315678afecb367f032d93F642f64180aa3',

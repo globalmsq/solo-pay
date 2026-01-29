@@ -6,6 +6,8 @@
     "no-empty-blocks": "off",
     "reason-string": "off",
     "no-inline-assembly": "off",
-    "gas-custom-errors": "off"
+    "gas-custom-errors": "off",
+    "gas-strict-inequalities": "off",
+    "function-max-lines": ["warn", 60]
   }
 }

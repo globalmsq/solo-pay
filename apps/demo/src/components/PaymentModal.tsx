@@ -59,6 +59,10 @@ const PAYMENT_GATEWAY_ABI = [
       { name: 'paymentId', type: 'bytes32' },
       { name: 'tokenAddress', type: 'address' },
       { name: 'amount', type: 'uint256' },
+      { name: 'recipientAddress', type: 'address' },
+      { name: 'merchantId', type: 'bytes32' },
+      { name: 'feeBps', type: 'uint16' },
+      { name: 'serverSignature', type: 'bytes' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -324,15 +328,31 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       const paymentId = serverConfig.paymentId as `0x${string}`;
       setCurrentPaymentId(paymentId);
 
+      // Validate server signature data is available
+      if (
+        !serverConfig.recipientAddress ||
+        !serverConfig.merchantId ||
+        !serverConfig.serverSignature
+      ) {
+        throw new Error('Missing server signature data for payment');
+      }
+
       // 1. Send payment TX to Contract using wagmi's writeContractAsync
       // wagmi handles chain switching internally when chainId is provided
-      // Note: Contract pays to treasury (set at deployment), not per-payment recipient
       const hash = await writeContractAsync({
         chainId: serverConfig.chainId,
         address: serverConfig.gatewayAddress as Address,
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'pay',
-        args: [paymentId, tokenAddress, amount],
+        args: [
+          paymentId,
+          tokenAddress,
+          amount,
+          serverConfig.recipientAddress as Address,
+          serverConfig.merchantId as `0x${string}`,
+          serverConfig.feeBps ?? 0,
+          serverConfig.serverSignature as `0x${string}`,
+        ],
       });
 
       setPendingTxHash(hash);
@@ -375,12 +395,28 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       const paymentId = serverConfig.paymentId as `0x${string}`;
       setCurrentPaymentId(paymentId);
 
+      // Validate server signature data is available
+      if (
+        !serverConfig.recipientAddress ||
+        !serverConfig.merchantId ||
+        !serverConfig.serverSignature
+      ) {
+        throw new Error('Missing server signature data for payment');
+      }
+
       // 1. Encode the PaymentGateway.pay() function call
-      // Note: Contract pays to treasury (set at deployment), not per-payment recipient
       const payCallData = encodeFunctionData({
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'pay',
-        args: [paymentId, tokenAddress, amount],
+        args: [
+          paymentId,
+          tokenAddress,
+          amount,
+          serverConfig.recipientAddress as Address,
+          serverConfig.merchantId as `0x${string}`,
+          serverConfig.feeBps ?? 0,
+          serverConfig.serverSignature as `0x${string}`,
+        ],
       });
 
       // 2. Create EIP-712 typed data for gasless payment forward request

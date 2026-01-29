@@ -621,7 +621,7 @@ export type CheckoutResponseItem = z.infer<typeof CheckoutResponseItemSchema>;
 /**
  * Checkout Response Schema
  * Amount, chainId, decimals, and tokenSymbol are returned from server (server-verified)
- * Note: recipientAddress removed - contract pays to treasury (set at deployment)
+ * Includes server signature for payment authorization
  */
 export const CheckoutResponseSchema = z.object({
   success: z.boolean(),
@@ -638,6 +638,11 @@ export const CheckoutResponseSchema = z.object({
   // 결제 컨트랙트 정보
   gatewayAddress: z.string(),
   forwarderAddress: z.string(),
+  // Server signature fields for V2 payment flow
+  recipientAddress: z.string().optional(), // Merchant's wallet address
+  merchantId: z.string().optional(), // bytes32 keccak256 of merchant_key
+  feeBps: z.number().optional(), // Fee in basis points (0-10000)
+  serverSignature: z.string().optional(), // Server EIP-712 signature
 });
 
 export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;

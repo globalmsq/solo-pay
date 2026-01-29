@@ -70,6 +70,14 @@ export interface CreatePaymentResponse {
   amount: string; // wei
   status: string;
   expiresAt: string;
+  /** Recipient address (merchant's wallet to receive payment) */
+  recipientAddress?: string;
+  /** Merchant identifier (bytes32, keccak256 of merchant_key) */
+  merchantId?: string;
+  /** Fee in basis points (0-10000, where 10000 = 100%) */
+  feeBps?: number;
+  /** Server EIP-712 signature for payment authorization */
+  serverSignature?: string;
 }
 
 export interface PaymentStatusResponse {

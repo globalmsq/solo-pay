@@ -73,15 +73,41 @@ x-api-key: sk_test_abc123
 ```json
 {
   "success": true,
-  "paymentId": "pay_1732960000000",
+  "paymentId": "0x5aed4bae...",
+  "chainId": 80002,
   "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
-  "gatewayAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "amount": "100",
-  "decimals": 18,
-  "status": "pending"
+  "tokenSymbol": "SUT",
+  "tokenDecimals": 18,
+  "gatewayAddress": "0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5",
+  "forwarderAddress": "0xF034a404241707F347A952Cd4095f9035AF877Bf",
+  "amount": "100000000000000000000",
+  "status": "pending",
+  "expiresAt": "2024-12-01T10:30:00.000Z",
+  "recipientAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "merchantId": "0x1234567890abcdef...",
+  "feeBps": 250,
+  "serverSignature": "0xabcdef..."
 }
 ```
+
+**Response Fields**:
+
+| Field            | Type   | Description                                        |
+| ---------------- | ------ | -------------------------------------------------- |
+| paymentId        | string | Unique payment identifier (bytes32 hash)           |
+| chainId          | number | Blockchain network ID                              |
+| tokenAddress     | string | ERC20 token contract address                       |
+| tokenSymbol      | string | Token symbol (fetched from on-chain)               |
+| tokenDecimals    | number | Token decimals (fetched from on-chain)             |
+| gatewayAddress   | string | PaymentGateway contract address                    |
+| forwarderAddress | string | ERC2771Forwarder address (for gasless)             |
+| amount           | string | Amount in wei (smallest token unit)                |
+| status           | string | Payment status (pending)                           |
+| expiresAt        | string | Payment expiration time (ISO 8601)                 |
+| recipientAddress | string | Merchant's wallet to receive payment               |
+| merchantId       | string | Merchant identifier (bytes32, for contract)        |
+| feeBps           | number | Fee in basis points (0-10000, where 10000 = 100%)  |
+| serverSignature  | string | Server EIP-712 signature for payment authorization |
 
 ### POST /api/checkout
 
@@ -114,10 +140,16 @@ Create payment based on product array (internal store server API route only).
     }
   ],
   "totalAmount": "125",
-  "tokenAddress": "0x...",
-  "gatewayAddress": "0x...",
-  "forwarderAddress": "0x...",
-  "treasuryAddress": "0x..."
+  "chainId": 80002,
+  "tokenSymbol": "SUT",
+  "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
+  "decimals": 18,
+  "gatewayAddress": "0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5",
+  "forwarderAddress": "0xF034a404241707F347A952Cd4095f9035AF877Bf",
+  "recipientAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "merchantId": "0x1234567890abcdef...",
+  "feeBps": 250,
+  "serverSignature": "0xabcdef..."
 }
 ```
 
@@ -134,9 +166,14 @@ Query payment status.
     "paymentId": "0x5aed4bae...",
     "status": "completed",
     "payer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    "merchant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "treasuryAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
+    "tokenSymbol": "SUT",
     "amount": "100000000000000000000",
-    "timestamp": 1733235200
+    "transactionHash": "0xabcd1234...",
+    "blockNumber": 42000000,
+    "createdAt": "2024-12-01T10:00:00.000Z",
+    "updatedAt": "2024-12-01T10:01:00.000Z"
   }
 }
 ```
@@ -205,9 +242,9 @@ Query user's payment history.
     {
       "paymentId": "0x5aed4bae...",
       "payer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      "merchant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "treasury": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       "token": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
-      "tokenSymbol": "TEST",
+      "tokenSymbol": "SUT",
       "decimals": 18,
       "amount": "100000000000000000000",
       "timestamp": "1733235200",
@@ -389,13 +426,19 @@ const client = new MSQPayClient({
   apiKey: 'sk_test_abc123',
 });
 
-// Create payment (funds go to treasury set at contract deployment)
+// Create payment
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
-  chainId: 31337,
+  chainId: 80002,
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
+
+// Response includes server signature for contract verification
+console.log('Payment ID:', payment.paymentId);
+console.log('Recipient:', payment.recipientAddress);
+console.log('Fee (bps):', payment.feeBps);
+console.log('Server Signature:', payment.serverSignature);
 
 // Query payment status
 const status = await client.getPaymentStatus(payment.paymentId);

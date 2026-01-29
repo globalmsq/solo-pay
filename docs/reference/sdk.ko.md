@@ -65,25 +65,37 @@ const customClient = new MSQPayClient({
 
 ### createPayment(params)
 
-새로운 결제를 생성합니다.
+새로운 결제를 생성합니다. 서버가 결제 파라미터를 승인하는 EIP-712 서명을 생성합니다.
 
 ```typescript
 const response = await client.createPayment({
-  merchantId: string;
-  amount: number;
-  chainId: number;
-  tokenAddress: string;
-  description?: string;
+  merchantId: string;       // 상점 식별자
+  amount: number;           // 결제 금액 (토큰 단위)
+  chainId: number;          // 블록체인 네트워크 ID
+  tokenAddress: string;     // ERC20 토큰 컨트랙트 주소
 });
 
 // 응답
 {
   success: true;
-  paymentId: string;
-  transactionHash: string;
+  paymentId: string;           // 고유 결제 해시 (bytes32)
+  chainId: number;             // 블록체인 네트워크 ID
+  tokenAddress: string;        // 토큰 컨트랙트 주소
+  tokenSymbol: string;         // 토큰 심볼 (온체인에서 가져옴)
+  tokenDecimals: number;       // 토큰 소수점 자리수 (온체인에서 가져옴)
+  gatewayAddress: string;      // PaymentGateway 컨트랙트 주소
+  forwarderAddress: string;    // ERC2771Forwarder 주소
+  amount: string;              // wei 단위 금액
   status: 'pending';
+  expiresAt: string;           // 만료 시간 (ISO 8601)
+  recipientAddress?: string;   // 상점 지갑 주소
+  merchantId?: string;         // 상점 ID (bytes32)
+  feeBps?: number;             // 수수료 (basis points, 0-10000)
+  serverSignature?: string;    // 서버 EIP-712 서명
 }
 ```
+
+**참고**: `recipientAddress`, `merchantId`, `feeBps`, `serverSignature` 필드는 스마트 컨트랙트에서 서버 서명 결제 검증에 사용됩니다.
 
 ### getPaymentStatus(paymentId)
 
@@ -178,7 +190,7 @@ const response = await client.getPaymentHistory({
     {
       paymentId: string;        // 결제 ID (bytes32 해시)
       payer: string;            // 지불자 주소
-      merchant: string;         // 상점 주소
+      treasury: string;         // 수수료를 받은 트레저리 주소
       token: string;            // 토큰 컨트랙트 주소
       tokenSymbol: string;      // 토큰 심볼 (예: "USDC")
       decimals: number;         // 토큰 소수점 자리수
@@ -274,11 +286,28 @@ interface MSQPayConfig {
 }
 
 interface CreatePaymentParams {
-  merchantId: string;
-  amount: number;
-  chainId: number;
+  merchantId: string; // 상점 식별자 키
+  amount: number; // 결제 금액 (토큰 단위)
+  chainId: number; // 블록체인 네트워크 ID
   tokenAddress: string; // 0x + 40 hex 문자
-  description?: string;
+}
+
+interface CreatePaymentResponse {
+  success: boolean;
+  paymentId: string;
+  chainId: number;
+  tokenAddress: string;
+  tokenSymbol: string;
+  tokenDecimals: number;
+  gatewayAddress: string;
+  forwarderAddress: string;
+  amount: string; // wei
+  status: string;
+  expiresAt: string;
+  recipientAddress?: string;
+  merchantId?: string; // bytes32
+  feeBps?: number; // 0-10000
+  serverSignature?: string;
 }
 
 interface GaslessParams {
@@ -300,18 +329,18 @@ interface GetPaymentHistoryParams {
 }
 
 interface PaymentHistoryItem {
-  paymentId: string;
-  payer: string;
-  merchant: string;
-  token: string;
-  tokenSymbol: string;
-  decimals: number;
-  amount: string;
-  timestamp: string;
-  transactionHash: string;
-  status: string;
-  isGasless: boolean;
-  relayId?: string;
+  paymentId: string; // 결제 ID (bytes32 해시)
+  payer: string; // 지불자 지갑 주소
+  treasury: string; // 수수료를 받은 트레저리 주소
+  token: string; // 토큰 컨트랙트 주소
+  tokenSymbol: string; // 토큰 심볼
+  decimals: number; // 토큰 소수점 자리수
+  amount: string; // wei 단위 금액
+  timestamp: string; // Unix 타임스탬프
+  transactionHash: string; // 트랜잭션 해시
+  status: string; // 결제 상태
+  isGasless: boolean; // 가스리스 결제 여부
+  relayId?: string; // 릴레이 요청 ID (가스리스인 경우)
 }
 ```
 

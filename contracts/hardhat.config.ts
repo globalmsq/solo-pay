@@ -24,6 +24,7 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
       evmVersion: 'paris',
+      viaIR: true,
     },
   },
   networks: {

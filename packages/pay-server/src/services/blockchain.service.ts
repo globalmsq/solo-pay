@@ -43,20 +43,22 @@ export interface PaymentHistoryItem {
   relayId?: string;
 }
 
-// PaymentCompleted 이벤트 ABI
+// PaymentCompleted 이벤트 ABI (V2: merchantId, recipientAddress, fee 포함)
 const PAYMENT_COMPLETED_EVENT = parseAbiItem(
-  'event PaymentCompleted(bytes32 indexed paymentId, address indexed payerAddress, address indexed treasuryAddress, address tokenAddress, uint256 amount, uint256 timestamp)'
+  'event PaymentCompleted(bytes32 indexed paymentId, bytes32 indexed merchantId, address indexed payerAddress, address recipientAddress, address tokenAddress, uint256 amount, uint256 fee, uint256 timestamp)'
 );
 
 /**
- * PaymentCompleted 이벤트 args 타입
+ * PaymentCompleted 이벤트 args 타입 (V2)
  */
 interface PaymentCompletedEventArgs {
   paymentId: string;
+  merchantId: string;
   payerAddress: string;
-  treasuryAddress: string;
+  recipientAddress: string;
   tokenAddress: string;
   amount: bigint;
+  fee: bigint;
   timestamp: bigint;
 }
 
@@ -442,11 +444,11 @@ export class BlockchainService {
 
       return {
         payerAddress: args.payerAddress || '',
-        treasuryAddress: args.treasuryAddress || '',
+        treasuryAddress: args.recipientAddress || '',
         tokenAddress,
         tokenSymbol,
         amount: (args.amount || BigInt(0)).toString(),
-        timestamp: new Date(Number(block.timestamp) * 1000).toISOString(),
+        timestamp: new Date(Number(args.timestamp || block.timestamp) * 1000).toISOString(),
         transactionHash: log.transactionHash,
       };
     } catch (err) {
@@ -664,12 +666,12 @@ export class BlockchainService {
           return {
             paymentId: args.paymentId || '',
             payerAddress: args.payerAddress || '',
-            treasuryAddress: args.treasuryAddress || '',
+            treasuryAddress: args.recipientAddress || '',
             tokenAddress,
             tokenSymbol,
             decimals,
             amount: (args.amount || BigInt(0)).toString(),
-            timestamp: block.timestamp.toString(),
+            timestamp: (args.timestamp || block.timestamp).toString(),
             transactionHash: log.transactionHash,
             status: 'completed',
             isGasless: false,

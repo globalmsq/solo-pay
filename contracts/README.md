@@ -182,11 +182,21 @@ Deployed contract addresses are saved in `ignition/deployments/chain-{CHAIN_ID}/
 
 ```
 src/
-├── PaymentGatewayV1.sol      # Payment Gateway (Upgradeable)
-├── PaymentGatewayProxy.sol   # Proxy Contract
+├── PaymentGatewayV1.sol      # Payment Gateway (Upgradeable, EIP-712 signature verification)
+├── PaymentGatewayProxy.sol   # UUPS Proxy Contract
+├── interfaces/
+│   └── IPaymentGateway.sol   # Payment Gateway Interface
 └── mocks/
     └── MockERC20.sol         # ERC20 Token for Testing
 ```
+
+### PaymentGatewayV1 Features
+
+- **Server Signature Verification**: EIP-712 typed data signature verification
+- **Treasury Model**: Fees sent to treasury, remainder to merchant recipient
+- **Token Whitelist**: Optional token support enforcement
+- **Gasless Support**: ERC2771 meta-transaction support
+- **Upgradeable**: UUPS proxy pattern for future upgrades
 
 ## License
 

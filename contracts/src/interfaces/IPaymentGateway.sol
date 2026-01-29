@@ -7,7 +7,6 @@ pragma solidity ^0.8.24;
  * @notice Interface for the PaymentGateway contract
  */
 interface IPaymentGateway {
-
     /**
      * @notice Event emitted when the treasury address is changed
      * @param oldTreasuryAddress Previous treasury address
@@ -18,18 +17,22 @@ interface IPaymentGateway {
     /**
      * @notice Emitted when a payment is completed
      * @param paymentId Unique identifier for the payment
+     * @param merchantId Merchant identifier (from server signature)
      * @param payerAddress Address of the user who paid
-     * @param treasuryAddress Address of the recipient
+     * @param recipientAddress Address that received the payment (merchant's wallet)
      * @param tokenAddress Address of the ERC20 token used
-     * @param amount Amount transferred
+     * @param amount Total amount transferred
+     * @param fee Fee amount (sent to treasury)
      * @param timestamp Block timestamp when payment was processed
      */
     event PaymentCompleted(
         bytes32 indexed paymentId,
+        bytes32 indexed merchantId,
         address indexed payerAddress,
-        address indexed treasuryAddress,
+        address recipientAddress,
         address tokenAddress,
         uint256 amount,
+        uint256 fee,
         uint256 timestamp
     );
 
@@ -41,15 +44,30 @@ interface IPaymentGateway {
     event TokenSupportChanged(address indexed tokenAddress, bool indexed supported);
 
     /**
-     * @notice Process a direct payment (user pays gas)
+     * @notice Emitted when server signer is changed
+     * @param oldSigner Previous signer address
+     * @param newSigner New signer address
+     */
+    event SignerChanged(address indexed oldSigner, address indexed newSigner);
+
+    /**
+     * @notice Process a payment with server signature verification
      * @param paymentId Unique identifier for this payment
      * @param tokenAddress Address of the ERC20 token to transfer
      * @param amount Amount to transfer (in token's smallest unit)
+     * @param recipientAddress Address to receive the payment (merchant's wallet)
+     * @param merchantId Merchant identifier (from server signature)
+     * @param feeBps Fee percentage in basis points (from server signature)
+     * @param serverSignature Server's EIP-712 signature
      */
     function pay(
         bytes32 paymentId,
         address tokenAddress,
-        uint256 amount
+        uint256 amount,
+        address recipientAddress,
+        bytes32 merchantId,
+        uint16 feeBps,
+        bytes calldata serverSignature
     ) external;
 
     /**

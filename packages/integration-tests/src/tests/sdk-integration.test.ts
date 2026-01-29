@@ -126,6 +126,11 @@ describe('SDK Integration', () => {
       expect(response.chainId).toBe(token.networkId);
       expect(response.tokenAddress.toLowerCase()).toBe(token.address.toLowerCase());
       expect(response.status).toBe('created');
+      // New server signature fields
+      expect(response.serverSignature).toBeDefined();
+      expect(response.recipientAddress).toBeDefined();
+      expect(response.merchantId).toBeDefined();
+      expect(response.feeBps).toBeDefined();
     });
 
     it('should return payment hash and gateway address', async () => {
@@ -209,11 +214,19 @@ describe('SDK Integration', () => {
       // 2. Approve tokens
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
 
-      // 3. Execute payment on-chain
+      // 3. Execute payment on-chain with server signature
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(createResponse.gatewayAddress, PaymentGatewayABI, wallet);
 
-      const tx = await gateway.pay(paymentId, token.address, amount);
+      const tx = await gateway.pay(
+        paymentId,
+        token.address,
+        amount,
+        createResponse.recipientAddress,
+        createResponse.merchantId,
+        createResponse.feeBps,
+        createResponse.serverSignature
+      );
       await tx.wait();
 
       // 4. Verify on-chain
@@ -242,6 +255,17 @@ describe('SDK Integration', () => {
 
       const paymentId = createResponse.paymentId;
 
+      // Verify server signature fields are present
+      const {
+        recipientAddress,
+        merchantId: respMerchantId,
+        feeBps,
+        serverSignature,
+      } = createResponse;
+      if (!recipientAddress || !respMerchantId || feeBps === undefined || !serverSignature) {
+        throw new Error('Server signature fields missing from response');
+      }
+
       // 2. Approve tokens
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
 
@@ -249,7 +273,15 @@ describe('SDK Integration', () => {
       const forwarder = getContract(createResponse.forwarderAddress, ERC2771ForwarderABI);
       const nonce = await forwarder.nonces(payerAddress);
       const deadline = getDeadline(1);
-      const data = encodePayFunctionData(paymentId, token.address, amount);
+      const data = encodePayFunctionData(
+        paymentId,
+        token.address,
+        amount,
+        recipientAddress,
+        respMerchantId,
+        feeBps,
+        serverSignature
+      );
 
       const request: ForwardRequest = {
         from: payerAddress,
@@ -302,10 +334,29 @@ describe('SDK Integration', () => {
 
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
 
+      // Server signature fields must be present
+      const {
+        recipientAddress,
+        merchantId: respMerchantId,
+        feeBps,
+        serverSignature,
+      } = createResponse;
+      if (!recipientAddress || !respMerchantId || feeBps === undefined || !serverSignature) {
+        throw new Error('Server signature fields missing from response');
+      }
+
       const forwarder = getContract(createResponse.forwarderAddress, ERC2771ForwarderABI);
       const nonce = await forwarder.nonces(payerAddress);
       const deadline = getDeadline(1);
-      const data = encodePayFunctionData(createResponse.paymentId, token.address, amount);
+      const data = encodePayFunctionData(
+        createResponse.paymentId,
+        token.address,
+        amount,
+        recipientAddress,
+        respMerchantId,
+        feeBps,
+        serverSignature
+      );
 
       const request: ForwardRequest = {
         from: payerAddress,

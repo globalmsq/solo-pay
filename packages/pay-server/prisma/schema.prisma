@@ -67,17 +67,19 @@ model Token {
 }
 
 model Merchant {
-  id              Int      @id @default(autoincrement())
-  merchant_key    String   @unique
-  name            String
-  chain_id        Int      // logical reference to chains.id
-  api_key_hash    String   // SHA-256 hash
-  webhook_url     String?
-  is_enabled      Boolean  @default(true)
-  is_deleted      Boolean  @default(false)
-  deleted_at      DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  merchant_key      String   @unique
+  name              String
+  chain_id          Int      // logical reference to chains.id
+  api_key_hash      String   // SHA-256 hash
+  webhook_url       String?
+  fee_bps           Int      @default(0)                     // 0 ~ 10000 basis points (100% = 10000)
+  recipient_address String?  @db.VarChar(42)                 // 0x... Ethereum address
+  is_enabled        Boolean  @default(true)
+  is_deleted        Boolean  @default(false)
+  deleted_at        DateTime?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
   @@map("merchants")
 }
