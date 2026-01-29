@@ -91,7 +91,7 @@ services:
       RELAY_API_KEY: ${RELAY_API_KEY:-amoy-dev-api-key}
       # Server signer private key for EIP-712 payment signatures
       # TODO: Set your signer private key (DO NOT COMMIT!)
-      SIGNER_PRIVATE_KEY: "${SIGNER_PRIVATE_KEY}"
+      SIGNER_PRIVATE_KEY: '${SIGNER_PRIVATE_KEY}'
     depends_on:
       mysql:
         condition: service_healthy

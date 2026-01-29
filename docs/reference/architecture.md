@@ -339,8 +339,8 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 
 | Contract                | Address                                      |
 | ----------------------- | -------------------------------------------- |
-| PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
-| PaymentGatewayV1 (Impl) | `0xf5131C2c7140919042f811080D2Be9E8da37F9ED` |
+| PaymentGateway (Proxy)  | `0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d` |
+| PaymentGatewayV1 (Impl) | `0x6b08b0EaD9370605AC9F34A17897515aACa0954a` |
 | ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 | SUT Token               | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 

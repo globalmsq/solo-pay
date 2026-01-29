@@ -190,16 +190,16 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 -- Demo Merchant (id=1)
 -- API Key: 123 -> SHA-256 hash
 -- chain_id=1 (Localhost chain)
--- recipient_address: Account #5 (merchantRecipient) for receiving payments
+-- recipient_address: Account #1 (recipient) for receiving payments
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
-('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo', 0, '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc');
+('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
 
 -- MetaStar Merchant (id=2)
 -- API Key: msq_sk_metastar_123 -> SHA-256 hash
 -- chain_id=3 (Amoy chain)
--- recipient_address: Test wallet for Amoy testnet
+-- recipient_address: Steven's wallet address for receiving payments
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
-('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL, 0, '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc');
+('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL, 0, '0x7bE4CfF95eb3c3d2162410abCd5506f691C624Ed');
 
 -- Payment Methods
 -- Note: Payment methods must use tokens from the merchant's chain

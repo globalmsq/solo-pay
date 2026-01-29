@@ -9,6 +9,7 @@ coverage/
 
 # Generated files
 artifacts/
+build-info/
 cache/
 typechain-types/
 subgraph/generated/

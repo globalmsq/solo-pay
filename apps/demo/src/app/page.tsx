@@ -2,7 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useDisconnect } from 'wagmi';
+import { useStableConnection } from '@/hooks/useStableConnection';
 import { ProductCard } from '@/components/ProductCard';
 import { PaymentHistory, PaymentHistoryRef } from '@/components/PaymentHistory';
 import { Toast } from '@/components/Toast';
@@ -11,42 +12,18 @@ import { PRODUCTS } from '@/lib/products';
 import { useChainConfig } from '@/app/providers';
 
 export default function Home() {
-  const { isConnected, chain } = useAccount();
+  const { isConnected, chain } = useStableConnection();
   const chainConfig = useChainConfig();
   const { disconnect } = useDisconnect();
   const walletChainId = chain?.id;
 
-  console.log('[Page] Render:', {
-    isConnected,
-    walletChainId,
-    chainConfigId: chainConfig?.chainId,
-  });
-
-  // Track connection state changes
-  const prevConnected = useRef(isConnected);
-  useEffect(() => {
-    if (prevConnected.current !== isConnected) {
-      console.log('[Page] Connection state CHANGED:', prevConnected.current, '->', isConnected);
-      if (prevConnected.current === true && isConnected === false) {
-        console.log('[Page] ⚠️ DISCONNECT DETECTED - stack trace:');
-        console.trace();
-      }
-      prevConnected.current = isConnected;
-    }
-  }, [isConnected]);
-
   // Auto-disconnect if connected to wrong network
   useEffect(() => {
-    console.log('useEffect triggered:', { chainConfig, isConnected, walletChainId });
     if (!chainConfig || !isConnected || !walletChainId) {
-      console.log('Early return - waiting for data');
       return;
     }
     if (walletChainId !== chainConfig.chainId) {
-      console.log('Disconnecting - chain mismatch:', walletChainId, '!==', chainConfig.chainId);
       disconnect();
-    } else {
-      console.log('Chain matches - no disconnect');
     }
   }, [chainConfig, walletChainId, isConnected, disconnect]);
 

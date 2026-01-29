@@ -9,7 +9,7 @@ dataSources:
     network: polygon-amoy
     source:
       # Address will be updated after deployment
-      address: "0x0000000000000000000000000000000000000000"
+      address: '0x0000000000000000000000000000000000000000'
       abi: PaymentGateway
       # Start block will be updated after deployment
       startBlock: 0

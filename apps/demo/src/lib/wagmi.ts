@@ -22,20 +22,12 @@ let cachedChainId: number | null = null;
  * 같은 chainId면 캐시된 config 반환, 다르면 새로 생성
  */
 export function getOrCreateWagmiConfig(chainConfig: ChainConfig): Config {
-  console.log('[wagmi] getOrCreateWagmiConfig called:', {
-    requestedChainId: chainConfig.chainId,
-    cachedChainId,
-    hasCachedConfig: !!cachedWagmiConfig,
-  });
-
   // 같은 chainId면 캐시된 config 반환 (리렌더/StrictMode 대응)
   if (cachedWagmiConfig && cachedChainId === chainConfig.chainId) {
-    console.log('[wagmi] Returning CACHED config');
     return cachedWagmiConfig;
   }
 
   // chainId가 바뀌면 새로 생성
-  console.log('[wagmi] Creating NEW config');
   cachedChainId = chainConfig.chainId;
   cachedWagmiConfig = createWagmiConfig(chainConfig);
   return cachedWagmiConfig;

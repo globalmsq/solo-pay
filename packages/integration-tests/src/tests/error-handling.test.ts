@@ -23,7 +23,8 @@ describe('Error Handling Integration', () => {
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const signerPrivateKey = HARDHAT_ACCOUNTS.signer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  const recipientAddress = HARDHAT_ACCOUNTS.merchantRecipient.address;
+  // Recipient receives payments (Account #1 - matches init.sql)
+  const recipientAddress = HARDHAT_ACCOUNTS.recipient.address;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
 
   // Test merchant ID
@@ -46,7 +47,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount: 0n,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -77,7 +78,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: ethers.ZeroAddress,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -110,7 +111,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -144,7 +145,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount: paymentAmount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -180,7 +181,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -215,7 +216,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -262,7 +263,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -300,7 +301,7 @@ describe('Error Handling Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount: signedAmount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };

@@ -43,8 +43,11 @@ vi.mock('wagmi', () => ({
 vi.mock('viem', () => ({
   parseUnits: vi.fn((val) => BigInt(val) * BigInt(10 ** 18)),
   formatUnits: vi.fn((val) => (Number(val) / 10 ** 18).toString()),
+  parseGwei: vi.fn((val) => BigInt(val) * BigInt(10 ** 9)),
+  encodeFunctionData: vi.fn(() => '0x1234'),
   keccak256: vi.fn(() => '0x123456789'),
   toHex: vi.fn((val) => '0x' + val),
+  maxUint256: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'),
 }));
 
 // Mock wagmi lib

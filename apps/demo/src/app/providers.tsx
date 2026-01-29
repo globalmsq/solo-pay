@@ -18,60 +18,25 @@ const queryClient = new QueryClient({
   },
 });
 
-/**
- * MetaMask 초기화 대기 (브라우저 시작 직후 연결 문제 방지)
- * @see https://github.com/MetaMask/metamask-extension/issues/13465
- */
-async function waitForMetaMaskInit(timeout = 3000): Promise<boolean> {
-  if (typeof window === 'undefined') return true;
-
-  const ethereum = (window as unknown as { ethereum?: { _state?: { initialized?: boolean } } })
-    .ethereum;
-  if (!ethereum) return true; // MetaMask 없으면 패스
-
-  const start = Date.now();
-  while (Date.now() - start < timeout) {
-    if (ethereum._state?.initialized) {
-      console.log('[Providers] MetaMask initialized');
-      return true;
-    }
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  console.warn('[Providers] MetaMask init timeout, proceeding anyway');
-  return false;
-}
-
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
   const [wagmiConfig, setWagmiConfig] = React.useState<Config | null>(null);
   const [chainConfig, setChainConfig] = React.useState<ChainConfig | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  console.log('[Providers] Render:', { mounted, hasWagmiConfig: !!wagmiConfig, chainConfig });
-
   React.useEffect(() => {
-    console.log('[Providers] useEffect triggered');
+    setMounted(true);
 
-    const init = async () => {
-      // MetaMask 초기화 대기 (연결 끊김 방지)
-      await waitForMetaMaskInit();
-
-      // 체인 설정을 API에서 가져와서 wagmi config 생성 (싱글톤)
-      try {
-        const config = await fetchChainConfig();
-        console.log('[Providers] API returned config:', config);
+    // 체인 설정을 API에서 가져와서 wagmi config 생성 (싱글톤)
+    fetchChainConfig()
+      .then((config) => {
         setChainConfig(config);
-        const wConfig = getOrCreateWagmiConfig(config);
-        setWagmiConfig(wConfig);
-      } catch (err) {
+        setWagmiConfig(getOrCreateWagmiConfig(config));
+      })
+      .catch((err) => {
         console.error('Failed to load chain config:', err);
         setError('Failed to load blockchain configuration');
-      }
-
-      setMounted(true);
-    };
-
-    init();
+      });
   }, []);
 
   // 로딩 상태

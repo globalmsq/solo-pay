@@ -10,7 +10,14 @@ import {
   useSwitchChain,
   useChainId,
 } from 'wagmi';
-import { parseUnits, formatUnits, encodeFunctionData, maxUint256, type Address } from 'viem';
+import {
+  parseUnits,
+  formatUnits,
+  encodeFunctionData,
+  maxUint256,
+  parseGwei,
+  type Address,
+} from 'viem';
 import {
   getPaymentStatus,
   checkout,
@@ -79,6 +86,13 @@ const FORWARDER_ABI = [
     stateMutability: 'view',
   },
 ] as const;
+
+// Polygon networks require higher gas fees (min 25 gwei priority fee)
+const POLYGON_CHAIN_IDS = [137, 80002]; // Polygon Mainnet, Polygon Amoy
+const POLYGON_GAS_CONFIG = {
+  maxPriorityFeePerGas: parseGwei('30'), // 30 gwei (above 25 gwei minimum)
+  maxFeePerGas: parseGwei('100'), // 100 gwei max
+};
 
 interface Product {
   id: string;
@@ -299,12 +313,16 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       setError(null);
 
       // wagmi's writeContractAsync handles chain switching internally when chainId is provided
+      // Polygon networks require higher gas fees
+      const gasConfig = POLYGON_CHAIN_IDS.includes(serverConfig.chainId) ? POLYGON_GAS_CONFIG : {};
+
       const hash = await writeContractAsync({
         chainId: serverConfig.chainId,
         address: tokenAddress,
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [serverConfig.gatewayAddress as Address, maxUint256],
+        ...gasConfig,
       });
 
       setApproveTxHash(hash);
@@ -339,6 +357,9 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
 
       // 1. Send payment TX to Contract using wagmi's writeContractAsync
       // wagmi handles chain switching internally when chainId is provided
+      // Polygon networks require higher gas fees
+      const gasConfig = POLYGON_CHAIN_IDS.includes(serverConfig.chainId) ? POLYGON_GAS_CONFIG : {};
+
       const hash = await writeContractAsync({
         chainId: serverConfig.chainId,
         address: serverConfig.gatewayAddress as Address,
@@ -353,6 +374,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
           serverConfig.feeBps ?? 0,
           serverConfig.serverSignature as `0x${string}`,
         ],
+        ...gasConfig,
       });
 
       setPendingTxHash(hash);

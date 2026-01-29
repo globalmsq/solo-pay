@@ -28,7 +28,8 @@ describe('Payment Lifecycle Integration', () => {
   const relayerPrivateKey = HARDHAT_ACCOUNTS.relayer.privateKey;
   const signerPrivateKey = HARDHAT_ACCOUNTS.signer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  const recipientAddress = HARDHAT_ACCOUNTS.merchantRecipient.address;
+  // Recipient receives payments (Account #1 - matches init.sql)
+  const recipientAddress = HARDHAT_ACCOUNTS.recipient.address;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
   const forwarderAddress = CONTRACT_ADDRESSES.forwarder;
 
@@ -64,7 +65,7 @@ describe('Payment Lifecycle Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -106,7 +107,7 @@ describe('Payment Lifecycle Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -170,7 +171,7 @@ describe('Payment Lifecycle Integration', () => {
         paymentId,
         tokenAddress: token.address,
         amount,
-        recipientAddress,
+        recipientAddress: recipientAddress,
         merchantId,
         feeBps,
       };
@@ -224,7 +225,7 @@ describe('Payment Lifecycle Integration', () => {
           paymentId,
           tokenAddress: token.address,
           amount,
-          recipientAddress,
+          recipientAddress: recipientAddress,
           merchantId,
           feeBps,
         };

@@ -22,10 +22,10 @@ describe('Direct Payment Integration', () => {
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const signerPrivateKey = HARDHAT_ACCOUNTS.signer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  // Treasury receives fees
-  const treasuryAddress = HARDHAT_ACCOUNTS.merchant.address;
-  // Merchant recipient receives payments (minus fees)
-  const recipientAddress = HARDHAT_ACCOUNTS.merchantRecipient.address;
+  // Treasury receives platform fees (Account #5 - contract config)
+  const treasuryAddress = HARDHAT_ACCOUNTS.treasury.address;
+  // Recipient receives payments (Account #1 - matches init.sql)
+  const recipientAddress = HARDHAT_ACCOUNTS.recipient.address;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
 
   // Test merchant ID
@@ -52,7 +52,7 @@ describe('Direct Payment Integration', () => {
       paymentId,
       tokenAddress: token.address,
       amount,
-      recipientAddress,
+      recipientAddress: recipientAddress,
       merchantId,
       feeBps,
     };
@@ -98,7 +98,7 @@ describe('Direct Payment Integration', () => {
       paymentId,
       tokenAddress: token.address,
       amount,
-      recipientAddress,
+      recipientAddress: recipientAddress,
       merchantId,
       feeBps,
     };
@@ -141,7 +141,7 @@ describe('Direct Payment Integration', () => {
       paymentId,
       tokenAddress: token.address,
       amount,
-      recipientAddress,
+      recipientAddress: recipientAddress,
       merchantId,
       feeBps,
     };
@@ -184,7 +184,7 @@ describe('Direct Payment Integration', () => {
       paymentId,
       tokenAddress: token.address,
       amount: 0n,
-      recipientAddress,
+      recipientAddress: recipientAddress,
       merchantId,
       feeBps,
     };
@@ -216,7 +216,7 @@ describe('Direct Payment Integration', () => {
       paymentId,
       tokenAddress: token.address,
       amount,
-      recipientAddress,
+      recipientAddress: recipientAddress,
       merchantId,
       feeBps,
     };
@@ -253,7 +253,7 @@ describe('Direct Payment Integration', () => {
       paymentId,
       tokenAddress: token.address,
       amount,
-      recipientAddress,
+      recipientAddress: recipientAddress,
       merchantId,
       feeBps,
     };
