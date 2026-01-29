@@ -4,7 +4,7 @@ import * as React from 'react';
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
 import { WagmiProvider, type Config } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { createWagmiConfig, fetchChainConfig } from '@/lib/wagmi';
+import { getOrCreateWagmiConfig, fetchChainConfig } from '@/lib/wagmi';
 import type { ChainConfig } from '@/app/api/config/route';
 
 import '@rainbow-me/rainbowkit/styles.css';
@@ -27,11 +27,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     setMounted(true);
 
-    // 체인 설정을 API에서 가져와서 wagmi config 생성
+    // 체인 설정을 API에서 가져와서 wagmi config 생성 (싱글톤)
     fetchChainConfig()
       .then((config) => {
         setChainConfig(config);
-        setWagmiConfig(createWagmiConfig(config));
+        setWagmiConfig(getOrCreateWagmiConfig(config));
       })
       .catch((err) => {
         console.error('Failed to load chain config:', err);

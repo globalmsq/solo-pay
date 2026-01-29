@@ -59,27 +59,55 @@ x-api-key: sk_test_abc123
 
 ```json
 {
+  "merchantId": "merchant_001",
   "amount": 100,
-  "currency": "SUT",
   "chainId": 80002,
-  "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2"
 }
 ```
+
+> **참고**: 결제금은 컨트랙트 배포 시 설정된 treasury 주소로 전송됩니다.
 
 #### 응답 (201 Created)
 
 ```json
 {
   "success": true,
-  "paymentId": "pay_1732960000000",
+  "paymentId": "0x5aed4bae...",
+  "chainId": 80002,
   "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
-  "gatewayAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "amount": "100",
-  "decimals": 18,
-  "status": "pending"
+  "tokenSymbol": "SUT",
+  "tokenDecimals": 18,
+  "gatewayAddress": "0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d",
+  "forwarderAddress": "0xF034a404241707F347A952Cd4095f9035AF877Bf",
+  "amount": "100000000000000000000",
+  "status": "pending",
+  "expiresAt": "2024-12-01T10:30:00.000Z",
+  "recipientAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "merchantId": "0x1234567890abcdef...",
+  "feeBps": 250,
+  "serverSignature": "0xabcdef..."
 }
 ```
+
+**응답 필드**:
+
+| 필드             | 타입   | 설명                                         |
+| ---------------- | ------ | -------------------------------------------- |
+| paymentId        | string | 고유 결제 식별자 (bytes32 해시)              |
+| chainId          | number | 블록체인 네트워크 ID                         |
+| tokenAddress     | string | ERC20 토큰 컨트랙트 주소                     |
+| tokenSymbol      | string | 토큰 심볼 (온체인에서 가져옴)                |
+| tokenDecimals    | number | 토큰 소수점 자리수 (온체인에서 가져옴)       |
+| gatewayAddress   | string | PaymentGateway 컨트랙트 주소                 |
+| forwarderAddress | string | ERC2771Forwarder 주소 (가스리스용)           |
+| amount           | string | wei 단위 금액 (토큰의 최소 단위)             |
+| status           | string | 결제 상태 (pending)                          |
+| expiresAt        | string | 결제 만료 시간 (ISO 8601)                    |
+| recipientAddress | string | 결제를 받을 상점 지갑 주소                   |
+| merchantId       | string | 상점 식별자 (bytes32, 컨트랙트용)            |
+| feeBps           | number | 수수료 (basis points, 0-10000, 10000 = 100%) |
+| serverSignature  | string | 결제 승인용 서버 EIP-712 서명                |
 
 ### POST /api/checkout
 
@@ -112,10 +140,16 @@ x-api-key: sk_test_abc123
     }
   ],
   "totalAmount": "125",
-  "tokenAddress": "0x...",
-  "gatewayAddress": "0x...",
-  "forwarderAddress": "0x...",
-  "recipientAddress": "0x..."
+  "chainId": 80002,
+  "tokenSymbol": "SUT",
+  "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
+  "decimals": 18,
+  "gatewayAddress": "0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d",
+  "forwarderAddress": "0xF034a404241707F347A952Cd4095f9035AF877Bf",
+  "recipientAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "merchantId": "0x1234567890abcdef...",
+  "feeBps": 250,
+  "serverSignature": "0xabcdef..."
 }
 ```
 
@@ -132,9 +166,14 @@ x-api-key: sk_test_abc123
     "paymentId": "0x5aed4bae...",
     "status": "completed",
     "payer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    "merchant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "treasuryAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
+    "tokenSymbol": "SUT",
     "amount": "100000000000000000000",
-    "timestamp": 1733235200
+    "transactionHash": "0xabcd1234...",
+    "blockNumber": 42000000,
+    "createdAt": "2024-12-01T10:00:00.000Z",
+    "updatedAt": "2024-12-01T10:01:00.000Z"
   }
 }
 ```
@@ -203,9 +242,9 @@ Relay 거래를 실행합니다. (Gasless API와 동일한 요청/응답 형식)
     {
       "paymentId": "0x5aed4bae...",
       "payer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      "merchant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "treasury": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       "token": "0xE4C687167705Abf55d709395f92e254bdF5825a2",
-      "tokenSymbol": "TEST",
+      "tokenSymbol": "SUT",
       "decimals": 18,
       "amount": "100000000000000000000",
       "timestamp": "1733235200",
@@ -364,10 +403,10 @@ curl -X POST http://localhost:3001/payments/create \
   -H "Content-Type: application/json" \
   -H "x-api-key: sk_test_abc123" \
   -d '{
+    "merchantId": "merchant_001",
     "amount": 100,
-    "currency": "SUT",
     "chainId": 80002,
-    "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    "tokenAddress": "0xE4C687167705Abf55d709395f92e254bdF5825a2"
   }'
 
 # 결제 상태 조회
@@ -391,10 +430,15 @@ const client = new MSQPayClient({
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
-  chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  chainId: 80002,
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
+
+// 응답에 컨트랙트 검증용 서버 서명 포함
+console.log('Payment ID:', payment.paymentId);
+console.log('Recipient:', payment.recipientAddress);
+console.log('Fee (bps):', payment.feeBps);
+console.log('Server Signature:', payment.serverSignature);
 
 // 결제 상태 조회
 const status = await client.getPaymentStatus(payment.paymentId);

@@ -3,27 +3,41 @@
  * 이 계정들은 Hardhat 로컬 노드에서 사용하는 결정론적 계정입니다.
  */
 export const HARDHAT_ACCOUNTS = {
+  // Account #0 - Deployer (contract deployment)
   deployer: {
     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
-  relayer: {
+  // Account #1 - Recipient (merchant payment recipient, matches init.sql)
+  recipient: {
     address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
   },
-  merchant: {
+  // Account #2 - Relayer (simple-relayer service)
+  relayer: {
     address: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
     privateKey: '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
   },
+  // Account #3 - Payer (test user who pays)
   payer: {
     address: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
     privateKey: '0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6',
   },
+  // Account #4 - Signer (server signer for payment authorization)
+  signer: {
+    address: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+    privateKey: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a',
+  },
+  // Account #5 - Treasury (platform fees, configured in contract deployment)
+  treasury: {
+    address: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
+    privateKey: '0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba',
+  },
 } as const;
 
 /**
- * 배포된 컨트랙트 주소 (init.sql과 동기화됨)
- * Deployment order: Forwarder → MockERC20 → GatewayV1 → Proxy
+ * 배포된 컨트랙트 주소 (scripts/check-and-deploy.ts로 배포됨)
+ * Deployment order: Forwarder (nonce 0) → MockERC20 (nonce 1) → GatewayV1 (nonce 2) → Proxy (nonce 3)
  */
 export const CONTRACT_ADDRESSES = {
   forwarder: '0x5FbDB2315678afecb367f032d93F642f64180aa3',

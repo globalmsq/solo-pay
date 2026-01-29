@@ -11,6 +11,8 @@ import type { IgnitionModuleResult } from '@nomicfoundation/ignition-core';
  *
  * Parameters:
  * - owner: Address of the PaymentGateway owner (default: Account #0)
+ * - treasury: Address of the treasury to receive payments (default: Account #2)
+ * - signerAddress: Address of the server signer for payment authorization (default: Account #4)
  * - forwarderAddress: Optional existing ERC2771Forwarder address to reuse
  *   - If provided: Uses existing forwarder (e.g., from msq-relayer-service)
  *   - If not provided: Deploys new MSQForwarder
@@ -21,7 +23,11 @@ const PaymentGatewayModule: ReturnType<
   typeof buildModule<'PaymentGateway', string, IgnitionModuleResult<string>>
 > = buildModule('PaymentGateway', (m) => {
   // Get deployment parameters
+  // Note: All defaults use Account #0 to avoid IGN723 error when fewer accounts are available
+  // For production deployments, always provide explicit addresses via parameters file
   const owner = m.getParameter('owner', m.getAccount(0));
+  const treasury = m.getParameter('treasury', m.getAccount(0));
+  const signerAddress = m.getParameter('signerAddress', m.getAccount(0));
   const forwarderAddress = m.getParameter<string>('forwarderAddress', '');
 
   // Deploy or reuse ERC2771Forwarder
@@ -42,8 +48,12 @@ const PaymentGatewayModule: ReturnType<
   // Deploy PaymentGatewayV1 implementation (with trustedForwarder in constructor)
   const implementation = m.contract('PaymentGatewayV1', [forwarder]);
 
-  // Encode initialization data (owner only - forwarder is set in constructor)
-  const initData = m.encodeFunctionCall(implementation, 'initialize', [owner]);
+  // Encode initialization data (owner, treasury, signerAddress - forwarder is set in constructor)
+  const initData = m.encodeFunctionCall(implementation, 'initialize', [
+    owner,
+    treasury,
+    signerAddress,
+  ]);
 
   // Deploy ERC1967Proxy
   const proxy = m.contract('ERC1967Proxy', [implementation, initData], {

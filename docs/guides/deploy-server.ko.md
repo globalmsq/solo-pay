@@ -653,11 +653,10 @@ curl https://api.msqpay.io/health
 curl -X POST https://api.msqpay.io/payments/create \
   -H "Content-Type: application/json" \
   -d '{
-    "userId": "test_user",
+    "merchantId": "merchant_001",
     "amount": 1000000,
-    "currency": "USD",
-    "tokenAddress": "0x...",
-    "recipientAddress": "0x..."
+    "chainId": 80002,
+    "tokenAddress": "0x..."
   }'
 ```
 

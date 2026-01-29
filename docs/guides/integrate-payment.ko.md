@@ -42,11 +42,11 @@ const client = new MSQPayClient({
 ### 1. 결제 생성
 
 ```typescript
+// Note: 결제금은 컨트랙트 배포 시 설정된 treasury 주소로 전송됨
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
   chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
@@ -103,7 +103,6 @@ const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
   chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 ```
@@ -282,12 +281,11 @@ app.post('/api/checkout', async (req, res) => {
     // 2. DB에서 실제 가격 조회
     const product = await db.products.findById(productId);
 
-    // 3. 결제 생성
+    // 3. 결제 생성 (결제금은 컨트랙트 배포 시 설정된 treasury로 전송)
     const payment = await client.createPayment({
       merchantId: 'merchant_001',
       amount: product.price, // 서버가 결정한 가격
       chainId: 31337,
-      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     });
 
@@ -320,11 +318,12 @@ const response = await fetch('/api/checkout', {
 const { paymentId } = await response.json();
 
 // 2. Direct Payment: Metamask로 트랜잭션 전송
+// Note: 컨트랙트가 트레저리로 결제 (배포 시 설정됨), merchantAddress 불필요
 await writeContract({
   address: gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, tokenAddress, amount, merchantAddress],
+  args: [paymentId, tokenAddress, amount],
 });
 
 // 3. 결제 상태 확인 (2초 간격)

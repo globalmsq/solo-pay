@@ -107,11 +107,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
       amount: totalAmount,
       chainId: merchantConfig.chainId,
-      recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
     });
 
@@ -133,7 +133,11 @@ export async function POST(request: NextRequest) {
         // 결제 컨트랙트 정보 (결제 서버 응답)
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
-        recipientAddress: merchantConfig.recipientAddress,
+        // Server signature fields for V2 payment flow
+        recipientAddress: payment.recipientAddress,
+        merchantId: payment.merchantId,
+        feeBps: payment.feeBps,
+        serverSignature: payment.serverSignature,
       },
       { status: 201 }
     );

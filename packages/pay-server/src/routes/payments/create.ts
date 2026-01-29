@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { parseUnits, keccak256, toHex } from 'viem';
+import { parseUnits, keccak256, toHex, Hex, Address } from 'viem';
 import { Decimal } from '@prisma/client/runtime/library';
 import { randomBytes } from 'crypto';
 import { ZodError } from 'zod';
@@ -10,6 +10,7 @@ import { ChainService } from '../../services/chain.service';
 import { TokenService } from '../../services/token.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { PaymentService } from '../../services/payment.service';
+import { ServerSigningService } from '../../services/signature-server.service';
 import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
 import {
   CreatePaymentRequestSchema,
@@ -22,7 +23,6 @@ export interface CreatePaymentRequest {
   amount: number;
   chainId: number;
   tokenAddress: string;
-  recipientAddress: string;
 }
 
 export async function createPaymentRoute(
@@ -32,7 +32,8 @@ export async function createPaymentRoute(
   chainService: ChainService,
   tokenService: TokenService,
   paymentMethodService: PaymentMethodService,
-  paymentService: PaymentService
+  paymentService: PaymentService,
+  signingServices?: Map<number, ServerSigningService>
 ) {
   // Auth + merchant ownership middleware
   const authMiddleware = createMerchantAuthMiddleware(merchantService);
@@ -127,7 +128,16 @@ Creates a new payment request for a merchant.
           });
         }
 
-        // 5. Validate merchant's chain matches requested chain
+        // 5. Validate merchant has recipient address configured
+        if (!merchant.recipient_address) {
+          return reply.code(400).send({
+            code: 'RECIPIENT_NOT_CONFIGURED',
+            message: 'Merchant recipient address is not configured',
+          });
+        }
+        const recipientAddress = merchant.recipient_address as Address;
+
+        // 6. Validate merchant's chain matches requested chain
         if (merchant.chain_id) {
           const merchantChain = await chainService.findById(merchant.chain_id);
           if (merchantChain && merchantChain.network_id !== validatedData.chainId) {
@@ -225,6 +235,34 @@ Creates a new payment request for a merchant.
           toHex(`${validatedData.merchantId}:${Date.now()}:${random.toString('hex')}`)
         );
 
+        // Generate merchantId (bytes32) from merchant_key
+        const merchantId = ServerSigningService.merchantKeyToId(validatedData.merchantId);
+
+        // Get fee from merchant config
+        const feeBps = merchant.fee_bps;
+
+        // Generate server signature if signing service is available for this chain
+        let serverSignature: Hex | undefined;
+        const signingService = signingServices?.get(validatedData.chainId);
+        if (signingService) {
+          try {
+            serverSignature = await signingService.signPaymentRequest(
+              paymentHash as Hex,
+              tokenConfig.address as Address,
+              amountInWei,
+              recipientAddress,
+              merchantId,
+              feeBps
+            );
+          } catch (error) {
+            app.log.error({ err: error }, 'Failed to generate server signature');
+            return reply.code(500).send({
+              code: 'SIGNATURE_ERROR',
+              message: 'Failed to generate payment signature',
+            });
+          }
+        }
+
         // 8. DB에 Payment 저장
         const payment = await paymentService.create({
           payment_hash: paymentHash,
@@ -249,6 +287,11 @@ Creates a new payment request for a merchant.
           amount: amountInWei.toString(),
           status: payment.status.toLowerCase(),
           expiresAt: payment.expires_at.toISOString(),
+          // V2 fields for server signature
+          recipientAddress,
+          merchantId,
+          feeBps,
+          serverSignature,
         });
       } catch (error) {
         if (error instanceof ZodError) {

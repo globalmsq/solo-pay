@@ -195,9 +195,9 @@ const payment = await retryableRequest(() => client.createPayment(params));
 
 ```json
 {
-  "code": "PAYMENT_STORE_INVALID_ADDRESS",
-  "message": "Invalid store address",
-  "field": "recipientAddress",
+  "code": "VALIDATION_ERROR",
+  "message": "Invalid token address",
+  "field": "tokenAddress",
   "value": "0xinvalid"
 }
 ```

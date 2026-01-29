@@ -2,7 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useDisconnect } from 'wagmi';
+import { useStableConnection } from '@/hooks/useStableConnection';
 import { ProductCard } from '@/components/ProductCard';
 import { PaymentHistory, PaymentHistoryRef } from '@/components/PaymentHistory';
 import { Toast } from '@/components/Toast';
@@ -11,16 +12,17 @@ import { PRODUCTS } from '@/lib/products';
 import { useChainConfig } from '@/app/providers';
 
 export default function Home() {
-  const { isConnected, chain } = useAccount();
+  const { isConnected, chain } = useStableConnection();
   const chainConfig = useChainConfig();
   const { disconnect } = useDisconnect();
   const walletChainId = chain?.id;
 
-  // Auto-disconnect if connected to wrong or unsupported network
+  // Auto-disconnect if connected to wrong network
   useEffect(() => {
-    if (!chainConfig || !isConnected) return;
-    // Disconnect if on unsupported chain (undefined) or wrong chain
-    if (walletChainId === undefined || walletChainId !== chainConfig.chainId) {
+    if (!chainConfig || !isConnected || !walletChainId) {
+      return;
+    }
+    if (walletChainId !== chainConfig.chainId) {
       disconnect();
     }
   }, [chainConfig, walletChainId, isConnected, disconnect]);
@@ -103,8 +105,8 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Payment history */}
-          {isConnected && (
+          {/* Payment history - only show when connected to correct chain */}
+          {isConnected && walletChainId === chainConfig?.chainId && (
             <section className="lg:w-1/3">
               <h2 className="text-2xl font-semibold mb-6">Your Payment History</h2>
               <PaymentHistory ref={paymentHistoryRef} />

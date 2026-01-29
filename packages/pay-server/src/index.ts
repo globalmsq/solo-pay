@@ -13,6 +13,7 @@ import { ChainService } from './services/chain.service';
 import { TokenService } from './services/token.service';
 import { PaymentMethodService } from './services/payment-method.service';
 import { RelayService } from './services/relay.service';
+import { ServerSigningService } from './services/signature-server.service';
 import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
 import { createPaymentRoute } from './routes/payments/create';
@@ -49,6 +50,9 @@ const chainService = new ChainService(prisma);
 
 // BlockchainService will be initialized after loading chains from DB
 let blockchainService: BlockchainService;
+
+// Server signing services (one per chain)
+let signingServices: Map<number, ServerSigningService>;
 
 // Initialize Relayer service for gasless transactions
 // Production: msq-relayer-service API
@@ -132,7 +136,8 @@ const registerRoutes = async () => {
     chainService,
     tokenService,
     paymentMethodService,
-    paymentService
+    paymentService,
+    signingServices
   );
   await getPaymentStatusRoute(server, blockchainService, paymentService);
   await submitGaslessRoute(server, relayerService, relayService, paymentService, merchantService);
@@ -196,6 +201,35 @@ const start = async () => {
     // Initialize BlockchainService with DB data
     blockchainService = new BlockchainService(chainsWithTokens);
     logger.info(`🔗 Supported chains: ${blockchainService.getSupportedChainIds().join(', ')}`);
+
+    // Initialize server signing services for each chain
+    const signerPrivateKey = process.env.SIGNER_PRIVATE_KEY;
+    signingServices = new Map();
+
+    if (signerPrivateKey) {
+      for (const chain of chainsWithTokens) {
+        if (chain.gateway_address) {
+          try {
+            const service = new ServerSigningService(
+              signerPrivateKey as `0x${string}`,
+              chain.network_id,
+              chain.gateway_address as `0x${string}`
+            );
+            signingServices.set(chain.network_id, service);
+            logger.info(
+              `🔐 Signing service initialized for chain ${chain.network_id} (${chain.name})`
+            );
+          } catch (error) {
+            logger.warn(
+              { err: error },
+              `Failed to initialize signing service for chain ${chain.network_id}`
+            );
+          }
+        }
+      }
+    } else {
+      logger.warn('⚠️  SIGNER_PRIVATE_KEY not set - server signatures will not be generated');
+    }
 
     // Register all routes
     await registerRoutes();

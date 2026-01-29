@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS merchants (
     chain_id INT NOT NULL COMMENT 'Logical reference to chains.id',
     api_key_hash VARCHAR(64) NOT NULL COMMENT 'SHA-256 hash of API key',
     webhook_url VARCHAR(500) NULL DEFAULT NULL,
+    fee_bps INT NOT NULL DEFAULT 0 COMMENT 'Fee in basis points (0-10000, where 10000=100%)',
+    recipient_address VARCHAR(42) NULL DEFAULT NULL COMMENT 'Merchant wallet address for receiving payments',
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
@@ -77,12 +79,12 @@ CREATE TABLE IF NOT EXISTS merchants (
 
 -- ============================================================
 -- TABLE 4: merchant_payment_methods - Payment settings per merchant
+-- Note: recipient_address removed - contract pays to treasury (set at deployment)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS merchant_payment_methods (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     merchant_id INT NOT NULL COMMENT 'Logical reference to merchants.id',
     token_id INT NOT NULL COMMENT 'Logical reference to tokens.id',
-    recipient_address VARCHAR(42) NOT NULL COMMENT 'Payment recipient address',
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
@@ -170,7 +172,7 @@ CREATE TABLE IF NOT EXISTS payment_events (
 INSERT INTO chains (network_id, name, rpc_url, gateway_address, forwarder_address, is_testnet) VALUES
 (31337, 'Localhost', 'http://hardhat-node:8545', '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9', '0x5FbDB2315678afecb367f032d93F642f64180aa3', TRUE),
 (11155111, 'Sepolia', 'https://ethereum-sepolia-rpc.publicnode.com', NULL, NULL, TRUE),
-(80002, 'Amoy', 'https://rpc-amoy.polygon.technology', '0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5', '0xF034a404241707F347A952Cd4095f9035AF877Bf', TRUE),
+(80002, 'Amoy', 'https://rpc-amoy.polygon.technology', '0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d', '0xF034a404241707F347A952Cd4095f9035AF877Bf', TRUE),
 (97, 'BNB Chain Testnet', 'https://data-seed-prebsc-1-s1.binance.org:8545', NULL, NULL, TRUE),
 (137, 'Polygon', 'https://polygon-rpc.com', NULL, NULL, FALSE),
 (1, 'Ethereum', 'https://eth.llamarpc.com', NULL, NULL, FALSE),
@@ -188,22 +190,25 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 -- Demo Merchant (id=1)
 -- API Key: 123 -> SHA-256 hash
 -- chain_id=1 (Localhost chain)
-INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url) VALUES
-('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo');
+-- recipient_address: Account #1 (recipient) for receiving payments
+INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
+('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
 
 -- MetaStar Merchant (id=2)
 -- API Key: msq_sk_metastar_123 -> SHA-256 hash
 -- chain_id=3 (Amoy chain)
-INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url) VALUES
-('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL);
+-- recipient_address: Steven's wallet address for receiving payments
+INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
+('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL, 0, '0x7bE4CfF95eb3c3d2162410abCd5506f691C624Ed');
 
 -- Payment Methods
 -- Note: Payment methods must use tokens from the merchant's chain
--- id=1: Demo Merchant (chain_id=1) + TEST on Localhost (token_id=1, chain_id=1) ✅
--- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3) ✅
-INSERT INTO merchant_payment_methods (merchant_id, token_id, recipient_address) VALUES
-(1, 1, '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'),
-(2, 3, '0x90F79bf6EB2c4f870365E785982E1f101E93b906');
+-- Note: recipient_address removed - contract pays to treasury (set at deployment)
+-- id=1: Demo Merchant (chain_id=1) + TEST on Localhost (token_id=1, chain_id=1)
+-- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3)
+INSERT INTO merchant_payment_methods (merchant_id, token_id) VALUES
+(1, 1),
+(2, 3);
 
 -- Show created tables
 SHOW TABLES;

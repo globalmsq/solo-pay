@@ -68,6 +68,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: server
+    image: msqpay-server
     container_name: msqpay-server
     ports:
       - '3001:3001'
@@ -88,6 +89,9 @@ services:
       # Option 2: relay-api (msq-relayer-service)
       RELAY_API_URL: http://relay-api:8080
       RELAY_API_KEY: ${RELAY_API_KEY:-amoy-dev-api-key}
+      # Server signer private key for EIP-712 payment signatures
+      # TODO: Set your signer private key (DO NOT COMMIT!)
+      SIGNER_PRIVATE_KEY: '${SIGNER_PRIVATE_KEY}'
     depends_on:
       mysql:
         condition: service_healthy
@@ -105,6 +109,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: demo
+    image: msqpay-demo
     container_name: msqpay-demo
     ports:
       - '3000:3000'

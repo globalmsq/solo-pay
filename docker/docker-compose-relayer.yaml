@@ -4,8 +4,9 @@ services:
   # MySQL 8.0 - Payment Data
   mysql:
     image: mysql:8.0
+    container_name: msqpay-mysql
     ports:
-      - "3306:3306"
+      - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: msqpay
@@ -17,7 +18,7 @@ services:
     networks:
       - msqpay-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppass"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-ppass']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -26,6 +27,7 @@ services:
   # Redis 7 Alpine - Caching
   redis:
     image: redis:7-alpine
+    container_name: msqpay-redis
     # ports:
     #   - "6379:6379"
     volumes:
@@ -40,6 +42,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: hardhat
+    image: msqpay-hardhat
+    container_name: msqpay-contracts-init
     command: >
       sh -c "sleep 5 && npx hardhat run scripts/check-and-deploy.ts --network localhost"
     environment:
@@ -49,11 +53,11 @@ services:
       # Setting these addresses skips MockERC20 and Forwarder deployment
       # - TOKEN_ADDRESS set → skip MockERC20, use SampleToken
       # - FORWARDER_ADDRESS set → skip Forwarder, reuse existing
-      TOKEN_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      TOKEN_ADDRESS: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+      FORWARDER_ADDRESS: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
     networks:
       - msq-network
-    restart: "no"
+    restart: 'no'
 
   # Payment Server (Fastify)
   server:
@@ -61,8 +65,10 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: server
+    image: msqpay-server
+    container_name: msqpay-server
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       NODE_ENV: development
       PORT: 3001
@@ -73,11 +79,15 @@ services:
       MYSQL_DATABASE: msqpay
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      BLOCKCHAIN_RPC_URL: http://hardhat-node:8545
       # External msq-relayer-service connection
       # Requires: docker network create msq-network
       # Requires: msq-relayer-service running with same network
       RELAY_API_URL: http://relay-api:8080
       RELAY_API_KEY: ${RELAY_API_KEY:-local-dev-api-key}
+      # Hardhat well-known dev account #4 (deterministic, safe to commit)
+      # Address: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
+      SIGNER_PRIVATE_KEY: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a'
     depends_on:
       mysql:
         condition: service_healthy
@@ -95,8 +105,10 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: demo
+    image: msqpay-demo
+    container_name: msqpay-demo
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       NODE_ENV: development
       # Chain Configuration (서버 런타임 환경변수 - /api/config에서 클라이언트에 전달)
@@ -109,7 +121,7 @@ services:
       # Server-side API URL (Docker internal network)
       MSQPAY_API_URL: http://server:3001
       # API Key for merchant_demo_001 (SHA-256 hash: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3)
-      MSQPAY_API_KEY: "123"
+      MSQPAY_API_KEY: '123'
     depends_on:
       - server
     networks:

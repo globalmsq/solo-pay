@@ -95,7 +95,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -116,7 +115,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -128,6 +126,11 @@ describe('SDK Integration', () => {
       expect(response.chainId).toBe(token.networkId);
       expect(response.tokenAddress.toLowerCase()).toBe(token.address.toLowerCase());
       expect(response.status).toBe('created');
+      // New server signature fields
+      expect(response.serverSignature).toBeDefined();
+      expect(response.recipientAddress).toBeDefined();
+      expect(response.merchantId).toBeDefined();
+      expect(response.feeBps).toBeDefined();
     });
 
     it('should return payment hash and gateway address', async () => {
@@ -142,7 +145,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 50,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -173,7 +175,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 25,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -204,7 +205,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 10,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       });
 
@@ -214,11 +214,19 @@ describe('SDK Integration', () => {
       // 2. Approve tokens
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
 
-      // 3. Execute payment on-chain
+      // 3. Execute payment on-chain with server signature
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(createResponse.gatewayAddress, PaymentGatewayABI, wallet);
 
-      const tx = await gateway.pay(paymentId, token.address, amount, merchant.recipientAddress);
+      const tx = await gateway.pay(
+        paymentId,
+        token.address,
+        amount,
+        createResponse.recipientAddress,
+        createResponse.merchantId,
+        createResponse.feeBps,
+        createResponse.serverSignature
+      );
       await tx.wait();
 
       // 4. Verify on-chain
@@ -242,11 +250,21 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 5,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       });
 
       const paymentId = createResponse.paymentId;
+
+      // Verify server signature fields are present
+      const {
+        recipientAddress,
+        merchantId: respMerchantId,
+        feeBps,
+        serverSignature,
+      } = createResponse;
+      if (!recipientAddress || !respMerchantId || feeBps === undefined || !serverSignature) {
+        throw new Error('Server signature fields missing from response');
+      }
 
       // 2. Approve tokens
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
@@ -259,7 +277,10 @@ describe('SDK Integration', () => {
         paymentId,
         token.address,
         amount,
-        merchant.recipientAddress
+        recipientAddress,
+        respMerchantId,
+        feeBps,
+        serverSignature
       );
 
       const request: ForwardRequest = {
@@ -308,11 +329,21 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 3,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       });
 
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
+
+      // Server signature fields must be present
+      const {
+        recipientAddress,
+        merchantId: respMerchantId,
+        feeBps,
+        serverSignature,
+      } = createResponse;
+      if (!recipientAddress || !respMerchantId || feeBps === undefined || !serverSignature) {
+        throw new Error('Server signature fields missing from response');
+      }
 
       const forwarder = getContract(createResponse.forwarderAddress, ERC2771ForwarderABI);
       const nonce = await forwarder.nonces(payerAddress);
@@ -321,7 +352,10 @@ describe('SDK Integration', () => {
         createResponse.paymentId,
         token.address,
         amount,
-        merchant.recipientAddress
+        recipientAddress,
+        respMerchantId,
+        feeBps,
+        serverSignature
       );
 
       const request: ForwardRequest = {
@@ -375,7 +409,6 @@ describe('SDK Integration', () => {
         merchantId: 'invalid_merchant_id',
         amount: 100,
         chainId: token.networkId,
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -394,7 +427,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: 99999, // Invalid chain
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -427,7 +459,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: 80002, // Amoy - different from merchant's chain
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: token.address,
       };
 
@@ -449,7 +480,6 @@ describe('SDK Integration', () => {
         merchantId: merchant.merchantId,
         amount: 100,
         chainId: token.networkId, // Correct chain for merchant
-        recipientAddress: merchant.recipientAddress,
         tokenAddress: sutAmoyToken.address, // Wrong token (from different chain)
       };
 

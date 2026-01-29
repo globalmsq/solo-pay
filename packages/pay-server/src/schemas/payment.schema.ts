@@ -3,6 +3,7 @@ import { decodeFunctionData } from 'viem';
 import PaymentGatewayV1Artifact from '@msq/pay-contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 // 결제 생성 요청 스키마
+// Note: recipientAddress는 컨트랙트에서 treasury로 고정되어 있으므로 요청에서 제거됨
 export const CreatePaymentSchema = z.object({
   merchantId: z.string().min(1, '상점 ID는 필수입니다'),
   amount: z.number().positive('금액은 양수여야 합니다'),
@@ -10,21 +11,19 @@ export const CreatePaymentSchema = z.object({
   tokenAddress: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, '유효한 토큰 주소여야 합니다 (0x + 40자 hex)'),
-  recipientAddress: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{40}$/, '유효한 Ethereum 주소여야 합니다 (0x + 40자 hex)'),
 });
 
 export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
 
 // 결제 상태 조회 응답 스키마
+// Note: treasuryAddress는 컨트랙트에서 결제를 받는 주소 (배포 시 설정)
 export const PaymentStatusSchema = z.object({
   paymentId: z.string(),
   userId: z.string(),
   amount: z.number(),
   tokenAddress: z.string(),
   tokenSymbol: z.string(),
-  recipientAddress: z.string(),
+  treasuryAddress: z.string(),
   status: z.enum(['pending', 'confirmed', 'failed', 'completed']),
   transactionHash: z.string().optional(),
   blockNumber: z.number().optional(),

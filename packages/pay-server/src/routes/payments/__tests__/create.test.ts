@@ -134,16 +134,16 @@ describe('POST /payments/create', () => {
 
   describe('Schema validation', () => {
     it('should validate required fields in request body', async () => {
-      const requiredFields = ['amount', 'currency', 'chainId', 'recipientAddress'];
+      // Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
+      const requiredFields = ['amount', 'chainId', 'tokenAddress'];
       // This is implicitly tested through the schema validation
-      expect(requiredFields).toHaveLength(4);
+      expect(requiredFields).toHaveLength(3);
     });
 
     it('should reject missing amount', () => {
       const payload = {
-        currency: 'SUT',
         chainId: 80002,
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
       };
       expect(payload).not.toHaveProperty('amount');
     });
@@ -217,9 +217,8 @@ describe('POST /payments/create', () => {
     it('should validate amount is positive', () => {
       const payload = {
         amount: 0,
-        currency: 'SUT',
         chainId: 80002,
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
       };
       expect(payload.amount).toBeLessThanOrEqual(0);
     });

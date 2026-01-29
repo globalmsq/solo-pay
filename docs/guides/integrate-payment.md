@@ -42,11 +42,11 @@ Users pay gas fees directly.
 ### 1. Create Payment
 
 ```typescript
+// Note: Payment funds are sent to treasury address set during contract deployment
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
   chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 
@@ -103,7 +103,6 @@ const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
   chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 ```
@@ -282,12 +281,11 @@ app.post('/api/checkout', async (req, res) => {
     // 2. Query actual price from DB
     const product = await db.products.findById(productId);
 
-    // 3. Create payment
+    // 3. Create payment (funds go to treasury set at contract deployment)
     const payment = await client.createPayment({
       merchantId: 'merchant_001',
       amount: product.price, // Price determined by server
       chainId: 31337,
-      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     });
 
@@ -320,11 +318,12 @@ const response = await fetch('/api/checkout', {
 const { paymentId } = await response.json();
 
 // 2. Direct Payment: Send transaction via Metamask
+// Note: Contract pays to treasury (set at deployment), no merchantAddress needed
 await writeContract({
   address: gatewayAddress,
   abi: PaymentGatewayABI,
   functionName: 'pay',
-  args: [paymentId, tokenAddress, amount, merchantAddress],
+  args: [paymentId, tokenAddress, amount],
 });
 
 // 3. Check payment status (2 second interval)

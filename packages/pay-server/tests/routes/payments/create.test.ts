@@ -77,6 +77,8 @@ const mockMerchant = {
   id: 1,
   merchant_key: 'merchant_001',
   is_enabled: true,
+  recipient_address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  fee_bps: 0,
 };
 
 const mockChain = {
@@ -207,7 +209,6 @@ describe('POST /payments/create', () => {
         amount: 100,
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -242,7 +243,6 @@ describe('POST /payments/create', () => {
         amount: 50,
         chainId: 31337,
         tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -266,7 +266,6 @@ describe('POST /payments/create', () => {
         amount: 0,
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -287,28 +286,6 @@ describe('POST /payments/create', () => {
         amount: -50,
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/payments/create',
-        headers: { 'x-api-key': TEST_API_KEY },
-        payload: invalidPayment,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.code).toBe('VALIDATION_ERROR');
-    });
-
-    it('유효하지 않은 recipientAddress 형식일 때 400 상태 코드를 반환해야 함', async () => {
-      const invalidPayment = {
-        merchantId: 'merchant_001',
-        amount: 100,
-        chainId: 80002,
-        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-        recipientAddress: 'invalid-address',
       };
 
       const response = await app.inject({
@@ -331,7 +308,6 @@ describe('POST /payments/create', () => {
         amount: 100,
         // chainId 누락
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -352,7 +328,6 @@ describe('POST /payments/create', () => {
         amount: 100,
         chainId: 1, // Ethereum Mainnet (지원 안 함)
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -374,7 +349,6 @@ describe('POST /payments/create', () => {
         amount: 100,
         chainId: 80002,
         tokenAddress: '0x0000000000000000000000000000000000000000', // 지원하지 않는 토큰 주소
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({
@@ -399,7 +373,6 @@ describe('POST /payments/create', () => {
         amount: 100,
         chainId: 80002,
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-        recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       };
 
       const response = await app.inject({

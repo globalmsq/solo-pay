@@ -41,8 +41,13 @@ function writeIgnitionParameters(forwarderAddress: string): string {
     fs.mkdirSync(paramsDir, { recursive: true });
   }
 
+  // Load base params from localhost.json
+  const localhostPath = path.join(__dirname, '../ignition/parameters/localhost.json');
+  const config = JSON.parse(fs.readFileSync(localhostPath, 'utf8'));
+
   const params = {
     PaymentGateway: {
+      ...config.PaymentGateway,
       forwarderAddress: forwarderAddress,
     },
   };

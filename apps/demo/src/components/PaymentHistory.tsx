@@ -8,7 +8,15 @@ import { formatTimestamp } from '@/lib/utils';
 import { CopyButton } from './CopyButton';
 
 // Address display with copy button - shows more characters
-function AddressWithCopy({ address, label }: { address: string; label: string }) {
+function AddressWithCopy({
+  address,
+  label,
+}: {
+  address: string | undefined | null;
+  label: string;
+}) {
+  if (!address) return null;
+
   // Show first 10 and last 8 characters for better readability
   const displayAddress = `${address.slice(0, 10)}...${address.slice(-8)}`;
 
@@ -135,7 +143,7 @@ export const PaymentHistory = forwardRef<PaymentHistoryRef>(function PaymentHist
 
                 {/* Details */}
                 <div className="space-y-2 mb-3">
-                  <AddressWithCopy address={payment.merchant} label="To" />
+                  <AddressWithCopy address={payment.treasury} label="To" />
                   <AddressWithCopy address={payment.paymentId} label="Payment ID" />
                   <AddressWithCopy address={payment.transactionHash} label="TX Hash" />
                   {payment.isGasless && payment.relayId && (

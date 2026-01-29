@@ -71,7 +71,7 @@ sequenceDiagram
     W-->>F: Approve 완료
 
     F->>W: pay() TX 요청
-    W->>C: pay(paymentId, token, amount, merchant)
+    W->>C: pay(paymentId, token, amount, recipient, merchantId, feeBps, serverSignature)
     C-->>W: TX 완료
 
     loop Polling (2초 간격)
@@ -206,19 +206,51 @@ flowchart TB
 
 ## 스마트 컨트랙트 구조
 
-### PaymentGateway
+### PaymentGatewayV1
 
 ```
-PaymentGateway (UUPS Upgradeable)
+PaymentGatewayV1 (UUPS Upgradeable)
+├── Inheritance
+│   ├── UUPSUpgradeable - 프록시 업그레이드
+│   ├── OwnableUpgradeable - 소유권 관리
+│   ├── ERC2771ContextUpgradeable - 가스리스 메타 트랜잭션 지원
+│   ├── ReentrancyGuardUpgradeable - 재진입 방지
+│   ├── EIP712Upgradeable - 서명 검증
+│   └── IPaymentGateway - 인터페이스
 ├── Storage
 │   ├── processedPayments: mapping(bytes32 => bool)
-│   └── trustedForwarder: address
+│   ├── supportedTokens: mapping(address => bool)
+│   ├── enforceTokenWhitelist: bool
+│   ├── treasuryAddress: address
+│   └── signerAddress: address
 ├── Functions
-│   ├── pay() - Direct Payment
-│   ├── payWithToken() - Direct Payment (token specified)
-│   └── _authorizeUpgrade() - Upgrade authorization
+│   ├── pay(paymentId, tokenAddress, amount, recipientAddress, merchantId, feeBps, serverSignature)
+│   ├── setTreasury(newTreasuryAddress) - 트레저리 주소 변경 (owner only)
+│   ├── setSigner(newSigner) - 서명자 주소 변경 (owner only)
+│   ├── setSupportedToken(tokenAddress, supported) - 토큰 화이트리스트
+│   ├── batchSetSupportedTokens(tokenAddresses[], supported[]) - 대량 토큰 화이트리스트
+│   ├── setEnforceTokenWhitelist(enforce) - 화이트리스트 강제 여부
+│   ├── isPaymentProcessed(paymentId) - 결제 상태 확인
+│   ├── getTrustedForwarder() - ERC2771 포워더 조회
+│   ├── getDomainSeparator() - EIP-712 도메인 분리자 조회
+│   └── _authorizeUpgrade() - 업그레이드 승인 (owner only)
 └── Events
-    └── PaymentProcessed(paymentId, payer, merchant, token, amount)
+    ├── PaymentCompleted(paymentId, merchantId, payerAddress, recipientAddress, tokenAddress, amount, fee, timestamp)
+    ├── TreasuryChanged(oldTreasuryAddress, newTreasuryAddress)
+    ├── SignerChanged(oldSigner, newSigner)
+    └── TokenSupportChanged(tokenAddress, supported)
+```
+
+### 결제 플로우 (컨트랙트 레벨)
+
+```
+1. 사용자가 7개의 파라미터로 pay() 호출
+2. 컨트랙트가 서버 EIP-712 서명 검증
+3. 컨트랙트가 수수료 계산: feeAmount = (amount * feeBps) / 10000
+4. 컨트랙트가 수수료를 treasuryAddress로 전송
+5. 컨트랙트가 (amount - fee)를 recipientAddress로 전송
+6. 컨트랙트가 paymentId를 처리됨으로 표시
+7. 컨트랙트가 PaymentCompleted 이벤트 발행
 ```
 
 ### ERC2771Forwarder
@@ -268,8 +300,11 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 | **금액 조작 (Direct)** | **상점서버에서 상품 가격 조회 (프론트 amount 수신 금지)** |
 | 금액 조작 (Gasless)    | 서명 데이터에서 amount 확인                               |
 | 상점 위장              | API Key 인증                                              |
+| 수수료/수신자 조작     | 컨트랙트에서 서버 EIP-712 서명 검증                       |
 
 **핵심 보안 원칙**: 프론트엔드는 `productId`만 전송하고, 상점서버가 DB/설정에서 실제 가격을 조회하여 결제서버에 전달해야 합니다.
+
+**서버 서명 보안**: 모든 결제 파라미터(금액, 수신자, 수수료)는 서버가 EIP-712를 사용하여 서명합니다. 컨트랙트는 처리 전에 이 서명을 검증하여 중요한 결제 데이터의 클라이언트 측 조작을 방지합니다.
 
 ### 컨트랙트 보안
 
@@ -304,8 +339,8 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 
 | Contract                | Address                                      |
 | ----------------------- | -------------------------------------------- |
-| PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
-| PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
+| PaymentGateway (Proxy)  | `0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d` |
+| PaymentGatewayV1 (Impl) | `0x6b08b0EaD9370605AC9F34A17897515aACa0954a` |
 | ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 | SUT Token               | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 

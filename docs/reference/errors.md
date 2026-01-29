@@ -195,9 +195,9 @@ Identify the issue using `field` and `value` in error response:
 
 ```json
 {
-  "code": "PAYMENT_STORE_INVALID_ADDRESS",
-  "message": "Invalid store address",
-  "field": "recipientAddress",
+  "code": "VALIDATION_ERROR",
+  "message": "Invalid token address",
+  "field": "tokenAddress",
   "value": "0xinvalid"
 }
 ```

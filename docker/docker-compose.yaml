@@ -5,8 +5,9 @@ services:
   mysql:
     image: mysql:8.0
     container_name: msqpay-mysql
+    restart: always
     ports:
-      - "3306:3306"
+      - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: msqpay
@@ -18,18 +19,23 @@ services:
     networks:
       - msqpay-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppass"]
+      test:
+        [
+          'CMD-SHELL',
+          "mysql -h localhost -u msqpay -ppass msqpay -e 'SELECT 1 FROM chains LIMIT 1'",
+        ]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 30s
 
   # Redis 7 Alpine - Caching
   redis:
     image: redis:7-alpine
     container_name: msqpay-redis
+    restart: always
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis-data:/data
     networks:
@@ -43,8 +49,9 @@ services:
       target: hardhat
     image: msqpay-hardhat-node
     container_name: msqpay-hardhat-node
+    restart: always
     ports:
-      - "8545:8545"
+      - '8545:8545'
     command: >
       sh -c "npx hardhat node --hostname 0.0.0.0 &
              sleep 5 &&
@@ -61,25 +68,26 @@ services:
       target: simple-relayer
     image: msqpay-simple-relayer
     container_name: msqpay-simple-relayer
+    restart: always
     ports:
-      - "3002:3001"
+      - '3002:3001'
     environment:
       NODE_ENV: development
       HOST: 0.0.0.0
       PORT: 3001
-      # Hardhat private key #2 (Account #2, deterministic - for local dev only)
+      # Hardhat well-known dev account #2 (deterministic, safe to commit)
       # Address: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
-      RELAYER_PRIVATE_KEY: "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+      RELAYER_PRIVATE_KEY: '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a'
       RPC_URL: http://hardhat-node:8545
       CHAIN_ID: 31337
       # ERC2771Forwarder address (first contract deployed at nonce 0)
-      FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      FORWARDER_ADDRESS: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
     depends_on:
       - hardhat-node
     networks:
       - msqpay-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3001/health"]
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://127.0.0.1:3001/health']
       interval: 30s
       timeout: 3s
       retries: 3
@@ -93,8 +101,9 @@ services:
       target: server
     image: msqpay-server
     container_name: msqpay-server
+    restart: always
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       NODE_ENV: development
       PORT: 3001
@@ -108,6 +117,9 @@ services:
       BLOCKCHAIN_RPC_URL: http://hardhat-node:8545
       # Simple Relayer API URL (Local gasless relay)
       RELAY_API_URL: http://simple-relayer:3001
+      # Hardhat well-known dev account #4 (deterministic, safe to commit)
+      # Address: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
+      SIGNER_PRIVATE_KEY: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a'
     depends_on:
       mysql:
         condition: service_healthy
@@ -128,10 +140,11 @@ services:
       target: demo
     image: msqpay-demo
     container_name: msqpay-demo
+    restart: always
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       # Chain Configuration (서버 런타임 환경변수 - /api/config에서 클라이언트에 전달)
       # RPC_URL은 브라우저에서 접근 가능한 URL 사용 (Docker 내부 이름 아님)
       CHAIN_ID: 31337
@@ -142,7 +155,7 @@ services:
       # Server-side API URL (Docker internal network)
       MSQPAY_API_URL: http://server:3001
       # API Key for merchant_demo_001 (SHA-256 hash: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3)
-      MSQPAY_API_KEY: "123"
+      MSQPAY_API_KEY: '123'
     depends_on:
       - server
     networks:
@@ -157,7 +170,7 @@ services:
     image: msqpay-guide
     container_name: msqpay-guide
     ports:
-      - "5173:80"
+      - '5173:80'
     networks:
       - msqpay-network
 

@@ -47,7 +47,7 @@ export async function getPaymentHistoryRoute(
                   properties: {
                     paymentId: { type: 'string', description: 'Payment ID (bytes32)' },
                     payer: { type: 'string', description: 'Payer wallet address' },
-                    merchant: { type: 'string', description: 'Merchant wallet address' },
+                    treasury: { type: 'string', description: 'Treasury wallet address' },
                     token: { type: 'string', description: 'Token contract address' },
                     tokenSymbol: { type: 'string', description: 'Token symbol (e.g., TEST)' },
                     decimals: { type: 'integer', description: 'Token decimals' },
@@ -118,8 +118,25 @@ export async function getPaymentHistoryRoute(
         const payments = await blockchainService.getPaymentHistory(chainIdNum, payer, blockRange);
 
         // DB에서 각 payment에 대해 relay 정보 조회하여 isGasless 설정
+        // 필드명 매핑: payerAddress -> payer, tokenAddress -> token
         const enrichedPayments = await Promise.all(
           payments.map(async (payment) => {
+            // Map blockchain service fields to API response fields
+            const mappedPayment = {
+              paymentId: payment.paymentId,
+              payer: payment.payerAddress,
+              treasury: payment.treasuryAddress,
+              token: payment.tokenAddress,
+              tokenSymbol: payment.tokenSymbol,
+              decimals: payment.decimals,
+              amount: payment.amount,
+              timestamp: payment.timestamp,
+              transactionHash: payment.transactionHash,
+              status: payment.status,
+              isGasless: payment.isGasless,
+              relayId: payment.relayId,
+            };
+
             try {
               // payment_hash로 DB에서 payment 조회
               const dbPayment = await paymentService.findByHash(payment.paymentId);
@@ -128,16 +145,16 @@ export async function getPaymentHistoryRoute(
                 const relayRequests = await relayService.findByPaymentId(dbPayment.id);
                 if (relayRequests.length > 0) {
                   return {
-                    ...payment,
+                    ...mappedPayment,
                     isGasless: true,
                     relayId: relayRequests[0].relay_ref,
                   };
                 }
               }
-              return payment;
+              return mappedPayment;
             } catch {
               // DB 조회 실패 시 기본값 유지
-              return payment;
+              return mappedPayment;
             }
           })
         );

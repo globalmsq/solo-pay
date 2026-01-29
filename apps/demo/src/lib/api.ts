@@ -14,13 +14,13 @@ import { z } from 'zod';
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
 // 결제 상태 타입 (서버 응답과 일치)
+// Note: recipientAddress removed - contract pays to treasury (set at deployment)
 export interface PaymentStatus {
   id: string;
   userId: string;
   amount: number;
   currency: 'USD' | 'EUR' | 'KRW';
   tokenAddress: string;
-  recipientAddress: string;
   status:
     | 'pending'
     | 'confirmed'
@@ -50,7 +50,7 @@ export interface PaymentHistoryItem {
   id: string;
   paymentId: string;
   payer: string;
-  merchant: string;
+  treasury: string;
   token: string;
   tokenSymbol: string;
   decimals: number;
@@ -621,6 +621,7 @@ export type CheckoutResponseItem = z.infer<typeof CheckoutResponseItemSchema>;
 /**
  * Checkout Response Schema
  * Amount, chainId, decimals, and tokenSymbol are returned from server (server-verified)
+ * Includes server signature for payment authorization
  */
 export const CheckoutResponseSchema = z.object({
   success: z.boolean(),
@@ -637,7 +638,11 @@ export const CheckoutResponseSchema = z.object({
   // 결제 컨트랙트 정보
   gatewayAddress: z.string(),
   forwarderAddress: z.string(),
-  recipientAddress: z.string(),
+  // Server signature fields for V2 payment flow
+  recipientAddress: z.string().optional(), // Merchant's wallet address
+  merchantId: z.string().optional(), // bytes32 keccak256 of merchant_key
+  feeBps: z.number().optional(), // Fee in basis points (0-10000)
+  serverSignature: z.string().optional(), // Server EIP-712 signature
 });
 
 export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;

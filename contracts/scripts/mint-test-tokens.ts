@@ -42,7 +42,7 @@ async function main() {
     );
   }
 
-  // Test user account (Hardhat Account #3)
+  // Test user account (Hardhat Account #3 - Payer)
   const TEST_USER_ADDRESS = '0x90F79bf6EB2c4f870365E785982E1f101E93b906';
   const MINT_AMOUNT = ethers.parseUnits('1000000', 18); // 1,000,000 tokens
 

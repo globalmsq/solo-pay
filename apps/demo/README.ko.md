@@ -358,11 +358,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Note: recipientAddress 제거됨 - 컨트랙트가 배포 시 설정된 treasury로 결제
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
       amount: totalAmount,
       chainId: merchantConfig.chainId,
-      recipientAddress: merchantConfig.recipientAddress,
       tokenAddress: merchantConfig.tokenAddress,
     });
 
@@ -381,7 +381,6 @@ export async function POST(request: NextRequest) {
         decimals: payment.tokenDecimals, // From on-chain via pay-server
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
-        recipientAddress: merchantConfig.recipientAddress,
       },
       { status: 201 }
     );

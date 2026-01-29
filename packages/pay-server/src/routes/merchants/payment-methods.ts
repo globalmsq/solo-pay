@@ -8,17 +8,13 @@ import { ChainService } from '../../services/chain.service';
 import { createAuthMiddleware } from '../../middleware/auth.middleware';
 import { ErrorResponseSchema } from '../../docs/schemas';
 
+// Note: recipientAddress removed - contract pays to treasury (set at deployment)
 const CreatePaymentMethodSchema = z.object({
   tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid token address format'),
-  recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid recipient address format'),
   is_enabled: z.boolean().optional().default(true),
 });
 
 const UpdatePaymentMethodSchema = z.object({
-  recipientAddress: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid recipient address format')
-    .optional(),
   is_enabled: z.boolean().optional(),
 });
 
@@ -52,7 +48,6 @@ export async function paymentMethodsRoute(
                   type: 'object',
                   properties: {
                     id: { type: 'integer' },
-                    recipient_address: { type: 'string' },
                     is_enabled: { type: 'boolean' },
                     created_at: { type: 'string', format: 'date-time' },
                     updated_at: { type: 'string', format: 'date-time' },
@@ -138,14 +133,9 @@ export async function paymentMethodsRoute(
               pattern: '^0x[a-fA-F0-9]{40}$',
               description: 'ERC20 token address',
             },
-            recipientAddress: {
-              type: 'string',
-              pattern: '^0x[a-fA-F0-9]{40}$',
-              description: 'Payment recipient address',
-            },
             is_enabled: { type: 'boolean', default: true },
           },
-          required: ['tokenAddress', 'recipientAddress'],
+          required: ['tokenAddress'],
         },
         response: {
           201: {
@@ -156,7 +146,6 @@ export async function paymentMethodsRoute(
                 type: 'object',
                 properties: {
                   id: { type: 'integer' },
-                  recipient_address: { type: 'string' },
                   is_enabled: { type: 'boolean' },
                   created_at: { type: 'string', format: 'date-time' },
                   updated_at: { type: 'string', format: 'date-time' },
@@ -250,7 +239,6 @@ export async function paymentMethodsRoute(
           if (existing.is_deleted) {
             // Restore soft-deleted payment method with updated values
             paymentMethod = await paymentMethodService.restore(existing.id, {
-              recipient_address: validatedData.recipientAddress,
               is_enabled: validatedData.is_enabled, // Schema default is true
             });
           } else {
@@ -265,7 +253,6 @@ export async function paymentMethodsRoute(
           paymentMethod = await paymentMethodService.create({
             merchant_id: merchant.id,
             token_id: token.id,
-            recipient_address: validatedData.recipientAddress,
             is_enabled: validatedData.is_enabled, // Schema default is true
           });
         }
@@ -275,7 +262,6 @@ export async function paymentMethodsRoute(
           success: true,
           payment_method: {
             id: paymentMethod.id,
-            recipient_address: paymentMethod.recipient_address,
             is_enabled: paymentMethod.is_enabled,
             created_at: paymentMethod.created_at.toISOString(),
             updated_at: paymentMethod.updated_at.toISOString(),
@@ -332,7 +318,6 @@ export async function paymentMethodsRoute(
         body: {
           type: 'object',
           properties: {
-            recipientAddress: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' },
             is_enabled: { type: 'boolean' },
           },
         },
@@ -345,7 +330,6 @@ export async function paymentMethodsRoute(
                 type: 'object',
                 properties: {
                   id: { type: 'integer' },
-                  recipient_address: { type: 'string' },
                   is_enabled: { type: 'boolean' },
                   created_at: { type: 'string', format: 'date-time' },
                   updated_at: { type: 'string', format: 'date-time' },
@@ -425,15 +409,11 @@ export async function paymentMethodsRoute(
           });
         }
 
-        // Transform camelCase to snake_case for service
+        // Transform for service
         const updateData: {
-          recipient_address?: string;
           is_enabled?: boolean;
         } = {};
 
-        if (validatedData.recipientAddress !== undefined) {
-          updateData.recipient_address = validatedData.recipientAddress;
-        }
         if (validatedData.is_enabled !== undefined) {
           updateData.is_enabled = validatedData.is_enabled;
         }
@@ -449,7 +429,6 @@ export async function paymentMethodsRoute(
           success: true,
           payment_method: {
             id: updated.id,
-            recipient_address: updated.recipient_address,
             is_enabled: updated.is_enabled,
             created_at: updated.created_at.toISOString(),
             updated_at: updated.updated_at.toISOString(),

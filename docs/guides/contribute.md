@@ -228,7 +228,6 @@ describe('MSQPayClient', () => {
       merchantId: 'merchant_001',
       amount: 100,
       chainId: 31337,
-      recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     });
 

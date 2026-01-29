@@ -7,6 +7,7 @@ export interface MSQPayConfig {
 }
 
 // Request types
+// Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
 export interface CreatePaymentParams {
   /** 상점 고유 식별자 */
   merchantId: string;
@@ -14,8 +15,6 @@ export interface CreatePaymentParams {
   amount: number;
   /** 블록체인 체인 ID */
   chainId: number;
-  /** 결제 수령 주소 */
-  recipientAddress: string;
   /** 결제 토큰 컨트랙트 주소 */
   tokenAddress: string;
 }
@@ -71,6 +70,14 @@ export interface CreatePaymentResponse {
   amount: string; // wei
   status: string;
   expiresAt: string;
+  /** Recipient address (merchant's wallet to receive payment) */
+  recipientAddress?: string;
+  /** Merchant identifier (bytes32, keccak256 of merchant_key) */
+  merchantId?: string;
+  /** Fee in basis points (0-10000, where 10000 = 100%) */
+  feeBps?: number;
+  /** Server EIP-712 signature for payment authorization */
+  serverSignature?: string;
 }
 
 export interface PaymentStatusResponse {
@@ -81,7 +88,8 @@ export interface PaymentStatusResponse {
     amount: number;
     tokenAddress: string;
     tokenSymbol: string;
-    recipientAddress: string;
+    /** 결제를 받는 treasury 주소 (컨트랙트 배포 시 설정) */
+    treasuryAddress: string;
     status: string;
     transactionHash?: string;
     blockNumber?: number;
@@ -134,8 +142,8 @@ export interface PaymentHistoryItem {
   paymentId: string;
   /** 결제자 주소 */
   payer: string;
-  /** 상점 주소 */
-  merchant: string;
+  /** 트레저리 주소 */
+  treasury: string;
   /** 토큰 컨트랙트 주소 */
   token: string;
   /** 토큰 심볼 */

@@ -71,7 +71,7 @@ sequenceDiagram
     W-->>F: Approve completed
 
     F->>W: Request pay() TX
-    W->>C: pay(paymentId, token, amount, merchant)
+    W->>C: pay(paymentId, token, amount, recipient, merchantId, feeBps, serverSignature)
     C-->>W: TX completed
 
     loop Polling (2 second interval)
@@ -206,19 +206,51 @@ flowchart TB
 
 ## Smart Contract Structure
 
-### PaymentGateway
+### PaymentGatewayV1
 
 ```
-PaymentGateway (UUPS Upgradeable)
+PaymentGatewayV1 (UUPS Upgradeable)
+├── Inheritance
+│   ├── UUPSUpgradeable - Proxy upgradability
+│   ├── OwnableUpgradeable - Ownership management
+│   ├── ERC2771ContextUpgradeable - Gasless meta-transaction support
+│   ├── ReentrancyGuardUpgradeable - Reentrancy protection
+│   ├── EIP712Upgradeable - Signature verification
+│   └── IPaymentGateway - Interface
 ├── Storage
 │   ├── processedPayments: mapping(bytes32 => bool)
-│   └── trustedForwarder: address
+│   ├── supportedTokens: mapping(address => bool)
+│   ├── enforceTokenWhitelist: bool
+│   ├── treasuryAddress: address
+│   └── signerAddress: address
 ├── Functions
-│   ├── pay() - Direct Payment
-│   ├── payWithToken() - Direct Payment (token specified)
-│   └── _authorizeUpgrade() - Upgrade authorization
+│   ├── pay(paymentId, tokenAddress, amount, recipientAddress, merchantId, feeBps, serverSignature)
+│   ├── setTreasury(newTreasuryAddress) - Update treasury (owner only)
+│   ├── setSigner(newSigner) - Update signer (owner only)
+│   ├── setSupportedToken(tokenAddress, supported) - Token whitelist
+│   ├── batchSetSupportedTokens(tokenAddresses[], supported[]) - Bulk token whitelist
+│   ├── setEnforceTokenWhitelist(enforce) - Toggle whitelist enforcement
+│   ├── isPaymentProcessed(paymentId) - Check payment status
+│   ├── getTrustedForwarder() - Get ERC2771 forwarder
+│   ├── getDomainSeparator() - Get EIP-712 domain separator
+│   └── _authorizeUpgrade() - Upgrade authorization (owner only)
 └── Events
-    └── PaymentProcessed(paymentId, payer, merchant, token, amount)
+    ├── PaymentCompleted(paymentId, merchantId, payerAddress, recipientAddress, tokenAddress, amount, fee, timestamp)
+    ├── TreasuryChanged(oldTreasuryAddress, newTreasuryAddress)
+    ├── SignerChanged(oldSigner, newSigner)
+    └── TokenSupportChanged(tokenAddress, supported)
+```
+
+### Payment Flow (Contract Level)
+
+```
+1. User calls pay() with 7 parameters
+2. Contract verifies server EIP-712 signature
+3. Contract calculates fee: feeAmount = (amount * feeBps) / 10000
+4. Contract transfers fee to treasuryAddress
+5. Contract transfers (amount - fee) to recipientAddress
+6. Contract marks paymentId as processed
+7. Contract emits PaymentCompleted event
 ```
 
 ### ERC2771Forwarder
@@ -268,8 +300,11 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 | **Amount Manipulation (Direct)** | **Store server queries product price (no frontend amount acceptance)** |
 | Amount Manipulation (Gasless)    | Verify amount in signature data                                        |
 | Store impersonation              | API Key authentication                                                 |
+| Fee/Recipient Manipulation       | Server EIP-712 signature verification in contract                      |
 
 **Core Security Principle**: Frontend sends only `productId`, and store server must query actual price from DB/config and pass to Payment Server.
+
+**Server Signature Security**: All payment parameters (amount, recipient, fee) are signed by the server using EIP-712. The contract verifies this signature before processing, preventing any client-side manipulation of critical payment data.
 
 ### Contract Security
 
@@ -304,8 +339,8 @@ function generatePaymentId(merchantId: string): `0x${string}` {
 
 | Contract                | Address                                      |
 | ----------------------- | -------------------------------------------- |
-| PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
-| PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
+| PaymentGateway (Proxy)  | `0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d` |
+| PaymentGatewayV1 (Impl) | `0x6b08b0EaD9370605AC9F34A17897515aACa0954a` |
 | ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 | SUT Token               | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 

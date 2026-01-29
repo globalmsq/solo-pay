@@ -2,15 +2,15 @@ name: Integration Tests
 
 on:
   pull_request:
-    branches: ["main"]
+    branches: ['main']
     paths:
-      - "packages/integration-tests/**"
-      - "packages/pay-server/**"
-      - "packages/simple-relayer/**"
-      - "packages/sdk/**"
-      - "contracts/**"
-      - "docker/**"
-      - ".github/workflows/integration-tests.yml"
+      - 'packages/integration-tests/**'
+      - 'packages/pay-server/**'
+      - 'packages/simple-relayer/**'
+      - 'packages/sdk/**'
+      - 'contracts/**'
+      - 'docker/**'
+      - '.github/workflows/integration-tests.yml'
   workflow_dispatch:
 
 jobs:
@@ -28,9 +28,10 @@ jobs:
       RELAY_API_URL: http://127.0.0.1:3012
       RPC_URL: http://127.0.0.1:8545
       CHAIN_ID: 31337
-      # Hardhat's publicly known test account #1 - DO NOT use on mainnet/testnet
-      # See: https://hardhat.org/hardhat-network/docs/reference#initial-state
-      RELAYER_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+      # Hardhat Account #2 - Relayer (DO NOT use on mainnet/testnet)
+      RELAYER_PRIVATE_KEY: '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a'
+      # Hardhat Account #4 - Signer (DO NOT use on mainnet/testnet)
+      SIGNER_PRIVATE_KEY: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a'
 
     services:
       mysql:
@@ -67,8 +68,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -113,7 +114,7 @@ jobs:
           NODE_ENV: test
           PORT: 3012
           HOST: 0.0.0.0
-          FORWARDER_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+          FORWARDER_ADDRESS: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
         run: |
           cd packages/simple-relayer
           pnpm start &

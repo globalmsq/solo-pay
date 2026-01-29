@@ -10,7 +10,14 @@ import {
   useSwitchChain,
   useChainId,
 } from 'wagmi';
-import { parseUnits, formatUnits, encodeFunctionData, maxUint256, type Address } from 'viem';
+import {
+  parseUnits,
+  formatUnits,
+  encodeFunctionData,
+  maxUint256,
+  parseGwei,
+  type Address,
+} from 'viem';
 import {
   getPaymentStatus,
   checkout,
@@ -57,9 +64,12 @@ const PAYMENT_GATEWAY_ABI = [
     name: 'pay',
     inputs: [
       { name: 'paymentId', type: 'bytes32' },
-      { name: 'token', type: 'address' },
+      { name: 'tokenAddress', type: 'address' },
       { name: 'amount', type: 'uint256' },
-      { name: 'merchant', type: 'address' },
+      { name: 'recipientAddress', type: 'address' },
+      { name: 'merchantId', type: 'bytes32' },
+      { name: 'feeBps', type: 'uint16' },
+      { name: 'serverSignature', type: 'bytes' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -76,6 +86,13 @@ const FORWARDER_ABI = [
     stateMutability: 'view',
   },
 ] as const;
+
+// Polygon networks require higher gas fees (min 25 gwei priority fee)
+const POLYGON_CHAIN_IDS = [137, 80002]; // Polygon Mainnet, Polygon Amoy
+const POLYGON_GAS_CONFIG = {
+  maxPriorityFeePerGas: parseGwei('30'), // 30 gwei (above 25 gwei minimum)
+  maxFeePerGas: parseGwei('100'), // 100 gwei max
+};
 
 interface Product {
   id: string;
@@ -296,12 +313,16 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       setError(null);
 
       // wagmi's writeContractAsync handles chain switching internally when chainId is provided
+      // Polygon networks require higher gas fees
+      const gasConfig = POLYGON_CHAIN_IDS.includes(serverConfig.chainId) ? POLYGON_GAS_CONFIG : {};
+
       const hash = await writeContractAsync({
         chainId: serverConfig.chainId,
         address: tokenAddress,
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [serverConfig.gatewayAddress as Address, maxUint256],
+        ...gasConfig,
       });
 
       setApproveTxHash(hash);
@@ -325,14 +346,35 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       const paymentId = serverConfig.paymentId as `0x${string}`;
       setCurrentPaymentId(paymentId);
 
+      // Validate server signature data is available
+      if (
+        !serverConfig.recipientAddress ||
+        !serverConfig.merchantId ||
+        !serverConfig.serverSignature
+      ) {
+        throw new Error('Missing server signature data for payment');
+      }
+
       // 1. Send payment TX to Contract using wagmi's writeContractAsync
       // wagmi handles chain switching internally when chainId is provided
+      // Polygon networks require higher gas fees
+      const gasConfig = POLYGON_CHAIN_IDS.includes(serverConfig.chainId) ? POLYGON_GAS_CONFIG : {};
+
       const hash = await writeContractAsync({
         chainId: serverConfig.chainId,
         address: serverConfig.gatewayAddress as Address,
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'pay',
-        args: [paymentId, tokenAddress, amount, serverConfig.recipientAddress as Address],
+        args: [
+          paymentId,
+          tokenAddress,
+          amount,
+          serverConfig.recipientAddress as Address,
+          serverConfig.merchantId as `0x${string}`,
+          serverConfig.feeBps ?? 0,
+          serverConfig.serverSignature as `0x${string}`,
+        ],
+        ...gasConfig,
       });
 
       setPendingTxHash(hash);
@@ -375,11 +417,28 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       const paymentId = serverConfig.paymentId as `0x${string}`;
       setCurrentPaymentId(paymentId);
 
+      // Validate server signature data is available
+      if (
+        !serverConfig.recipientAddress ||
+        !serverConfig.merchantId ||
+        !serverConfig.serverSignature
+      ) {
+        throw new Error('Missing server signature data for payment');
+      }
+
       // 1. Encode the PaymentGateway.pay() function call
       const payCallData = encodeFunctionData({
         abi: PAYMENT_GATEWAY_ABI,
         functionName: 'pay',
-        args: [paymentId, tokenAddress, amount, serverConfig.recipientAddress as Address],
+        args: [
+          paymentId,
+          tokenAddress,
+          amount,
+          serverConfig.recipientAddress as Address,
+          serverConfig.merchantId as `0x${string}`,
+          serverConfig.feeBps ?? 0,
+          serverConfig.serverSignature as `0x${string}`,
+        ],
       });
 
       // 2. Create EIP-712 typed data for gasless payment forward request

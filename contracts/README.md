@@ -149,12 +149,12 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 
 | Contract            | Address                                      |
 | ------------------- | -------------------------------------------- |
-| PaymentGatewayProxy | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
-| PaymentGatewayV1    | `0xf5131C2c7140919042f811080D2Be9E8da37F9ED` |
+| PaymentGatewayProxy | `0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d` |
+| PaymentGatewayV1    | `0x6b08b0EaD9370605AC9F34A17897515aACa0954a` |
 | ERC2771Forwarder    | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 | SUT Token           | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
-> [View on Polygonscan](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
+> [View on Polygonscan](https://amoy.polygonscan.com/address/0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d)
 
 ## Deployment Results
 
@@ -182,11 +182,21 @@ Deployed contract addresses are saved in `ignition/deployments/chain-{CHAIN_ID}/
 
 ```
 src/
-├── PaymentGatewayV1.sol      # Payment Gateway (Upgradeable)
-├── PaymentGatewayProxy.sol   # Proxy Contract
+├── PaymentGatewayV1.sol      # Payment Gateway (Upgradeable, EIP-712 signature verification)
+├── PaymentGatewayProxy.sol   # UUPS Proxy Contract
+├── interfaces/
+│   └── IPaymentGateway.sol   # Payment Gateway Interface
 └── mocks/
     └── MockERC20.sol         # ERC20 Token for Testing
 ```
+
+### PaymentGatewayV1 Features
+
+- **Server Signature Verification**: EIP-712 typed data signature verification
+- **Treasury Model**: Fees sent to treasury, remainder to merchant recipient
+- **Token Whitelist**: Optional token support enforcement
+- **Gasless Support**: ERC2771 meta-transaction support
+- **Upgradeable**: UUPS proxy pattern for future upgrades
 
 ## License
 

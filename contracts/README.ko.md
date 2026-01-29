@@ -149,12 +149,12 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 
 | Contract            | Address                                      |
 | ------------------- | -------------------------------------------- |
-| PaymentGatewayProxy | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
-| PaymentGatewayV1    | `0xf5131C2c7140919042f811080D2Be9E8da37F9ED` |
+| PaymentGatewayProxy | `0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d` |
+| PaymentGatewayV1    | `0x6b08b0EaD9370605AC9F34A17897515aACa0954a` |
 | ERC2771Forwarder    | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
 | SUT Token           | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
-> [Polygonscan에서 확인](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
+> [Polygonscan에서 확인](https://amoy.polygonscan.com/address/0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d)
 
 ## 배포 결과 확인
 
@@ -182,11 +182,21 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 
 ```
 src/
-├── PaymentGatewayV1.sol      # 결제 게이트웨이 (Upgradeable)
-├── PaymentGatewayProxy.sol   # 프록시 컨트랙트
+├── PaymentGatewayV1.sol      # 결제 게이트웨이 (Upgradeable, EIP-712 서명 검증)
+├── PaymentGatewayProxy.sol   # UUPS 프록시 컨트랙트
+├── interfaces/
+│   └── IPaymentGateway.sol   # 결제 게이트웨이 인터페이스
 └── mocks/
     └── MockERC20.sol         # 테스트용 ERC20 토큰
 ```
+
+### PaymentGatewayV1 기능
+
+- **서버 서명 검증**: EIP-712 타입드 데이터 서명 검증
+- **트레저리 모델**: 수수료는 트레저리로, 나머지는 상점 수신자에게 전송
+- **토큰 화이트리스트**: 선택적 토큰 지원 강제
+- **가스리스 지원**: ERC2771 메타 트랜잭션 지원
+- **업그레이드 가능**: 향후 업그레이드를 위한 UUPS 프록시 패턴
 
 ## 라이선스
 

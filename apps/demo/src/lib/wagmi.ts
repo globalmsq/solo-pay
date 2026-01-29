@@ -1,7 +1,6 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { fallback, unstable_connector, http, type Config } from 'wagmi';
+import { fallback, http, type Config } from 'wagmi';
 import { polygonAmoy, hardhat, type Chain } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
 import type { ChainConfig } from '@/app/api/config/route';
 
 // WalletConnect Project ID - Get one at https://cloud.walletconnect.com/
@@ -13,11 +12,31 @@ const AMOY_BACKUP_RPCS = [
   'https://polygon-amoy-bor-rpc.publicnode.com',
 ];
 
+// Singleton cache for wagmi config (prevents disconnect on re-render/StrictMode)
+let cachedWagmiConfig: Config | null = null;
+let cachedChainId: number | null = null;
+
 /**
- * 체인 설정에 따라 wagmi config 생성
+ * 체인 설정에 따라 wagmi config 생성 (싱글톤)
  * /api/config에서 받은 설정으로 단일 체인 구성
+ * 같은 chainId면 캐시된 config 반환, 다르면 새로 생성
  */
-export function createWagmiConfig(chainConfig: ChainConfig): Config {
+export function getOrCreateWagmiConfig(chainConfig: ChainConfig): Config {
+  // 같은 chainId면 캐시된 config 반환 (리렌더/StrictMode 대응)
+  if (cachedWagmiConfig && cachedChainId === chainConfig.chainId) {
+    return cachedWagmiConfig;
+  }
+
+  // chainId가 바뀌면 새로 생성
+  cachedChainId = chainConfig.chainId;
+  cachedWagmiConfig = createWagmiConfig(chainConfig);
+  return cachedWagmiConfig;
+}
+
+/**
+ * 내부 함수: wagmi config 생성
+ */
+function createWagmiConfig(chainConfig: ChainConfig): Config {
   // 체인 ID에 따라 체인 객체 선택
   const chain: Chain = chainConfig.chainId === 80002 ? polygonAmoy : hardhat;
 
@@ -43,7 +62,7 @@ export function createWagmiConfig(chainConfig: ChainConfig): Config {
     chains: [customChain],
     ssr: true,
     transports: {
-      [customChain.id]: fallback([unstable_connector(injected), ...httpTransports]),
+      [customChain.id]: fallback(httpTransports),
     },
   });
 }

@@ -166,11 +166,11 @@ const client = new MSQPayClient({
 });
 
 // 결제 생성 (상점서버에서 호출)
+// Note: 결제금은 컨트랙트 배포 시 설정된 treasury 주소로 전송됨
 const payment = await client.createPayment({
   merchantId: 'merchant_001',
   amount: 100,
   chainId: 31337,
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
   tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
 });
 

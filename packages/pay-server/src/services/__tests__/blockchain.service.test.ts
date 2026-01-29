@@ -559,12 +559,12 @@ describe('BlockchainService - Blockchain interaction methods', () => {
   });
 
   describe('estimateGasCost', () => {
+    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
     it('should return fixed gas estimate', async () => {
       const result = await service.estimateGasCost(
         80002,
         '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`,
-        BigInt('1000000000000000000'),
-        '0x1234567890123456789012345678901234567890' as `0x${string}`
+        BigInt('1000000000000000000')
       );
 
       expect(result).toBe(BigInt('200000'));
@@ -578,7 +578,6 @@ describe('BlockchainService - Blockchain interaction methods', () => {
         amount: BigInt('1000000000000000000'),
         currency: 'USDC',
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`,
-        recipientAddress: '0x1234567890123456789012345678901234567890' as `0x${string}`,
         description: 'Test payment',
       });
 
@@ -592,7 +591,6 @@ describe('BlockchainService - Blockchain interaction methods', () => {
           amount: BigInt('1000000000000000000'),
           currency: 'USDC',
           tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`,
-          recipientAddress: '0x1234567890123456789012345678901234567890' as `0x${string}`,
         })
       ).rejects.toThrow('필수 결제 정보가 누락되었습니다');
     });
@@ -604,7 +602,6 @@ describe('BlockchainService - Blockchain interaction methods', () => {
           amount: BigInt(0),
           currency: 'USDC',
           tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`,
-          recipientAddress: '0x1234567890123456789012345678901234567890' as `0x${string}`,
         })
       ).rejects.toThrow('필수 결제 정보가 누락되었습니다');
     });
@@ -627,9 +624,9 @@ describe('BlockchainService - Blockchain interaction methods', () => {
         {
           args: {
             paymentId: '0x' + 'a'.repeat(64),
-            payer: '0x1234567890123456789012345678901234567890',
-            merchant: '0x0987654321098765432109876543210987654321',
-            token: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+            payerAddress: '0x1234567890123456789012345678901234567890',
+            treasuryAddress: '0x0987654321098765432109876543210987654321',
+            tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
             amount: BigInt('1000000000000000000'),
             timestamp: BigInt(1234567890),
           },
@@ -694,9 +691,9 @@ describe('BlockchainService - Blockchain interaction methods', () => {
         {
           args: {
             paymentId: '0x' + 'a'.repeat(64),
-            payer: '0x1234567890123456789012345678901234567890',
-            merchant: '0x0987654321098765432109876543210987654321',
-            token: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+            payerAddress: '0x1234567890123456789012345678901234567890',
+            treasuryAddress: '0x0987654321098765432109876543210987654321',
+            tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
             amount: BigInt('1000000000000000000'),
             timestamp: BigInt(1000),
           },
@@ -706,9 +703,9 @@ describe('BlockchainService - Blockchain interaction methods', () => {
         {
           args: {
             paymentId: '0x' + 'd'.repeat(64),
-            payer: '0x1234567890123456789012345678901234567890',
-            merchant: '0x0987654321098765432109876543210987654321',
-            token: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+            payerAddress: '0x1234567890123456789012345678901234567890',
+            treasuryAddress: '0x0987654321098765432109876543210987654321',
+            tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
             amount: BigInt('2000000000000000000'),
             timestamp: BigInt(2000),
           },

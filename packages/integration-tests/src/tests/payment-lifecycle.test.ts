@@ -11,24 +11,31 @@ import {
 } from '../helpers/blockchain';
 import {
   signForwardRequest,
+  signPaymentRequest,
   encodePayFunctionData,
   generatePaymentId,
+  merchantKeyToId,
   getDeadline,
   type ForwardRequest,
+  type PaymentParams,
 } from '../helpers/signature';
 import { HARDHAT_ACCOUNTS, CONTRACT_ADDRESSES } from '../setup/wallets';
 import { getToken } from '../fixtures/token';
-import { getMerchant } from '../fixtures/merchant';
 
 describe('Payment Lifecycle Integration', () => {
   const token = getToken('mockUSDT');
-  const merchant = getMerchant('default');
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const relayerPrivateKey = HARDHAT_ACCOUNTS.relayer.privateKey;
+  const signerPrivateKey = HARDHAT_ACCOUNTS.signer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
-  const merchantAddress = merchant.recipientAddress;
+  // Recipient receives payments (Account #1 - matches init.sql)
+  const recipientAddress = HARDHAT_ACCOUNTS.recipient.address;
   const gatewayAddress = CONTRACT_ADDRESSES.paymentGateway;
   const forwarderAddress = CONTRACT_ADDRESSES.forwarder;
+
+  // Test merchant ID
+  const merchantKey = 'merchant_demo_001';
+  const merchantId = merchantKeyToId(merchantKey);
 
   beforeAll(async () => {
     const balance = await getTokenBalance(token.address, payerAddress);
@@ -46,17 +53,37 @@ describe('Payment Lifecycle Integration', () => {
     it('should transition: NOT_PROCESSED -> PROCESSED (direct)', async () => {
       const paymentId = generatePaymentId(`LIFECYCLE_DIRECT_${Date.now()}`);
       const amount = parseUnits('10', token.decimals);
+      const feeBps = 0;
 
       const gateway = getContract(gatewayAddress, PaymentGatewayABI);
 
       const beforeProcessed = await gateway.isPaymentProcessed(paymentId);
       expect(beforeProcessed).toBe(false);
 
+      // Create server signature
+      const paymentParams: PaymentParams = {
+        paymentId,
+        tokenAddress: token.address,
+        amount,
+        recipientAddress: recipientAddress,
+        merchantId,
+        feeBps,
+      };
+      const serverSignature = await signPaymentRequest(paymentParams, signerPrivateKey);
+
       await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
 
       const wallet = getWallet(payerPrivateKey);
       const gatewayWithSigner = getContract(gatewayAddress, PaymentGatewayABI, wallet);
-      const tx = await gatewayWithSigner.pay(paymentId, token.address, amount, merchantAddress);
+      const tx = await gatewayWithSigner.pay(
+        paymentId,
+        token.address,
+        amount,
+        recipientAddress,
+        merchantId,
+        feeBps,
+        serverSignature
+      );
       await tx.wait();
 
       const afterProcessed = await gateway.isPaymentProcessed(paymentId);
@@ -68,15 +95,35 @@ describe('Payment Lifecycle Integration', () => {
     it('should transition: NOT_PROCESSED -> PROCESSED (gasless)', async () => {
       const paymentId = generatePaymentId(`LIFECYCLE_GASLESS_${Date.now()}`);
       const amount = parseUnits('10', token.decimals);
+      const feeBps = 0;
 
       const gateway = getContract(gatewayAddress, PaymentGatewayABI);
 
       const beforeProcessed = await gateway.isPaymentProcessed(paymentId);
       expect(beforeProcessed).toBe(false);
 
+      // Create server signature
+      const paymentParams: PaymentParams = {
+        paymentId,
+        tokenAddress: token.address,
+        amount,
+        recipientAddress: recipientAddress,
+        merchantId,
+        feeBps,
+      };
+      const serverSignature = await signPaymentRequest(paymentParams, signerPrivateKey);
+
       await approveToken(token.address, gatewayAddress, amount, payerPrivateKey);
 
-      const data = encodePayFunctionData(paymentId, token.address, amount, merchantAddress);
+      const data = encodePayFunctionData(
+        paymentId,
+        token.address,
+        amount,
+        recipientAddress,
+        merchantId,
+        feeBps,
+        serverSignature
+      );
       const nonce = await getNonce(payerAddress);
       const deadline = getDeadline(1);
 
@@ -117,17 +164,45 @@ describe('Payment Lifecycle Integration', () => {
     it('should not allow re-processing of completed payment', async () => {
       const paymentId = generatePaymentId(`FINALITY_${Date.now()}`);
       const amount = parseUnits('10', token.decimals);
+      const feeBps = 0;
+
+      // Create server signature
+      const paymentParams: PaymentParams = {
+        paymentId,
+        tokenAddress: token.address,
+        amount,
+        recipientAddress: recipientAddress,
+        merchantId,
+        feeBps,
+      };
+      const serverSignature = await signPaymentRequest(paymentParams, signerPrivateKey);
 
       await approveToken(token.address, gatewayAddress, amount * 2n, payerPrivateKey);
 
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
 
-      const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
+      const tx = await gateway.pay(
+        paymentId,
+        token.address,
+        amount,
+        recipientAddress,
+        merchantId,
+        feeBps,
+        serverSignature
+      );
       await tx.wait();
 
       await expect(
-        gateway.pay(paymentId, token.address, amount, merchantAddress)
+        gateway.pay(
+          paymentId,
+          token.address,
+          amount,
+          recipientAddress,
+          merchantId,
+          feeBps,
+          serverSignature
+        )
       ).rejects.toThrow();
     });
 
@@ -139,14 +214,34 @@ describe('Payment Lifecycle Integration', () => {
       ];
       const amount = parseUnits('5', token.decimals);
       const totalAmount = amount * BigInt(paymentIds.length);
+      const feeBps = 0;
 
       await approveToken(token.address, gatewayAddress, totalAmount, payerPrivateKey);
 
       // Create fresh wallet for each payment to avoid nonce caching issues
       for (const paymentId of paymentIds) {
+        // Create server signature for each payment
+        const paymentParams: PaymentParams = {
+          paymentId,
+          tokenAddress: token.address,
+          amount,
+          recipientAddress: recipientAddress,
+          merchantId,
+          feeBps,
+        };
+        const serverSignature = await signPaymentRequest(paymentParams, signerPrivateKey);
+
         const wallet = getWallet(payerPrivateKey);
         const gateway = getContract(gatewayAddress, PaymentGatewayABI, wallet);
-        const tx = await gateway.pay(paymentId, token.address, amount, merchantAddress);
+        const tx = await gateway.pay(
+          paymentId,
+          token.address,
+          amount,
+          recipientAddress,
+          merchantId,
+          feeBps,
+          serverSignature
+        );
         await tx.wait();
       }
 

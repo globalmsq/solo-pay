@@ -1,5 +1,5 @@
 import { PaymentCompleted as PaymentCompletedEvent } from '../generated/PaymentGateway/PaymentGateway';
-import { Payment, MerchantStats, DailyVolume, TokenStats, GlobalStats } from '../generated/schema';
+import { Payment, TreasuryStats, DailyVolume, TokenStats, GlobalStats } from '../generated/schema';
 import { BigInt } from '@graphprotocol/graph-ts';
 
 // Constants
@@ -8,13 +8,13 @@ const SECONDS_PER_DAY = 86400;
 
 /**
  * Handle PaymentCompleted event
- * Creates/updates Payment, MerchantStats, DailyVolume, TokenStats, and GlobalStats entities
+ * Creates/updates Payment, TreasuryStats, DailyVolume, TokenStats, and GlobalStats entities
  */
 export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   const payment = new Payment(event.params.paymentId.toHexString());
-  payment.payer = event.params.payer;
-  payment.merchant = event.params.merchant;
-  payment.token = event.params.token;
+  payment.payer = event.params.payerAddress;
+  payment.treasury = event.params.treasuryAddress;
+  payment.token = event.params.tokenAddress;
   payment.amount = event.params.amount;
   payment.timestamp = event.params.timestamp;
   payment.transactionHash = event.transaction.hash;
@@ -23,7 +23,7 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
   // Determine gas mode based on transaction sender
   // If tx.from == payer, it's a direct payment
   // If tx.from != payer, it's a meta-transaction (via forwarder)
-  if (event.transaction.from.equals(event.params.payer)) {
+  if (event.transaction.from.equals(event.params.payerAddress)) {
     payment.gasMode = 'Direct';
   } else {
     payment.gasMode = 'MetaTx';
@@ -31,8 +31,8 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
 
   payment.save();
 
-  // Update MerchantStats
-  updateMerchantStats(event);
+  // Update TreasuryStats
+  updateTreasuryStats(event);
 
   // Update DailyVolume
   updateDailyVolume(event);
@@ -45,23 +45,24 @@ export function handlePaymentCompleted(event: PaymentCompletedEvent): void {
 }
 
 /**
- * Update merchant statistics
+ * Update treasury statistics
+ * Note: With fixed treasury, this tracks the single treasury's stats
  */
-function updateMerchantStats(event: PaymentCompletedEvent): void {
-  const merchantId = event.params.merchant.toHexString();
-  let merchant = MerchantStats.load(merchantId);
+function updateTreasuryStats(event: PaymentCompletedEvent): void {
+  const treasuryId = event.params.treasuryAddress.toHexString();
+  let treasury = TreasuryStats.load(treasuryId);
 
-  if (merchant == null) {
-    merchant = new MerchantStats(merchantId);
-    merchant.totalReceived = BigInt.fromI32(0);
-    merchant.paymentCount = 0;
+  if (treasury == null) {
+    treasury = new TreasuryStats(treasuryId);
+    treasury.totalReceived = BigInt.fromI32(0);
+    treasury.paymentCount = 0;
   }
 
-  merchant.totalReceived = merchant.totalReceived.plus(event.params.amount);
-  merchant.paymentCount = merchant.paymentCount + 1;
-  merchant.lastPaymentAt = event.params.timestamp;
+  treasury.totalReceived = treasury.totalReceived.plus(event.params.amount);
+  treasury.paymentCount = treasury.paymentCount + 1;
+  treasury.lastPaymentAt = event.params.timestamp;
 
-  merchant.save();
+  treasury.save();
 }
 
 /**
@@ -88,7 +89,7 @@ function updateDailyVolume(event: PaymentCompletedEvent): void {
  * Update token statistics
  */
 function updateTokenStats(event: PaymentCompletedEvent): void {
-  const tokenId = event.params.token.toHexString();
+  const tokenId = event.params.tokenAddress.toHexString();
   let token = TokenStats.load(tokenId);
 
   if (token == null) {
@@ -114,7 +115,6 @@ function updateGlobalStats(event: PaymentCompletedEvent): void {
     global = new GlobalStats(GLOBAL_STATS_ID);
     global.totalPayments = 0;
     global.totalVolume = BigInt.fromI32(0);
-    global.uniqueMerchants = 0;
     global.uniquePayers = 0;
   }
 
