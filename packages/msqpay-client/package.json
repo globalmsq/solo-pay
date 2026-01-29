@@ -1,0 +1,66 @@
+{
+  "name": "@globalmsq/msqpay-client",
+  "version": "1.0.0",
+  "description": "CDN-ready JavaScript SDK for MSQPay blockchain payments. Supports MetaMask, Trust Wallet, and other injected wallets with built-in UI components.",
+  "main": "dist/msqpay.js",
+  "module": "dist/msqpay.esm.js",
+  "browser": "dist/msqpay.js",
+  "types": "dist/index.d.ts",
+  "unpkg": "dist/msqpay.min.js",
+  "jsdelivr": "dist/msqpay.min.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "webpack --config webpack.config.js --mode production",
+    "build:dev": "webpack --config webpack.config.js --mode development",
+    "build:watch": "webpack --config webpack.config.js --mode development --watch",
+    "build:types": "tsc -p tsconfig.build.json",
+    "serve": "http-server -p 8081 -o apps/demo.html",
+    "dev": "npm run build:dev && npm run serve",
+    "dev:prod": "npm run build && npm run serve",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'No tests configured yet'",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "babel-loader": "^9.1.3",
+    "http-server": "^14.1.1",
+    "terser-webpack-plugin": "^5.3.10",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.0",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "keywords": [
+    "blockchain",
+    "payment",
+    "ethereum",
+    "metamask",
+    "trust-wallet",
+    "crypto",
+    "web3",
+    "cdn"
+  ],
+  "author": "MSQ Team",
+  "license": "MIT",
+  "homepage": "https://github.com/globalmsq/msqpay-monorepo/tree/main/packages/msqpay-client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/globalmsq/msqpay-monorepo.git",
+    "directory": "packages/msqpay-client"
+  },
+  "bugs": {
+    "url": "https://github.com/globalmsq/msqpay-monorepo/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

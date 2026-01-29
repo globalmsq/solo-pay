@@ -1,0 +1,179 @@
+/**
+ * MSQPay Documentation - 반응형 UX 개선
+ */
+
+.vp-doc table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+}
+
+.vp-doc table th,
+.vp-doc table td {
+  min-width: 80px;
+  white-space: normal;
+}
+
+
+@media (max-width: 768px) {
+  .vp-doc table {
+    font-size: 14px;
+  }
+
+  .vp-doc table th,
+  .vp-doc table td {
+    padding: 8px 12px;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .vp-doc div[class*='language-'] {
+    margin: 16px -24px;
+    border-radius: 0;
+  }
+
+  .vp-doc div[class*='language-'] code {
+    font-size: 12px;
+  }
+
+  .vp-doc div[class*='language-json'] code {
+    word-break: break-all;
+  }
+}
+
+.vp-doc div[class*='language-'] pre {
+  -webkit-overflow-scrolling: touch;
+}
+
+
+@media (max-width: 768px) {
+  /* 사이드바 링크 */
+  .VPSidebarItem .link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* 네비게이션 링크 */
+  .VPNavBarMenuLink {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* 목차(outline) 링크 */
+  .VPDocOutlineItem a {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .VPHero .actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .VPHero .action {
+    width: 100%;
+  }
+
+  .VPHero .VPButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .VPFeatures .items {
+    gap: 16px;
+  }
+
+  .VPFeature {
+    padding: 20px;
+  }
+}
+
+.vp-doc :not(pre) > code {
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .vp-doc :not(pre) > code {
+    font-size: 0.85em;
+    padding: 2px 6px;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .vp-doc .custom-block {
+    padding: 16px;
+    margin: 16px 0;
+  }
+
+  .vp-doc .custom-block .custom-block-title {
+    font-size: 15px;
+  }
+
+  .vp-doc .custom-block p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .vp-doc p {
+    line-height: 1.8;
+    margin: 16px 0;
+  }
+
+  .vp-doc li {
+    line-height: 1.7;
+  }
+
+  /* 제목과 콘텐츠 간격 */
+  .vp-doc h2 {
+    margin-top: 40px;
+  }
+
+  .vp-doc h3 {
+    margin-top: 32px;
+  }
+}
+
+
+.vp-doc h3 code {
+  font-size: 0.9em;
+  word-break: break-all;
+}
+
+@media (max-width: 640px) {
+  .vp-doc h3 {
+    font-size: 1.1em;
+  }
+
+  .vp-doc h3 code {
+    display: inline-block;
+    font-size: 0.85em;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .VPLocalSearchBox .shell {
+    max-height: 90vh;
+  }
+
+  .VPLocalSearchBox .results {
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

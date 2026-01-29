@@ -161,6 +161,19 @@ services:
     networks:
       - msqpay-network
 
+  # Documentation (VitePress)
+  guide:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: guide
+    image: msqpay-guide
+    container_name: msqpay-guide
+    ports:
+      - "5173:80"
+    networks:
+      - msqpay-network
+
 networks:
   msqpay-network:
     driver: bridge
