@@ -66,6 +66,67 @@ export const CreatePaymentRequestSchema = {
   },
 } as const;
 
+export const PaymentInfoRequestSchema = {
+  type: 'object',
+  properties: {
+    amount: {
+      type: 'number',
+      description: 'Payment amount in base token units (e.g., 10.5 for 10.5 TEST)',
+      example: 10,
+    },
+    tokenAddress: {
+      type: 'string',
+      description: 'ERC20 token contract address',
+      example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+    },
+  },
+  required: ['amount', 'tokenAddress'],
+} as const;
+
+export const PaymentInfoResponseSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean', example: true },
+    chainId: { type: 'integer', example: 31337 },
+    tokenAddress: {
+      type: 'string',
+      example: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
+    },
+    tokenSymbol: { type: 'string', example: 'USDT' },
+    tokenDecimals: { type: 'integer', example: 6 },
+    gatewayAddress: {
+      type: 'string',
+      description: 'PaymentGateway contract address',
+      example: '0x1234567890abcdef1234567890abcdef12345678',
+    },
+    forwarderAddress: {
+      type: 'string',
+      description: 'ERC2771 Forwarder contract address',
+      example: '0x1234567890abcdef1234567890abcdef12345678',
+    },
+    amount: {
+      type: 'string',
+      description: 'Amount in wei (smallest unit)',
+      example: '10500000',
+    },
+    recipientAddress: {
+      type: 'string',
+      description: 'Recipient address (merchant wallet to receive payment)',
+      example: '0x1234567890abcdef1234567890abcdef12345678',
+    },
+    merchantId: {
+      type: 'string',
+      description: 'Merchant identifier (bytes32, keccak256 of merchant_key)',
+      example: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+    },
+    feeBps: {
+      type: 'integer',
+      description: 'Fee in basis points (0-10000, where 10000 = 100%)',
+      example: 100,
+    },
+  },
+} as const;
+
 export const CreatePaymentResponseSchema = {
   type: 'object',
   properties: {
