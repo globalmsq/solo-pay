@@ -15,6 +15,17 @@ export const CreatePaymentSchema = z.object({
 
 export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
 
+// 결제 정보 조회 요청 스키마 (결제 생성 없이 컨트랙트 정보만 반환)
+// chainId와 merchantId는 인증된 머천트에서 가져옴
+export const PaymentInfoSchema = z.object({
+  amount: z.number().positive('금액은 양수여야 합니다'),
+  tokenAddress: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/, '유효한 토큰 주소여야 합니다 (0x + 40자 hex)'),
+});
+
+export type PaymentInfoRequest = z.infer<typeof PaymentInfoSchema>;
+
 // 결제 상태 조회 응답 스키마
 // Note: treasuryAddress는 컨트랙트에서 결제를 받는 주소 (배포 시 설정)
 export const PaymentStatusSchema = z.object({

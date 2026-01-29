@@ -17,6 +17,7 @@ import { ServerSigningService } from './services/signature-server.service';
 import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
 import { createPaymentRoute } from './routes/payments/create';
+import { paymentInfoRoute } from './routes/payments/info';
 import { getPaymentStatusRoute } from './routes/payments/status';
 import { submitGaslessRoute } from './routes/payments/gasless';
 import { getRelayStatusRoute } from './routes/payments/relay-status';
@@ -138,6 +139,14 @@ const registerRoutes = async () => {
     paymentMethodService,
     paymentService,
     signingServices
+  );
+  await paymentInfoRoute(
+    server,
+    blockchainService,
+    merchantService,
+    chainService,
+    tokenService,
+    paymentMethodService
   );
   await getPaymentStatusRoute(server, blockchainService, paymentService);
   await submitGaslessRoute(server, relayerService, relayService, paymentService, merchantService);
