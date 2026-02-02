@@ -16,16 +16,18 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
         operationId: 'updateCurrentMerchant',
         tags: ['Merchants'],
         summary: 'Update current merchant',
-        description: 'Updates the authenticated merchant information',
+        description: 'Updates the merchant information.',
         security: [{ ApiKeyAuth: [] }],
         body: {
           type: 'object',
+          required: [], // All fields optional;
           properties: {
-            name: { type: 'string', description: 'Merchant display name' },
+            name: { type: 'string', description: 'Merchant display name (optional)' },
+            chain_id: { type: 'integer', description: 'Chain ID (optional)' },
             webhook_url: {
               type: 'string',
               format: 'uri',
-              description: 'Webhook URL for payment notifications',
+              description: 'Webhook URL for payment notifications (optional)',
             },
           },
         },

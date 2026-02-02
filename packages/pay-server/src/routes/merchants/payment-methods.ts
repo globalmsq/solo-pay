@@ -14,9 +14,11 @@ const CreatePaymentMethodSchema = z.object({
   is_enabled: z.boolean().optional().default(true),
 });
 
-const UpdatePaymentMethodSchema = z.object({
-  is_enabled: z.boolean().optional(),
-});
+const UpdatePaymentMethodSchema = z
+  .object({
+    is_enabled: z.boolean().optional(),
+  })
+  .strict(); // Reject unknown keys (e.g. merchant_key); this endpoint updates payment method only
 
 export async function paymentMethodsRoute(
   app: FastifyInstance,
