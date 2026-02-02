@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Merchant update request schema. merchant_key is not updatable (assigned by us).
+// Merchant update request schema. merchant_key is not updatable.
 export const UpdateMerchantSchema = z
   .object({
     name: z.string().min(1, 'Merchant name is required').optional(),

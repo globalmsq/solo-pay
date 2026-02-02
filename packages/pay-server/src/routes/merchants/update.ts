@@ -20,7 +20,7 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
         security: [{ ApiKeyAuth: [] }],
         body: {
           type: 'object',
-          required: [], // All fields optional; at least one must be provided (validated in handler)
+          required: [], // All fields optional;
           properties: {
             name: { type: 'string', description: 'Merchant display name (optional)' },
             chain_id: { type: 'integer', description: 'Chain ID (optional)' },
