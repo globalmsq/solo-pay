@@ -99,39 +99,39 @@ const registerRoutes = async () => {
   );
 
   // Root endpoint
-  server.get(
-    '/',
-    {
-      schema: {
-        tags: ['Health'],
-        summary: 'Server info',
-        description: 'Returns server information and supported chains',
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              service: { type: 'string', example: 'MSQ Pay Server' },
-              version: { type: 'string', example: '0.1.0' },
-              status: { type: 'string', example: 'running' },
-              supportedChains: {
-                type: 'array',
-                items: { type: 'number' },
-                example: [80002, 137],
-              },
-            },
-          },
-        },
-      },
-    },
-    async () => {
-      return {
-        service: 'MSQ Pay Server',
-        version: '0.1.0',
-        status: 'running',
-        supportedChains: blockchainService.getSupportedChainIds(),
-      };
-    }
-  );
+  // server.get(
+  //   '/',
+  //   {
+  //     schema: {
+  //       tags: ['Health'],
+  //       summary: 'Server info',
+  //       description: 'Returns server information and supported chains',
+  //       response: {
+  //         200: {
+  //           type: 'object',
+  //           properties: {
+  //             service: { type: 'string', example: 'MSQ Pay Server' },
+  //             version: { type: 'string', example: '0.1.0' },
+  //             status: { type: 'string', example: 'running' },
+  //             supportedChains: {
+  //               type: 'array',
+  //               items: { type: 'number' },
+  //               example: [80002, 137],
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //   },
+  //   async () => {
+  //     return {
+  //       service: 'MSQ Pay Server',
+  //       version: '0.1.0',
+  //       status: 'running',
+  //       supportedChains: blockchainService.getSupportedChainIds(),
+  //     };
+  //   }
+  // );
 
   await createPaymentRoute(
     server,
