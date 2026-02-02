@@ -36,6 +36,7 @@ export async function createPaymentRoute(
   signingServices?: Map<number, ServerSigningService>
 ) {
   // Auth + merchant ownership middleware
+  // Enforce same merchant key and API: body.merchantId must match x-api-key owner
   const authMiddleware = createMerchantAuthMiddleware(merchantService);
 
   app.post<{ Body: CreatePaymentRequest }>(

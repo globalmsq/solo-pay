@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Prisma } from '@prisma/client';
 import { mockPrisma, resetPrismaMocks } from '../../db/__mocks__/client';
 import crypto from 'crypto';
 
@@ -8,7 +9,12 @@ vi.mock('../../db/client', () => ({
   disconnectPrisma: vi.fn(),
 }));
 
-import { MerchantService } from '../merchant.service';
+import { Merchant } from '@prisma/client';
+import {
+  MerchantService,
+  MERCHANT_KEY_EXISTS_MESSAGE,
+  API_KEY_IN_USE_MESSAGE,
+} from '../merchant.service';
 
 const TEST_PREFIX = 'merchant_svc_test_';
 
@@ -282,9 +288,22 @@ describe('MerchantService', () => {
     expect(created.api_key_hash.length).toBe(64);
   });
 
-  it('should enforce unique merchant_key constraint', async () => {
-    const error = new Error('Unique constraint failed on the fields: (`merchant_key`)');
-    mockPrisma.merchant.create.mockRejectedValue(error);
+  it('should throw when merchant_key already exists (pre-check)', async () => {
+    mockPrisma.merchant.findFirst.mockResolvedValue({
+      id: 99,
+      merchant_key: `${TEST_PREFIX}unique`,
+      name: 'Existing',
+      chain_id: 1,
+      api_key_hash: 'hash',
+      is_enabled: true,
+      is_deleted: false,
+      webhook_url: null,
+      fee_bps: 0,
+      recipient_address: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      deleted_at: null,
+    } as Merchant);
 
     await expect(
       merchantService.create({
@@ -293,6 +312,77 @@ describe('MerchantService', () => {
         chain_id: 1,
         api_key: 'unique_key',
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow(MERCHANT_KEY_EXISTS_MESSAGE);
+    expect(mockPrisma.merchant.create).not.toHaveBeenCalled();
+  });
+
+  it('should throw when DB raises P2002 for merchant_key (race)', async () => {
+    mockPrisma.merchant.findFirst.mockResolvedValue(null); // both pre-checks pass
+    mockPrisma.merchant.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '5.x',
+        meta: { target: ['merchant_key'] },
+      })
+    );
+
+    await expect(
+      merchantService.create({
+        merchant_key: `${TEST_PREFIX}unique`,
+        name: 'Unique Test',
+        chain_id: 1,
+        api_key: 'unique_key',
+      })
+    ).rejects.toThrow(MERCHANT_KEY_EXISTS_MESSAGE);
+  });
+
+  it('should throw when api_key already in use (pre-check)', async () => {
+    mockPrisma.merchant.findFirst
+      .mockResolvedValueOnce(null) // merchant_key not taken
+      .mockResolvedValueOnce({
+        id: 88,
+        merchant_key: 'other_merchant',
+        name: 'Other',
+        chain_id: 1,
+        api_key_hash: 'same_hash',
+        is_enabled: true,
+        is_deleted: false,
+        webhook_url: null,
+        fee_bps: 0,
+        recipient_address: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      } as Merchant);
+
+    await expect(
+      merchantService.create({
+        merchant_key: `${TEST_PREFIX}new_key`,
+        name: 'New Merchant',
+        chain_id: 1,
+        api_key: 'duplicate_api_key',
+      })
+    ).rejects.toThrow(API_KEY_IN_USE_MESSAGE);
+    expect(mockPrisma.merchant.create).not.toHaveBeenCalled();
+  });
+
+  it('should throw when DB raises P2002 for api_key_hash (race)', async () => {
+    mockPrisma.merchant.findFirst.mockResolvedValue(null);
+    mockPrisma.merchant.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '5.x',
+        meta: { target: ['api_key_hash'] },
+      })
+    );
+
+    await expect(
+      merchantService.create({
+        merchant_key: `${TEST_PREFIX}unique`,
+        name: 'Unique Test',
+        chain_id: 1,
+        api_key: 'duplicate_key',
+      })
+    ).rejects.toThrow(API_KEY_IN_USE_MESSAGE);
   });
 });

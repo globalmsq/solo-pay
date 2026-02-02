@@ -1,5 +1,10 @@
-import { PrismaClient, Merchant } from '@prisma/client';
+import { Prisma, PrismaClient, Merchant } from '@prisma/client';
 import crypto from 'crypto';
+
+/** Message thrown when merchant_key already exists (for 409 handling in routes). */
+export const MERCHANT_KEY_EXISTS_MESSAGE = 'Merchant key already exists';
+/** Message thrown when api_key is already in use by another merchant (one API key per merchant). */
+export const API_KEY_IN_USE_MESSAGE = 'API key already in use';
 
 export interface CreateMerchantInput {
   merchant_key: string;
@@ -24,19 +29,41 @@ export class MerchantService {
   }
 
   async create(input: CreateMerchantInput): Promise<Merchant> {
-    const apiKeyHash = this.hashApiKey(input.api_key);
-
-    return this.prisma.merchant.create({
-      data: {
-        merchant_key: input.merchant_key,
-        name: input.name,
-        chain_id: input.chain_id,
-        api_key_hash: apiKeyHash,
-        webhook_url: input.webhook_url,
-        is_enabled: true,
-        is_deleted: false,
-      },
+    const existingByKey = await this.prisma.merchant.findFirst({
+      where: { merchant_key: input.merchant_key },
     });
+    if (existingByKey) throw new Error(MERCHANT_KEY_EXISTS_MESSAGE);
+
+    const apiKeyHash = this.hashApiKey(input.api_key);
+    const existingByApiKey = await this.prisma.merchant.findFirst({
+      where: { api_key_hash: apiKeyHash },
+    });
+    if (existingByApiKey) throw new Error(API_KEY_IN_USE_MESSAGE);
+
+    try {
+      return await this.prisma.merchant.create({
+        data: {
+          merchant_key: input.merchant_key,
+          name: input.name,
+          chain_id: input.chain_id,
+          api_key_hash: apiKeyHash,
+          webhook_url: input.webhook_url,
+          is_enabled: true,
+          is_deleted: false,
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002' &&
+        Array.isArray(err.meta?.target)
+      ) {
+        const target = err.meta.target as string[];
+        if (target.includes('merchant_key')) throw new Error(MERCHANT_KEY_EXISTS_MESSAGE);
+        if (target.includes('api_key_hash')) throw new Error(API_KEY_IN_USE_MESSAGE);
+      }
+      throw err;
+    }
   }
 
   async findById(id: number): Promise<Merchant | null> {

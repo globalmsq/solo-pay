@@ -69,7 +69,10 @@ const tokenService = new TokenService(prisma);
 const paymentMethodService = new PaymentMethodService(prisma);
 const relayService = new RelayService(prisma);
 
-// Register routes
+// Route auth (same merchant key and API):
+// - createMerchantAuthMiddleware: POST /payments/create, POST /payments/info (body.merchantId must match x-api-key owner)
+// - createPaymentAuthMiddleware: POST /payments/:id/gasless, POST /payments/:id/relay (payment must belong to x-api-key owner)
+// - createAuthMiddleware: GET /merchants/me, PATCH /merchants/me, payment-methods (no body.merchantId; uses request.merchant only)
 const registerRoutes = async () => {
   // Health check endpoint
   server.get(

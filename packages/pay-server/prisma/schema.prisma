@@ -71,7 +71,7 @@ model Merchant {
   merchant_key      String   @unique
   name              String
   chain_id          Int      // logical reference to chains.id
-  api_key_hash      String   // SHA-256 hash
+  api_key_hash      String   @unique // SHA-256 hash; one API key per merchant
   webhook_url       String?
   fee_bps           Int      @default(0)                     // 0 ~ 10000 basis points (100% = 10000)
   recipient_address String?  @db.VarChar(42)                 // 0x... Ethereum address
