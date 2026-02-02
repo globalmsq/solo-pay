@@ -49,8 +49,9 @@ export function createAuthMiddleware(merchantService: MerchantService) {
 }
 
 /**
- * Merchant auth middleware for /payments/create
- * Validates that body.merchantId matches the authenticated merchant's merchant_key
+ * Merchant auth middleware for routes that accept merchantId in body.
+ * Ensures same merchant key and API: body.merchantId must match the merchant bound to x-api-key.
+ * Used by: POST /payments/create, POST /payments/info.
  */
 export function createMerchantAuthMiddleware(merchantService: MerchantService) {
   const baseAuth = createAuthMiddleware(merchantService);

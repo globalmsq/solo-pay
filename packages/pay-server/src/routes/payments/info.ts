@@ -28,6 +28,7 @@ export async function paymentInfoRoute(
   tokenService: TokenService,
   paymentMethodService: PaymentMethodService
 ) {
+  // Enforce same merchant key and API when body.merchantId is present
   const authMiddleware = createMerchantAuthMiddleware(merchantService);
 
   app.post<{ Body: PaymentInfoRequest }>(

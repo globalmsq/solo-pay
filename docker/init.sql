@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS merchants (
     merchant_key VARCHAR(255) NOT NULL UNIQUE COMMENT 'Public merchant identifier',
     name VARCHAR(255) NOT NULL,
     chain_id INT NOT NULL COMMENT 'Logical reference to chains.id',
-    api_key_hash VARCHAR(64) NOT NULL COMMENT 'SHA-256 hash of API key',
+    api_key_hash VARCHAR(64) NOT NULL UNIQUE COMMENT 'SHA-256 hash of API key; one API key per merchant',
     webhook_url VARCHAR(500) NULL DEFAULT NULL,
     fee_bps INT NOT NULL DEFAULT 0 COMMENT 'Fee in basis points (0-10000, where 10000=100%)',
     recipient_address VARCHAR(42) NULL DEFAULT NULL COMMENT 'Merchant wallet address for receiving payments',
