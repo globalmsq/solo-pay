@@ -32,10 +32,7 @@ export class MerchantService {
     const apiKeyHash = this.hashApiKey(input.api_key);
     const existingMerchant = await this.prisma.merchant.findFirst({
       where: {
-        OR: [
-          { merchant_key: input.merchant_key },
-          { api_key_hash: apiKeyHash },
-        ],
+        OR: [{ merchant_key: input.merchant_key }, { api_key_hash: apiKeyHash }],
       },
     });
     if (existingMerchant) {
