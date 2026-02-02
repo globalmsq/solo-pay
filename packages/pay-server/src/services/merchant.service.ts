@@ -29,16 +29,21 @@ export class MerchantService {
   }
 
   async create(input: CreateMerchantInput): Promise<Merchant> {
-    const existingByKey = await this.prisma.merchant.findFirst({
-      where: { merchant_key: input.merchant_key },
-    });
-    if (existingByKey) throw new Error(MERCHANT_KEY_EXISTS_MESSAGE);
-
     const apiKeyHash = this.hashApiKey(input.api_key);
-    const existingByApiKey = await this.prisma.merchant.findFirst({
-      where: { api_key_hash: apiKeyHash },
+    const existingMerchant = await this.prisma.merchant.findFirst({
+      where: {
+        OR: [
+          { merchant_key: input.merchant_key },
+          { api_key_hash: apiKeyHash },
+        ],
+      },
     });
-    if (existingByApiKey) throw new Error(API_KEY_IN_USE_MESSAGE);
+    if (existingMerchant) {
+      if (existingMerchant.merchant_key === input.merchant_key) {
+        throw new Error(MERCHANT_KEY_EXISTS_MESSAGE);
+      }
+      throw new Error(API_KEY_IN_USE_MESSAGE);
+    }
 
     try {
       return await this.prisma.merchant.create({

@@ -337,23 +337,22 @@ describe('MerchantService', () => {
   });
 
   it('should throw when api_key already in use (pre-check)', async () => {
-    mockPrisma.merchant.findFirst
-      .mockResolvedValueOnce(null) // merchant_key not taken
-      .mockResolvedValueOnce({
-        id: 88,
-        merchant_key: 'other_merchant',
-        name: 'Other',
-        chain_id: 1,
-        api_key_hash: 'same_hash',
-        is_enabled: true,
-        is_deleted: false,
-        webhook_url: null,
-        fee_bps: 0,
-        recipient_address: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-      } as Merchant);
+    // Single findFirst(OR: [merchant_key, api_key_hash]) returns existing merchant with same api_key_hash
+    mockPrisma.merchant.findFirst.mockResolvedValueOnce({
+      id: 88,
+      merchant_key: 'other_merchant',
+      name: 'Other',
+      chain_id: 1,
+      api_key_hash: crypto.createHash('sha256').update('duplicate_api_key').digest('hex'),
+      is_enabled: true,
+      is_deleted: false,
+      webhook_url: null,
+      fee_bps: 0,
+      recipient_address: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      deleted_at: null,
+    } as Merchant);
 
     await expect(
       merchantService.create({
