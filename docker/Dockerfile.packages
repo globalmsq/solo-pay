@@ -43,13 +43,13 @@ FROM deps AS gateway
 
 COPY packages/gateway ./packages/gateway
 WORKDIR /app/packages/gateway
-RUN npx prisma generate
+RUN pnpm build
 
 ENV NODE_ENV=production
 EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -sf http://localhost:3001/health || exit 1
-CMD ["pnpm", "start"]
+CMD ["node", "dist/index.js"]
 
 # === Demo Builder ===
 FROM deps AS demo-builder
