@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSoloPayClient } from '@/lib/msqpay-server';
+import { getSoloPayClient } from '@/lib/gateway';
 
 export async function GET(
   request: NextRequest,
