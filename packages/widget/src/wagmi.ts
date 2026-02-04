@@ -13,6 +13,13 @@ import {
   sepolia,
 } from 'wagmi/chains';
 
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+if (typeof window !== 'undefined' && !projectId) {
+  console.warn(
+    '[Solo Pay] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. Mobile wallet connections will not work. Get a free ID at https://cloud.walletconnect.com',
+  );
+}
+
 const connectors = connectorsForWallets(
   [
     {
@@ -22,9 +29,11 @@ const connectors = connectorsForWallets(
   ],
   {
     appName: 'Solo Pay',
-    projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'PLACEHOLDER',
+    projectId: projectId || 'PLACEHOLDER',
   },
 );
+
+const enableTestnets = process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true';
 
 const chains = [
   mainnet,
@@ -32,9 +41,7 @@ const chains = [
   optimism,
   arbitrum,
   base,
-  ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true'
-    ? ([sepolia] as const)
-    : []),
+  ...(enableTestnets ? ([sepolia] as const) : []),
 ] as const;
 
 export const config = createConfig({
