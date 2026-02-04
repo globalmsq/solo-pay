@@ -58,8 +58,8 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 
 | Variable                               | Required | Location | Description                                                   |
 | -------------------------------------- | -------- | -------- | ------------------------------------------------------------- |
-| `SOLO_PAY_API_KEY`                       | ✅       | Server   | SoloPay server authentication key                              |
-| `SOLO_PAY_API_URL`                       | ❌       | Server   | Payment server URL (default: localhost:3001)                  |
+| `SOLO_PAY_API_KEY`                     | ✅       | Server   | SoloPay server authentication key                             |
+| `SOLO_PAY_API_URL`                     | ❌       | Server   | Payment server URL (default: localhost:3001)                  |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅       | Client   | Issued from [WalletConnect](https://cloud.walletconnect.com/) |
 
 > **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the payment server's database. Wallet connection is handled through RainbowKit.

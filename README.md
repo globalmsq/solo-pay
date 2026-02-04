@@ -243,12 +243,12 @@ Query transaction status and confirmation info:
 
 Key environment variables for the payment server:
 
-| Variable        | Purpose                            | Example                                   |
-| --------------- | ---------------------------------- | ----------------------------------------- |
+| Variable        | Purpose                            | Example                                    |
+| --------------- | ---------------------------------- | ------------------------------------------ |
 | `DATABASE_URL`  | MySQL connection string            | `mysql://user:pass@localhost:3306/solopay` |
-| `REDIS_URL`     | Redis connection string (optional) | `redis://localhost:6379`                  |
-| `RELAY_API_URL` | Relayer service endpoint           | `http://simple-relayer:3001`              |
-| `RELAY_API_KEY` | Relayer API key (production only)  | `sk_...`                                  |
+| `REDIS_URL`     | Redis connection string (optional) | `redis://localhost:6379`                   |
+| `RELAY_API_URL` | Relayer service endpoint           | `http://simple-relayer:3001`               |
+| `RELAY_API_KEY` | Relayer API key (production only)  | `sk_...`                                   |
 
 > **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the database `chains` table, not environment variables. See [Pay Gateway README](./packages/gateway/README.md#multi-chain-configuration) for details.
 

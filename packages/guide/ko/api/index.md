@@ -4,11 +4,11 @@ SoloPay REST API 전체 명세입니다.
 
 ## Base URL
 
-| 환경        | URL                              |
-| ----------- | -------------------------------- |
+| 환경        | URL                               |
+| ----------- | --------------------------------- |
 | Production  | `https://api.solopay.com`         |
 | Staging     | `https://staging-api.solopay.com` |
-| Development | `http://localhost:3001`          |
+| Development | `http://localhost:3001`           |
 
 ## 인증
 

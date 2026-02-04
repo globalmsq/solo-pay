@@ -69,9 +69,9 @@ Webhook을 설정하면 결제 상태가 변경될 때 지정한 URL로 HTTP POS
 
 ## 헤더
 
-| 헤더                 | 설명                            |
-| -------------------- | ------------------------------- |
-| `Content-Type`       | `application/json`              |
+| 헤더                  | 설명                            |
+| --------------------- | ------------------------------- |
+| `Content-Type`        | `application/json`              |
 | `X-SoloPay-Signature` | HMAC-SHA256 서명                |
 | `X-SoloPay-Timestamp` | 요청 생성 시각 (Unix timestamp) |
 | `X-SoloPay-Event`     | 이벤트 타입                     |

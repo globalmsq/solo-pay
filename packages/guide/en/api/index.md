@@ -4,11 +4,11 @@ Complete SoloPay REST API specification.
 
 ## Base URL
 
-| Environment | URL                              |
-| ----------- | -------------------------------- |
+| Environment | URL                               |
+| ----------- | --------------------------------- |
 | Production  | `https://api.solopay.com`         |
 | Staging     | `https://staging-api.solopay.com` |
-| Development | `http://localhost:3001`          |
+| Development | `http://localhost:3001`           |
 
 ## Authentication
 

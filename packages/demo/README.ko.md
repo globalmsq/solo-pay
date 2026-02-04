@@ -58,8 +58,8 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 
 | 변수                                   | 필수 | 위치   | 설명                                                       |
 | -------------------------------------- | ---- | ------ | ---------------------------------------------------------- |
-| `SOLO_PAY_API_KEY`                       | ✅   | Server | SoloPay 결제서버 인증 키                                    |
-| `SOLO_PAY_API_URL`                       | ❌   | Server | 결제서버 URL (기본: localhost:3001)                        |
+| `SOLO_PAY_API_KEY`                     | ✅   | Server | SoloPay 결제서버 인증 키                                   |
+| `SOLO_PAY_API_URL`                     | ❌   | Server | 결제서버 URL (기본: localhost:3001)                        |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | ✅   | Client | [WalletConnect](https://cloud.walletconnect.com/)에서 발급 |
 
 > **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 결제 서버의 데이터베이스에서 관리됩니다. 지갑 연결은 RainbowKit을 통해 처리됩니다.

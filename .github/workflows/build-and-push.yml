@@ -2,7 +2,7 @@ name: Build and Push to ECR
 
 on:
   push:
-    branches: ["main", "ON-54_create_build_and_push_action"]
+    branches: ["main"]
     tags: ["release-*"]
 
 env:

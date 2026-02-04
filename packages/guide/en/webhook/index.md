@@ -69,9 +69,9 @@ When you set up a Webhook, you can receive HTTP POST requests to your specified 
 
 ## Headers
 
-| Header               | Description                            |
-| -------------------- | -------------------------------------- |
-| `Content-Type`       | `application/json`                     |
+| Header                | Description                            |
+| --------------------- | -------------------------------------- |
+| `Content-Type`        | `application/json`                     |
 | `X-SoloPay-Signature` | HMAC-SHA256 signature                  |
 | `X-SoloPay-Timestamp` | Request creation time (Unix timestamp) |
 | `X-SoloPay-Event`     | Event type                             |
