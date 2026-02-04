@@ -15,16 +15,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SoloPayClient } from '@solo-pay/gateway-sdk';
+import { getSoloPayClient } from '@/lib/solo-pay-client';
 import { getProductById } from '@/lib/products';
 import { getMerchantConfig } from '@/lib/merchant';
-
-// Solo Pay SDK 클라이언트 초기화
-const client = new SoloPayClient({
-  environment: 'custom',
-  apiKey: process.env.SOLO_PAY_API_KEY || 'demo-key',
-  apiUrl: process.env.SOLO_PAY_API_URL || 'http://127.0.0.1:3001',
-});
 
 interface CheckoutItem {
   productId: string;
@@ -108,6 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Note: recipientAddress removed - contract pays to treasury (set at deployment)
+    const client = getSoloPayClient();
     const payment = await client.createPayment({
       merchantId: merchantConfig.merchantId,
       amount: totalAmount,
