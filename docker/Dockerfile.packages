@@ -1,5 +1,5 @@
 # SoloPay Monorepo - Multi-stage Dockerfile
-# Targets: hardhat, gateway, demo, simple-relayer, guide
+# Targets: hardhat, contracts, gateway, demo, simple-relayer, guide
 
 # === Dependencies Stage (tools + deps + contracts) ===
 FROM node:20-alpine AS deps
@@ -31,6 +31,12 @@ EXPOSE 8545
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD curl -sf -X POST -H 'Content-Type:application/json' -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' http://localhost:8545 || exit 1
 CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
+
+# === Contracts (deploy and exit) ===
+FROM deps AS contracts
+
+WORKDIR /app/packages/contracts
+CMD ["npx", "hardhat", "run", "scripts/check-and-deploy.ts", "--network", "localhost"]
 
 # === Gateway ===
 FROM deps AS gateway
