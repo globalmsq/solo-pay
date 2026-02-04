@@ -15,6 +15,7 @@ jobs:
     strategy:
       matrix:
         target: [hardhat, contracts, gateway, demo, simple-relayer, guide]
+        arch: [amd64, arm64]
         include:
           - arch: amd64
             runner: ubuntu-latest
