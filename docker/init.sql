@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS tokens (
 
 -- ============================================================
 -- TABLE 3: merchants - Merchant accounts
+-- public_key / public_key_hash / allowed_domains: set via API
+-- (POST /merchants/me/public-key and PATCH /merchants/me), not on insert
 -- ============================================================
 CREATE TABLE IF NOT EXISTS merchants (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -64,6 +66,9 @@ CREATE TABLE IF NOT EXISTS merchants (
     name VARCHAR(255) NOT NULL,
     chain_id INT NOT NULL COMMENT 'Logical reference to chains.id',
     api_key_hash VARCHAR(64) NOT NULL UNIQUE COMMENT 'SHA-256 hash of API key; one API key per merchant',
+    public_key VARCHAR(255) NULL UNIQUE COMMENT 'pk_live_xxx for client-side integration',
+    public_key_hash VARCHAR(64) NULL UNIQUE COMMENT 'SHA-256 hash of public_key (same pattern as api_key_hash)',
+    allowed_domains JSON NULL COMMENT 'List of domains allowed for public_key usage',
     webhook_url VARCHAR(500) NULL DEFAULT NULL,
     fee_bps INT NOT NULL DEFAULT 0 COMMENT 'Fee in basis points (0-10000, where 10000=100%)',
     recipient_address VARCHAR(42) NULL DEFAULT NULL COMMENT 'Merchant wallet address for receiving payments',
@@ -111,12 +116,19 @@ CREATE TABLE IF NOT EXISTS payments (
     tx_hash VARCHAR(66) NULL DEFAULT NULL COMMENT 'Transaction hash (bytes32)',
     expires_at TIMESTAMP NOT NULL,
     confirmed_at TIMESTAMP NULL DEFAULT NULL,
+    order_id VARCHAR(255) NULL DEFAULT NULL COMMENT 'Merchant order ID (client-side integration)',
+    success_url VARCHAR(500) NULL DEFAULT NULL COMMENT 'Redirect URL on payment success',
+    fail_url VARCHAR(500) NULL DEFAULT NULL COMMENT 'Redirect URL on payment failure/cancel',
+    webhook_url VARCHAR(500) NULL DEFAULT NULL COMMENT 'Per-payment webhook (fallback: merchant.webhook_url)',
+    origin VARCHAR(500) NULL DEFAULT NULL COMMENT 'Request origin for domain verification audit',
+    payer_address VARCHAR(42) NULL DEFAULT NULL COMMENT 'Payer wallet address',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_payment_hash (payment_hash),
     INDEX idx_merchant_id (merchant_id),
     INDEX idx_status (status),
-    INDEX idx_created_at (created_at)
+    INDEX idx_created_at (created_at),
+    INDEX idx_order_id_merchant_id (order_id, merchant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -157,6 +169,21 @@ CREATE TABLE IF NOT EXISTS payment_events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- TABLE 8: wallet_gas_grants - Gas faucet grant history (one grant per wallet per chain)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS wallet_gas_grants (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    wallet_address VARCHAR(42) NOT NULL COMMENT 'Wallet that received gas',
+    chain_id INT NOT NULL COMMENT 'EIP-155 chain ID',
+    amount VARCHAR(78) NOT NULL COMMENT 'Gas amount in wei (string)',
+    tx_hash VARCHAR(66) NULL DEFAULT NULL COMMENT 'Gas transfer transaction hash',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_wallet_chain (wallet_address, chain_id),
+    INDEX idx_wallet_address (wallet_address),
+    INDEX idx_chain_id (chain_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- DEMO DATA FOR DEVELOPMENT
 -- ============================================================
 
@@ -191,6 +218,7 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 -- API Key: 123 -> SHA-256 hash
 -- chain_id=1 (Localhost chain)
 -- recipient_address: Account #1 (recipient) for receiving payments
+-- public_key, public_key_hash, allowed_domains: NULL by default; configure via POST /merchants/me/public-key
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
 ('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
 
@@ -198,6 +226,7 @@ INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, 
 -- API Key: msq_sk_metastar_123 -> SHA-256 hash
 -- chain_id=3 (Amoy chain)
 -- recipient_address: Steven's wallet address for receiving payments
+-- public_key, public_key_hash, allowed_domains: NULL by default; configure via POST /merchants/me/public-key
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
 ('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL, 0, '0x7bE4CfF95eb3c3d2162410abCd5506f691C624Ed');
 
@@ -226,4 +255,6 @@ SELECT 'payments', COUNT(*) FROM payments
 UNION ALL
 SELECT 'relay_requests', COUNT(*) FROM relay_requests
 UNION ALL
-SELECT 'payment_events', COUNT(*) FROM payment_events;
+SELECT 'payment_events', COUNT(*) FROM payment_events
+UNION ALL
+SELECT 'wallet_gas_grants', COUNT(*) FROM wallet_gas_grants;

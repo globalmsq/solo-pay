@@ -92,6 +92,8 @@ services:
       # Server signer private key for EIP-712 payment signatures
       # TODO: Set your signer private key (DO NOT COMMIT!)
       SIGNER_PRIVATE_KEY: '${SIGNER_PRIVATE_KEY}'
+      # Optional: Gas faucet – wallet that sends native token to users (POST /payments/prepare-wallet). If unset, gas grant fails when requested.
+      GAS_FAUCET_PRIVATE_KEY: '${GAS_FAUCET_PRIVATE_KEY:-}'
     depends_on:
       mysql:
         condition: service_healthy

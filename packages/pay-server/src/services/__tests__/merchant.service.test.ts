@@ -41,6 +41,9 @@ describe('MerchantService', () => {
       name: merchantData.name,
       chain_id: merchantData.chain_id,
       api_key_hash: apiKeyHash,
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: null,
@@ -72,6 +75,9 @@ describe('MerchantService', () => {
       name: 'Another Merchant',
       chain_id: 1,
       api_key_hash: 'somehash',
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: null,
@@ -99,6 +105,9 @@ describe('MerchantService', () => {
       name: 'Key-based Merchant',
       chain_id: 1,
       api_key_hash: 'somehash',
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: null,
@@ -128,6 +137,9 @@ describe('MerchantService', () => {
       name: 'Verification Merchant',
       chain_id: 1,
       api_key_hash: apiKeyHash,
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: null,
@@ -157,6 +169,9 @@ describe('MerchantService', () => {
         name: 'Merchant A',
         chain_id: 1,
         api_key_hash: 'hash_a',
+        public_key: null,
+        public_key_hash: null,
+        allowed_domains: null,
         is_enabled: true,
         is_deleted: false,
         webhook_url: null,
@@ -172,6 +187,9 @@ describe('MerchantService', () => {
         name: 'Merchant B',
         chain_id: 1,
         api_key_hash: 'hash_b',
+        public_key: null,
+        public_key_hash: null,
+        allowed_domains: null,
         is_enabled: true,
         is_deleted: false,
         webhook_url: null,
@@ -198,6 +216,9 @@ describe('MerchantService', () => {
       name: 'Updated Name',
       chain_id: 1,
       api_key_hash: 'hash',
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: 'https://example.com/webhook',
@@ -227,6 +248,9 @@ describe('MerchantService', () => {
       name: 'Delete Test',
       chain_id: 1,
       api_key_hash: 'hash',
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: true,
       webhook_url: null,
@@ -265,6 +289,9 @@ describe('MerchantService', () => {
       name: 'Private Key Merchant',
       chain_id: 1,
       api_key_hash: apiKeyHash,
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: null,
@@ -295,6 +322,9 @@ describe('MerchantService', () => {
       name: 'Existing',
       chain_id: 1,
       api_key_hash: 'hash',
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: null,
@@ -344,6 +374,9 @@ describe('MerchantService', () => {
       name: 'Other',
       chain_id: 1,
       api_key_hash: crypto.createHash('sha256').update('duplicate_api_key').digest('hex'),
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
       is_enabled: true,
       is_deleted: false,
       webhook_url: null,
@@ -383,5 +416,121 @@ describe('MerchantService', () => {
         api_key: 'duplicate_key',
       })
     ).rejects.toThrow(API_KEY_IN_USE_MESSAGE);
+  });
+
+  it('should generate public key and store hash', async () => {
+    const existingMerchant = {
+      id: 10,
+      merchant_key: `${TEST_PREFIX}pk`,
+      name: 'PK Merchant',
+      chain_id: 1,
+      api_key_hash: 'hash',
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: null,
+      is_enabled: true,
+      is_deleted: false,
+      webhook_url: null,
+      fee_bps: 0,
+      recipient_address: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      deleted_at: null,
+    };
+    mockPrisma.merchant.findFirst.mockResolvedValue(existingMerchant);
+    mockPrisma.merchant.update.mockResolvedValue(existingMerchant as Merchant);
+
+    const result = await merchantService.generatePublicKey(10);
+
+    expect(result.startsWith('pk_live_')).toBe(true);
+    expect(result.length).toBeGreaterThan(8);
+    expect(mockPrisma.merchant.update).toHaveBeenCalledOnce();
+    const updateCall = mockPrisma.merchant.update.mock.calls[0][0];
+    expect(updateCall.where).toEqual({ id: 10 });
+    expect(updateCall.data.public_key).toBe(result);
+    expect(updateCall.data.public_key_hash).toBe(
+      crypto.createHash('sha256').update(result).digest('hex')
+    );
+  });
+
+  it('should throw when generating public key for non-existent merchant', async () => {
+    mockPrisma.merchant.findFirst.mockResolvedValue(null);
+
+    await expect(merchantService.generatePublicKey(999)).rejects.toThrow('Merchant not found');
+    expect(mockPrisma.merchant.update).not.toHaveBeenCalled();
+  });
+
+  it('should find merchant by public key', async () => {
+    const publicKey = 'pk_live_xyz789';
+    const hash = crypto.createHash('sha256').update(publicKey).digest('hex');
+    const mockMerchant = {
+      id: 11,
+      merchant_key: `${TEST_PREFIX}pub`,
+      name: 'Public Key Merchant',
+      chain_id: 1,
+      api_key_hash: 'h',
+      public_key: publicKey,
+      public_key_hash: hash,
+      allowed_domains: ['https://example.com'],
+      is_enabled: true,
+      is_deleted: false,
+      webhook_url: null,
+      fee_bps: 0,
+      recipient_address: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      deleted_at: null,
+    };
+    mockPrisma.merchant.findFirst.mockResolvedValue(mockMerchant);
+
+    const result = await merchantService.findByPublicKey(publicKey);
+
+    expect(result).toEqual(mockMerchant);
+    expect(mockPrisma.merchant.findFirst).toHaveBeenCalledWith({
+      where: {
+        public_key_hash: hash,
+        is_deleted: false,
+        is_enabled: true,
+      },
+    });
+  });
+
+  it('should return null when public key does not match any merchant', async () => {
+    mockPrisma.merchant.findFirst.mockResolvedValue(null);
+
+    const result = await merchantService.findByPublicKey('pk_live_unknown');
+
+    expect(result).toBeNull();
+  });
+
+  it('should update allowed domains', async () => {
+    const domains = ['https://shop.example.com', 'https://checkout.example.com'];
+    const mockUpdated = {
+      id: 12,
+      merchant_key: `${TEST_PREFIX}domains`,
+      name: 'Domains Merchant',
+      chain_id: 1,
+      api_key_hash: 'h',
+      public_key: null,
+      public_key_hash: null,
+      allowed_domains: domains,
+      is_enabled: true,
+      is_deleted: false,
+      webhook_url: null,
+      fee_bps: 0,
+      recipient_address: null,
+      created_at: new Date(),
+      updated_at: new Date(),
+      deleted_at: null,
+    };
+    mockPrisma.merchant.update.mockResolvedValue(mockUpdated);
+
+    const result = await merchantService.updateAllowedDomains(12, domains);
+
+    expect(result.allowed_domains).toEqual(domains);
+    expect(mockPrisma.merchant.update).toHaveBeenCalledWith({
+      where: { id: 12 },
+      data: { allowed_domains: domains },
+    });
   });
 });

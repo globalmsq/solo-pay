@@ -29,6 +29,12 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
               format: 'uri',
               description: 'Webhook URL for payment notifications (optional)',
             },
+            allowed_domains: {
+              type: 'array',
+              items: { type: 'string', format: 'uri' },
+              description:
+                'Origins allowed for public key (client-side integration). e.g. https://checkout.example.com',
+            },
           },
         },
         response: {
@@ -44,6 +50,7 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
                   name: { type: 'string' },
                   chain_id: { type: 'integer', nullable: true },
                   webhook_url: { type: 'string', nullable: true },
+                  allowed_domains: { type: 'array', items: { type: 'string' }, nullable: true },
                   is_enabled: { type: 'boolean' },
                   created_at: { type: 'string', format: 'date-time' },
                   updated_at: { type: 'string', format: 'date-time' },
@@ -80,10 +87,21 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
           });
         }
 
-        // Update merchant
-        const updatedMerchant = await merchantService.update(merchant.id, validatedData);
+        const { allowed_domains, ...rest } = validatedData;
+        if (allowed_domains !== undefined) {
+          await merchantService.updateAllowedDomains(merchant.id, allowed_domains);
+        }
+        if (Object.keys(rest).length > 0) {
+          await merchantService.update(merchant.id, rest);
+        }
+        const updatedMerchant = await merchantService.findById(merchant.id);
+        if (!updatedMerchant) {
+          return reply.code(500).send({
+            code: 'INTERNAL_ERROR',
+            message: 'Merchant not found after update',
+          });
+        }
 
-        // Return updated merchant (excluding sensitive data)
         return reply.code(200).send({
           success: true,
           merchant: {
@@ -92,6 +110,7 @@ export async function updateMerchantRoute(app: FastifyInstance, merchantService:
             name: updatedMerchant.name,
             chain_id: updatedMerchant.chain_id,
             webhook_url: updatedMerchant.webhook_url,
+            allowed_domains: updatedMerchant.allowed_domains ?? null,
             is_enabled: updatedMerchant.is_enabled,
             created_at: updatedMerchant.created_at.toISOString(),
             updated_at: updatedMerchant.updated_at.toISOString(),

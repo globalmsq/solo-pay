@@ -11,6 +11,11 @@ export interface CreatePaymentInput {
   token_symbol: string;
   network_id: number;
   expires_at: Date;
+  order_id?: string;
+  success_url?: string;
+  fail_url?: string;
+  webhook_url?: string;
+  origin?: string;
 }
 
 export class PaymentService {
@@ -32,6 +37,11 @@ export class PaymentService {
         network_id: input.network_id,
         status: 'CREATED' as PaymentStatus,
         expires_at: input.expires_at,
+        order_id: input.order_id,
+        success_url: input.success_url,
+        fail_url: input.fail_url,
+        webhook_url: input.webhook_url,
+        origin: input.origin,
       },
     });
 
@@ -191,5 +201,37 @@ export class PaymentService {
       token_symbol: payment.token_symbol,
       token_decimals: payment.token_decimals,
     };
+  }
+
+  /**
+   * Find payment by order_id and merchant_id (for client-side integration).
+   */
+  async findByOrderId(orderId: string, merchantId: number): Promise<Payment | null> {
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        order_id: orderId,
+        merchant_id: merchantId,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+    return payment;
+  }
+
+  /**
+   * Update payer_address for a payment (by payment_hash).
+   */
+  async updatePayerAddress(paymentHash: string, payerAddress: string): Promise<Payment> {
+    const payment = await this.prisma.payment.findUnique({
+      where: { payment_hash: paymentHash },
+    });
+    if (!payment) {
+      throw new Error('Payment not found');
+    }
+    const updated = await this.prisma.payment.update({
+      where: { payment_hash: paymentHash },
+      data: { payer_address: payerAddress },
+    });
+    await deleteCache(this.getCacheKey(paymentHash));
+    return updated;
   }
 }

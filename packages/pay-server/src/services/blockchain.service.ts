@@ -238,6 +238,22 @@ export class BlockchainService {
   }
 
   /**
+   * Check current gas prices (wei)
+   */
+  async getGasPrice(chainId: number): Promise<bigint> {
+    const client = this.getClient(chainId);
+    return client.getGasPrice();
+  }
+
+  /**
+   * Native token balance (wei) for an address.
+   */
+  async getNativeBalance(chainId: number, address: string): Promise<bigint> {
+    const client = this.getClient(chainId);
+    return client.getBalance({ address: address as Address });
+  }
+
+  /**
    * 토큰 검증: 심볼 존재 + 주소 일치 확인
    * @param chainId 체인 ID
    * @param tokenSymbol 토큰 심볼

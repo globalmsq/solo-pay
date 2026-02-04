@@ -49,6 +49,19 @@ export async function getMerchantRoute(
                     },
                   },
                   webhook_url: { type: 'string', nullable: true },
+                  public_key: {
+                    type: 'string',
+                    nullable: true,
+                    description:
+                      'Public key for client-side integration (pk_live_xxx). Set via POST /merchants/me/public-key',
+                  },
+                  allowed_domains: {
+                    type: 'array',
+                    nullable: true,
+                    items: { type: 'string' },
+                    description:
+                      'Origins allowed for x-public-key (e.g. https://checkout.example.com)',
+                  },
                   is_enabled: { type: 'boolean' },
                   created_at: { type: 'string', format: 'date-time' },
                   updated_at: { type: 'string', format: 'date-time' },
@@ -134,6 +147,8 @@ export async function getMerchantRoute(
                 }
               : null,
             webhook_url: merchant.webhook_url,
+            public_key: merchant.public_key ?? null,
+            allowed_domains: merchant.allowed_domains ?? null,
             is_enabled: merchant.is_enabled,
             created_at: merchant.created_at.toISOString(),
             updated_at: merchant.updated_at.toISOString(),
