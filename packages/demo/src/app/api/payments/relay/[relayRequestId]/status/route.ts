@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSoloPayClient } from '@/lib/gateway';
+import { getSoloPayClient } from '@/lib/solo-pay-client';
 
 export async function GET(
   request: NextRequest,

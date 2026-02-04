@@ -70,7 +70,7 @@ FROM node:20-alpine AS demo
 RUN apk add --no-cache curl && \
     corepack enable
 WORKDIR /app
-COPY package.json ./
+COPY package.json pnpm-workspace.yaml ./
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/demo/node_modules ./packages/demo/node_modules
