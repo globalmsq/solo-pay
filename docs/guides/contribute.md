@@ -1,16 +1,16 @@
 [English](contribute.md) | [한국어](contribute.ko.md)
 
-# Contributing to MSQPay
+# Contributing to SoloPay
 
-How to contribute to the MSQPay project.
+How to contribute to the SoloPay project.
 
 ## Local Development Setup
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/globalmsq/msqpay-monorepo.git
-cd msqpay-monorepo
+git clone https://github.com/globalmsq/solopay-monorepo.git
+cd solopay-monorepo
 ```
 
 ### 2. Install Dependencies
@@ -160,24 +160,25 @@ git push origin feature/your-feature
 ## Directory Structure
 
 ```
-msqpay-monorepo/
-├── contracts/             # Smart Contracts (Hardhat)
+solopay-monorepo/
 ├── packages/
-│   ├── sdk/              # TypeScript SDK
-│   ├── pay-server/       # Payment Server (Fastify)
-│   └── simple-relayer/   # Local Relayer
-├── apps/
-│   └── demo/             # Demo Web App
-├── subgraph/             # The Graph Subgraph
+│   ├── contracts/        # Smart Contracts (Hardhat)
+│   ├── demo/             # Demo Web App (Next.js)
+│   ├── guide/            # Documentation Site
+│   ├── integration-tests/# Integration Tests
+│   ├── gateway/          # Pay Gateway (Fastify)
+│   ├── gateway-sdk/      # TypeScript SDK
+│   ├── simple-relayer/   # Local Relayer
+│   └── subgraph/         # The Graph Subgraph
 └── docs/                 # Documentation
 ```
 
 ## Development Workflow
 
-### Payment Server Development
+### Pay Gateway Development
 
 ```bash
-cd packages/pay-server
+cd packages/gateway
 pnpm dev
 
 # Test
@@ -190,7 +191,7 @@ pnpm build
 ### SDK Development
 
 ```bash
-cd packages/sdk
+cd packages/gateway-sdk
 pnpm dev
 
 # Test
@@ -203,7 +204,7 @@ pnpm build
 ### Demo App Development
 
 ```bash
-cd apps/demo
+cd packages/demo
 pnpm dev
 
 # Browser: http://localhost:3000
@@ -215,11 +216,11 @@ pnpm dev
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { MSQPayClient } from '../src';
+import { SoloPayClient } from '../src';
 
-describe('MSQPayClient', () => {
+describe('SoloPayClient', () => {
   it('should create payment', async () => {
-    const client = new MSQPayClient({
+    const client = new SoloPayClient({
       environment: 'development',
       apiKey: 'test-key',
     });
@@ -280,8 +281,8 @@ docs/
 
 ## Need Help?
 
-- **Issue**: https://github.com/globalmsq/msqpay-monorepo/issues
-- **Discussions**: https://github.com/globalmsq/msqpay-monorepo/discussions
+- **Issue**: https://github.com/globalmsq/solopay-monorepo/issues
+- **Discussions**: https://github.com/globalmsq/solopay-monorepo/discussions
 - **Email**: support@msq.com
 
 ## Related Documentation

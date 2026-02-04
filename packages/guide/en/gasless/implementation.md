@@ -68,7 +68,7 @@ const forwardRequest = {
 // EIP-712 Signature
 const signature = await signTypedDataAsync({
   domain: {
-    name: 'MSQPay Forwarder',
+    name: 'SoloPay Forwarder',
     version: '1',
     chainId: 80002, // Polygon Amoy
     verifyingContract: FORWARDER_ADDRESS,
@@ -94,7 +94,7 @@ const signature = await signTypedDataAsync({
 The user's wallet will display something like this:
 
 ```
-MSQPay Forwarder
+SoloPay Forwarder
 
 ForwardRequest
 ───────────────
@@ -264,10 +264,10 @@ function GaslessPayment({ paymentId, forwarderAddress, gatewayAddress, amount, t
 ### Backend (Node.js)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 

@@ -2,7 +2,7 @@
 
 # Error Codes
 
-MSQPay API error codes and solutions.
+SoloPay API error codes and solutions.
 
 ## Error Response Structure
 
@@ -113,9 +113,9 @@ External dependency error
 ### SDK Error Handling
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayClient, SoloPayError } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development',
   apiKey: 'sk_test_abc123',
 });
@@ -123,7 +123,7 @@ const client = new MSQPayClient({
 try {
   await client.createPayment(params);
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.error(`Error [${error.code}]: ${error.message}`);
     console.error(`HTTP Status: ${error.statusCode}`);
     console.error(`Details:`, error.details);
@@ -161,7 +161,7 @@ async function retryableRequest<T>(fn: () => Promise<T>, maxRetries = 3): Promis
     } catch (error) {
       lastError = error as Error;
 
-      if (error instanceof MSQPayError) {
+      if (error instanceof SoloPayError) {
         // Check if error is retryable
         const retryable = [
           'INTERNAL_ERROR',
@@ -222,4 +222,4 @@ curl -X POST http://localhost:8545 \
 
 - [API Reference](api.md) - All API endpoints
 - [Integrate Payment](../guides/integrate-payment.md) - Error handling examples
-- [SDK Reference](sdk.md) - MSQPayError class
+- [SDK Reference](sdk.md) - SoloPayError class

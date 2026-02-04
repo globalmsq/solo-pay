@@ -1,13 +1,13 @@
 # API Reference
 
-MSQPay REST API 전체 명세입니다.
+SoloPay REST API 전체 명세입니다.
 
 ## Base URL
 
 | 환경        | URL                              |
 | ----------- | -------------------------------- |
-| Production  | `https://api.msqpay.com`         |
-| Staging     | `https://staging-api.msqpay.com` |
+| Production  | `https://api.solopay.com`         |
+| Staging     | `https://staging-api.solopay.com` |
 | Development | `http://localhost:3001`          |
 
 ## 인증
@@ -15,7 +15,7 @@ MSQPay REST API 전체 명세입니다.
 모든 API 요청에 `x-api-key` 헤더가 필요합니다.
 
 ```bash
-curl -H "x-api-key: sk_test_xxxxx" https://api.msqpay.com/...
+curl -H "x-api-key: sk_test_xxxxx" https://api.solopay.com/...
 ```
 
 ## 공통 응답 형식

@@ -8,7 +8,7 @@ Webhook 요청의 진위를 확인합니다.
 
 ## 왜 검증해야 하나요?
 
-악의적인 제3자가 가짜 Webhook 요청을 보낼 수 있습니다. 서명 검증을 통해 MSQPay에서 보낸 진짜 요청인지 확인해야 합니다.
+악의적인 제3자가 가짜 Webhook 요청을 보낼 수 있습니다. 서명 검증을 통해 SoloPay에서 보낸 진짜 요청인지 확인해야 합니다.
 
 ::: danger 필수
 프로덕션 환경에서는 **반드시** 서명을 검증하세요.
@@ -19,13 +19,13 @@ Webhook 요청의 진위를 확인합니다.
 ### SDK 사용 (권장)
 
 ```typescript
-import { verifyWebhookSignature } from '@globalmsq/msqpay';
+import { verifyWebhookSignature } from '@globalmsq/solopay';
 
 app.post('/webhook', (req, res) => {
   const isValid = verifyWebhookSignature({
     payload: req.body,
-    signature: req.headers['x-msqpay-signature'],
-    timestamp: req.headers['x-msqpay-timestamp'],
+    signature: req.headers['x-solopay-signature'],
+    timestamp: req.headers['x-solopay-timestamp'],
     secret: process.env.WEBHOOK_SECRET!,
   });
 
@@ -82,7 +82,7 @@ function verifySignature(
 
 ```typescript
 import express from 'express';
-import { verifyWebhookSignature } from '@globalmsq/msqpay';
+import { verifyWebhookSignature } from '@globalmsq/solopay';
 
 const app = express();
 
@@ -99,8 +99,8 @@ app.use(
 app.post('/webhook', (req, res) => {
   const isValid = verifyWebhookSignature({
     payload: req.body,
-    signature: req.headers['x-msqpay-signature'] as string,
-    timestamp: req.headers['x-msqpay-timestamp'] as string,
+    signature: req.headers['x-solopay-signature'] as string,
+    timestamp: req.headers['x-solopay-timestamp'] as string,
     secret: process.env.WEBHOOK_SECRET!,
   });
 
@@ -120,7 +120,7 @@ app.post('/webhook', (req, res) => {
 ```typescript
 // pages/api/webhook.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { verifyWebhookSignature } from '@globalmsq/msqpay';
+import { verifyWebhookSignature } from '@globalmsq/solopay';
 
 export const config = {
   api: {
@@ -135,8 +135,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const isValid = verifyWebhookSignature({
     payload: req.body,
-    signature: req.headers['x-msqpay-signature'] as string,
-    timestamp: req.headers['x-msqpay-timestamp'] as string,
+    signature: req.headers['x-solopay-signature'] as string,
+    timestamp: req.headers['x-solopay-timestamp'] as string,
     secret: process.env.WEBHOOK_SECRET!,
   });
 
@@ -164,15 +164,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 ```typescript
 import Fastify from 'fastify';
-import { verifyWebhookSignature } from '@globalmsq/msqpay';
+import { verifyWebhookSignature } from '@globalmsq/solopay';
 
 const app = Fastify();
 
 app.post('/webhook', async (request, reply) => {
   const isValid = verifyWebhookSignature({
     payload: request.body,
-    signature: request.headers['x-msqpay-signature'] as string,
-    timestamp: request.headers['x-msqpay-timestamp'] as string,
+    signature: request.headers['x-solopay-signature'] as string,
+    timestamp: request.headers['x-solopay-timestamp'] as string,
     secret: process.env.WEBHOOK_SECRET!,
   });
 

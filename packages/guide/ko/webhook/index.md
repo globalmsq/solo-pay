@@ -21,7 +21,7 @@ Webhook을 설정하면 결제 상태가 변경될 때 지정한 URL로 HTTP POS
 
 ### 1. 대시보드에서 설정
 
-1. MSQPay 대시보드에 로그인
+1. SoloPay 대시보드에 로그인
 2. Settings > Webhooks 메뉴로 이동
 3. "Add Webhook" 클릭
 4. Webhook URL 입력 (HTTPS 필수)
@@ -72,9 +72,9 @@ Webhook을 설정하면 결제 상태가 변경될 때 지정한 URL로 HTTP POS
 | 헤더                 | 설명                            |
 | -------------------- | ------------------------------- |
 | `Content-Type`       | `application/json`              |
-| `X-MSQPay-Signature` | HMAC-SHA256 서명                |
-| `X-MSQPay-Timestamp` | 요청 생성 시각 (Unix timestamp) |
-| `X-MSQPay-Event`     | 이벤트 타입                     |
+| `X-SoloPay-Signature` | HMAC-SHA256 서명                |
+| `X-SoloPay-Timestamp` | 요청 생성 시각 (Unix timestamp) |
+| `X-SoloPay-Event`     | 이벤트 타입                     |
 
 ## 재시도 정책
 

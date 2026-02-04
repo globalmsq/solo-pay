@@ -1,5 +1,5 @@
-# MSQPay Monorepo - Multi-stage Dockerfile
-# Targets: hardhat, server, demo, simple-relayer, guide
+# SoloPay Monorepo - Multi-stage Dockerfile
+# Targets: hardhat, gateway, demo, simple-relayer, guide
 
 # === Dependencies Stage (tools + deps + contracts) ===
 FROM node:20-alpine AS deps
@@ -9,34 +9,34 @@ RUN apk add --no-cache git python3 make g++ curl && \
 
 WORKDIR /app
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY contracts/package.json ./contracts/
-COPY packages/sdk/package.json ./packages/sdk/
-COPY packages/pay-server/package.json ./packages/pay-server/
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/gateway-sdk/package.json ./packages/gateway-sdk/
+COPY packages/gateway/package.json ./packages/gateway/
 COPY packages/simple-relayer/package.json ./packages/simple-relayer/
 COPY packages/guide/package.json ./packages/guide/
-COPY apps/demo/package.json ./apps/demo/
+COPY packages/demo/package.json ./packages/demo/
 
 RUN pnpm install --frozen-lockfile
 
-COPY contracts ./contracts
-WORKDIR /app/contracts
+COPY packages/contracts ./packages/contracts
+WORKDIR /app/packages/contracts
 RUN npx hardhat compile
 WORKDIR /app
 
 # === Hardhat Node ===
 FROM deps AS hardhat
 
-WORKDIR /app/contracts
+WORKDIR /app/packages/contracts
 EXPOSE 8545
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD curl -sf -X POST -H 'Content-Type:application/json' -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' http://localhost:8545 || exit 1
 CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
 
-# === Server ===
-FROM deps AS server
+# === Gateway ===
+FROM deps AS gateway
 
-COPY packages/pay-server ./packages/pay-server
-WORKDIR /app/packages/pay-server
+COPY packages/gateway ./packages/gateway
+WORKDIR /app/packages/gateway
 RUN npx prisma generate
 
 ENV NODE_ENV=production
@@ -48,14 +48,14 @@ CMD ["pnpm", "start"]
 # === Demo Builder ===
 FROM deps AS demo-builder
 
-COPY packages/sdk ./packages/sdk
-WORKDIR /app/packages/sdk
+COPY packages/gateway-sdk ./packages/gateway-sdk
+WORKDIR /app/packages/gateway-sdk
 RUN pnpm build
 
 WORKDIR /app
 COPY eslint.config.ts ./
-COPY apps/demo ./apps/demo
-WORKDIR /app/apps/demo
+COPY packages/demo ./packages/demo
+WORKDIR /app/packages/demo
 RUN pnpm build
 
 # === Demo Runtime ===
@@ -67,12 +67,12 @@ WORKDIR /app
 COPY package.json ./
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/demo/node_modules ./apps/demo/node_modules
-COPY --from=demo-builder /app/apps/demo/.next ./apps/demo/.next
-COPY --from=demo-builder /app/apps/demo/package.json ./apps/demo/
-COPY --from=demo-builder /app/apps/demo/next.config.ts ./apps/demo/
+COPY --from=deps /app/packages/demo/node_modules ./packages/demo/node_modules
+COPY --from=demo-builder /app/packages/demo/.next ./packages/demo/.next
+COPY --from=demo-builder /app/packages/demo/package.json ./packages/demo/
+COPY --from=demo-builder /app/packages/demo/next.config.ts ./packages/demo/
 
-WORKDIR /app/apps/demo
+WORKDIR /app/packages/demo
 ENV NODE_ENV=production
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \

@@ -2,7 +2,7 @@
 
 # System Architecture
 
-Complete architecture and design principles of the MSQPay blockchain payment system.
+Complete architecture and design principles of the SoloPay blockchain payment system.
 
 ## Core Principles
 
@@ -131,7 +131,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-    subgraph Docker["Docker Network (msqpay-network)"]
+    subgraph Docker["Docker Network (solo-pay-network)"]
         subgraph Infra["Infrastructure"]
             MySQL[(MySQL 8.0<br/>:3306)]
             Redis[(Redis 7<br/>:6379)]
@@ -381,6 +381,6 @@ In production environment, separate API Server and Status Worker:
 ## Related Documentation
 
 - [API Reference](api.md) - All API endpoints
-- [SDK Reference](sdk.md) - MSQPayClient methods
+- [SDK Reference](sdk.md) - SoloPayClient methods
 - [Integrate Payment](../guides/integrate-payment.md) - SDK usage
 - [Deploy Server](../guides/deploy-server.md) - Deployment guide

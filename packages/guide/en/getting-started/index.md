@@ -1,6 +1,6 @@
 # Overview
 
-MSQPay is a blockchain payment gateway. It provides APIs and SDKs for merchants to easily accept ERC-20 token payments.
+SoloPay is a blockchain payment gateway. It provides APIs and SDKs for merchants to easily accept ERC-20 token payments.
 
 ## Key Features
 
@@ -25,7 +25,7 @@ MSQPay is a blockchain payment gateway. It provides APIs and SDKs for merchants 
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Merchant  │────▶│  MSQPay API │────▶│  Blockchain │
+│   Merchant  │────▶│  SoloPay API │────▶│  Blockchain │
 │   Server    │     │             │     │             │
 └─────────────┘     └─────────────┘     └─────────────┘
        │                   │                   │
@@ -36,7 +36,7 @@ MSQPay is a blockchain payment gateway. It provides APIs and SDKs for merchants 
 
 ## Payment Flow
 
-1. **Create Payment**: Merchant server sends payment creation request to MSQPay API
+1. **Create Payment**: Merchant server sends payment creation request to SoloPay API
 2. **User Payment**: User transfers tokens or signs from their wallet
 3. **Status Check**: Transaction confirmed on blockchain
 4. **Notification**: Payment completion notification via Webhook

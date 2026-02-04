@@ -1,12 +1,12 @@
 [English](getting-started.md) | [한국어](getting-started.ko.md)
 
-# MSQPay - Getting Started
+# SoloPay - Getting Started
 
 A blockchain payment gateway that enables integration for multiple stores
 
-## What is MSQPay?
+## What is SoloPay?
 
-MSQPay is an ERC-20 token-based blockchain payment system. Store servers can create payments through the SDK, and users can pay via Direct Payment (paying gas fees directly) or Gasless Payment (gas fees subsidized).
+SoloPay is an ERC-20 token-based blockchain payment system. Store servers can create payments through the SDK, and users can pay via Direct Payment (paying gas fees directly) or Gasless Payment (gas fees subsidized).
 
 **Key Features**:
 
@@ -73,7 +73,7 @@ To contribute to the project:
 For detailed information:
 
 - [API Reference](reference/api.md) - All API endpoints
-- [SDK Reference](reference/sdk.md) - MSQPayClient methods
+- [SDK Reference](reference/sdk.md) - SoloPayClient methods
 - [System Architecture](reference/architecture.md) - Complete system diagram
 - [Error Codes](reference/errors.md) - Error codes and solutions
 

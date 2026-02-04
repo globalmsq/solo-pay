@@ -1,8 +1,5 @@
 packages:
-  - contracts
   - packages/*
-  - apps/*
-  - subgraph
 
 onlyBuiltDependencies:
   - '@prisma/client'

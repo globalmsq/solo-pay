@@ -159,7 +159,7 @@ packages/simple-defender/
 ├── vitest.config.ts
 └── tsconfig.json
 
-packages/pay-server/src/services/
+packages/gateway/src/services/
 ├── signature.service.ts
 ├── nonce.service.ts
 ├── relay.factory.ts
@@ -260,10 +260,10 @@ Branch: feature/gasless-relay-integration
 Commits ahead: 2
 New files (untracked):
   - packages/mock-defender/ (complete package)
-  - packages/pay-server/src/services/nonce.service.ts
-  - packages/pay-server/src/services/relay.factory.ts
-  - packages/pay-server/src/services/signature.service.ts
-  - packages/pay-server/src/services/__tests__/ (3 test files)
+  - packages/gateway/src/services/nonce.service.ts
+  - packages/gateway/src/services/relay.factory.ts
+  - packages/gateway/src/services/signature.service.ts
+  - packages/gateway/src/services/__tests__/ (3 test files)
 
 Modified:
   - subgraph/tests/.latest.json (test artifact)

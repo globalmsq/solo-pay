@@ -2,12 +2,12 @@
 
 # Integrate Payment
 
-A guide to integrating blockchain payments into your store using the MSQPay SDK.
+A guide to integrating blockchain payments into your store using the SoloPay SDK.
 
 ## SDK Installation
 
 ```bash
-pnpm add @globalmsq/msqpay
+pnpm add @globalmsq/solopay
 ```
 
 **Requirements**:
@@ -18,9 +18,9 @@ pnpm add @globalmsq/msqpay
 ## SDK Initialization
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development', // or 'staging', 'production', 'custom'
   apiKey: 'your-api-key',
 });
@@ -194,12 +194,12 @@ history.data.forEach((payment) => {
 ### Error Handling Example
 
 ```typescript
-import { MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayError } from '@globalmsq/solopay';
 
 try {
   await client.createPayment(params);
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.error(`Error [${error.code}]: ${error.message}`);
     console.error(`HTTP Status: ${error.statusCode}`);
     console.error(`Details:`, error.details);
@@ -266,11 +266,11 @@ if (BigInt(allowance) < BigInt(amount)) {
 ### Store Server (Backend)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'production',
-  apiKey: process.env.MSQPAY_API_KEY!,
+  apiKey: process.env.SOLO_PAY_API_KEY!,
 });
 
 app.post('/api/checkout', async (req, res) => {
@@ -292,7 +292,7 @@ app.post('/api/checkout', async (req, res) => {
     // 4. Return paymentId
     res.json({ paymentId: payment.paymentId });
   } catch (error) {
-    if (error instanceof MSQPayError) {
+    if (error instanceof SoloPayError) {
       res.status(error.statusCode).json({ error: error.message });
     }
   }
@@ -341,6 +341,6 @@ const checkPayment = setInterval(async () => {
 ## Next Steps
 
 - [API Reference](../reference/api.md) - All API endpoints in detail
-- [SDK Reference](../reference/sdk.md) - Complete MSQPayClient methods
+- [SDK Reference](../reference/sdk.md) - Complete SoloPayClient methods
 - [Error Codes](../reference/errors.md) - Full error code list
 - [Deploy Server](deploy-server.md) - Payment server deployment guide

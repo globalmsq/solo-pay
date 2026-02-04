@@ -282,19 +282,19 @@ Internal server error.
 **Solution**
 
 - Retry after a moment
-- Contact support@msqpay.com if issue persists
+- Contact support@solopay.com if issue persists
 
 ---
 
 ## SDK Error Handling
 
 ```typescript
-import { MSQPayError } from '@globalmsq/msqpay'
+import { SoloPayError } from '@globalmsq/solopay'
 
 try {
   const payment = await client.createPayment({ ... })
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     switch (error.code) {
       case 'UNSUPPORTED_TOKEN':
         console.log('Token is not supported')

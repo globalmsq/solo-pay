@@ -10,7 +10,7 @@ out/
 
 # Hardhat
 cache/
-contracts/artifacts/
+packages/contracts/artifacts/
 typechain-types/
 ignition/deployments/
 
@@ -41,8 +41,8 @@ coverage/
 coverage.json
 
 # Subgraph
-subgraph/build/
-subgraph/generated/
+packages/subgraph/build/
+packages/subgraph/generated/
 
 # Misc
 *.tsbuildinfo

@@ -2,7 +2,7 @@
 
 # API 레퍼런스
 
-MSQPay REST API 전체 엔드포인트 레퍼런스입니다.
+SoloPay REST API 전체 엔드포인트 레퍼런스입니다.
 
 ## 개요
 
@@ -419,9 +419,9 @@ curl "http://localhost:3001/tokens/0xE4C687167705Abf55d709395f92e254bdF5825a2/ba
 ### JavaScript/TypeScript (SDK)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development',
   apiKey: 'sk_test_abc123',
 });
@@ -449,6 +449,6 @@ const status = await client.getPaymentStatus(payment.paymentId);
 ## 관련 문서
 
 - [결제 통합하기](../guides/integrate-payment.ko.md) - SDK 사용 가이드
-- [SDK 레퍼런스](sdk.ko.md) - MSQPayClient 전체 메서드
+- [SDK 레퍼런스](sdk.ko.md) - SoloPayClient 전체 메서드
 - [에러 코드](errors.ko.md) - 전체 에러 코드 목록
 - [시스템 구조](architecture.ko.md) - 아키텍처 다이어그램
