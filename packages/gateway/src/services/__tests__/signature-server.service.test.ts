@@ -61,7 +61,7 @@ describe('ServerSigningService', () => {
       const domain = serverSigningService.getDomain();
 
       expect(domain).toBeDefined();
-      expect(domain.name).toBe('MSQPayGateway');
+      expect(domain.name).toBe('SoloPayGateway');
       expect(domain.version).toBe('1');
       expect(domain.chainId).toBe(chainId);
       expect(domain.verifyingContract).toBe(gatewayAddress);
