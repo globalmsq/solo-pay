@@ -121,7 +121,6 @@ describe('POST /payments/:id/gasless', () => {
     paymentService = {
       findByHash: vi.fn().mockResolvedValue(mockPaymentData),
       updateStatus: vi.fn().mockResolvedValue(mockPaymentData),
-      updatePayerAddress: vi.fn().mockResolvedValue(mockPaymentData),
     };
 
     merchantService = {

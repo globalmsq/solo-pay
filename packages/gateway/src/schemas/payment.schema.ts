@@ -49,7 +49,7 @@ export type PaymentInfoRequest = z.infer<typeof PaymentInfoSchema>;
 // Note: treasuryAddress는 컨트랙트에서 결제를 받는 주소 (배포 시 설정)
 export const PaymentStatusSchema = z.object({
   paymentId: z.string(),
-  userId: z.string(),
+  payerAddress: z.string(), // wallet address of payer (from chain event)
   amount: z.number(),
   tokenAddress: z.string(),
   tokenSymbol: z.string(),

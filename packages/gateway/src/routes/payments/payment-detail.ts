@@ -29,10 +29,10 @@ async function syncPaymentStatusFromChain(
     payment.status = updated.status;
     payment.tx_hash = updated.tx_hash;
     payment.confirmed_at = updated.confirmed_at ?? payment.confirmed_at;
-    if (paymentStatus.userId) {
+    if (paymentStatus.payerAddress) {
       const withPayer = await paymentService.updatePayerAddress(
         payment.payment_hash,
-        paymentStatus.userId
+        paymentStatus.payerAddress
       );
       payment.payer_address = withPayer.payer_address ?? payment.payer_address;
     }

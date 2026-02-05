@@ -574,7 +574,7 @@ describe('BlockchainService - Blockchain interaction methods', () => {
   describe('recordPaymentOnChain', () => {
     it('should return transaction hash for valid payment data', async () => {
       const result = await service.recordPaymentOnChain({
-        userId: 'user123',
+        payerAddress: '0x1234567890123456789012345678901234567890',
         amount: BigInt('1000000000000000000'),
         currency: 'USDC',
         tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`,
@@ -584,10 +584,10 @@ describe('BlockchainService - Blockchain interaction methods', () => {
       expect(result).toBe('0x' + 'a'.repeat(64));
     });
 
-    it('should throw error when userId is missing', async () => {
+    it('should throw error when payerAddress is missing', async () => {
       await expect(
         service.recordPaymentOnChain({
-          userId: '',
+          payerAddress: '',
           amount: BigInt('1000000000000000000'),
           currency: 'USDC',
           tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`,
@@ -598,7 +598,7 @@ describe('BlockchainService - Blockchain interaction methods', () => {
     it('should throw error when amount is missing', async () => {
       await expect(
         service.recordPaymentOnChain({
-          userId: 'user123',
+          payerAddress: '0x1234567890123456789012345678901234567890',
           amount: BigInt(0),
           currency: 'USDC',
           tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2' as `0x${string}`,

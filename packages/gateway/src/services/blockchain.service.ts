@@ -364,7 +364,7 @@ export class BlockchainService {
         if (paymentDetails) {
           return {
             paymentId,
-            userId: paymentDetails.payerAddress,
+            payerAddress: paymentDetails.payerAddress,
             amount: Number(paymentDetails.amount),
             tokenAddress: paymentDetails.tokenAddress,
             tokenSymbol: paymentDetails.tokenSymbol,
@@ -380,7 +380,7 @@ export class BlockchainService {
       // 아직 처리되지 않은 결제
       return {
         paymentId,
-        userId: '',
+        payerAddress: '',
         amount: 0,
         tokenAddress: '',
         tokenSymbol: '',
@@ -395,7 +395,7 @@ export class BlockchainService {
       const now = new Date().toISOString();
       return {
         paymentId,
-        userId: '',
+        payerAddress: '',
         amount: 0,
         tokenAddress: '',
         tokenSymbol: '',
@@ -478,7 +478,7 @@ export class BlockchainService {
    * Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
    */
   async recordPaymentOnChain(paymentData: {
-    userId: string;
+    payerAddress: string;
     amount: bigint;
     currency: string;
     tokenAddress: Address;
@@ -487,7 +487,7 @@ export class BlockchainService {
     try {
       // 실제 구현에서는 트랜잭션 서명 및 전송
       // 여기서는 데이터 검증만 수행
-      if (!paymentData.userId || !paymentData.amount || !paymentData.tokenAddress) {
+      if (!paymentData.payerAddress || !paymentData.amount || !paymentData.tokenAddress) {
         throw new Error('필수 결제 정보가 누락되었습니다');
       }
 
