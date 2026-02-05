@@ -17,7 +17,7 @@ describe('PaymentGatewayV1', function () {
     feeBps: number
   ) {
     const domain = {
-      name: 'MSQPayGateway',
+      name: 'SoloPayGateway',
       version: '1',
       chainId: (await ethers.provider.getNetwork()).chainId,
       verifyingContract: await gateway.getAddress(),
