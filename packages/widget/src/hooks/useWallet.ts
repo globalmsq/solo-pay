@@ -208,7 +208,7 @@ export function useWallet(): UseWalletReturn {
 
   // Find injected connector (for use inside wallet browsers or extensions)
   const injectedConnector = useMemo(
-    () => connectors.find((c) => c.id === 'injected') ?? connectors[0],
+    () => connectors.find((c) => c.id === 'injected'),
     [connectors]
   );
 
