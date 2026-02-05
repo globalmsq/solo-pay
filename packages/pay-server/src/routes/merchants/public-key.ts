@@ -9,7 +9,8 @@ const CreatePublicKeyBodySchema = {
     allowedDomains: {
       type: 'array',
       items: { type: 'string', format: 'uri' },
-      description: 'Domains allowed for x-public-key (e.g. https://checkout.example.com). Required for client-side integration.',
+      description:
+        'Domains allowed for x-public-key (e.g. https://checkout.example.com). Required for client-side integration.',
     },
   },
 };
@@ -46,7 +47,10 @@ Overwrites any existing public key. Store the returned publicKey securely; it is
             type: 'object',
             properties: {
               success: { type: 'boolean', example: true },
-              publicKey: { type: 'string', description: 'Use in x-public-key header (pk_live_xxx)' },
+              publicKey: {
+                type: 'string',
+                description: 'Use in x-public-key header (pk_live_xxx)',
+              },
               allowedDomains: {
                 type: 'array',
                 items: { type: 'string' },
@@ -72,7 +76,9 @@ Overwrites any existing public key. Store the returned publicKey securely; it is
         }
 
         const body = request.body as { allowedDomains?: string[] };
-        const allowedDomains = Array.isArray(body?.allowedDomains) ? body.allowedDomains : undefined;
+        const allowedDomains = Array.isArray(body?.allowedDomains)
+          ? body.allowedDomains
+          : undefined;
 
         const publicKey = await merchantService.generatePublicKey(merchant.id);
         if (allowedDomains && allowedDomains.length > 0) {
@@ -80,7 +86,7 @@ Overwrites any existing public key. Store the returned publicKey securely; it is
         }
 
         const updated = await merchantService.findById(merchant.id);
-        const domains = (updated?.allowed_domains as string[] | null) ?? (allowedDomains ?? []);
+        const domains = (updated?.allowed_domains as string[] | null) ?? allowedDomains ?? [];
 
         return reply.code(200).send({
           success: true,
