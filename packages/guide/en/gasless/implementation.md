@@ -68,7 +68,7 @@ const forwardRequest = {
 // EIP-712 Signature
 const signature = await signTypedDataAsync({
   domain: {
-    name: 'SoloPay Forwarder',
+    name: 'MSQForwarder',
     version: '1',
     chainId: 80002, // Polygon Amoy
     verifyingContract: FORWARDER_ADDRESS,
@@ -94,7 +94,7 @@ const signature = await signTypedDataAsync({
 The user's wallet will display something like this:
 
 ```
-SoloPay Forwarder
+MSQForwarder
 
 ForwardRequest
 ───────────────

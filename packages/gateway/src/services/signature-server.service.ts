@@ -23,7 +23,7 @@ export class ServerSigningService {
   private account: PrivateKeyAccount;
   private chainId: number;
   private gatewayAddress: Address;
-  private name = 'MSQPayGateway';
+  private name = 'SoloPayGateway';
   private version = '1';
 
   constructor(privateKey: Hex, chainId: number, gatewayAddress: Address) {

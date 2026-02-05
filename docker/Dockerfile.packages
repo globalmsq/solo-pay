@@ -38,13 +38,24 @@ FROM deps AS contracts
 WORKDIR /app/packages/contracts
 CMD ["npx", "hardhat", "run", "scripts/check-and-deploy.ts", "--network", "localhost"]
 
-# === Gateway ===
-FROM deps AS gateway
+# === Gateway Builder ===
+FROM deps AS gateway-builder
 
 COPY packages/gateway ./packages/gateway
 WORKDIR /app/packages/gateway
 RUN pnpm build
 
+# === Gateway Runtime ===
+FROM node:20-alpine AS gateway
+
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/gateway/node_modules ./packages/gateway/node_modules
+COPY --from=gateway-builder /app/packages/gateway/dist ./packages/gateway/dist
+COPY --from=gateway-builder /app/packages/gateway/package.json ./packages/gateway/
+
+WORKDIR /app/packages/gateway
 ENV NODE_ENV=production
 EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \

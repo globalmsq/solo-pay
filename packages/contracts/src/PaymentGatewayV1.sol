@@ -76,7 +76,7 @@ contract PaymentGatewayV1 is
         __UUPSUpgradeable_init();
         __Ownable_init(owner);
         __ReentrancyGuard_init();
-        __EIP712_init("MSQPayGateway", "1");
+        __EIP712_init("SoloPayGateway", "1");
 
         enforceTokenWhitelist = false;
         _setTreasury(treasury);
