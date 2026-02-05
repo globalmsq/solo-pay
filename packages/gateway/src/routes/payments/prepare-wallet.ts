@@ -35,7 +35,7 @@ export async function prepareWalletRoute(
         summary: 'Prepare wallet (allowance/gas check)',
         description: `
 After wallet connect, check allowance and token balance; reports needsApprove and needsGas.
-Public Key auth. Updates payer_address.
+Public Key auth.
 
 **Headers (required):** \`x-public-key\` = public key (pk_live_xxx). \`Origin\` = allowed origin (must be in merchant allowed_domains).
         `,
@@ -162,8 +162,6 @@ Public Key auth. Updates payer_address.
 
         const approveGasCost = APPROVE_GAS * gasPrice;
         const needsGas = nativeBalance < approveGasCost;
-
-        await paymentService.updatePayerAddress(validated.paymentId, validated.walletAddress);
 
         return reply.code(200).send({
           needsApprove,

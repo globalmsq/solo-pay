@@ -119,6 +119,9 @@ Retrieves the current status of a payment by its payment hash.
             'CONFIRMED',
             paymentStatus.transactionHash
           );
+          if (paymentStatus.userId) {
+            await paymentService.updatePayerAddress(id, paymentStatus.userId);
+          }
           finalStatus = 'CONFIRMED';
         }
 

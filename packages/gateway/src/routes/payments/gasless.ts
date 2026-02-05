@@ -158,6 +158,9 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
           payment_id: payment.id,
         });
 
+        // Payer address from the signed ForwardRequest (user who signed = payer)
+        await paymentService.updatePayerAddress(id, validatedData.forwardRequest.from);
+
         // Payment 상태를 PENDING으로 업데이트
         if (payment.status === 'CREATED') {
           await paymentService.updateStatus(payment.id, 'PENDING');
