@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS payment_events (
 INSERT INTO chains (network_id, name, rpc_url, gateway_address, forwarder_address, is_testnet) VALUES
 (31337, 'Localhost', 'http://hardhat-node:8545', '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9', '0x5FbDB2315678afecb367f032d93F642f64180aa3', TRUE),
 (11155111, 'Sepolia', 'https://ethereum-sepolia-rpc.publicnode.com', NULL, NULL, TRUE),
-(80002, 'Amoy', 'https://rpc-amoy.polygon.technology', '0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d', '0xF034a404241707F347A952Cd4095f9035AF877Bf', TRUE),
+(80002, 'Amoy', 'https://rpc-amoy.polygon.technology', '0x2024b6669A2BE5fF9624792cB1BB657d20C4b24B', '0xF034a404241707F347A952Cd4095f9035AF877Bf', TRUE),
 (97, 'BNB Chain Testnet', 'https://data-seed-prebsc-1-s1.binance.org:8545', NULL, NULL, TRUE),
 (137, 'Polygon', 'https://polygon-rpc.com', NULL, NULL, FALSE),
 (1, 'Ethereum', 'https://eth.llamarpc.com', NULL, NULL, FALSE),

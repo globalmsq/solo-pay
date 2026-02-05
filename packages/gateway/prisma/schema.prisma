@@ -36,8 +36,8 @@ enum EventType {
 model Chain {
   id               Int      @id @default(autoincrement())
   network_id       Int      @unique  // EIP-155 chain ID
-  name             String
-  rpc_url          String
+  name             String   @db.VarChar(255)
+  rpc_url          String   @db.VarChar(500)
   gateway_address   String?  @db.VarChar(42)  // PaymentGateway proxy address
   forwarder_address String?  @db.VarChar(42)  // ERC2771Forwarder address
   is_testnet       Boolean  @default(false)
@@ -53,8 +53,8 @@ model Chain {
 model Token {
   id              Int      @id @default(autoincrement())
   chain_id        Int      // logical reference to chains.id
-  address         String
-  symbol          String
+  address         String   @db.VarChar(42)
+  symbol          String   @db.VarChar(20)
   decimals        Int
   is_enabled      Boolean  @default(true)
   is_deleted      Boolean  @default(false)
@@ -68,14 +68,14 @@ model Token {
 
 model Merchant {
   id                Int      @id @default(autoincrement())
-  merchant_key      String   @unique
-  name              String
+  merchant_key      String   @unique @db.VarChar(255)
+  name              String   @db.VarChar(255)
   chain_id          Int      // logical reference to chains.id
-  api_key_hash      String   @unique // SHA-256 hash; one API key per merchant
-  public_key        String?  @unique // pk_live_xxx for client-side integration
-  public_key_hash   String?  @unique // SHA-256 hash of public_key (same pattern as api_key_hash)
+  api_key_hash      String   @unique @db.VarChar(64) // SHA-256 hash; one API key per merchant
+  public_key        String?  @unique @db.VarChar(255) // pk_live_xxx for client-side integration
+  public_key_hash   String?  @unique @db.VarChar(64) // SHA-256 hash of public_key (same pattern as api_key_hash)
   allowed_domains   Json?    // List of domains allowed for public_key usage
-  webhook_url       String?
+  webhook_url       String?  @db.VarChar(500)
   fee_bps           Int      @default(0)                     // 0 ~ 10000 basis points (100% = 10000)
   recipient_address String?  @db.VarChar(42)                 // 0x... Ethereum address
   is_enabled        Boolean  @default(true)
@@ -109,18 +109,18 @@ model Payment {
   payment_method_id     Int
   amount                Decimal       @db.Decimal(65, 0)  // wei (max uint256)
   token_decimals        Int           // snapshot
-  token_symbol          String        // snapshot
+  token_symbol          String        @db.VarChar(20) // snapshot
   network_id            Int           // snapshot of chain's network_id
   status                PaymentStatus @default(CREATED)
   tx_hash               String?       @db.VarChar(66)
   expires_at            DateTime
   confirmed_at          DateTime?
-  order_id              String?       // merchant order ID (client-side integration)
-  success_url           String?       // redirect URL on payment success
-  fail_url              String?       // redirect URL on payment failure/cancel
-  webhook_url           String?      // per-payment webhook (fallback: merchant.webhook_url)
-  origin                String?      // request origin for domain verification audit
-  payer_address         String?      @db.VarChar(42)  // payer wallet address
+  order_id              String?       @db.VarChar(255) // merchant order ID (client-side integration)
+  success_url           String?       @db.VarChar(500) // redirect URL on payment success
+  fail_url              String?       @db.VarChar(500) // redirect URL on payment failure/cancel
+  webhook_url           String?       @db.VarChar(500) // per-payment webhook (fallback: merchant.webhook_url)
+  origin                String?       @db.VarChar(500) // request origin for domain verification audit
+  payer_address         String?       @db.VarChar(42)  // payer wallet address
   created_at            DateTime      @default(now())
   updated_at            DateTime      @updatedAt
 
@@ -132,7 +132,7 @@ model Payment {
 
 model RelayRequest {
   id              Int         @id @default(autoincrement())
-  relay_ref       String      @unique
+  relay_ref       String      @unique @db.VarChar(255)
   payment_id      Int
   status          RelayStatus @default(QUEUED)
   gas_estimate    Decimal?    @db.Decimal(65, 0)
@@ -152,8 +152,8 @@ model PaymentEvent {
   id          Int       @id @default(autoincrement())
   payment_id  Int
   event_type  EventType
-  old_status  String?
-  new_status  String?
+  old_status  String?   @db.VarChar(20)
+  new_status  String?   @db.VarChar(20)
   metadata    Json?
   created_at  DateTime  @default(now())
 

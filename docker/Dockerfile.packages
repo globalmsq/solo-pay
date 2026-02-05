@@ -56,16 +56,18 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/gateway/node_modules ./packages/gateway/node_modules
-COPY --from=deps /app/packages/contracts ./packages/contracts
+COPY --from=deps /app/packages/contracts/typechain-types ./packages/contracts/typechain-types
+COPY --from=deps /app/packages/contracts/artifacts ./packages/contracts/artifacts
 COPY --from=gateway-builder /app/packages/gateway/dist ./packages/gateway/dist
 COPY --from=gateway-builder /app/packages/gateway/package.json ./packages/gateway/
+COPY --from=deps /app/packages/gateway/prisma ./packages/gateway/prisma
 
 WORKDIR /app/packages/gateway
 ENV NODE_ENV=production
 EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -sf http://localhost:3001/health || exit 1
-CMD ["node", "dist/index.js"]
+CMD sh -c "npx prisma db push --skip-generate && node dist/index.js"
 
 # === Demo Builder ===
 FROM deps AS demo-builder

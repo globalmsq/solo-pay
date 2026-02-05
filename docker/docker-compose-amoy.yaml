@@ -75,6 +75,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      DATABASE_URL: mysql://solopay:pass@mysql:3306/solopay
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_USER: solopay
