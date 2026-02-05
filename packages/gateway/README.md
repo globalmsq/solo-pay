@@ -77,9 +77,6 @@ RELAY_API_URL=http://simple-relayer:3001  # Local development
 # RELAY_API_URL=https://api.defender.openzeppelin.com  # Production
 RELAY_API_KEY=  # Production only
 
-# Gas Faucet (optional – for POST /payments/prepare-wallet)
-# Wallet that sends native token (POL/ETH) to users who need gas for approve. If unset, gas grant fails when requested.
-# GAS_FAUCET_PRIVATE_KEY=0x...  # 0x + 64 hex chars
 ```
 
 > **Note**: Chain configuration (RPC URLs, Contract addresses, etc.) is managed in the database `chains` table, not environment variables.

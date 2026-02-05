@@ -169,21 +169,6 @@ CREATE TABLE IF NOT EXISTS payment_events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- TABLE 8: wallet_gas_grants - Gas faucet grant history (one grant per wallet per chain)
--- ============================================================
-CREATE TABLE IF NOT EXISTS wallet_gas_grants (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    wallet_address VARCHAR(42) NOT NULL COMMENT 'Wallet that received gas',
-    chain_id INT NOT NULL COMMENT 'EIP-155 chain ID',
-    amount VARCHAR(78) NOT NULL COMMENT 'Gas amount in wei (string)',
-    tx_hash VARCHAR(66) NULL DEFAULT NULL COMMENT 'Gas transfer transaction hash',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_wallet_chain (wallet_address, chain_id),
-    INDEX idx_wallet_address (wallet_address),
-    INDEX idx_chain_id (chain_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
 -- DEMO DATA FOR DEVELOPMENT
 -- ============================================================
 
@@ -255,6 +240,4 @@ SELECT 'payments', COUNT(*) FROM payments
 UNION ALL
 SELECT 'relay_requests', COUNT(*) FROM relay_requests
 UNION ALL
-SELECT 'payment_events', COUNT(*) FROM payment_events
-UNION ALL
-SELECT 'wallet_gas_grants', COUNT(*) FROM wallet_gas_grants;
+SELECT 'payment_events', COUNT(*) FROM payment_events;

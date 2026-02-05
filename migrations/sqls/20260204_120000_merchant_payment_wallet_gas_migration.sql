@@ -1,6 +1,6 @@
--- Migration: Merchant public key, Payment client fields, WalletGasGrant
+-- Migration: Merchant public key, Payment client fields
 -- Date: 2026-02-04 12:00:00
--- Aligns with Prisma schema for client-side integration (public key, orderId, successUrl, failUrl, webhookUrl, gas faucet)
+-- Aligns with Prisma schema for client-side integration (public key, orderId, successUrl, failUrl, webhookUrl)
 
 USE msqpay;
 
@@ -24,18 +24,3 @@ ALTER TABLE payments
   ADD COLUMN payer_address VARCHAR(42) NULL COMMENT 'Payer wallet address' AFTER origin;
 
 CREATE INDEX idx_payments_order_id_merchant_id ON payments (order_id, merchant_id);
-
--- ============================================================
--- 3. New table: wallet_gas_grants (Gas faucet grant history, one grant per wallet per chain)
--- ============================================================
-CREATE TABLE IF NOT EXISTS wallet_gas_grants (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  wallet_address VARCHAR(42) NOT NULL COMMENT 'Wallet that received gas',
-  chain_id INT NOT NULL COMMENT 'EIP-155 chain ID',
-  amount VARCHAR(78) NOT NULL COMMENT 'Gas amount in wei (string)',
-  tx_hash VARCHAR(66) NULL DEFAULT NULL COMMENT 'Gas transfer transaction hash',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_wallet_chain (wallet_address, chain_id),
-  INDEX idx_wallet_address (wallet_address),
-  INDEX idx_chain_id (chain_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

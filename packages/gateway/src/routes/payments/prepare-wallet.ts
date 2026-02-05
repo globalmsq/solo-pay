@@ -5,7 +5,6 @@ import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { TokenService } from '../../services/token.service';
-import { GasFaucetService } from '../../services/gas-faucet.service';
 import { createPublicAuthMiddleware } from '../../middleware/public-auth.middleware';
 import { MerchantService } from '../../services/merchant.service';
 import { ErrorResponseSchema } from '../../docs/schemas';
@@ -23,8 +22,7 @@ export async function prepareWalletRoute(
   merchantService: MerchantService,
   paymentService: PaymentService,
   paymentMethodService: PaymentMethodService,
-  tokenService: TokenService,
-  gasFaucetService: GasFaucetService
+  tokenService: TokenService
 ) {
   const publicAuth = createPublicAuthMiddleware(merchantService);
 
@@ -36,7 +34,7 @@ export async function prepareWalletRoute(
         tags: ['Payments'],
         summary: 'Prepare wallet (allowance/gas check)',
         description: `
-After wallet connect, check allowance and token balance; optionally send gas for approve.
+After wallet connect, check allowance and token balance; reports needsApprove and needsGas.
 Public Key auth. Updates payer_address.
 
 **Headers (required):** \`x-public-key\` = public key (pk_live_xxx). \`Origin\` = allowed origin (must be in merchant allowed_domains).
@@ -164,21 +162,6 @@ Public Key auth. Updates payer_address.
 
         const approveGasCost = APPROVE_GAS * gasPrice;
         const needsGas = nativeBalance < approveGasCost;
-
-        if (needsGas) {
-          const hasGrant = await gasFaucetService.hasGrant(validated.walletAddress, chainId);
-          if (!hasGrant) {
-            try {
-              await gasFaucetService.grantGas(validated.walletAddress, chainId);
-            } catch (err) {
-              app.log.warn({ err }, 'Gas grant failed');
-              return reply.code(500).send({
-                code: 'GAS_GRANT_FAILED',
-                message: err instanceof Error ? err.message : 'Failed to send gas',
-              });
-            }
-          }
-        }
 
         await paymentService.updatePayerAddress(validated.paymentId, validated.walletAddress);
 

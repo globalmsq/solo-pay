@@ -160,16 +160,3 @@ model PaymentEvent {
   @@index([payment_id])
   @@map("payment_events")
 }
-
-// Gas faucet grant history (one grant per wallet per chain)
-model WalletGasGrant {
-  id              Int       @id @default(autoincrement())
-  wallet_address  String    @db.VarChar(42)
-  chain_id        Int       // EIP-155 chain ID
-  amount          String    // wei as string
-  tx_hash         String?   @db.VarChar(66)
-  created_at      DateTime  @default(now())
-
-  @@unique([wallet_address, chain_id])
-  @@map("wallet_gas_grants")
-}

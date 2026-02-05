@@ -13,7 +13,6 @@ import { ChainService } from './services/chain.service';
 import { TokenService } from './services/token.service';
 import { PaymentMethodService } from './services/payment-method.service';
 import { RelayService } from './services/relay.service';
-import { GasFaucetService } from './services/gas-faucet.service';
 import { ServerSigningService } from './services/signature-server.service';
 import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
@@ -79,8 +78,6 @@ const relayService = new RelayService(prisma);
 // - createPaymentAuthMiddleware: POST /payments/:id/gasless, POST /payments/:id/relay (payment must belong to x-api-key owner)
 // - createAuthMiddleware: GET /merchants/me, PATCH /merchants/me, payment-methods (no body.merchantId; uses request.merchant only)
 const registerRoutes = async () => {
-  const gasFaucetService = new GasFaucetService(blockchainService, chainService, prisma);
-
   // Health check endpoint
   server.get(
     '/health',
@@ -166,8 +163,7 @@ const registerRoutes = async () => {
     merchantService,
     paymentService,
     paymentMethodService,
-    tokenService,
-    gasFaucetService
+    tokenService
   );
   await paymentDetailRoute(server, blockchainService, merchantService, paymentService);
   await paymentInfoRoute(

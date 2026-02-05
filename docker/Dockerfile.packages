@@ -17,10 +17,14 @@ COPY packages/guide/package.json ./packages/guide/
 COPY packages/demo/package.json ./packages/demo/
 
 RUN pnpm install --frozen-lockfile
-
+  
 COPY packages/contracts ./packages/contracts
 WORKDIR /app/packages/contracts
 RUN npx hardhat compile
+WORKDIR /app
+
+COPY packages/gateway/prisma ./packages/gateway/prisma
+RUN cd /app/packages/gateway && pnpm exec prisma generate
 WORKDIR /app
 
 # === Hardhat Node ===
@@ -52,6 +56,7 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/gateway/node_modules ./packages/gateway/node_modules
+COPY --from=deps /app/packages/contracts ./packages/contracts
 COPY --from=gateway-builder /app/packages/gateway/dist ./packages/gateway/dist
 COPY --from=gateway-builder /app/packages/gateway/package.json ./packages/gateway/
 

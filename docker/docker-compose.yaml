@@ -120,9 +120,6 @@ services:
       # Hardhat well-known dev account #4 (deterministic, safe to commit)
       # Address: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
       SIGNER_PRIVATE_KEY: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a'
-      # Optional: Gas faucet – wallet that sends native token to users who need gas (POST /payments/prepare-wallet).
-      # If unset, gas grant will fail when requested. For local dev, use another Hardhat account with ETH (e.g. account #5).
-      GAS_FAUCET_PRIVATE_KEY: ''
     depends_on:
       mysql:
         condition: service_healthy
