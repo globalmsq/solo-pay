@@ -156,6 +156,7 @@ venv/
 .DocumentRevisions-V100
 .moai/logs/
 *key*
+!packages/pay-server/src/routes/merchants/public-key.ts
 !.moai/config/**
 # uv.lock is intentionally included for reproducible builds
 # Tracked in git: config/, memory/, scripts/, specs/
