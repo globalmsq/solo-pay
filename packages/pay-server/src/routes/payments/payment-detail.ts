@@ -1,9 +1,36 @@
 import { FastifyInstance } from 'fastify';
+import { Payment } from '@prisma/client';
 import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
 import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
 import { MerchantService } from '../../services/merchant.service';
 import { ErrorResponseSchema } from '../../docs/schemas';
+
+/**
+ * Syncs payment status from blockchain: if on-chain status is completed and DB status is
+ * CREATED or PENDING, updates DB to CONFIRMED and mutates the payment object in place.
+ */
+async function syncPaymentStatusFromChain(
+  blockchainService: BlockchainService,
+  paymentService: PaymentService,
+  payment: Payment
+): Promise<void> {
+  const chainId = payment.network_id;
+  if (!blockchainService.isChainSupported(chainId)) {
+    return;
+  }
+  const paymentStatus = await blockchainService.getPaymentStatus(chainId, payment.payment_hash);
+  if (paymentStatus?.status === 'completed' && ['CREATED', 'PENDING'].includes(payment.status)) {
+    const updated = await paymentService.updateStatusByHash(
+      payment.payment_hash,
+      'CONFIRMED',
+      paymentStatus.transactionHash ?? undefined
+    );
+    payment.status = updated.status;
+    payment.tx_hash = updated.tx_hash;
+    payment.confirmed_at = updated.confirmed_at ?? payment.confirmed_at;
+  }
+}
 
 function buildPaymentDetailResponse(payment: {
   payment_hash: string;
@@ -108,26 +135,7 @@ Retrieves payment by merchant order ID. API Key required. Same response format a
           });
         }
 
-        const chainId = payment.network_id;
-        if (blockchainService.isChainSupported(chainId)) {
-          const paymentStatus = await blockchainService.getPaymentStatus(
-            chainId,
-            payment.payment_hash
-          );
-          if (
-            paymentStatus?.status === 'completed' &&
-            ['CREATED', 'PENDING'].includes(payment.status)
-          ) {
-            await paymentService.updateStatusByHash(
-              payment.payment_hash,
-              'CONFIRMED',
-              paymentStatus.transactionHash ?? undefined
-            );
-            payment.status = 'CONFIRMED';
-            payment.tx_hash = paymentStatus.transactionHash ?? payment.tx_hash;
-            payment.confirmed_at = payment.confirmed_at ?? new Date();
-          }
-        }
+        await syncPaymentStatusFromChain(blockchainService, paymentService, payment);
 
         return reply.code(200).send(buildPaymentDetailResponse(payment));
       } catch (error) {
@@ -189,23 +197,7 @@ Syncs latest status from blockchain.
           });
         }
 
-        const chainId = payment.network_id;
-        if (blockchainService.isChainSupported(chainId)) {
-          const paymentStatus = await blockchainService.getPaymentStatus(chainId, paymentId);
-          if (
-            paymentStatus?.status === 'completed' &&
-            ['CREATED', 'PENDING'].includes(payment.status)
-          ) {
-            await paymentService.updateStatusByHash(
-              payment.payment_hash,
-              'CONFIRMED',
-              paymentStatus.transactionHash ?? undefined
-            );
-            payment.status = 'CONFIRMED';
-            payment.tx_hash = paymentStatus.transactionHash ?? payment.tx_hash;
-            payment.confirmed_at = payment.confirmed_at ?? new Date();
-          }
-        }
+        await syncPaymentStatusFromChain(blockchainService, paymentService, payment);
 
         return reply.code(200).send(buildPaymentDetailResponse(payment));
       } catch (error) {
