@@ -1,22 +1,12 @@
 import { connectorsForWallets } from '@rainbow-me/rainbowkit';
-import {
-  metaMaskWallet,
-  trustWallet,
-} from '@rainbow-me/rainbowkit/wallets';
+import { metaMaskWallet, trustWallet } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
-import {
-  arbitrum,
-  base,
-  mainnet,
-  optimism,
-  polygon,
-  sepolia,
-} from 'wagmi/chains';
+import { arbitrum, base, mainnet, optimism, polygon, sepolia } from 'wagmi/chains';
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 if (typeof window !== 'undefined' && !projectId) {
   console.warn(
-    '[Solo Pay] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. Mobile wallet connections will not work. Get a free ID at https://cloud.walletconnect.com',
+    '[Solo Pay] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. Mobile wallet connections will not work. Get a free ID at https://cloud.walletconnect.com'
   );
 }
 
@@ -30,7 +20,7 @@ const connectors = connectorsForWallets(
   {
     appName: 'Solo Pay',
     projectId: projectId || 'PLACEHOLDER',
-  },
+  }
 );
 
 const enableTestnets = process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true';

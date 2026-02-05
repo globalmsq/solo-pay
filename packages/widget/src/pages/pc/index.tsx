@@ -25,9 +25,7 @@ const PcWidget: NextPage = () => {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-xs mt-6 text-gray-400">
-            Powered by Solo Pay
-          </p>
+          <p className="text-center text-xs mt-6 text-gray-400">Powered by Solo Pay</p>
         </div>
       </div>
     </>

@@ -21,10 +21,10 @@ Open http://localhost:3000 (mobile) or http://localhost:3000/pc (PC widget).
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Yes | Free project ID from [cloud.walletconnect.com](https://cloud.walletconnect.com) (needed for mobile wallet deep linking) |
-| `NEXT_PUBLIC_ENABLE_TESTNETS` | No | Set to `"true"` to enable Sepolia testnet |
+| Variable                               | Required | Description                                                                                                             |
+| -------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Yes      | Free project ID from [cloud.walletconnect.com](https://cloud.walletconnect.com) (needed for mobile wallet deep linking) |
+| `NEXT_PUBLIC_ENABLE_TESTNETS`          | No       | Set to `"true"` to enable Sepolia testnet                                                                               |
 
 ## Scripts
 
@@ -59,11 +59,7 @@ The merchant backend creates a payment session via the pay-server API, receives 
 
 ```js
 // Merchant opens widget as a popup
-window.open(
-  'https://pay.example.com/pc?token=abc123',
-  'solopay',
-  'width=450,height=600'
-);
+window.open('https://pay.example.com/pc?token=abc123', 'solopay', 'width=450,height=600');
 ```
 
 ### Mobile Example
