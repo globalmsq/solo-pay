@@ -17,6 +17,9 @@ import { ServerSigningService } from './services/signature-server.service';
 import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
 import { createPaymentRoute } from './routes/payments/create';
+import { createPublicPaymentRoute } from './routes/payments/create-public';
+import { prepareWalletRoute } from './routes/payments/prepare-wallet';
+import { paymentDetailRoute } from './routes/payments/payment-detail';
 import { paymentInfoRoute } from './routes/payments/info';
 import { getPaymentStatusRoute } from './routes/payments/status';
 import { submitGaslessRoute } from './routes/payments/gasless';
@@ -27,6 +30,7 @@ import { getTokenAllowanceRoute } from './routes/tokens/allowance';
 import { getTransactionStatusRoute } from './routes/transactions/status';
 import { updateMerchantRoute } from './routes/merchants/update';
 import { getMerchantRoute } from './routes/merchants/get';
+import { merchantPublicKeyRoute } from './routes/merchants/public-key';
 import { paymentMethodsRoute } from './routes/merchants/payment-methods';
 import { getChainsRoute } from './routes/chains/get';
 
@@ -143,6 +147,25 @@ const registerRoutes = async () => {
     paymentService,
     signingServices
   );
+  await createPublicPaymentRoute(
+    server,
+    blockchainService,
+    merchantService,
+    chainService,
+    tokenService,
+    paymentMethodService,
+    paymentService,
+    signingServices
+  );
+  await prepareWalletRoute(
+    server,
+    blockchainService,
+    merchantService,
+    paymentService,
+    paymentMethodService,
+    tokenService
+  );
+  await paymentDetailRoute(server, blockchainService, merchantService, paymentService);
   await paymentInfoRoute(
     server,
     blockchainService,
@@ -161,6 +184,7 @@ const registerRoutes = async () => {
   await getChainsRoute(server, chainService, tokenService);
   await updateMerchantRoute(server, merchantService);
   await getMerchantRoute(server, merchantService, paymentMethodService, tokenService, chainService);
+  await merchantPublicKeyRoute(server, merchantService);
   await paymentMethodsRoute(
     server,
     merchantService,

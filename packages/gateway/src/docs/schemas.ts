@@ -200,7 +200,7 @@ export const PaymentStatusResponseSchema = {
       type: 'object',
       properties: {
         paymentId: { type: 'string', description: 'Payment ID (bytes32)' },
-        userId: { type: 'string', description: 'Payer address' },
+        payerAddress: { type: 'string', description: 'Payer wallet address (from chain)' },
         amount: { type: 'string', description: 'Amount in wei' },
         tokenAddress: { type: 'string', description: 'Token contract address' },
         tokenSymbol: { type: 'string', description: 'Token symbol' },

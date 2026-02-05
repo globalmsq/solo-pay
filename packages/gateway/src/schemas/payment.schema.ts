@@ -15,6 +15,25 @@ export const CreatePaymentSchema = z.object({
 
 export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
 
+// Client-side public payment creation (widget): orderId, amount, successUrl, failUrl, webhookUrl optional
+export const CreatePublicPaymentSchema = z.object({
+  orderId: z.string().min(1, 'orderId is required'),
+  amount: z.number().positive('amount must be positive'),
+  successUrl: z.string().url('successUrl must be a valid URL'),
+  failUrl: z.string().url('failUrl must be a valid URL'),
+  webhookUrl: z.string().url().optional(),
+});
+
+export type CreatePublicPaymentRequest = z.infer<typeof CreatePublicPaymentSchema>;
+
+// Prepare wallet: paymentId + walletAddress (public auth)
+export const PrepareWalletSchema = z.object({
+  paymentId: z.string().min(1, 'paymentId is required'),
+  walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'walletAddress must be 0x + 40 hex chars'),
+});
+
+export type PrepareWalletRequest = z.infer<typeof PrepareWalletSchema>;
+
 // 결제 정보 조회 요청 스키마 (결제 생성 없이 컨트랙트 정보만 반환)
 // chainId와 merchantId는 인증된 머천트에서 가져옴
 export const PaymentInfoSchema = z.object({
@@ -30,7 +49,7 @@ export type PaymentInfoRequest = z.infer<typeof PaymentInfoSchema>;
 // Note: treasuryAddress는 컨트랙트에서 결제를 받는 주소 (배포 시 설정)
 export const PaymentStatusSchema = z.object({
   paymentId: z.string(),
-  userId: z.string(),
+  payerAddress: z.string(), // wallet address of payer (from chain event)
   amount: z.number(),
   tokenAddress: z.string(),
   tokenSymbol: z.string(),

@@ -17,7 +17,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 // Note: recipientAddress removed - contract pays to treasury (set at deployment)
 export interface PaymentStatus {
   id: string;
-  userId: string;
+  /** Payer wallet address (from chain) */
+  payerAddress: string;
   amount: number;
   currency: 'USD' | 'EUR' | 'KRW';
   tokenAddress: string;

@@ -193,7 +193,7 @@ describe('SoloPayClient', () => {
           success: true,
           data: {
             paymentId: 'pay-123',
-            userId: 'user-1',
+            payerAddress: '0x1234567890123456789012345678901234567890',
             amount: 1000,
             tokenAddress: '0x1234567890123456789012345678901234567890',
             tokenSymbol: 'USDC',
@@ -251,7 +251,7 @@ describe('SoloPayClient', () => {
             success: true,
             data: {
               paymentId: 'pay-123',
-              userId: 'user-1',
+              payerAddress: '0x1234567890123456789012345678901234567890',
               amount: 1000,
               tokenAddress: '0x1234567890123456789012345678901234567890',
               tokenSymbol: 'USDC',
@@ -449,7 +449,7 @@ describe('SoloPayClient', () => {
           success: true,
           data: {
             paymentId: 'pay-123',
-            userId: 'user-1',
+            payerAddress: '0x1234567890123456789012345678901234567890',
             amount: 1000,
             tokenAddress: '0x1234567890123456789012345678901234567890',
             tokenSymbol: 'USDC',
@@ -716,7 +716,7 @@ describe('SoloPayClient', () => {
           success: true,
           data: {
             paymentId: 'pay-123',
-            userId: 'user-1',
+            payerAddress: '0x1234567890123456789012345678901234567890',
             amount: 1000,
             tokenAddress: '0x1234567890123456789012345678901234567890',
             tokenSymbol: 'USDC',

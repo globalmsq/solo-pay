@@ -84,7 +84,8 @@ export interface PaymentStatusResponse {
   success: true;
   data: {
     paymentId: string;
-    userId: string;
+    /** Payer wallet address (from chain) */
+    payerAddress: string;
     amount: number;
     tokenAddress: string;
     tokenSymbol: string;

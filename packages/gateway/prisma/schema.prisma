@@ -72,6 +72,9 @@ model Merchant {
   name              String
   chain_id          Int      // logical reference to chains.id
   api_key_hash      String   @unique // SHA-256 hash; one API key per merchant
+  public_key        String?  @unique // pk_live_xxx for client-side integration
+  public_key_hash   String?  @unique // SHA-256 hash of public_key (same pattern as api_key_hash)
+  allowed_domains   Json?    // List of domains allowed for public_key usage
   webhook_url       String?
   fee_bps           Int      @default(0)                     // 0 ~ 10000 basis points (100% = 10000)
   recipient_address String?  @db.VarChar(42)                 // 0x... Ethereum address
@@ -112,11 +115,18 @@ model Payment {
   tx_hash               String?       @db.VarChar(66)
   expires_at            DateTime
   confirmed_at          DateTime?
+  order_id              String?       // merchant order ID (client-side integration)
+  success_url           String?       // redirect URL on payment success
+  fail_url              String?       // redirect URL on payment failure/cancel
+  webhook_url           String?      // per-payment webhook (fallback: merchant.webhook_url)
+  origin                String?      // request origin for domain verification audit
+  payer_address         String?      @db.VarChar(42)  // payer wallet address
   created_at            DateTime      @default(now())
   updated_at            DateTime      @updatedAt
 
   @@index([merchant_id])
   @@index([status])
+  @@index([order_id, merchant_id])
   @@map("payments")
 }
 

@@ -22,7 +22,7 @@ describe('GET /payments/:id/status', () => {
 
   const mockPaymentStatus: PaymentStatus = {
     paymentId: 'payment-123',
-    userId: 'user123',
+    payerAddress: '0x' + 'a'.repeat(40),
     amount: 1000000000000000000, // Must match mockPaymentData.amount for completed status
     tokenAddress: '0x' + 'a'.repeat(40),
     tokenSymbol: 'USDC',

@@ -50,6 +50,11 @@ describe('PaymentService', () => {
       status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
+      order_id: null,
+      success_url: null,
+      fail_url: null,
+      webhook_url: null,
+      origin: null,
       created_at: new Date(),
       updated_at: new Date(),
       confirmed_at: null,
@@ -89,6 +94,11 @@ describe('PaymentService', () => {
       status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
+      order_id: null,
+      success_url: null,
+      fail_url: null,
+      webhook_url: null,
+      origin: null,
       expires_at: new Date(Date.now() + 3600000),
       created_at: new Date(),
       updated_at: new Date(),
@@ -118,6 +128,11 @@ describe('PaymentService', () => {
       status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
+      order_id: null,
+      success_url: null,
+      fail_url: null,
+      webhook_url: null,
+      origin: null,
       expires_at: new Date(Date.now() + 3600000),
       created_at: new Date(),
       updated_at: new Date(),
@@ -150,6 +165,11 @@ describe('PaymentService', () => {
       status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
+      order_id: null,
+      success_url: null,
+      fail_url: null,
+      webhook_url: null,
+      origin: null,
       expires_at: new Date(Date.now() + 3600000),
       created_at: new Date(),
       updated_at: new Date(),
@@ -195,6 +215,11 @@ describe('PaymentService', () => {
         status: PaymentStatus.CONFIRMED,
         payer_address: null,
         tx_hash: null,
+        order_id: null,
+        success_url: null,
+        fail_url: null,
+        webhook_url: null,
+        origin: null,
         expires_at: new Date(Date.now() + 3600000),
         created_at: new Date(),
         updated_at: new Date(),
@@ -230,6 +255,11 @@ describe('PaymentService', () => {
       status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
+      order_id: null,
+      success_url: null,
+      fail_url: null,
+      webhook_url: null,
+      origin: null,
       created_at: new Date(),
       updated_at: new Date(),
       confirmed_at: null,
@@ -266,6 +296,11 @@ describe('PaymentService', () => {
       status: PaymentStatus.CREATED,
       payer_address: null,
       tx_hash: null,
+      order_id: null,
+      success_url: null,
+      fail_url: null,
+      webhook_url: null,
+      origin: null,
       expires_at: new Date(Date.now() + 3600000),
       created_at: new Date(),
       updated_at: new Date(),
@@ -314,6 +349,11 @@ describe('PaymentService', () => {
         status: PaymentStatus.CREATED,
         payer_address: null,
         tx_hash: null,
+        order_id: null,
+        success_url: null,
+        fail_url: null,
+        webhook_url: null,
+        origin: null,
         expires_at: new Date(Date.now() + 3600000),
         created_at: new Date(),
         updated_at: new Date(),
@@ -372,6 +412,11 @@ describe('PaymentService', () => {
         status: PaymentStatus.CREATED,
         payer_address: null,
         tx_hash: null,
+        order_id: null,
+        success_url: null,
+        fail_url: null,
+        webhook_url: null,
+        origin: null,
         expires_at: new Date(Date.now() + 3600000),
         created_at: new Date(),
         updated_at: new Date(),
@@ -418,6 +463,11 @@ describe('PaymentService', () => {
         status: PaymentStatus.CREATED,
         payer_address: null,
         tx_hash: null,
+        order_id: null,
+        success_url: null,
+        fail_url: null,
+        webhook_url: null,
+        origin: null,
         expires_at: new Date(Date.now() + 3600000),
         created_at: new Date(),
         updated_at: new Date(),
@@ -465,6 +515,11 @@ describe('PaymentService', () => {
         status: PaymentStatus.CREATED,
         payer_address: null,
         tx_hash: null,
+        order_id: null,
+        success_url: null,
+        fail_url: null,
+        webhook_url: null,
+        origin: null,
         expires_at: new Date(Date.now() + 3600000),
         created_at: new Date(),
         updated_at: new Date(),
@@ -488,6 +543,115 @@ describe('PaymentService', () => {
       const result = await paymentService.getPaymentWithChain('0x' + 'n'.repeat(64));
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('findByOrderId', () => {
+    it('should return the latest payment for order_id and merchant_id', async () => {
+      const orderId = 'order_abc_123';
+      const mockPayment = {
+        id: 13,
+        payment_hash: '0x' + 'o'.repeat(64),
+        merchant_id: merchantId,
+        payment_method_id: paymentMethodId,
+        amount: new Decimal('13000000'),
+        token_decimals: 6,
+        token_symbol: 'USDC',
+        network_id: 31337,
+        status: PaymentStatus.CREATED,
+        payer_address: null,
+        tx_hash: null,
+        order_id: orderId,
+        success_url: null,
+        fail_url: null,
+        webhook_url: null,
+        origin: null,
+        expires_at: new Date(Date.now() + 3600000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        confirmed_at: null,
+      };
+
+      mockPrisma.payment.findFirst.mockResolvedValue(mockPayment);
+
+      const result = await paymentService.findByOrderId(orderId, merchantId);
+
+      expect(result).toBeDefined();
+      expect(result?.order_id).toBe(orderId);
+      expect(result?.merchant_id).toBe(merchantId);
+      expect(mockPrisma.payment.findFirst).toHaveBeenCalledWith({
+        where: { order_id: orderId, merchant_id: merchantId },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+
+    it('should return null when no payment exists for order_id and merchant_id', async () => {
+      mockPrisma.payment.findFirst.mockResolvedValue(null);
+
+      const result = await paymentService.findByOrderId('unknown_order', merchantId);
+
+      expect(result).toBeNull();
+      expect(mockPrisma.payment.findFirst).toHaveBeenCalledWith({
+        where: { order_id: 'unknown_order', merchant_id: merchantId },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+  });
+
+  describe('updatePayerAddress', () => {
+    it('should update payer_address and invalidate cache', async () => {
+      const paymentHash = '0x' + 'p'.repeat(64);
+      const payerAddress = '0x90F79bf6EB2c4f870365E785982E1f101E93b906';
+      const mockExisting = {
+        id: 14,
+        payment_hash: paymentHash,
+        merchant_id: merchantId,
+        payment_method_id: paymentMethodId,
+        amount: new Decimal('14000000'),
+        token_decimals: 6,
+        token_symbol: 'USDC',
+        network_id: 31337,
+        status: PaymentStatus.CREATED,
+        payer_address: null,
+        tx_hash: null,
+        order_id: null,
+        success_url: null,
+        fail_url: null,
+        webhook_url: null,
+        origin: null,
+        expires_at: new Date(Date.now() + 3600000),
+        created_at: new Date(),
+        updated_at: new Date(),
+        confirmed_at: null,
+      };
+
+      const mockUpdated = {
+        ...mockExisting,
+        payer_address: payerAddress,
+      };
+
+      mockPrisma.payment.findUnique.mockResolvedValue(mockExisting);
+      mockPrisma.payment.update.mockResolvedValue(mockUpdated);
+
+      const result = await paymentService.updatePayerAddress(paymentHash, payerAddress);
+
+      expect(result.payer_address).toBe(payerAddress);
+      expect(mockPrisma.payment.update).toHaveBeenCalledWith({
+        where: { payment_hash: paymentHash },
+        data: { payer_address: payerAddress },
+      });
+    });
+
+    it('should throw error when payment not found by hash', async () => {
+      mockPrisma.payment.findUnique.mockResolvedValue(null);
+
+      await expect(
+        paymentService.updatePayerAddress(
+          '0x' + 'q'.repeat(64),
+          '0x1234567890123456789012345678901234567890'
+        )
+      ).rejects.toThrow('Payment not found');
+      expect(mockPrisma.payment.update).not.toHaveBeenCalled();
     });
   });
 });

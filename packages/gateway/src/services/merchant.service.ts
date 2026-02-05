@@ -6,6 +6,9 @@ export const MERCHANT_KEY_EXISTS_MESSAGE = 'Merchant key already exists';
 /** Message thrown when api_key is already in use by another merchant (one API key per merchant). */
 export const API_KEY_IN_USE_MESSAGE = 'API key already in use';
 
+/** Prefix for client-side public keys. */
+export const PUBLIC_KEY_PREFIX = 'pk_live_';
+
 export interface CreateMerchantInput {
   merchant_key: string;
   name: string;
@@ -26,6 +29,10 @@ export class MerchantService {
 
   private hashApiKey(apiKey: string): string {
     return crypto.createHash('sha256').update(apiKey).digest('hex');
+  }
+
+  private hashPublicKey(publicKey: string): string {
+    return crypto.createHash('sha256').update(publicKey).digest('hex');
   }
 
   async create(input: CreateMerchantInput): Promise<Merchant> {
@@ -130,6 +137,58 @@ export class MerchantService {
 
     const apiKeyHash = this.hashApiKey(apiKey);
     return merchant.api_key_hash === apiKeyHash;
+  }
+
+  /**
+   * Generates a new public key for client-side integration (pk_live_ + random string),
+   * stores it and its SHA-256 hash on the merchant, and returns the plain public key.
+   * Overwrites existing public key if present.
+   */
+  async generatePublicKey(merchantId: number): Promise<string> {
+    const merchant = await this.prisma.merchant.findFirst({
+      where: { id: merchantId, is_deleted: false },
+    });
+    if (!merchant) {
+      throw new Error('Merchant not found');
+    }
+
+    const randomPart = crypto.randomBytes(24).toString('base64url');
+    const publicKey = `${PUBLIC_KEY_PREFIX}${randomPart}`;
+    const publicKeyHash = this.hashPublicKey(publicKey);
+
+    await this.prisma.merchant.update({
+      where: { id: merchantId },
+      data: {
+        public_key: publicKey,
+        public_key_hash: publicKeyHash,
+      },
+    });
+
+    return publicKey;
+  }
+
+  /**
+   * Finds a merchant by public key (lookup via public_key_hash).
+   */
+  async findByPublicKey(publicKey: string): Promise<Merchant | null> {
+    const publicKeyHash = this.hashPublicKey(publicKey);
+    return this.prisma.merchant.findFirst({
+      where: {
+        public_key_hash: publicKeyHash,
+        is_deleted: false,
+        is_enabled: true,
+      },
+    });
+  }
+
+  /**
+   * Updates the list of domains allowed for public key usage (client-side integration).
+   */
+  async updateAllowedDomains(merchantId: number, domains: string[]): Promise<Merchant> {
+    return this.prisma.merchant.update({
+      where: { id: merchantId },
+      data: { allowed_domains: domains },
+    });
   }
 
   async softDelete(id: number): Promise<Merchant> {

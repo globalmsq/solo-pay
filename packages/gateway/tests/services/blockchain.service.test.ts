@@ -74,7 +74,7 @@ describe('BlockchainService', () => {
   describe('recordPaymentOnChain', () => {
     it('유효한 결제 데이터로 거래 해시를 반환해야 함', async () => {
       const paymentData = {
-        userId: 'user123',
+        payerAddress: '0x' + 'a'.repeat(40),
         amount: BigInt(100),
         currency: 'USD',
         tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
@@ -87,7 +87,7 @@ describe('BlockchainService', () => {
 
     it('필수 결제 정보가 누락되었을 때 에러를 던져야 함', async () => {
       const incompleteData = {
-        userId: '',
+        payerAddress: '',
         amount: BigInt(100),
         currency: 'USD',
         tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
@@ -102,7 +102,7 @@ describe('BlockchainService', () => {
 
     it('0 금액으로 요청할 때 에러를 던져야 함', async () => {
       const invalidData = {
-        userId: 'user456',
+        payerAddress: '0x' + 'a'.repeat(40),
         amount: BigInt(0),
         currency: 'USD',
         tokenAddress: ('0x' + 'a'.repeat(40)) as Address,
@@ -115,7 +115,7 @@ describe('BlockchainService', () => {
 
     it('누락된 tokenAddress로 요청할 때 에러를 던져야 함', async () => {
       const invalidData = {
-        userId: 'user789',
+        payerAddress: '0x' + 'a'.repeat(40),
         amount: BigInt(100),
         currency: 'USD',
         tokenAddress: '' as Address,
