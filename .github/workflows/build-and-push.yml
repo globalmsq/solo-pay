@@ -46,7 +46,8 @@ jobs:
             VERSION=${GITHUB_REF#refs/tags/v}
             echo "tag=${IMAGE}:${VERSION}-${{ matrix.arch }}" >> $GITHUB_OUTPUT
           else
-            echo "tag=${IMAGE}:main-${{ matrix.arch }}" >> $GITHUB_OUTPUT
+            SHORT_SHA=${GITHUB_SHA:0:7}
+            echo "tag=${IMAGE}:${SHORT_SHA}-${{ matrix.arch }}" >> $GITHUB_OUTPUT
           fi
           echo "image=${IMAGE}" >> $GITHUB_OUTPUT
 
@@ -103,8 +104,17 @@ jobs:
               ${IMAGE}:${VERSION}-arm64
             docker manifest push ${IMAGE}:latest
           else
-            docker manifest create ${IMAGE}:main \
-              ${IMAGE}:main-amd64 \
-              ${IMAGE}:main-arm64
-            docker manifest push ${IMAGE}:main
+            SHORT_SHA=${GITHUB_SHA:0:7}
+
+            # Create manifest for specific commit
+            docker manifest create ${IMAGE}:${SHORT_SHA} \
+              ${IMAGE}:${SHORT_SHA}-amd64 \
+              ${IMAGE}:${SHORT_SHA}-arm64
+            docker manifest push ${IMAGE}:${SHORT_SHA}
+
+            # Update latest nightly tag
+            docker manifest create ${IMAGE}:nightly \
+              ${IMAGE}:${SHORT_SHA}-amd64 \
+              ${IMAGE}:${SHORT_SHA}-arm64
+            docker manifest push ${IMAGE}:nightly
           fi

@@ -47,7 +47,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: hardhat
-    image: solo-pay-hardhat-node
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/hardhat:nightly
     container_name: solo-pay-hardhat-node
     restart: always
     ports:
@@ -66,7 +66,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: simple-relayer
-    image: solo-pay-simple-relayer
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/simple-relayer:nightly
     container_name: solo-pay-simple-relayer
     restart: always
     ports:
@@ -99,7 +99,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: gateway
-    image: solo-pay-gateway
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/gateway:nightly
     container_name: solo-pay-gateway
     restart: always
     ports:
@@ -138,7 +138,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: demo
-    image: solo-pay-demo
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/demo:nightly
     container_name: solo-pay-demo
     restart: always
     ports:
@@ -167,7 +167,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: guide
-    image: solo-pay-guide
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/guide:nightly
     container_name: solo-pay-guide
     ports:
       - '5173:80'

@@ -42,7 +42,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: hardhat
-    image: solo-pay-hardhat
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/hardhat:nightly
     container_name: solo-pay-contracts-init
     command: >
       sh -c "sleep 5 && npx hardhat run scripts/check-and-deploy.ts --network localhost"
@@ -65,7 +65,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: gateway
-    image: solo-pay-gateway
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/gateway:nightly
     container_name: solo-pay-gateway
     ports:
       - '3001:3001'
@@ -105,7 +105,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: demo
-    image: solo-pay-demo
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/demo:nightly
     container_name: solo-pay-demo
     ports:
       - '3000:3000'
