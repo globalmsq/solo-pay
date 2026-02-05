@@ -1,5 +1,3 @@
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-
 interface WalletConnectProps {
   onConnect: () => void;
 }
