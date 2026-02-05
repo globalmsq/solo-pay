@@ -16,7 +16,7 @@ export default defineConfig({
     // Environment variables are inherited from the shell
     // Override defaults only if not set externally
     env: {
-      DATABASE_URL: process.env.DATABASE_URL || 'mysql://msqpay:pass@localhost:3307/msqpay_test',
+      DATABASE_URL: process.env.DATABASE_URL || 'mysql://solopay:pass@localhost:3307/solopay_test',
       REDIS_HOST: process.env.REDIS_HOST || 'localhost',
       REDIS_PORT: process.env.REDIS_PORT || '6380',
       BLOCKCHAIN_RPC_URL: process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8546',

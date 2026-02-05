@@ -2,15 +2,15 @@
 
 # 코드 기여하기
 
-MSQPay 프로젝트에 기여하는 방법입니다.
+SoloPay 프로젝트에 기여하는 방법입니다.
 
 ## 로컬 개발 환경 셋업
 
 ### 1. 저장소 클론
 
 ```bash
-git clone https://github.com/globalmsq/msqpay-monorepo.git
-cd msqpay-monorepo
+git clone https://github.com/globalmsq/solopay-monorepo.git
+cd solopay-monorepo
 ```
 
 ### 2. 의존성 설치
@@ -160,15 +160,16 @@ git push origin feature/your-feature
 ## 디렉토리 구조
 
 ```
-msqpay-monorepo/
-├── contracts/             # Smart Contracts (Hardhat)
+solopay-monorepo/
 ├── packages/
-│   ├── sdk/              # TypeScript SDK
-│   ├── pay-server/       # Payment Server (Fastify)
-│   └── simple-relayer/   # Local Relayer
-├── apps/
-│   └── demo/             # Demo Web App
-├── subgraph/             # The Graph Subgraph
+│   ├── contracts/        # Smart Contracts (Hardhat)
+│   ├── demo/             # Demo Web App (Next.js)
+│   ├── guide/            # Documentation Site
+│   ├── integration-tests/# Integration Tests
+│   ├── gateway/          # Pay Gateway (Fastify)
+│   ├── gateway-sdk/      # TypeScript SDK
+│   ├── simple-relayer/   # Local Relayer
+│   └── subgraph/         # The Graph Subgraph
 └── docs/                 # Documentation
 ```
 
@@ -177,7 +178,7 @@ msqpay-monorepo/
 ### 결제서버 개발
 
 ```bash
-cd packages/pay-server
+cd packages/gateway
 pnpm dev
 
 # 테스트
@@ -190,7 +191,7 @@ pnpm build
 ### SDK 개발
 
 ```bash
-cd packages/sdk
+cd packages/gateway-sdk
 pnpm dev
 
 # 테스트
@@ -203,7 +204,7 @@ pnpm build
 ### Demo 앱 개발
 
 ```bash
-cd apps/demo
+cd packages/demo
 pnpm dev
 
 # 브라우저: http://localhost:3000
@@ -215,11 +216,11 @@ pnpm dev
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { MSQPayClient } from '../src';
+import { SoloPayClient } from '../src';
 
-describe('MSQPayClient', () => {
+describe('SoloPayClient', () => {
   it('should create payment', async () => {
-    const client = new MSQPayClient({
+    const client = new SoloPayClient({
       environment: 'development',
       apiKey: 'test-key',
     });
@@ -280,8 +281,8 @@ docs/
 
 ## 도움이 필요하신가요?
 
-- **Issue**: https://github.com/globalmsq/msqpay-monorepo/issues
-- **Discussions**: https://github.com/globalmsq/msqpay-monorepo/discussions
+- **Issue**: https://github.com/globalmsq/solopay-monorepo/issues
+- **Discussions**: https://github.com/globalmsq/solopay-monorepo/discussions
 - **Email**: support@msq.com
 
 ## 관련 문서

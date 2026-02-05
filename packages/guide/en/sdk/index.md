@@ -1,21 +1,21 @@
 # SDK Installation
 
-MSQPay SDK is available for JavaScript/TypeScript environments.
+SoloPay SDK is available for JavaScript/TypeScript environments.
 
 ## Installation
 
 ::: code-group
 
 ```bash [npm]
-npm install @globalmsq/msqpay
+npm install @globalmsq/solopay
 ```
 
 ```bash [pnpm]
-pnpm add @globalmsq/msqpay
+pnpm add @globalmsq/solopay
 ```
 
 ```bash [yarn]
-yarn add @globalmsq/msqpay
+yarn add @globalmsq/solopay
 ```
 
 :::
@@ -28,10 +28,10 @@ yarn add @globalmsq/msqpay
 ## Initialization
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 ```
@@ -49,7 +49,7 @@ const client = new MSQPayClient({
 ### Development
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_test_...',
   environment: 'development',
 });
@@ -59,27 +59,27 @@ const client = new MSQPayClient({
 ### Staging (Testnet)
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_test_...',
   environment: 'staging',
 });
-// Endpoint: https://staging-api.msqpay.com
+// Endpoint: https://staging-api.solopay.com
 ```
 
 ### Production (Mainnet)
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_live_...',
   environment: 'production',
 });
-// Endpoint: https://api.msqpay.com
+// Endpoint: https://api.solopay.com
 ```
 
 ### Custom Environment
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_test_...',
   environment: 'custom',
   apiUrl: 'https://my-custom-server.com',
@@ -89,10 +89,10 @@ const client = new MSQPayClient({
 ## Basic Usage
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayClient, SoloPayError } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 
@@ -124,14 +124,14 @@ The SDK provides complete TypeScript types.
 
 ```typescript
 import type {
-  MSQPayConfig,
+  SoloPayConfig,
   CreatePaymentParams,
   CreatePaymentResponse,
   GaslessParams,
   GaslessResponse,
-} from '@globalmsq/msqpay';
+} from '@globalmsq/solopay';
 
-const config: MSQPayConfig = {
+const config: SoloPayConfig = {
   apiKey: 'sk_test_...',
   environment: 'staging',
 };

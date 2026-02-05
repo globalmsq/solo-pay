@@ -1,223 +1,141 @@
-# MSQPay Monorepo - Multi-stage Dockerfile
-# Targets: hardhat, server, demo
+# SoloPay Monorepo - Multi-stage Dockerfile
+# Targets: hardhat, contracts, gateway, demo, simple-relayer, guide
 
-# ============================================
-# Base Stage: Common dependencies
-# ============================================
-FROM node:20-alpine AS base
+# === Dependencies Stage (tools + deps + contracts) ===
+FROM node:20-alpine AS deps
 
-# 네이티브 모듈 빌드를 위한 도구 설치 (node-gyp 요구사항)
-RUN apk add --no-cache git python3 make g++ && \
-    npm install -g pnpm@10.23.0
+RUN apk add --no-cache git python3 make g++ curl && \
+    corepack enable
 
 WORKDIR /app
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/gateway-sdk/package.json ./packages/gateway-sdk/
+COPY packages/gateway/package.json ./packages/gateway/
+COPY packages/simple-relayer/package.json ./packages/simple-relayer/
+COPY packages/guide/package.json ./packages/guide/
+COPY packages/demo/package.json ./packages/demo/
 
-# Copy workspace configuration
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml eslint.config.ts ./
-
-# ============================================
-# Dependencies Stage
-# ============================================
-FROM base AS deps
-
-# Copy all package.json files
-COPY contracts/package.json ./contracts/
-COPY packages/sdk/package.json ./packages/sdk/
-COPY packages/pay-server/package.json ./packages/pay-server/
-COPY apps/demo/package.json ./apps/demo/
-
-# Install all dependencies with frozen lockfile for reproducible builds
 RUN pnpm install --frozen-lockfile
 
-# ============================================
-# Contracts Builder Stage
-# ============================================
-FROM deps AS contracts-builder
-
-# Copy contracts source
-COPY contracts ./contracts
-
-WORKDIR /app/contracts
-
-# Pre-download solidity compiler and compile contracts
-# This caches the compiler and artifacts in the image
+COPY packages/contracts ./packages/contracts
+WORKDIR /app/packages/contracts
 RUN npx hardhat compile
+WORKDIR /app
 
-# ============================================
-# Hardhat Node Stage
-# ============================================
-FROM contracts-builder AS hardhat
+# === Hardhat Node ===
+FROM deps AS hardhat
 
-# Expose Hardhat node port
+WORKDIR /app/packages/contracts
 EXPOSE 8545
-
-# Run Hardhat node with network exposed
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
+  CMD curl -sf -X POST -H 'Content-Type:application/json' -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' http://localhost:8545 || exit 1
 CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
 
-# ============================================
-# Server Stage (tsx로 소스 직접 실행)
-# ============================================
-FROM deps AS server
+# === Contracts (deploy and exit) ===
+FROM deps AS contracts
 
-# Copy only compiled artifacts from contracts-builder (not source code)
-# This reduces final image size significantly
-WORKDIR /app
-COPY --from=contracts-builder /app/contracts/artifacts ./contracts/artifacts
-COPY --from=contracts-builder /app/contracts/typechain-types ./contracts/typechain-types
-COPY --from=contracts-builder /app/contracts/package.json ./contracts/
+WORKDIR /app/packages/contracts
+CMD ["npx", "hardhat", "run", "scripts/check-and-deploy.ts", "--network", "localhost"]
 
-# Copy server source
-COPY packages/pay-server ./packages/pay-server
+# === Gateway Builder ===
+FROM deps AS gateway-builder
 
-WORKDIR /app/packages/pay-server
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Expose server port
-EXPOSE 3001
-
-# Run server with tsx (pnpm start)
-CMD ["pnpm", "start"]
-
-# ============================================
-# SDK Builder Stage (for demo dependency)
-# ============================================
-FROM deps AS sdk-builder
-
-# Copy SDK source
-COPY packages/sdk ./packages/sdk
-
-WORKDIR /app/packages/sdk
-
-# Build SDK
+COPY packages/gateway ./packages/gateway
+WORKDIR /app/packages/gateway
 RUN pnpm build
 
-# ============================================
-# Demo Builder Stage
-# ============================================
+# === Gateway Runtime ===
+FROM node:20-alpine AS gateway
+
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/gateway/node_modules ./packages/gateway/node_modules
+COPY --from=gateway-builder /app/packages/gateway/dist ./packages/gateway/dist
+COPY --from=gateway-builder /app/packages/gateway/package.json ./packages/gateway/
+
+WORKDIR /app/packages/gateway
+ENV NODE_ENV=production
+EXPOSE 3001
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -sf http://localhost:3001/health || exit 1
+CMD ["node", "dist/index.js"]
+
+# === Demo Builder ===
 FROM deps AS demo-builder
 
-# Copy built SDK from sdk-builder
-COPY --from=sdk-builder /app/packages/sdk ./packages/sdk
-
-# Copy demo source
-COPY apps/demo ./apps/demo
-
-WORKDIR /app/apps/demo
-
-# Build demo app
+COPY packages/gateway-sdk ./packages/gateway-sdk
+WORKDIR /app/packages/gateway-sdk
 RUN pnpm build
 
-# ============================================
-# Demo Runtime Stage
-# ============================================
-FROM base AS demo
+WORKDIR /app
+COPY eslint.config.ts ./
+COPY packages/demo ./packages/demo
+WORKDIR /app/packages/demo
+RUN pnpm build
 
-# Copy dependencies from deps stage
+# === Demo Runtime ===
+FROM node:20-alpine AS demo
+
+RUN apk add --no-cache curl && \
+    corepack enable
+WORKDIR /app
+COPY package.json pnpm-workspace.yaml ./
+
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/demo/node_modules ./apps/demo/node_modules
+COPY --from=deps /app/packages/demo/node_modules ./packages/demo/node_modules
+COPY --from=demo-builder /app/packages/demo/.next ./packages/demo/.next
+COPY --from=demo-builder /app/packages/demo/package.json ./packages/demo/
+COPY --from=demo-builder /app/packages/demo/next.config.ts ./packages/demo/
 
-# Copy built demo
-COPY --from=demo-builder /app/apps/demo/.next ./apps/demo/.next
-COPY --from=demo-builder /app/apps/demo/package.json ./apps/demo/
-COPY --from=demo-builder /app/apps/demo/next.config.ts ./apps/demo/
-
-WORKDIR /app/apps/demo
-
-# Expose demo port
+WORKDIR /app/packages/demo
+ENV NODE_ENV=production
 EXPOSE 3000
-
-# Run demo app
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -sf http://localhost:3000 || exit 1
 CMD ["pnpm", "start"]
 
-# ============================================
-# Simple Relayer Dependencies Stage
-# ============================================
-FROM base AS simple-relayer-deps
+# === Simple Relayer Builder ===
+FROM deps AS simple-relayer-builder
 
-# Copy simple-relayer package.json
-COPY packages/simple-relayer/package.json ./packages/simple-relayer/
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile --filter @msqpay/simple-relayer
-
-# ============================================
-# Simple Relayer Builder Stage
-# ============================================
-FROM simple-relayer-deps AS simple-relayer-builder
-
-# Copy simple-relayer source
 COPY packages/simple-relayer ./packages/simple-relayer
-
 WORKDIR /app/packages/simple-relayer
-
-# Build simple-relayer
 RUN pnpm build
 
-# ============================================
-# Simple Relayer Runtime Stage
-# ============================================
-FROM base AS simple-relayer
+# === Simple Relayer Runtime ===
+FROM node:20-alpine AS simple-relayer
 
-# Copy dependencies from simple-relayer-deps stage
-COPY --from=simple-relayer-deps /app/node_modules ./node_modules
-COPY --from=simple-relayer-deps /app/packages/simple-relayer/node_modules ./packages/simple-relayer/node_modules
-
-# Copy built simple-relayer
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/simple-relayer/node_modules ./packages/simple-relayer/node_modules
 COPY --from=simple-relayer-builder /app/packages/simple-relayer/dist ./packages/simple-relayer/dist
 COPY --from=simple-relayer-builder /app/packages/simple-relayer/package.json ./packages/simple-relayer/
 
 WORKDIR /app/packages/simple-relayer
-
-# Environment variables
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3001
-
-# Expose port
 EXPOSE 3001
-
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
-
-# Run server
+  CMD curl -sf http://localhost:3001/health || exit 1
 CMD ["node", "dist/server.js"]
 
-# ============================================
-# Guide Dependencies Stage
-# ============================================
-FROM base AS guide-deps
+# === Guide Builder ===
+FROM deps AS guide-builder
 
-# Copy guide package.json
-COPY packages/guide/package.json ./packages/guide/
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile --filter @msqpay/guide
-
-# ============================================
-# Guide Builder Stage
-# ============================================
-FROM guide-deps AS guide-builder
-
-# Copy guide source
 COPY packages/guide ./packages/guide
-
 WORKDIR /app/packages/guide
-
-# Build static files
 RUN pnpm build
 
-# ============================================
-# Guide Runtime Stage (nginx)
-# ============================================
+# === Guide Runtime (nginx) ===
 FROM nginx:alpine AS guide
 
-# Copy built static files
+RUN apk add --no-cache curl
 COPY --from=guide-builder /app/packages/guide/.vitepress/dist /usr/share/nginx/html
 
-# Expose port
 EXPOSE 80
-
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -sf http://localhost:80 || exit 1
 CMD ["nginx", "-g", "daemon off;"]

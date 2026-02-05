@@ -68,7 +68,7 @@ export function getPaymentGatewayDomain(
   chainId: number = TEST_CHAIN_ID
 ) {
   return {
-    name: 'MSQPayGateway',
+    name: 'SoloPayGateway',
     version: '1',
     chainId: chainId,
     verifyingContract: gatewayAddress,

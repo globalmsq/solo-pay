@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitepress';
 
 export default defineConfig({
-  title: 'MSQPay',
-  description: 'MSQPay Documentation - Blockchain Payment Gateway',
+  title: 'SoloPay',
+  description: 'SoloPay Documentation - Blockchain Payment Gateway',
 
   locales: {
     ko: {
@@ -164,15 +164,15 @@ export default defineConfig({
   },
 
   themeConfig: {
-    socialLinks: [{ icon: 'github', link: 'https://github.com/globalmsq/msqpay-monorepo' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/globalmsq/solopay-monorepo' }],
 
     search: {
       provider: 'local',
     },
 
     footer: {
-      message: 'MSQPay Documentation',
-      copyright: 'Copyright © 2026 MSQPay',
+      message: 'SoloPay Documentation',
+      copyright: 'Copyright © 2026 SoloPay',
     },
 
     darkModeSwitchLabel: '',

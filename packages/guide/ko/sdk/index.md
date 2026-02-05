@@ -1,21 +1,21 @@
 # SDK 설치
 
-MSQPay SDK는 JavaScript/TypeScript 환경에서 사용할 수 있습니다.
+SoloPay SDK는 JavaScript/TypeScript 환경에서 사용할 수 있습니다.
 
 ## 설치
 
 ::: code-group
 
 ```bash [npm]
-npm install @globalmsq/msqpay
+npm install @globalmsq/solopay
 ```
 
 ```bash [pnpm]
-pnpm add @globalmsq/msqpay
+pnpm add @globalmsq/solopay
 ```
 
 ```bash [yarn]
-yarn add @globalmsq/msqpay
+yarn add @globalmsq/solopay
 ```
 
 :::
@@ -28,10 +28,10 @@ yarn add @globalmsq/msqpay
 ## 초기화
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 ```
@@ -49,7 +49,7 @@ const client = new MSQPayClient({
 ### 개발 환경
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_test_...',
   environment: 'development',
 });
@@ -59,27 +59,27 @@ const client = new MSQPayClient({
 ### 스테이징 환경 (테스트넷)
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_test_...',
   environment: 'staging',
 });
-// 연결 주소: https://staging-api.msqpay.com
+// 연결 주소: https://staging-api.solopay.com
 ```
 
 ### 프로덕션 환경 (메인넷)
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_live_...',
   environment: 'production',
 });
-// 연결 주소: https://api.msqpay.com
+// 연결 주소: https://api.solopay.com
 ```
 
 ### 커스텀 환경
 
 ```typescript
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_test_...',
   environment: 'custom',
   apiUrl: 'https://my-custom-server.com',
@@ -89,10 +89,10 @@ const client = new MSQPayClient({
 ## 기본 사용법
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayClient, SoloPayError } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 
@@ -124,14 +124,14 @@ SDK는 완전한 TypeScript 타입을 제공합니다.
 
 ```typescript
 import type {
-  MSQPayConfig,
+  SoloPayConfig,
   CreatePaymentParams,
   CreatePaymentResponse,
   GaslessParams,
   GaslessResponse,
-} from '@globalmsq/msqpay';
+} from '@globalmsq/solopay';
 
-const config: MSQPayConfig = {
+const config: SoloPayConfig = {
   apiKey: 'sk_test_...',
   environment: 'staging',
 };

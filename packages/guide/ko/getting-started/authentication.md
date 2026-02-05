@@ -1,10 +1,10 @@
 # 인증
 
-MSQPay API는 API Key를 사용하여 인증합니다.
+SoloPay API는 API Key를 사용하여 인증합니다.
 
 ## API Key 발급
 
-1. MSQPay 대시보드에 로그인
+1. SoloPay 대시보드에 로그인
 2. Settings > API Keys 메뉴로 이동
 3. "Create API Key" 클릭
 4. 발급된 키를 안전하게 저장
@@ -25,17 +25,17 @@ API Key는 한 번만 표시됩니다. 분실 시 새로 발급해야 합니다.
 ### SDK 사용 시
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
 // 기본 설정 (staging 환경)
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY,
   environment: 'staging', // 'production' | 'staging' | 'custom'
 });
 
 // 커스텀 URL 사용 시
-const customClient = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY,
+const customClient = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY,
   environment: 'custom',
   baseUrl: 'https://your-custom-api.com',
 });
@@ -62,12 +62,12 @@ curl -X POST http://localhost:3001/payments/create \
 ::: code-group
 
 ```bash [.env]
-MSQPAY_API_KEY=sk_test_xxxxx
+SOLO_PAY_API_KEY=sk_test_xxxxx
 ```
 
 ```typescript [사용]
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 ```

@@ -2,9 +2,9 @@ import { ethers, JsonRpcProvider, Wallet, Contract, parseUnits, formatUnits } fr
 import { HARDHAT_ACCOUNTS } from '../setup/wallets';
 
 // Import ABIs from contracts package
-import PaymentGatewayArtifact from '@msq/pay-contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
-import MockERC20Artifact from '@msq/pay-contracts/artifacts/src/mocks/MockERC20.sol/MockERC20.json';
-import ERC2771ForwarderArtifact from '@msq/pay-contracts/artifacts/@openzeppelin/contracts/metatx/ERC2771Forwarder.sol/ERC2771Forwarder.json';
+import PaymentGatewayArtifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
+import MockERC20Artifact from '@solo-pay/contracts/artifacts/src/mocks/MockERC20.sol/MockERC20.json';
+import ERC2771ForwarderArtifact from '@solo-pay/contracts/artifacts/@openzeppelin/contracts/metatx/ERC2771Forwarder.sol/ERC2771Forwarder.json';
 
 const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8546';
 

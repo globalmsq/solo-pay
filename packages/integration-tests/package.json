@@ -1,8 +1,8 @@
 {
-  "name": "@globalmsq/integration-tests",
+  "name": "@solo-pay/integration-tests",
   "version": "0.1.0",
   "private": true,
-  "description": "Integration tests for MSQPay monorepo",
+  "description": "Integration tests for SoloPay monorepo",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@globalmsq/msqpay": "workspace:*",
-    "@msq/pay-contracts": "workspace:*",
+    "@solo-pay/gateway-sdk": "workspace:*",
+    "@solo-pay/contracts": "workspace:*",
     "@types/node": "^20.0.0",
     "dotenv": "^16.4.0",
     "ethers": "^6.13.0",

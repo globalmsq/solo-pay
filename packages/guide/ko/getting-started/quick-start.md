@@ -1,6 +1,6 @@
 # 빠른 시작
 
-5분 안에 MSQPay를 연동하는 방법을 알아봅니다.
+5분 안에 SoloPay를 연동하는 방법을 알아봅니다.
 
 ## 사전 준비
 
@@ -12,15 +12,15 @@
 ::: code-group
 
 ```bash [npm]
-npm install @globalmsq/msqpay
+npm install @globalmsq/solopay
 ```
 
 ```bash [pnpm]
-pnpm add @globalmsq/msqpay
+pnpm add @globalmsq/solopay
 ```
 
 ```bash [yarn]
-yarn add @globalmsq/msqpay
+yarn add @globalmsq/solopay
 ```
 
 :::
@@ -28,9 +28,9 @@ yarn add @globalmsq/msqpay
 ## Step 2: 클라이언트 초기화
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   apiKey: 'sk_test_...',
   environment: 'development', // 'development' | 'staging' | 'production'
 });
@@ -90,10 +90,10 @@ CREATED ──────▶ PENDING ──────▶ CONFIRMED
 ## 전체 예시
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayClient, SoloPayError } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 
@@ -118,7 +118,7 @@ async function createPayment() {
 
     return payment;
   } catch (error) {
-    if (error instanceof MSQPayError) {
+    if (error instanceof SoloPayError) {
       console.error('결제 생성 실패:', error.code, error.message);
     }
     throw error;

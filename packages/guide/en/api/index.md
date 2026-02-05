@@ -1,21 +1,21 @@
 # API Reference
 
-Complete MSQPay REST API specification.
+Complete SoloPay REST API specification.
 
 ## Base URL
 
-| Environment | URL                              |
-| ----------- | -------------------------------- |
-| Production  | `https://api.msqpay.com`         |
-| Staging     | `https://staging-api.msqpay.com` |
-| Development | `http://localhost:3001`          |
+| Environment | URL                               |
+| ----------- | --------------------------------- |
+| Production  | `https://api.solopay.com`         |
+| Staging     | `https://staging-api.solopay.com` |
+| Development | `http://localhost:3001`           |
 
 ## Authentication
 
 All API requests require the `x-api-key` header.
 
 ```bash
-curl -H "x-api-key: sk_test_xxxxx" https://api.msqpay.com/...
+curl -H "x-api-key: sk_test_xxxxx" https://api.solopay.com/...
 ```
 
 ## Common Response Format

@@ -2,11 +2,11 @@
 
 # 결제 API 배포 가이드
 
-MSQPay 결제 API를 다양한 환경에 배포하기 위한 단계별 가이드입니다. 환경별 하이브리드 Relay 아키텍처, ERC2771Forwarder 기반 Meta-Transaction, Polygon RPC, 환경 설정을 포함합니다.
+SoloPay 결제 API를 다양한 환경에 배포하기 위한 단계별 가이드입니다. 환경별 하이브리드 Relay 아키텍처, ERC2771Forwarder 기반 Meta-Transaction, Polygon RPC, 환경 설정을 포함합니다.
 
 ## 환경별 아키텍처 개요 (v4.0.0)
 
-MSQPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용합니다. `RELAY_API_URL` 환경변수만 변경하여 환경을 전환합니다:
+SoloPay는 모든 환경에서 동일한 HTTP API 기반 아키텍처를 사용합니다. `RELAY_API_URL` 환경변수만 변경하여 환경을 전환합니다:
 
 | 환경                       | Relay 서비스               | API URL                               | Forwarder        |
 | -------------------------- | -------------------------- | ------------------------------------- | ---------------- |
@@ -119,13 +119,13 @@ LOG_LEVEL=info
 # ============================================
 # CORS Configuration (선택사항)
 # ============================================
-CORS_ORIGIN=https://app.msqpay.io
+CORS_ORIGIN=https://app.solopay.io
 # 클라이언트 도메인
 ```
 
 ### 1.2 멀티체인 설정 (chains.json)
 
-Pay Server는 `chains.json` 설정 파일을 통해 멀티체인을 지원합니다. 환경별로 다른 설정 파일을 사용할 수 있습니다.
+Pay Gateway는 `chains.json` 설정 파일을 통해 멀티체인을 지원합니다. 환경별로 다른 설정 파일을 사용할 수 있습니다.
 
 #### 설정 파일 종류
 
@@ -200,7 +200,7 @@ ERC2771Forwarder는 Meta-Transaction을 처리하는 핵심 컨트랙트입니�
 **Hardhat Ignition으로 배포**:
 
 ```bash
-cd contracts
+cd packages/contracts
 npx hardhat ignition deploy ignition/modules/Forwarder.ts --network amoy
 ```
 
@@ -386,7 +386,7 @@ CMD ["pnpm", "start"]
 
 ```bash
 # 이미지 빌드
-docker build -t msqpay-api:latest .
+docker build -t solo-pay-api:latest .
 
 # 이미지 테스트 (로컬)
 docker run -p 3000:3000 \
@@ -394,7 +394,7 @@ docker run -p 3000:3000 \
   -e GATEWAY_ADDRESS=0x... \
   -e FORWARDER_ADDRESS=0x... \
   -e RELAYER_PRIVATE_KEY=xxx \
-  msqpay-api:latest
+  solo-pay-api:latest
 
 # 연결 테스트
 curl http://localhost:3000/health
@@ -482,7 +482,7 @@ aws configure
 
 # 3. serverless.yml 작성
 cat > serverless.yml << 'EOF'
-service: msqpay-api
+service: solo-pay-api
 
 provider:
   name: aws
@@ -640,7 +640,7 @@ app.register(rateLimit, {
 
 ```bash
 # 헬스 체크 엔드포인트
-curl https://api.msqpay.io/health
+curl https://api.solopay.io/health
 
 # 기대 응답:
 # {"status":"ok","timestamp":"2024-11-29T10:00:00.000Z"}
@@ -650,7 +650,7 @@ curl https://api.msqpay.io/health
 
 ```bash
 # 결제 생성 테스트
-curl -X POST https://api.msqpay.io/payments/create \
+curl -X POST https://api.solopay.io/payments/create \
   -H "Content-Type: application/json" \
   -d '{
     "merchantId": "merchant_001",

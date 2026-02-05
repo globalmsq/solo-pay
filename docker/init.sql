@@ -1,12 +1,12 @@
--- MSQPay MySQL Initialization Script
--- SPEC-DB-001: Pay-Server Database Integration
+-- SoloPay MySQL Initialization Script
+-- SPEC-DB-001: Gateway Database Integration
 -- This script runs automatically when MySQL container starts for the first time
 -- Schema aligned with Prisma schema (INT AUTO_INCREMENT IDs)
 
 -- Create database if not exists
-CREATE DATABASE IF NOT EXISTS msqpay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS solopay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE msqpay;
+USE solopay;
 
 -- ============================================================
 -- ENUMS (MySQL doesn't have native enums, use ENUM type)

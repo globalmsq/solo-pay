@@ -1,10 +1,10 @@
 # Authentication
 
-MSQPay API uses API Keys for authentication.
+SoloPay API uses API Keys for authentication.
 
 ## Getting an API Key
 
-1. Log in to MSQPay Dashboard
+1. Log in to SoloPay Dashboard
 2. Navigate to Settings > API Keys
 3. Click "Create API Key"
 4. Store the issued key securely
@@ -25,17 +25,17 @@ API Key is only displayed once. If lost, you'll need to issue a new one.
 ### With SDK
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
 // Default configuration (staging environment)
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY,
   environment: 'staging', // 'production' | 'staging' | 'custom'
 });
 
 // With custom URL
-const customClient = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY,
+const customClient = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY,
   environment: 'custom',
   baseUrl: 'https://your-custom-api.com',
 });
@@ -62,12 +62,12 @@ curl -X POST http://localhost:3001/payments/create \
 ::: code-group
 
 ```bash [.env]
-MSQPAY_API_KEY=sk_test_xxxxx
+SOLO_PAY_API_KEY=sk_test_xxxxx
 ```
 
 ```typescript [Usage]
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 ```
