@@ -43,7 +43,9 @@ export default function PaymentComplete({
       {/* Title */}
       <div className="text-center mb-6 sm:mb-8">
         <h1 className="text-base sm:text-lg font-bold text-gray-900">Payment Complete</h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">Your payment has been successfully processed</p>
+        <p className="text-xs sm:text-sm text-gray-500 mt-1">
+          Your payment has been successfully processed
+        </p>
       </div>
 
       {/* Payment Details */}

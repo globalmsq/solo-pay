@@ -89,7 +89,7 @@ export default function TokenApproval({
             </svg>
           </div>
           <p className="text-xs text-blue-700 leading-relaxed">
-            We provide free gas for token approval once per account. If you don't have enough gas,
+            We provide free gas for token approval once per account. If you do not have enough gas,
             click the button below to receive it.
           </p>
         </div>
