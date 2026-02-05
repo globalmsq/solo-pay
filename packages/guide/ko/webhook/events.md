@@ -204,7 +204,7 @@ case 'payment.expired':
 ## 전체 이벤트 핸들러 예시
 
 ```typescript
-import { verifyWebhookSignature, WebhookEvent } from '@globalmsq/msqpay';
+import { verifyWebhookSignature, WebhookEvent } from '@globalmsq/solopay';
 
 async function handleWebhook(event: WebhookEvent) {
   const { event: eventType, data } = event;

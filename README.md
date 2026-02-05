@@ -1,4 +1,4 @@
-# MSQPay Monorepo
+# SoloPay Monorepo
 
 [English](README.md) | [한국어](README.ko.md)
 
@@ -22,7 +22,7 @@ A blockchain payment system that multiple services can integrate with.
 
 - **Direct Payment**: Users pay gas fees directly
 - **Gasless Payment**: Gas fee delegation via Meta-transaction (Relayer Service)
-- **TypeScript SDK**: API client for merchant servers (`@globalmsq/msqpay`)
+- **TypeScript SDK**: API client for merchant servers (`@globalmsq/solopay`)
 - **Payment Server**: paymentId issuance, contract state queries, gasless relay
 - **Demo App**: Test web application
 
@@ -36,15 +36,16 @@ Frontend → Merchant Server → Payment Server → Contract
 ## Project Structure
 
 ```
-msqpay-monorepo/
-├── contracts/             # Smart Contracts (Hardhat)
+solopay-monorepo/
 ├── packages/
-│   ├── sdk/              # TypeScript SDK (@globalmsq/msqpay)
-│   ├── pay-server/       # Payment Server (Fastify)
-│   └── simple-relayer/   # Local Development Relayer Service
-├── apps/
-│   └── demo/             # Demo Web App (Next.js)
-├── subgraph/             # The Graph Subgraph (Event Indexing)
+│   ├── contracts/        # Smart Contracts (Hardhat)
+│   ├── demo/             # Demo Web App (Next.js)
+│   ├── guide/            # Documentation Site
+│   ├── integration-tests/# Integration Tests
+│   ├── gateway/          # Pay Gateway (Fastify)
+│   ├── gateway-sdk/      # TypeScript SDK (@solo-pay/gateway-sdk)
+│   ├── simple-relayer/   # Local Development Relayer Service
+│   └── subgraph/         # The Graph Subgraph (Event Indexing)
 └── docs/                 # Documentation
 ```
 
@@ -105,7 +106,7 @@ docker-compose restart server
 docker-compose up -d --build server
 
 # MySQL access
-docker-compose exec mysql mysql -u root -ppass msqpay
+docker-compose exec mysql mysql -u root -ppass solopay
 
 # Full reset
 docker-compose down -v
@@ -117,19 +118,19 @@ For manual development without Docker:
 
 ```bash
 # Terminal 1: Start Hardhat node
-cd contracts
+cd packages/contracts
 npx hardhat node
 
 # Terminal 2: Deploy contracts
-cd contracts
+cd packages/contracts
 pnpm deploy:local
 
-# Terminal 3: Start Payment Server
-cd packages/pay-server
+# Terminal 3: Start Pay Gateway
+cd packages/gateway
 pnpm dev
 
 # Terminal 4: Start Demo App
-cd apps/demo
+cd packages/demo
 pnpm dev
 ```
 
@@ -154,13 +155,13 @@ pnpm dev
 
 Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 
-## SDK Usage (@globalmsq/msqpay)
+## SDK Usage (@globalmsq/solopay)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
 // Initialize
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development', // or 'custom' + apiUrl
   apiKey: 'sk_test_abc123',
 });
@@ -193,7 +194,7 @@ const relayResult = await client.executeRelay({
 });
 ```
 
-**Detailed documentation**: [SDK README](./packages/sdk/README.md)
+**Detailed documentation**: [SDK README](./packages/gateway-sdk/README.md)
 
 ## Payment Server API
 
@@ -242,14 +243,14 @@ Query transaction status and confirmation info:
 
 Key environment variables for the payment server:
 
-| Variable        | Purpose                            | Example                                   |
-| --------------- | ---------------------------------- | ----------------------------------------- |
-| `DATABASE_URL`  | MySQL connection string            | `mysql://user:pass@localhost:3306/msqpay` |
-| `REDIS_URL`     | Redis connection string (optional) | `redis://localhost:6379`                  |
-| `RELAY_API_URL` | Relayer service endpoint           | `http://simple-relayer:3001`              |
-| `RELAY_API_KEY` | Relayer API key (production only)  | `sk_...`                                  |
+| Variable        | Purpose                            | Example                                    |
+| --------------- | ---------------------------------- | ------------------------------------------ |
+| `DATABASE_URL`  | MySQL connection string            | `mysql://user:pass@localhost:3306/solopay` |
+| `REDIS_URL`     | Redis connection string (optional) | `redis://localhost:6379`                   |
+| `RELAY_API_URL` | Relayer service endpoint           | `http://simple-relayer:3001`               |
+| `RELAY_API_KEY` | Relayer API key (production only)  | `sk_...`                                   |
 
-> **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the database `chains` table, not environment variables. See [Pay Server README](./packages/pay-server/README.md#multi-chain-configuration) for details.
+> **Note**: Chain configuration (RPC URLs, contract addresses) is managed in the database `chains` table, not environment variables. See [Pay Gateway README](./packages/gateway/README.md#multi-chain-configuration) for details.
 
 ## Documentation
 

@@ -1,22 +1,22 @@
-name: msqpay
+name: solo-pay
 
 services:
   # MySQL 8.0 - Payment Data
   mysql:
     image: mysql:8.0
-    container_name: msqpay-mysql
+    container_name: solo-pay-mysql
     ports:
       - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: pass
-      MYSQL_DATABASE: msqpay
-      MYSQL_USER: msqpay
+      MYSQL_DATABASE: solopay
+      MYSQL_USER: solopay
       MYSQL_PASSWORD: pass
     volumes:
       - mysql-data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      - msqpay-network
+      - solo-pay-network
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-ppass']
       interval: 5s
@@ -27,13 +27,13 @@ services:
   # Redis 7 Alpine - Caching
   redis:
     image: redis:7-alpine
-    container_name: msqpay-redis
+    container_name: solo-pay-redis
     # ports:
     #   - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
-      - msqpay-network
+      - solo-pay-network
 
   # Contract Deployment (uses external hardhat-node from msq-relayer-service)
   # Note: hardhat-node must be running in msq-relayer-service before starting this
@@ -42,8 +42,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: hardhat
-    image: msqpay-hardhat
-    container_name: msqpay-contracts-init
+    image: solo-pay-hardhat
+    container_name: solo-pay-contracts-init
     command: >
       sh -c "sleep 5 && npx hardhat run scripts/check-and-deploy.ts --network localhost"
     environment:
@@ -59,14 +59,14 @@ services:
       - msq-network
     restart: 'no'
 
-  # Payment Server (Fastify)
-  server:
+  # Payment Gateway (Fastify)
+  gateway:
     build:
       context: ..
       dockerfile: docker/Dockerfile.packages
-      target: server
-    image: msqpay-server
-    container_name: msqpay-server
+      target: gateway
+    image: solo-pay-gateway
+    container_name: solo-pay-gateway
     ports:
       - '3001:3001'
     environment:
@@ -74,9 +74,9 @@ services:
       PORT: 3001
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
-      MYSQL_USER: msqpay
+      MYSQL_USER: solopay
       MYSQL_PASSWORD: pass
-      MYSQL_DATABASE: msqpay
+      MYSQL_DATABASE: solopay
       REDIS_HOST: redis
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: http://hardhat-node:8545
@@ -96,7 +96,7 @@ services:
       contracts-init:
         condition: service_completed_successfully
     networks:
-      - msqpay-network
+      - solo-pay-network
       - msq-network
 
   # Demo App (Next.js)
@@ -105,8 +105,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: demo
-    image: msqpay-demo
-    container_name: msqpay-demo
+    image: solo-pay-demo
+    container_name: solo-pay-demo
     ports:
       - '3000:3000'
     environment:
@@ -119,16 +119,16 @@ services:
       # API URLs
       NEXT_PUBLIC_API_URL: http://localhost:3001
       # Server-side API URL (Docker internal network)
-      MSQPAY_API_URL: http://server:3001
+      SOLO_PAY_API_URL: http://gateway:3001
       # API Key for merchant_demo_001 (SHA-256 hash: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3)
-      MSQPAY_API_KEY: '123'
+      SOLO_PAY_API_KEY: '123'
     depends_on:
-      - server
+      - gateway
     networks:
-      - msqpay-network
+      - solo-pay-network
 
 networks:
-  msqpay-network:
+  solo-pay-network:
     driver: bridge
   msq-network:
     external: true

@@ -2,11 +2,11 @@
 
 # Payment API Deployment Guide
 
-A step-by-step guide to deploying the MSQPay Payment API to various environments. Includes hybrid Relay architecture for each environment, ERC2771Forwarder-based Meta-Transaction, Polygon RPC, and environment configuration.
+A step-by-step guide to deploying the SoloPay Payment API to various environments. Includes hybrid Relay architecture for each environment, ERC2771Forwarder-based Meta-Transaction, Polygon RPC, and environment configuration.
 
 ## Environment Architecture Overview (v4.0.0)
 
-MSQPay uses the same HTTP API-based architecture across all environments. Environment switching is controlled solely through the `RELAY_API_URL` environment variable:
+SoloPay uses the same HTTP API-based architecture across all environments. Environment switching is controlled solely through the `RELAY_API_URL` environment variable:
 
 | Environment                | Relay Service               | API URL                               | Forwarder        |
 | -------------------------- | --------------------------- | ------------------------------------- | ---------------- |
@@ -119,13 +119,13 @@ LOG_LEVEL=info
 # ============================================
 # CORS Configuration (Optional)
 # ============================================
-CORS_ORIGIN=https://app.msqpay.io
+CORS_ORIGIN=https://app.solopay.io
 # Client domain
 ```
 
 ### 1.2 Multi-Chain Configuration (chains.json)
 
-Pay Server supports multi-chain through the `chains.json` configuration file. Different configuration files can be used for different environments.
+Pay Gateway supports multi-chain through the `chains.json` configuration file. Different configuration files can be used for different environments.
 
 #### Configuration File Types
 
@@ -200,7 +200,7 @@ ERC2771Forwarder is the core contract for processing Meta-Transactions.
 **Deploy with Hardhat Ignition**:
 
 ```bash
-cd contracts
+cd packages/contracts
 npx hardhat ignition deploy ignition/modules/Forwarder.ts --network amoy
 ```
 
@@ -386,7 +386,7 @@ CMD ["pnpm", "start"]
 
 ```bash
 # Build image
-docker build -t msqpay-api:latest .
+docker build -t solo-pay-api:latest .
 
 # Test image (local)
 docker run -p 3000:3000 \
@@ -394,7 +394,7 @@ docker run -p 3000:3000 \
   -e GATEWAY_ADDRESS=0x... \
   -e FORWARDER_ADDRESS=0x... \
   -e RELAYER_PRIVATE_KEY=xxx \
-  msqpay-api:latest
+  solo-pay-api:latest
 
 # Test connection
 curl http://localhost:3000/health
@@ -482,7 +482,7 @@ aws configure
 
 # 3. Create serverless.yml
 cat > serverless.yml << 'EOF'
-service: msqpay-api
+service: solo-pay-api
 
 provider:
   name: aws
@@ -640,7 +640,7 @@ app.register(rateLimit, {
 
 ```bash
 # Health check endpoint
-curl https://api.msqpay.io/health
+curl https://api.solopay.io/health
 
 # Expected response:
 # {"status":"ok","timestamp":"2024-11-29T10:00:00.000Z"}
@@ -650,7 +650,7 @@ curl https://api.msqpay.io/health
 
 ```bash
 # Test payment creation
-curl -X POST https://api.msqpay.io/payments/create \
+curl -X POST https://api.solopay.io/payments/create \
   -H "Content-Type: application/json" \
   -d '{
     "merchantId": "merchant_001",

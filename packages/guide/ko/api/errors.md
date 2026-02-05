@@ -282,19 +282,19 @@ EIP-712 서명 검증에 실패했습니다.
 **해결 방법**
 
 - 잠시 후 재시도
-- 문제 지속 시 support@msqpay.com 문의
+- 문제 지속 시 support@solopay.com 문의
 
 ---
 
 ## SDK 에러 처리
 
 ```typescript
-import { MSQPayError } from '@globalmsq/msqpay'
+import { SoloPayError } from '@globalmsq/solopay'
 
 try {
   const payment = await client.createPayment({ ... })
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     switch (error.code) {
       case 'UNSUPPORTED_TOKEN':
         console.log('지원하지 않는 토큰입니다')

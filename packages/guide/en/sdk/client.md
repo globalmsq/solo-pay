@@ -1,6 +1,6 @@
 # Client Methods
 
-This document describes the methods provided by MSQPayClient.
+This document describes the methods provided by SoloPayClient.
 
 ## createPayment()
 
@@ -192,12 +192,12 @@ const status = await client.getRelayStatus('relay_abc123');
 ## Error Handling
 
 ```typescript
-import { MSQPayError } from '@globalmsq/msqpay'
+import { SoloPayError } from '@globalmsq/solopay'
 
 try {
   const payment = await client.createPayment({ ... })
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.log(error.code)       // 'UNSUPPORTED_TOKEN'
     console.log(error.message)    // 'Unsupported token'
     console.log(error.statusCode) // 400

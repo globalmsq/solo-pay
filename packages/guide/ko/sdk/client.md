@@ -1,6 +1,6 @@
 # 클라이언트 메서드
 
-MSQPayClient가 제공하는 메서드들을 설명합니다.
+SoloPayClient가 제공하는 메서드들을 설명합니다.
 
 ## createPayment()
 
@@ -192,12 +192,12 @@ const status = await client.getRelayStatus('relay_abc123');
 ## 에러 처리
 
 ```typescript
-import { MSQPayError } from '@globalmsq/msqpay'
+import { SoloPayError } from '@globalmsq/solopay'
 
 try {
   const payment = await client.createPayment({ ... })
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.log(error.code)       // 'UNSUPPORTED_TOKEN'
     console.log(error.message)    // 'Unsupported token'
     console.log(error.statusCode) // 400

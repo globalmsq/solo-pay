@@ -2,7 +2,7 @@
 
 # 시스템 구조
 
-MSQPay 블록체인 결제 시스템의 전체 아키텍처 및 설계 원칙입니다.
+SoloPay 블록체인 결제 시스템의 전체 아키텍처 및 설계 원칙입니다.
 
 ## 핵심 원칙
 
@@ -131,7 +131,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-    subgraph Docker["Docker Network (msqpay-network)"]
+    subgraph Docker["Docker Network (solo-pay-network)"]
         subgraph Infra["인프라"]
             MySQL[(MySQL 8.0<br/>:3306)]
             Redis[(Redis 7<br/>:6379)]
@@ -381,6 +381,6 @@ Production 환경에서는 API Server와 Status Worker를 분리:
 ## 관련 문서
 
 - [API 레퍼런스](api.ko.md) - 모든 API 엔드포인트
-- [SDK 레퍼런스](sdk.ko.md) - MSQPayClient 메서드
+- [SDK 레퍼런스](sdk.ko.md) - SoloPayClient 메서드
 - [결제 통합하기](../guides/integrate-payment.ko.md) - SDK 사용법
 - [서버 배포하기](../guides/deploy-server.ko.md) - 배포 가이드

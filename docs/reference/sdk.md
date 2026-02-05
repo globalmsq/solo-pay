@@ -1,13 +1,13 @@
 [English](sdk.md) | [한국어](sdk.ko.md)
 
-# MSQPay SDK (`@globalmsq/msqpay`)
+# SoloPay SDK (`@globalmsq/solopay`)
 
-A lightweight TypeScript SDK for store servers to interact with the MSQPay payment API. Built with Node.js 18+ native `fetch` and zero external dependencies.
+A lightweight TypeScript SDK for store servers to interact with the SoloPay payment API. Built with Node.js 18+ native `fetch` and zero external dependencies.
 
 ## Installation
 
 ```bash
-pnpm add @globalmsq/msqpay
+pnpm add @globalmsq/solopay
 ```
 
 ## Quick Start
@@ -15,10 +15,10 @@ pnpm add @globalmsq/msqpay
 ### Basic Usage
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
 // Initialize the client
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'production',
   apiKey: 'your-api-key',
 });
@@ -48,13 +48,13 @@ console.log(`Payment created: ${payment.paymentId}`);
 
 ```typescript
 // Development
-const devClient = new MSQPayClient({
+const devClient = new SoloPayClient({
   environment: 'development',
   apiKey: 'dev-api-key',
 });
 
 // Custom environment
-const customClient = new MSQPayClient({
+const customClient = new SoloPayClient({
   environment: 'custom',
   apiKey: 'custom-api-key',
   apiUrl: 'https://my-api.example.com',
@@ -224,13 +224,13 @@ console.log(url); // https://pay-api.msq.com
 
 ## Error Handling
 
-All API errors are thrown as `MSQPayError` with the following structure:
+All API errors are thrown as `SoloPayError` with the following structure:
 
 ```typescript
 try {
   await client.createPayment(params);
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.error(`Error [${error.code}]: ${error.message}`);
     console.error(`HTTP Status: ${error.statusCode}`);
     console.error(`Details:`, error.details);
@@ -256,10 +256,10 @@ The SDK exports all types for full type safety:
 
 ```typescript
 import {
-  MSQPayClient,
-  MSQPayError,
+  SoloPayClient,
+  SoloPayError,
   Environment,
-  MSQPayConfig,
+  SoloPayConfig,
   CreatePaymentParams,
   CreatePaymentResponse,
   PaymentStatusResponse,
@@ -271,7 +271,7 @@ import {
   PaymentHistoryItem,
   PaymentHistoryResponse,
   ErrorResponse,
-} from '@globalmsq/msqpay';
+} from '@globalmsq/solopay';
 ```
 
 ### Type Definitions
@@ -279,7 +279,7 @@ import {
 ```typescript
 type Environment = 'development' | 'staging' | 'production' | 'custom';
 
-interface MSQPayConfig {
+interface SoloPayConfig {
   environment: Environment;
   apiKey: string;
   apiUrl?: string; // Required when environment is 'custom'
@@ -347,12 +347,12 @@ interface PaymentHistoryItem {
 ## Complete Example
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayClient, SoloPayError } from '@globalmsq/solopay';
 
 async function processPayment() {
-  const client = new MSQPayClient({
+  const client = new SoloPayClient({
     environment: 'production',
-    apiKey: process.env.MSQPAY_API_KEY!,
+    apiKey: process.env.SOLO_PAY_API_KEY!,
   });
 
   try {
@@ -391,7 +391,7 @@ async function processPayment() {
       console.log(`Relay request: ${gaslessResult.relayRequestId}`);
     }
   } catch (error) {
-    if (error instanceof MSQPayError) {
+    if (error instanceof SoloPayError) {
       console.error(`Payment error: [${error.code}] ${error.message}`);
     } else {
       console.error('Unexpected error:', error);
@@ -411,7 +411,7 @@ processPayment();
 
 - ✅ **Zero Dependencies**: Uses native Node.js `fetch` API
 - ✅ **Full TypeScript Support**: Complete type definitions
-- ✅ **Type-Safe Error Handling**: `MSQPayError` class with error codes
+- ✅ **Type-Safe Error Handling**: `SoloPayError` class with error codes
 - ✅ **Environment Management**: Built-in support for multiple environments
 - ✅ **API Key Authentication**: Secure header-based authentication
 - ✅ **Comprehensive Test Coverage**: 100% coverage with 32+ test cases
@@ -437,7 +437,7 @@ MIT
 
 For issues or questions:
 
-1. Check the error code and details in the thrown `MSQPayError`
+1. Check the error code and details in the thrown `SoloPayError`
 2. Verify your API key and environment configuration
 3. Ensure Node.js version >= 18.0.0
 4. Review the [API documentation](https://docs.msq.com/api)

@@ -2,7 +2,7 @@
 
 # API Reference
 
-Complete reference for all MSQPay REST API endpoints.
+Complete reference for all SoloPay REST API endpoints.
 
 ## Overview
 
@@ -419,9 +419,9 @@ curl "http://localhost:3001/tokens/0xE4C687167705Abf55d709395f92e254bdF5825a2/ba
 ### JavaScript/TypeScript (SDK)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development',
   apiKey: 'sk_test_abc123',
 });
@@ -449,6 +449,6 @@ const status = await client.getPaymentStatus(payment.paymentId);
 ## Related Documentation
 
 - [Integrate Payment](../guides/integrate-payment.md) - SDK usage guide
-- [SDK Reference](sdk.md) - Complete MSQPayClient methods
+- [SDK Reference](sdk.md) - Complete SoloPayClient methods
 - [Error Codes](errors.md) - Complete error code list
 - [System Architecture](architecture.md) - Architecture diagrams

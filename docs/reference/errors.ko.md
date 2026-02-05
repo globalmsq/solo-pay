@@ -2,7 +2,7 @@
 
 # 에러 코드
 
-MSQPay API 에러 코드 및 해결 방법입니다.
+SoloPay API 에러 코드 및 해결 방법입니다.
 
 ## 에러 응답 구조
 
@@ -113,9 +113,9 @@ MSQPay API 에러 코드 및 해결 방법입니다.
 ### SDK에서 에러 처리
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayClient, SoloPayError } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development',
   apiKey: 'sk_test_abc123',
 });
@@ -123,7 +123,7 @@ const client = new MSQPayClient({
 try {
   await client.createPayment(params);
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.error(`Error [${error.code}]: ${error.message}`);
     console.error(`HTTP Status: ${error.statusCode}`);
     console.error(`Details:`, error.details);
@@ -161,7 +161,7 @@ async function retryableRequest<T>(fn: () => Promise<T>, maxRetries = 3): Promis
     } catch (error) {
       lastError = error as Error;
 
-      if (error instanceof MSQPayError) {
+      if (error instanceof SoloPayError) {
         // 재시도 가능한 에러인지 확인
         const retryable = [
           'INTERNAL_ERROR',
@@ -222,4 +222,4 @@ curl -X POST http://localhost:8545 \
 
 - [API 레퍼런스](api.ko.md) - 모든 API 엔드포인트
 - [결제 통합하기](../guides/integrate-payment.ko.md) - 에러 처리 예제
-- [SDK 레퍼런스](sdk.ko.md) - MSQPayError 클래스
+- [SDK 레퍼런스](sdk.ko.md) - SoloPayError 클래스

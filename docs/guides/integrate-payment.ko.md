@@ -2,12 +2,12 @@
 
 # 결제 통합하기
 
-MSQPay SDK를 사용하여 상점에 블록체인 결제를 통합하는 가이드입니다.
+SoloPay SDK를 사용하여 상점에 블록체인 결제를 통합하는 가이드입니다.
 
 ## SDK 설치
 
 ```bash
-pnpm add @globalmsq/msqpay
+pnpm add @globalmsq/solopay
 ```
 
 **요구사항**:
@@ -18,9 +18,9 @@ pnpm add @globalmsq/msqpay
 ## SDK 초기화
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development', // or 'staging', 'production', 'custom'
   apiKey: 'your-api-key',
 });
@@ -194,12 +194,12 @@ history.data.forEach((payment) => {
 ### 에러 핸들링 예제
 
 ```typescript
-import { MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayError } from '@globalmsq/solopay';
 
 try {
   await client.createPayment(params);
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.error(`Error [${error.code}]: ${error.message}`);
     console.error(`HTTP Status: ${error.statusCode}`);
     console.error(`Details:`, error.details);
@@ -266,11 +266,11 @@ if (BigInt(allowance) < BigInt(amount)) {
 ### 상점서버 (Backend)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'production',
-  apiKey: process.env.MSQPAY_API_KEY!,
+  apiKey: process.env.SOLO_PAY_API_KEY!,
 });
 
 app.post('/api/checkout', async (req, res) => {
@@ -292,7 +292,7 @@ app.post('/api/checkout', async (req, res) => {
     // 4. paymentId 반환
     res.json({ paymentId: payment.paymentId });
   } catch (error) {
-    if (error instanceof MSQPayError) {
+    if (error instanceof SoloPayError) {
       res.status(error.statusCode).json({ error: error.message });
     }
   }
@@ -341,6 +341,6 @@ const checkPayment = setInterval(async () => {
 ## 다음 단계
 
 - [API 레퍼런스](../reference/api.ko.md) - 모든 API 엔드포인트 상세
-- [SDK 레퍼런스](../reference/sdk.ko.md) - MSQPayClient 전체 메서드
+- [SDK 레퍼런스](../reference/sdk.ko.md) - SoloPayClient 전체 메서드
 - [에러 코드](../reference/errors.ko.md) - 전체 에러 코드 목록
 - [서버 배포하기](deploy-server.ko.md) - 결제 서버 배포 가이드

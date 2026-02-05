@@ -1,0 +1,20 @@
+{
+  "name": "@solo-pay/subgraph",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SoloPay Onchain Subgraph for payment event indexing",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph codegen && graph build",
+    "deploy": "graph deploy --studio solo-pay-polygon-amoy",
+    "deploy:local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 solo-pay",
+    "create:local": "graph create --node http://localhost:8020/ solo-pay",
+    "remove:local": "graph remove --node http://localhost:8020/ solo-pay",
+    "test": "echo 'No subgraph tests configured'"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.79.0",
+    "@graphprotocol/graph-ts": "^0.35.0",
+    "matchstick-as": "^0.6.0"
+  }
+}

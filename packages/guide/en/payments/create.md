@@ -4,13 +4,13 @@ Create a payment and receive a unique ID.
 
 ## Overview
 
-Payment creation is the first step in MSQPay integration. Created payments **automatically expire after 30 minutes**.
+Payment creation is the first step in SoloPay integration. Created payments **automatically expire after 30 minutes**.
 
 ## Payment Flow
 
 ```
 ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
-│  Merchant   │         │  MSQPay API │         │  Blockchain │
+│  Merchant   │         │  SoloPay API │         │  Blockchain │
 │  Server     │         │             │         │             │
 └──────┬──────┘         └──────┬──────┘         └──────┬──────┘
        │                       │                       │

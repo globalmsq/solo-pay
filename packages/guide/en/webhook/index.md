@@ -21,7 +21,7 @@ When you set up a Webhook, you can receive HTTP POST requests to your specified 
 
 ### 1. Dashboard Configuration
 
-1. Log in to MSQPay Dashboard
+1. Log in to SoloPay Dashboard
 2. Navigate to Settings > Webhooks
 3. Click "Add Webhook"
 4. Enter Webhook URL (HTTPS required)
@@ -69,12 +69,12 @@ When you set up a Webhook, you can receive HTTP POST requests to your specified 
 
 ## Headers
 
-| Header               | Description                            |
-| -------------------- | -------------------------------------- |
-| `Content-Type`       | `application/json`                     |
-| `X-MSQPay-Signature` | HMAC-SHA256 signature                  |
-| `X-MSQPay-Timestamp` | Request creation time (Unix timestamp) |
-| `X-MSQPay-Event`     | Event type                             |
+| Header                | Description                            |
+| --------------------- | -------------------------------------- |
+| `Content-Type`        | `application/json`                     |
+| `X-SoloPay-Signature` | HMAC-SHA256 signature                  |
+| `X-SoloPay-Timestamp` | Request creation time (Unix timestamp) |
+| `X-SoloPay-Event`     | Event type                             |
 
 ## Retry Policy
 

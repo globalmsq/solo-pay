@@ -1,12 +1,12 @@
 [English](getting-started.md) | [한국어](getting-started.ko.md)
 
-# MSQPay - 시작하기
+# SoloPay - 시작하기
 
 여러 상점이 통합할 수 있는 블록체인 결제 게이트웨이
 
-## MSQPay란?
+## SoloPay란?
 
-MSQPay는 ERC-20 토큰 기반 블록체인 결제 시스템입니다. 상점서버는 SDK를 통해 결제를 생성하고, 사용자는 Direct Payment(가스비 직접 지불) 또는 Gasless Payment(가스비 대납) 방식으로 결제할 수 있습니다.
+SoloPay는 ERC-20 토큰 기반 블록체인 결제 시스템입니다. 상점서버는 SDK를 통해 결제를 생성하고, 사용자는 Direct Payment(가스비 직접 지불) 또는 Gasless Payment(가스비 대납) 방식으로 결제할 수 있습니다.
 
 **핵심 특징**:
 
@@ -73,7 +73,7 @@ curl http://localhost:3001/health
 자세한 내용은:
 
 - [API 레퍼런스](reference/api.ko.md) - 모든 API 엔드포인트
-- [SDK 레퍼런스](reference/sdk.ko.md) - MSQPayClient 메서드
+- [SDK 레퍼런스](reference/sdk.ko.md) - SoloPayClient 메서드
 - [시스템 구조](reference/architecture.ko.md) - 전체 시스템 다이어그램
 - [에러 코드](reference/errors.ko.md) - 에러 코드 및 해결 방법
 
