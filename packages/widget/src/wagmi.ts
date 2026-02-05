@@ -1,27 +1,6 @@
-import { connectorsForWallets } from '@rainbow-me/rainbowkit';
-import { metaMaskWallet, trustWallet } from '@rainbow-me/rainbowkit/wallets';
-import { createConfig, http } from 'wagmi';
+import { http, createConfig } from 'wagmi';
+import { injected, metaMask } from 'wagmi/connectors';
 import { arbitrum, base, mainnet, optimism, polygon, sepolia } from 'wagmi/chains';
-
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
-if (typeof window !== 'undefined' && !projectId) {
-  console.warn(
-    '[Solo Pay] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set. Mobile wallet connections will not work. Get a free ID at https://cloud.walletconnect.com'
-  );
-}
-
-const connectors = connectorsForWallets(
-  [
-    {
-      groupName: 'Popular',
-      wallets: [metaMaskWallet, trustWallet],
-    },
-  ],
-  {
-    appName: 'Solo Pay',
-    projectId: projectId || 'PLACEHOLDER',
-  }
-);
 
 const enableTestnets = process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true';
 
@@ -35,7 +14,12 @@ const chains = [
 ] as const;
 
 export const config = createConfig({
-  connectors,
+  connectors: [
+    // Injected connector for wallet browsers (Trust Wallet, MetaMask mobile, etc.)
+    injected(),
+    // MetaMask SDK for desktop extension + mobile deeplink
+    metaMask(),
+  ],
   chains,
   transports: {
     [mainnet.id]: http(),

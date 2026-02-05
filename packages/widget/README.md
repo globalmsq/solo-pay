@@ -21,10 +21,9 @@ Open http://localhost:3000 (mobile) or http://localhost:3000/pc (PC widget).
 
 ## Environment Variables
 
-| Variable                               | Required | Description                                                                                                             |
-| -------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Yes      | Free project ID from [cloud.walletconnect.com](https://cloud.walletconnect.com) (needed for mobile wallet deep linking) |
-| `NEXT_PUBLIC_ENABLE_TESTNETS`          | No       | Set to `"true"` to enable Sepolia testnet                                                                               |
+| Variable                      | Required | Description                               |
+| ----------------------------- | -------- | ----------------------------------------- |
+| `NEXT_PUBLIC_ENABLE_TESTNETS` | No       | Set to `"true"` to enable Sepolia testnet |
 
 ## Scripts
 
