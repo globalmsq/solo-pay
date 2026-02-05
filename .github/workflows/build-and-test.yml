@@ -38,7 +38,7 @@ jobs:
 
       - name: Build
         run: |
-          pnpm --filter @msq/pay-contracts exec hardhat compile
+          pnpm --filter @solo-pay/contracts exec hardhat compile
           pnpm build
 
       - name: Type check

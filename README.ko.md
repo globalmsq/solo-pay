@@ -1,4 +1,4 @@
-# MSQPay Monorepo
+# SoloPay Monorepo
 
 [English](README.md) | [한국어](README.ko.md)
 
@@ -22,7 +22,7 @@ Multi-Service Blockchain Payment Gateway - ERC-20 토큰 결제 게이트웨이
 
 - **Direct Payment**: 사용자가 가스비를 직접 지불
 - **Gasless Payment**: Meta-transaction을 통한 가스비 대납 (Relayer Service)
-- **TypeScript SDK**: 상점서버용 API 클라이언트 (`@globalmsq/msqpay`)
+- **TypeScript SDK**: 상점서버용 API 클라이언트 (`@globalmsq/solopay`)
 - **결제서버**: paymentId 발급, Contract 상태 조회, Gasless Relay
 - **Demo App**: 테스트용 웹앱
 
@@ -36,15 +36,16 @@ Multi-Service Blockchain Payment Gateway - ERC-20 토큰 결제 게이트웨이
 ## Project Structure
 
 ```
-msqpay-monorepo/
-├── contracts/             # Smart Contracts (Hardhat)
+solopay-monorepo/
 ├── packages/
-│   ├── sdk/              # TypeScript SDK (@globalmsq/msqpay)
-│   ├── pay-server/       # 결제서버 (Fastify)
-│   └── simple-relayer/   # 로컬 개발용 Relayer 서비스
-├── apps/
-│   └── demo/             # Demo Web App (Next.js)
-├── subgraph/             # The Graph Subgraph (이벤트 인덱싱)
+│   ├── contracts/        # Smart Contracts (Hardhat)
+│   ├── demo/             # Demo Web App (Next.js)
+│   ├── guide/            # Documentation Site
+│   ├── integration-tests/# Integration Tests
+│   ├── gateway/          # Pay Gateway (Fastify)
+│   ├── gateway-sdk/      # TypeScript SDK (@solo-pay/gateway-sdk)
+│   ├── simple-relayer/   # 로컬 개발용 Relayer 서비스
+│   └── subgraph/         # The Graph Subgraph (이벤트 인덱싱)
 └── docs/                 # Documentation
 ```
 
@@ -105,7 +106,7 @@ docker-compose restart server
 docker-compose up -d --build server
 
 # MySQL 접속
-docker-compose exec mysql mysql -u root -ppass msqpay
+docker-compose exec mysql mysql -u root -ppass solopay
 
 # 전체 초기화
 docker-compose down -v
@@ -117,19 +118,19 @@ Docker 없이 수동으로 개발하는 경우:
 
 ```bash
 # Terminal 1: Start Hardhat node
-cd contracts
+cd packages/contracts
 npx hardhat node
 
 # Terminal 2: Deploy contracts
-cd contracts
+cd packages/contracts
 pnpm deploy:local
 
-# Terminal 3: Start Payment Server
-cd packages/pay-server
+# Terminal 3: Start Pay Gateway
+cd packages/gateway
 pnpm dev
 
 # Terminal 4: Start Demo App
-cd apps/demo
+cd packages/demo
 pnpm dev
 ```
 
@@ -154,13 +155,13 @@ pnpm dev
 
 Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 
-## SDK Usage (@globalmsq/msqpay)
+## SDK Usage (@globalmsq/solopay)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
 // 초기화
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'development', // 또는 'custom' + apiUrl
   apiKey: 'sk_test_abc123',
 });
@@ -193,7 +194,7 @@ const relayResult = await client.executeRelay({
 });
 ```
 
-**상세 문서**: [SDK README](./packages/sdk/README.ko.md)
+**상세 문서**: [SDK README](./packages/gateway-sdk/README.ko.md)
 
 ## Payment Server API
 
@@ -242,14 +243,14 @@ ERC-20 토큰의 지갑 상태를 조회합니다:
 
 결제 서버의 주요 환경 변수:
 
-| 변수            | 용도                         | 예시                                      |
-| --------------- | ---------------------------- | ----------------------------------------- |
-| `DATABASE_URL`  | MySQL 연결 문자열            | `mysql://user:pass@localhost:3306/msqpay` |
-| `REDIS_URL`     | Redis 연결 문자열 (선택사항) | `redis://localhost:6379`                  |
-| `RELAY_API_URL` | Relayer 서비스 엔드포인트    | `http://simple-relayer:3001`              |
-| `RELAY_API_KEY` | Relayer API 키 (프로덕션만)  | `sk_...`                                  |
+| 변수            | 용도                         | 예시                                       |
+| --------------- | ---------------------------- | ------------------------------------------ |
+| `DATABASE_URL`  | MySQL 연결 문자열            | `mysql://user:pass@localhost:3306/solopay` |
+| `REDIS_URL`     | Redis 연결 문자열 (선택사항) | `redis://localhost:6379`                   |
+| `RELAY_API_URL` | Relayer 서비스 엔드포인트    | `http://simple-relayer:3001`               |
+| `RELAY_API_KEY` | Relayer API 키 (프로덕션만)  | `sk_...`                                   |
 
-> **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 데이터베이스 `chains` 테이블에서 관리되며 환경변수로 설정하지 않습니다. 자세한 내용은 [Pay Server README](./packages/pay-server/README.ko.md#체인-설정)를 참고하세요.
+> **참고**: 체인 설정(RPC URL, 컨트랙트 주소)은 데이터베이스 `chains` 테이블에서 관리되며 환경변수로 설정하지 않습니다. 자세한 내용은 [Pay Gateway README](./packages/gateway/README.ko.md#체인-설정)를 참고하세요.
 
 ## Documentation
 
@@ -258,7 +259,7 @@ ERC-20 토큰의 지갑 상태를 조회합니다:
 - **[서버 배포하기](./docs/guides/deploy-server.ko.md)** - 프로덕션 배포, 환경 설정
 - **[기여하기](./docs/guides/contribute.ko.md)** - 프로젝트에 기여하기
 - **[API 레퍼런스](./docs/reference/api.ko.md)** - 모든 API 엔드포인트, 요청/응답 포맷
-- **[SDK 레퍼런스](./docs/reference/sdk.ko.md)** - MSQPayClient 메서드, 전체 TypeScript 타입
+- **[SDK 레퍼런스](./docs/reference/sdk.ko.md)** - SoloPayClient 메서드, 전체 TypeScript 타입
 - **[아키텍처 가이드](./docs/reference/architecture.ko.md)** - 시스템 설계, 보안, 결제 흐름
 - **[에러 코드](./docs/reference/errors.ko.md)** - 모든 에러 코드 및 해결 방법
 

@@ -1,13 +1,13 @@
 [English](sdk.md) | [한국어](sdk.ko.md)
 
-# MSQPay SDK (`@globalmsq/msqpay`)
+# SoloPay SDK (`@globalmsq/solopay`)
 
-상점 서버가 MSQPay 결제 API와 상호작용하기 위한 경량 TypeScript SDK입니다. Node.js 18+ 네이티브 `fetch`를 사용하며 외부 의존성이 없습니다.
+상점 서버가 SoloPay 결제 API와 상호작용하기 위한 경량 TypeScript SDK입니다. Node.js 18+ 네이티브 `fetch`를 사용하며 외부 의존성이 없습니다.
 
 ## 설치
 
 ```bash
-pnpm add @globalmsq/msqpay
+pnpm add @globalmsq/solopay
 ```
 
 ## 빠른 시작
@@ -15,10 +15,10 @@ pnpm add @globalmsq/msqpay
 ### 기본 사용법
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
 // 클라이언트 초기화
-const client = new MSQPayClient({
+const client = new SoloPayClient({
   environment: 'production',
   apiKey: 'your-api-key',
 });
@@ -48,13 +48,13 @@ console.log(`Payment created: ${payment.paymentId}`);
 
 ```typescript
 // 개발 환경
-const devClient = new MSQPayClient({
+const devClient = new SoloPayClient({
   environment: 'development',
   apiKey: 'dev-api-key',
 });
 
 // 커스텀 환경
-const customClient = new MSQPayClient({
+const customClient = new SoloPayClient({
   environment: 'custom',
   apiKey: 'custom-api-key',
   apiUrl: 'https://my-api.example.com',
@@ -224,13 +224,13 @@ console.log(url); // https://pay-api.msq.com
 
 ## 에러 처리
 
-모든 API 에러는 다음 구조의 `MSQPayError`로 발생합니다.
+모든 API 에러는 다음 구조의 `SoloPayError`로 발생합니다.
 
 ```typescript
 try {
   await client.createPayment(params);
 } catch (error) {
-  if (error instanceof MSQPayError) {
+  if (error instanceof SoloPayError) {
     console.error(`Error [${error.code}]: ${error.message}`);
     console.error(`HTTP Status: ${error.statusCode}`);
     console.error(`Details:`, error.details);
@@ -256,10 +256,10 @@ SDK는 완전한 타입 안전성을 위해 모든 타입을 내보냅니다.
 
 ```typescript
 import {
-  MSQPayClient,
-  MSQPayError,
+  SoloPayClient,
+  SoloPayError,
   Environment,
-  MSQPayConfig,
+  SoloPayConfig,
   CreatePaymentParams,
   CreatePaymentResponse,
   PaymentStatusResponse,
@@ -271,7 +271,7 @@ import {
   PaymentHistoryItem,
   PaymentHistoryResponse,
   ErrorResponse,
-} from '@globalmsq/msqpay';
+} from '@globalmsq/solopay';
 ```
 
 ### 타입 정의
@@ -279,7 +279,7 @@ import {
 ```typescript
 type Environment = 'development' | 'staging' | 'production' | 'custom';
 
-interface MSQPayConfig {
+interface SoloPayConfig {
   environment: Environment;
   apiKey: string;
   apiUrl?: string; // environment가 'custom'일 때 필수
@@ -347,12 +347,12 @@ interface PaymentHistoryItem {
 ## 전체 예제
 
 ```typescript
-import { MSQPayClient, MSQPayError } from '@globalmsq/msqpay';
+import { SoloPayClient, SoloPayError } from '@globalmsq/solopay';
 
 async function processPayment() {
-  const client = new MSQPayClient({
+  const client = new SoloPayClient({
     environment: 'production',
-    apiKey: process.env.MSQPAY_API_KEY!,
+    apiKey: process.env.SOLO_PAY_API_KEY!,
   });
 
   try {
@@ -391,7 +391,7 @@ async function processPayment() {
       console.log(`릴레이 요청: ${gaslessResult.relayRequestId}`);
     }
   } catch (error) {
-    if (error instanceof MSQPayError) {
+    if (error instanceof SoloPayError) {
       console.error(`Payment error: [${error.code}] ${error.message}`);
     } else {
       console.error('Unexpected error:', error);
@@ -411,7 +411,7 @@ processPayment();
 
 - ✅ **제로 의존성**: Node.js 네이티브 `fetch` API 사용
 - ✅ **완전한 TypeScript 지원**: 전체 타입 정의 제공
-- ✅ **타입 안전 에러 처리**: 에러 코드를 포함한 `MSQPayError` 클래스
+- ✅ **타입 안전 에러 처리**: 에러 코드를 포함한 `SoloPayError` 클래스
 - ✅ **환경 관리**: 여러 환경에 대한 내장 지원
 - ✅ **API 키 인증**: 안전한 헤더 기반 인증
 - ✅ **종합적인 테스트 커버리지**: 32개 이상의 테스트 케이스로 100% 커버리지
@@ -437,7 +437,7 @@ MIT
 
 문제나 질문이 있는 경우:
 
-1. 발생한 `MSQPayError`의 에러 코드 및 상세 정보 확인
+1. 발생한 `SoloPayError`의 에러 코드 및 상세 정보 확인
 2. API 키 및 환경 설정 확인
 3. Node.js 버전 >= 18.0.0 확인
 4. [API 문서](https://docs.msq.com/api) 검토

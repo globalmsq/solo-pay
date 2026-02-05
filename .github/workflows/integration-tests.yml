@@ -5,10 +5,10 @@ on:
     branches: ['main']
     paths:
       - 'packages/integration-tests/**'
-      - 'packages/pay-server/**'
+      - 'packages/gateway/**'
       - 'packages/simple-relayer/**'
-      - 'packages/sdk/**'
-      - 'contracts/**'
+      - 'packages/gateway-sdk/**'
+      - 'packages/contracts/**'
       - 'docker/**'
       - '.github/workflows/integration-tests.yml'
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 20
 
     env:
-      DATABASE_URL: mysql://msqpay:pass@127.0.0.1:3306/msqpay
+      DATABASE_URL: mysql://solopay:pass@127.0.0.1:3306/solopay
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: http://127.0.0.1:8545
@@ -38,8 +38,8 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: pass
-          MYSQL_DATABASE: msqpay
-          MYSQL_USER: msqpay
+          MYSQL_DATABASE: solopay
+          MYSQL_USER: solopay
           MYSQL_PASSWORD: pass
         ports:
           - 3306:3306
@@ -76,38 +76,38 @@ jobs:
 
       - name: Build packages
         run: |
-          pnpm --filter @msq/pay-contracts exec hardhat compile
+          pnpm --filter @solo-pay/contracts exec hardhat compile
           pnpm build
 
       - name: Initialize database
         run: |
-          mysql -h 127.0.0.1 -u root -ppass msqpay < docker/init.sql
+          mysql -h 127.0.0.1 -u root -ppass solopay < docker/init.sql
 
       - name: Start Hardhat node
         run: |
-          cd contracts
+          cd packages/contracts
           pnpm exec hardhat node --hostname 0.0.0.0 &
           sleep 5
           echo "Hardhat node started"
 
       - name: Deploy contracts
         run: |
-          cd contracts
+          cd packages/contracts
           pnpm exec hardhat run scripts/check-and-deploy.ts --network localhost
 
       - name: Update database with localhost RPC
         run: |
-          mysql -h 127.0.0.1 -u root -ppass msqpay -e "UPDATE chains SET rpc_url = '$BLOCKCHAIN_RPC_URL' WHERE network_id = $CHAIN_ID;"
+          mysql -h 127.0.0.1 -u root -ppass solopay -e "UPDATE chains SET rpc_url = '$BLOCKCHAIN_RPC_URL' WHERE network_id = $CHAIN_ID;"
 
-      - name: Start pay-server
+      - name: Start gateway
         env:
           NODE_ENV: test
           PORT: 3011
         run: |
-          cd packages/pay-server
+          cd packages/gateway
           pnpm start &
           sleep 5
-          echo "pay-server started"
+          echo "gateway started"
 
       - name: Start simple-relayer
         env:
@@ -140,7 +140,7 @@ jobs:
           curl -sf $BLOCKCHAIN_RPC_URL -X POST -H "Content-Type: application/json" \
             -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 
-          echo "Checking pay-server..."
+          echo "Checking gateway..."
           curl -sf $PAY_SERVER_URL/health
 
           echo "Checking simple-relayer..."
@@ -158,8 +158,8 @@ jobs:
           echo "=== Process list ==="
           ps aux | grep -E "(node|hardhat)" || true
 
-          echo "=== Pay-server logs (if any) ==="
-          cat /tmp/pay-server.log 2>/dev/null || true
+          echo "=== Gateway logs (if any) ==="
+          cat /tmp/gateway.log 2>/dev/null || true
 
           echo "=== Simple-relayer logs (if any) ==="
           cat /tmp/simple-relayer.log 2>/dev/null || true

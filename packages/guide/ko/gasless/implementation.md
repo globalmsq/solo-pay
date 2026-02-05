@@ -68,7 +68,7 @@ const forwardRequest = {
 // EIP-712 서명
 const signature = await signTypedDataAsync({
   domain: {
-    name: 'MSQPay Forwarder',
+    name: 'MSQForwarder',
     version: '1',
     chainId: 80002, // Polygon Amoy
     verifyingContract: FORWARDER_ADDRESS,
@@ -94,7 +94,7 @@ const signature = await signTypedDataAsync({
 사용자 지갑에서 다음과 같은 내용이 표시됩니다:
 
 ```
-MSQPay Forwarder
+MSQForwarder
 
 ForwardRequest
 ───────────────
@@ -264,10 +264,10 @@ function GaslessPayment({ paymentId, forwarderAddress, gatewayAddress, amount, t
 ### 백엔드 (Node.js)
 
 ```typescript
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@globalmsq/solopay';
 
-const client = new MSQPayClient({
-  apiKey: process.env.MSQPAY_API_KEY!,
+const client = new SoloPayClient({
+  apiKey: process.env.SOLO_PAY_API_KEY!,
   environment: 'staging',
 });
 

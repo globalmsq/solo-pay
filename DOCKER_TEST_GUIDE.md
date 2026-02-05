@@ -29,11 +29,11 @@ docker-compose up
 **예상 출력**:
 
 ```
-Creating msqpay-mysql   ... done
-Creating msqpay-redis   ... done
-Creating msqpay-hardhat ... done
-Creating msqpay-server  ... done
-Creating msqpay-demo    ... done
+Creating solo-pay-mysql   ... done
+Creating solo-pay-redis   ... done
+Creating solo-pay-hardhat ... done
+Creating solo-pay-gateway  ... done
+Creating solo-pay-demo    ... done
 ```
 
 ---
@@ -48,11 +48,11 @@ docker-compose ps
 
 # 예상 출력:
 NAME              COMMAND                  SERVICE   STATUS           PORTS
-msqpay-mysql      "docker-entrypoint.s…"   mysql     Up (healthy)     0.0.0.0:3306->3306/tcp
-msqpay-redis      "redis-server /usr/l…"   redis     Up (healthy)     0.0.0.0:6379->6379/tcp
-msqpay-hardhat    "npx hardhat node …"     hardhat   Up (healthy)     0.0.0.0:8545->8545/tcp
-msqpay-server     "node dist/index.js"     server    Up (healthy)     0.0.0.0:3001->3001/tcp
-msqpay-demo       "pnpm start"             demo      Up (healthy)     0.0.0.0:3000->3000/tcp
+solo-pay-mysql      "docker-entrypoint.s…"   mysql     Up (healthy)     0.0.0.0:3306->3306/tcp
+solo-pay-redis      "redis-server /usr/l…"   redis     Up (healthy)     0.0.0.0:6379->6379/tcp
+solo-pay-hardhat    "npx hardhat node …"     hardhat   Up (healthy)     0.0.0.0:8545->8545/tcp
+solo-pay-gateway    "pnpm start"             gateway   Up (healthy)     0.0.0.0:3001->3001/tcp
+solo-pay-demo       "pnpm start"             demo      Up (healthy)     0.0.0.0:3000->3000/tcp
 ```
 
 ### 개별 서비스 테스트
@@ -64,7 +64,7 @@ msqpay-demo       "pnpm start"             demo      Up (healthy)     0.0.0.0:30
 docker-compose exec mysql mysql -u root -ppass -e "SELECT VERSION();"
 
 # 데이터베이스 확인
-docker-compose exec mysql mysql -u root -ppass msqpay -e "SHOW TABLES;"
+docker-compose exec mysql mysql -u root -ppass solopay -e "SHOW TABLES;"
 
 # 예상 테이블:
 payments
@@ -94,7 +94,7 @@ curl -X POST http://localhost:8545 \
 # {"jsonrpc":"2.0","result":"HardhatNetwork/...","id":67}
 ```
 
-#### Payment Server
+#### Payment Gateway
 
 ```bash
 # Health check
@@ -107,7 +107,7 @@ curl http://localhost:3001/health
 curl http://localhost:3001
 
 # 예상 응답:
-# {"service":"MSQ Pay Server","version":"0.1.0","status":"running"}
+# {"service":"Solo Pay Gateway","version":"0.1.0","status":"running"}
 ```
 
 #### Demo App
@@ -130,7 +130,7 @@ curl -s http://localhost:3000 | head -20
 docker-compose logs -f
 
 # 또는 특정 서비스만
-docker-compose logs -f server
+docker-compose logs -f gateway
 docker-compose logs -f hardhat
 docker-compose logs -f mysql
 ```
@@ -138,7 +138,7 @@ docker-compose logs -f mysql
 ### 로그 크기 확인
 
 ```bash
-docker-compose logs --tail=50 server
+docker-compose logs --tail=50 gateway
 ```
 
 ---
@@ -235,7 +235,7 @@ docker stats
 ### 컨테이너 상세 정보
 
 ```bash
-docker inspect msqpay-server
+docker inspect solo-pay-gateway
 ```
 
 ---
@@ -245,20 +245,20 @@ docker inspect msqpay-server
 1. **결제서버 API 개발**
 
    ```bash
-   cd ../packages/pay-server
+   cd ../packages/gateway
    pnpm dev
    ```
 
 2. **SDK 개발**
 
    ```bash
-   cd ../packages/sdk
+   cd ../packages/gateway-sdk
    pnpm dev
    ```
 
 3. **Demo 앱 수정**
    ```bash
-   cd ../apps/demo
+   cd ../packages/demo
    pnpm dev
    ```
 

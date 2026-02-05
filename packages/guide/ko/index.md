@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: MSQPay
+  name: SoloPay
   text: 블록체인 결제 게이트웨이
   tagline: 쉽고 빠른 ERC-20 토큰 결제 통합
   actions:

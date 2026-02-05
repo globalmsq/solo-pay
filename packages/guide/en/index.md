@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: MSQPay
+  name: SoloPay
   text: Blockchain Payment Gateway
   tagline: Easy and Fast ERC-20 Token Payment Integration
   actions:

@@ -1,11 +1,11 @@
-import { MSQPayClient } from '@globalmsq/msqpay';
+import { SoloPayClient } from '@solo-pay/gateway-sdk';
 import type {
   CreatePaymentParams,
   CreatePaymentResponse,
   PaymentStatusResponse,
   GaslessParams,
   GaslessResponse,
-} from '@globalmsq/msqpay';
+} from '@solo-pay/gateway-sdk';
 
 import { getMerchant } from '../fixtures/merchant';
 
@@ -24,17 +24,17 @@ export const TEST_MERCHANT: TestMerchant = {
   apiKey: '123',
 };
 
-export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): MSQPayClient {
-  return new MSQPayClient({
+export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): SoloPayClient {
+  return new SoloPayClient({
     environment: 'custom',
     apiUrl: PAY_SERVER_URL,
     apiKey: merchant.apiKey,
   });
 }
 
-export function createTestClientFromFixture(merchantName: string = 'default'): MSQPayClient {
+export function createTestClientFromFixture(merchantName: string = 'default'): SoloPayClient {
   const fixture = getMerchant(merchantName);
-  return new MSQPayClient({
+  return new SoloPayClient({
     environment: 'custom',
     apiUrl: PAY_SERVER_URL,
     apiKey: fixture.apiKey,
@@ -42,28 +42,28 @@ export function createTestClientFromFixture(merchantName: string = 'default'): M
 }
 
 export async function createPayment(
-  client: MSQPayClient,
+  client: SoloPayClient,
   params: CreatePaymentParams
 ): Promise<CreatePaymentResponse> {
   return client.createPayment(params);
 }
 
 export async function getPaymentStatus(
-  client: MSQPayClient,
+  client: SoloPayClient,
   paymentId: string
 ): Promise<PaymentStatusResponse> {
   return client.getPaymentStatus(paymentId);
 }
 
 export async function submitGasless(
-  client: MSQPayClient,
+  client: SoloPayClient,
   params: GaslessParams
 ): Promise<GaslessResponse> {
   return client.submitGasless(params);
 }
 
 export async function waitForPaymentStatus(
-  client: MSQPayClient,
+  client: SoloPayClient,
   paymentId: string,
   expectedStatus: string,
   timeoutMs: number = 30000,
@@ -82,7 +82,7 @@ export async function waitForPaymentStatus(
   throw new Error(`Payment status did not reach ${expectedStatus} within ${timeoutMs}ms`);
 }
 
-export { MSQPayClient };
+export { SoloPayClient };
 export type {
   CreatePaymentParams,
   CreatePaymentResponse,

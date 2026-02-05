@@ -12,7 +12,7 @@ artifacts/
 build-info/
 cache/
 typechain-types/
-subgraph/generated/
+packages/subgraph/generated/
 
 # Config/tool files
 .moai/

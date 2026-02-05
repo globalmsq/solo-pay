@@ -1,5 +1,5 @@
 {
-  "name": "@msqpay/simple-relayer",
+  "name": "@solo-pay/simple-relayer",
   "version": "1.0.0",
   "description": "Simple HTTP service for gasless transaction relay (Defender/msq-relayer compatible)",
   "main": "./dist/index.js",
