@@ -8,6 +8,7 @@
   },
   "scripts": {
     "compile": "hardhat compile",
+    "build": "hardhat compile",
     "test": "hardhat test",
     "test:coverage": "hardhat coverage",
     "typecheck": "tsc --noEmit",
