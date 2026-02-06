@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useDisconnect } from 'wagmi';
 import { useStableConnection } from '@/hooks/useStableConnection';
@@ -56,6 +57,9 @@ export default function Home() {
           <p className="text-gray-600 dark:text-gray-400">Blockchain Payment Gateway</p>
         </div>
         <div className="flex items-center gap-4">
+          <Link href="/webhook-log" className="text-sm text-primary-600 hover:underline">
+            Webhook log
+          </Link>
           {/* Current chain info (read-only) */}
           {chainConfig && (
             <div className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm">

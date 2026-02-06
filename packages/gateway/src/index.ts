@@ -16,6 +16,7 @@ import { RelayService } from './services/relay.service';
 import { ServerSigningService } from './services/signature-server.service';
 import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
+import { createWebhookQueue } from '@solo-pay/webhook-manager';
 import { createPaymentRoute } from './routes/payments/create';
 import { createPublicPaymentRoute } from './routes/payments/create-public';
 import { prepareWalletRoute } from './routes/payments/prepare-wallet';
@@ -165,7 +166,14 @@ const registerRoutes = async () => {
     paymentMethodService,
     tokenService
   );
-  await paymentDetailRoute(server, blockchainService, merchantService, paymentService);
+  webhookQueueInstance = createWebhookQueue(getRedisClient());
+  await paymentDetailRoute(
+    server,
+    blockchainService,
+    merchantService,
+    paymentService,
+    webhookQueueInstance
+  );
   await paymentInfoRoute(
     server,
     blockchainService,
@@ -174,7 +182,13 @@ const registerRoutes = async () => {
     tokenService,
     paymentMethodService
   );
-  await getPaymentStatusRoute(server, blockchainService, paymentService);
+  await getPaymentStatusRoute(
+    server,
+    blockchainService,
+    paymentService,
+    merchantService,
+    webhookQueueInstance
+  );
   await submitGaslessRoute(server, relayerService, relayService, paymentService, merchantService);
   await getRelayStatusRoute(server, relayerService);
   await getPaymentHistoryRoute(server, blockchainService, paymentService, relayService);
@@ -195,10 +209,15 @@ const registerRoutes = async () => {
 };
 
 // Graceful shutdown
+let webhookQueueInstance: ReturnType<typeof createWebhookQueue> | null = null;
+
 const gracefulShutdown = async (signal: string) => {
   logger.info(`\n📢 Received ${signal}, shutting down gracefully...`);
   try {
     await server.close();
+    if (webhookQueueInstance) {
+      await webhookQueueInstance.close();
+    }
     await disconnectPrisma();
     await disconnectRedis();
     logger.info('✅ Server closed successfully');
