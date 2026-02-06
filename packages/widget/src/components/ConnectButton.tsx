@@ -17,7 +17,16 @@ export function ConnectButton({ className }: { className?: string }) {
     connectTrustWallet,
     connectInjected,
     disconnect,
+    pendingConnectorId,
   } = useWallet();
+
+  const isMetaMaskPending =
+    isPending && (pendingConnectorId === 'metaMask' || pendingConnectorId === 'metaMaskSDK');
+  const isTrustWalletPending =
+    isPending &&
+    (pendingConnectorId === 'injected' ||
+      pendingConnectorId === 'trust' ||
+      pendingConnectorId === 'trustWallet');
 
   // Connected state
   if (isConnected && address) {
@@ -50,11 +59,11 @@ export function ConnectButton({ className }: { className?: string }) {
       <div className={className}>
         <button
           onClick={connectTrustWallet}
-          disabled={isPending}
+          disabled={isTrustWalletPending}
           type="button"
           className="w-full rounded-xl bg-[#3375BB] px-6 py-4 text-lg font-semibold text-white shadow-sm hover:bg-[#2a5f99] active:bg-[#1e4a7a] disabled:opacity-50 transition-colors"
         >
-          {isPending ? 'Connecting...' : 'Connect Wallet'}
+          {isTrustWalletPending ? 'Connecting...' : 'Connect Wallet'}
         </button>
       </div>
     );
@@ -66,11 +75,11 @@ export function ConnectButton({ className }: { className?: string }) {
       <div className={className}>
         <button
           onClick={connectInjected}
-          disabled={isPending}
+          disabled={isMetaMaskPending}
           type="button"
           className="w-full rounded-xl bg-[#F6851B] px-6 py-4 text-lg font-semibold text-white shadow-sm hover:bg-[#e2761b] active:bg-[#cd6116] disabled:opacity-50 transition-colors"
         >
-          {isPending ? 'Connecting...' : 'Connect Wallet'}
+          {isMetaMaskPending ? 'Connecting...' : 'Connect Wallet'}
         </button>
       </div>
     );
@@ -82,19 +91,19 @@ export function ConnectButton({ className }: { className?: string }) {
       <div className={[className, 'flex flex-col gap-2'].join(' ')}>
         <button
           onClick={connectMetaMask}
-          disabled={isPending}
+          disabled={isMetaMaskPending}
           type="button"
           className="w-full rounded-xl bg-[#F6851B] px-6 py-4 text-lg font-semibold text-white shadow-sm hover:bg-[#e2761b] active:bg-[#cd6116] disabled:opacity-50 transition-colors"
         >
-          {isPending ? 'Connecting...' : 'MetaMask'}
+          {isMetaMaskPending ? 'Connecting...' : 'MetaMask'}
         </button>
         <button
           onClick={connectTrustWallet}
-          disabled={isPending}
+          disabled={isTrustWalletPending}
           type="button"
           className="w-full rounded-xl bg-[#3375BB] px-6 py-4 text-lg font-semibold text-white shadow-sm hover:bg-[#2a5f99] active:bg-[#1e4a7a] disabled:opacity-50 transition-colors"
         >
-          {isPending ? 'Connecting...' : 'Trust Wallet'}
+          {isTrustWalletPending ? 'Connecting...' : 'Trust Wallet'}
         </button>
       </div>
     );
@@ -106,21 +115,21 @@ export function ConnectButton({ className }: { className?: string }) {
       {/* MetaMask */}
       <button
         onClick={connectMetaMask}
-        disabled={isPending}
+        disabled={isMetaMaskPending}
         type="button"
         className="w-full rounded-xl bg-[#F6851B] px-6 py-4 text-lg font-semibold text-white shadow-sm hover:bg-[#e2761b] active:bg-[#cd6116] disabled:opacity-50 transition-colors"
       >
-        {isPending ? 'Connecting...' : 'MetaMask'}
+        {isMetaMaskPending ? 'Connecting...' : 'MetaMask'}
       </button>
 
       {/* Trust Wallet - works on both desktop (extension) and mobile (deeplink) */}
       <button
         onClick={connectTrustWallet}
-        disabled={isPending}
+        disabled={isTrustWalletPending}
         type="button"
         className="w-full rounded-xl bg-[#3375BB] px-6 py-4 text-lg font-semibold text-white shadow-sm hover:bg-[#2a5f99] active:bg-[#1e4a7a] disabled:opacity-50 transition-colors"
       >
-        {isPending ? 'Connecting...' : 'Trust Wallet'}
+        {isTrustWalletPending ? 'Connecting...' : 'Trust Wallet'}
       </button>
     </div>
   );

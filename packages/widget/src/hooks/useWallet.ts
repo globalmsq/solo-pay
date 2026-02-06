@@ -20,6 +20,8 @@ export interface WalletState {
   isTrustWalletBrowser: boolean;
   /** Inside MetaMask browser (mobile) or extension available (desktop) */
   isMetaMaskBrowser: boolean;
+  /** ID of the connector currently trying to connect */
+  pendingConnectorId?: string;
 }
 
 export interface WalletActions {
@@ -186,7 +188,7 @@ export function getTrustWalletDeeplink(url?: string): string {
 
 export function useWallet(): UseWalletReturn {
   const { address, isConnected, chain } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
+  const { connect, connectors, isPending, variables: connectVariables } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
 
   const [isMobile, setIsMobile] = useState(false);
@@ -263,6 +265,7 @@ export function useWallet(): UseWalletReturn {
     isMobile,
     isTrustWalletBrowser,
     isMetaMaskBrowser,
+    pendingConnectorId: (connectVariables?.connector as { id?: string })?.id,
     // Actions
     connectMetaMask,
     connectTrustWallet,
