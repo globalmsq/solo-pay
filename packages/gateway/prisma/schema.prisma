@@ -31,6 +31,17 @@ enum EventType {
   RELAY_SUBMITTED
   RELAY_CONFIRMED
   EXPIRED
+  REFUND_REQUESTED
+  REFUND_SUBMITTED
+  REFUND_CONFIRMED
+  REFUND_FAILED
+}
+
+enum RefundStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  FAILED
 }
 
 model Chain {
@@ -159,4 +170,28 @@ model PaymentEvent {
 
   @@index([payment_id])
   @@map("payment_events")
+}
+
+model Refund {
+  id              Int          @id @default(autoincrement())
+  refund_hash     String       @unique @db.VarChar(66)  // bytes32, unique refund identifier
+  payment_id      Int          // FK to payments.id
+  merchant_id     Int          // FK to merchants.id (denormalized for query efficiency)
+  amount          Decimal      @db.Decimal(65, 0)       // refund amount in wei
+  token_address   String       @db.VarChar(42)          // token contract address
+  payer_address   String       @db.VarChar(42)          // refund recipient (original payer)
+  status          RefundStatus @default(PENDING)
+  reason          String?      @db.VarChar(500)         // refund reason (optional)
+  tx_hash         String?      @db.VarChar(66)          // refund transaction hash
+  error_message   String?      @db.Text                 // error message on failure
+  submitted_at    DateTime?                             // relayer submission time
+  confirmed_at    DateTime?                             // on-chain confirmation time
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @default(now()) @updatedAt
+
+  @@index([payment_id])
+  @@index([merchant_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("refunds")
 }

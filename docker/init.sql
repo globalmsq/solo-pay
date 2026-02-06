@@ -14,7 +14,8 @@ USE solopay;
 
 -- PaymentStatus: CREATED, PENDING, CONFIRMED, FAILED, EXPIRED
 -- RelayStatus: QUEUED, SUBMITTED, CONFIRMED, FAILED
--- EventType: CREATED, STATUS_CHANGED, RELAY_SUBMITTED, RELAY_CONFIRMED, EXPIRED
+-- RefundStatus: PENDING, SUBMITTED, CONFIRMED, FAILED
+-- EventType: CREATED, STATUS_CHANGED, RELAY_SUBMITTED, RELAY_CONFIRMED, EXPIRED, REFUND_REQUESTED, REFUND_SUBMITTED, REFUND_CONFIRMED, REFUND_FAILED
 
 -- ============================================================
 -- TABLE 1: chains - Blockchain networks
@@ -158,13 +159,39 @@ CREATE TABLE IF NOT EXISTS relay_requests (
 CREATE TABLE IF NOT EXISTS payment_events (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     payment_id INT NOT NULL COMMENT 'Logical reference to payments.id',
-    event_type ENUM('CREATED', 'STATUS_CHANGED', 'RELAY_SUBMITTED', 'RELAY_CONFIRMED', 'EXPIRED') NOT NULL,
+    event_type ENUM('CREATED', 'STATUS_CHANGED', 'RELAY_SUBMITTED', 'RELAY_CONFIRMED', 'EXPIRED', 'REFUND_REQUESTED', 'REFUND_SUBMITTED', 'REFUND_CONFIRMED', 'REFUND_FAILED') NOT NULL,
     old_status VARCHAR(20) NULL DEFAULT NULL,
     new_status VARCHAR(20) NULL DEFAULT NULL,
     metadata JSON NULL DEFAULT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_payment_id (payment_id),
     INDEX idx_event_type (event_type),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- TABLE 8: refunds - Refund records
+-- ============================================================
+CREATE TABLE IF NOT EXISTS refunds (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    refund_hash VARCHAR(66) NOT NULL UNIQUE COMMENT 'Keccak256 hash (bytes32), unique refund identifier',
+    payment_id INT NOT NULL COMMENT 'Logical reference to payments.id',
+    merchant_id INT NOT NULL COMMENT 'Logical reference to merchants.id (denormalized)',
+    amount DECIMAL(65,0) NOT NULL COMMENT 'Refund amount in wei',
+    token_address VARCHAR(42) NOT NULL COMMENT 'Token contract address',
+    payer_address VARCHAR(42) NOT NULL COMMENT 'Refund recipient (original payer)',
+    status ENUM('PENDING', 'SUBMITTED', 'CONFIRMED', 'FAILED') NOT NULL DEFAULT 'PENDING',
+    reason VARCHAR(500) NULL DEFAULT NULL COMMENT 'Refund reason (optional)',
+    tx_hash VARCHAR(66) NULL DEFAULT NULL COMMENT 'Refund transaction hash',
+    error_message TEXT NULL DEFAULT NULL COMMENT 'Error message on failure',
+    submitted_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Relayer submission time',
+    confirmed_at TIMESTAMP NULL DEFAULT NULL COMMENT 'On-chain confirmation time',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_refund_hash (refund_hash),
+    INDEX idx_payment_id (payment_id),
+    INDEX idx_merchant_id (merchant_id),
+    INDEX idx_status (status),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -240,4 +267,6 @@ SELECT 'payments', COUNT(*) FROM payments
 UNION ALL
 SELECT 'relay_requests', COUNT(*) FROM relay_requests
 UNION ALL
-SELECT 'payment_events', COUNT(*) FROM payment_events;
+SELECT 'payment_events', COUNT(*) FROM payment_events
+UNION ALL
+SELECT 'refunds', COUNT(*) FROM refunds;
