@@ -137,9 +137,6 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           path: solo-pay-infra
 
-      - name: Install Kustomize
-        run: curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s -- /usr/local/bin
-
       - name: Update kustomization
         working-directory: solo-pay-infra/k8s/overlays/${{ env.OVERLAY }}
         env:
