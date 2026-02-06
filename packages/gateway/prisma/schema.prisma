@@ -45,7 +45,7 @@ model Chain {
   is_deleted       Boolean  @default(false)
   deleted_at       DateTime?
   created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  updated_at       DateTime @default(now()) @updatedAt
 
   @@map("chains")
 }
@@ -60,7 +60,7 @@ model Token {
   is_deleted      Boolean  @default(false)
   deleted_at      DateTime?
   created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  updated_at      DateTime @default(now()) @updatedAt
 
   @@unique([chain_id, address])
   @@map("tokens")
@@ -82,7 +82,7 @@ model Merchant {
   is_deleted        Boolean  @default(false)
   deleted_at        DateTime?
   created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  updated_at        DateTime @default(now()) @updatedAt
 
   @@map("merchants")
 }
@@ -96,7 +96,7 @@ model MerchantPaymentMethod {
   is_deleted        Boolean  @default(false)
   deleted_at        DateTime?
   created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  updated_at        DateTime @default(now()) @updatedAt
 
   @@unique([merchant_id, token_id])
   @@map("merchant_payment_methods")
@@ -122,7 +122,7 @@ model Payment {
   origin                String?       @db.VarChar(500) // request origin for domain verification audit
   payer_address         String?       @db.VarChar(42)  // payer wallet address
   created_at            DateTime      @default(now())
-  updated_at            DateTime      @updatedAt
+  updated_at            DateTime      @default(now()) @updatedAt
 
   @@index([merchant_id])
   @@index([status])
@@ -142,7 +142,7 @@ model RelayRequest {
   submitted_at    DateTime?
   confirmed_at    DateTime?
   created_at      DateTime    @default(now())
-  updated_at      DateTime    @updatedAt
+  updated_at      DateTime    @default(now()) @updatedAt
 
   @@index([payment_id])
   @@map("relay_requests")
