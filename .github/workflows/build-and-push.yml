@@ -137,18 +137,17 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           path: solo-pay-infra
 
-      - name: Setup Kustomize
-        uses: imranismail/setup-kustomize@v2
-
       - name: Update kustomization
         working-directory: solo-pay-infra/k8s/overlays/${{ env.OVERLAY }}
         env:
           ECR_BASE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/solo-pay
           TARGETS: ${{ needs.setup.outputs.kustomize_targets }}
         run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
           for target in $(echo "$TARGETS" | jq -r '.[]'); do
-            kustomize edit set image ${ECR_BASE}/${target}=${ECR_BASE}/${target}:${TAG}
+            ./kustomize edit set image ${ECR_BASE}/${target}=${ECR_BASE}/${target}:${TAG}
           done
+          npx prettier --write kustomization.yaml
 
       - name: Commit and push
         working-directory: solo-pay-infra
