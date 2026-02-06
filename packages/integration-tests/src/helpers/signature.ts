@@ -176,3 +176,63 @@ export function buildForwardRequestData(
 export function getDeadline(hoursFromNow: number = 1): bigint {
   return BigInt(Math.floor(Date.now() / 1000) + hoursFromNow * 3600);
 }
+
+// --- Refund ---
+
+export interface RefundParams {
+  originalPaymentId: string;
+  tokenAddress: string;
+  amount: bigint;
+  payerAddress: string;
+  merchantId: string;
+}
+
+const REFUND_REQUEST_TYPES = {
+  RefundRequest: [
+    { name: 'originalPaymentId', type: 'bytes32' },
+    { name: 'tokenAddress', type: 'address' },
+    { name: 'amount', type: 'uint256' },
+    { name: 'payerAddress', type: 'address' },
+    { name: 'merchantId', type: 'bytes32' },
+  ],
+};
+
+export async function signRefundRequest(
+  params: RefundParams,
+  signerPrivateKey: string = HARDHAT_ACCOUNTS.signer.privateKey,
+  gatewayAddress: string = CONTRACT_ADDRESSES.paymentGateway,
+  chainId: number = TEST_CHAIN_ID
+): Promise<string> {
+  const provider = getProvider();
+  const wallet = new Wallet(signerPrivateKey, provider);
+  const domain = getPaymentGatewayDomain(gatewayAddress, chainId);
+
+  const message = {
+    originalPaymentId: params.originalPaymentId,
+    tokenAddress: params.tokenAddress,
+    amount: params.amount,
+    payerAddress: params.payerAddress,
+    merchantId: params.merchantId,
+  };
+
+  return wallet.signTypedData(domain, REFUND_REQUEST_TYPES, message);
+}
+
+export function encodeRefundFunctionData(
+  originalPaymentId: string,
+  tokenAddress: string,
+  amount: bigint,
+  payerAddress: string,
+  merchantId: string,
+  serverSignature: string
+): string {
+  const iface = new Interface(PaymentGatewayABI);
+  return iface.encodeFunctionData('refund', [
+    originalPaymentId,
+    tokenAddress,
+    amount,
+    payerAddress,
+    merchantId,
+    serverSignature,
+  ]);
+}

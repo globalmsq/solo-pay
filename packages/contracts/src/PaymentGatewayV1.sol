@@ -43,11 +43,18 @@ contract PaymentGatewayV1 is
     /// @dev keccak256("PaymentRequest(bytes32 paymentId,address tokenAddress,uint256 amount,address recipientAddress,bytes32 merchantId,uint16 feeBps)")
     bytes32 public constant PAYMENT_REQUEST_TYPEHASH = 0x72d781e0942cb269e920d3563ab7d2adea5c28bad1c9364c70dcb529638cff65;
 
+    /// @notice EIP-712 typehash for RefundRequest
+    /// @dev keccak256("RefundRequest(bytes32 originalPaymentId,address tokenAddress,uint256 amount,address payerAddress,bytes32 merchantId)")
+    bytes32 public constant REFUND_REQUEST_TYPEHASH = 0x598c2433ebfb69460ac5996ae20431ae5372d75ec981feb369353efa8899a0eb;
+
     /// @notice Maximum fee percentage (100% = 10000 basis points)
     uint16 public constant MAX_FEE_BPS = 10000;
 
     /// @notice Mapping of payment IDs to their processed status
     mapping(bytes32 => bool) public processedPayments;
+
+    /// @notice Mapping of payment IDs to their refunded status
+    mapping(bytes32 => bool) public refundedPayments;
 
     /// @notice Mapping of token addresses to their supported status
     mapping(address => bool) public supportedTokens;
@@ -299,6 +306,114 @@ contract PaymentGatewayV1 is
             emit TokenSupportChanged(tokenAddresses[i], supported[i]);
         }
     }
+
+    // ============ Refund Functions ============
+
+    /**
+     * @notice Process a refund with server signature verification
+     * @dev Transfers ERC20 tokens from the merchant (msg.sender) to the original payer
+     *      Uses _msgSender() to support both direct calls and meta-transactions
+     * @param originalPaymentId The original payment ID to refund
+     * @param tokenAddress Address of the ERC20 token to refund
+     * @param amount Amount to refund (in token's smallest unit)
+     * @param payerAddress Address to receive the refund (original payer)
+     * @param merchantId Merchant identifier (from server signature)
+     * @param serverSignature Server's EIP-712 signature
+     */
+    function refund(
+        bytes32 originalPaymentId,
+        address tokenAddress,
+        uint256 amount,
+        address payerAddress,
+        bytes32 merchantId,
+        bytes calldata serverSignature
+    ) external nonReentrant {
+        // Validation
+        require(processedPayments[originalPaymentId], "PG: payment not found");
+        require(!refundedPayments[originalPaymentId], "PG: already refunded");
+        require(amount > 0, "PG: amount must be > 0");
+        require(tokenAddress != address(0), "PG: invalid token");
+        require(payerAddress != address(0), "PG: invalid payer");
+
+        // Verify server signature
+        require(
+            _verifyRefundSignature(
+                originalPaymentId,
+                tokenAddress,
+                amount,
+                payerAddress,
+                merchantId,
+                serverSignature
+            ),
+            "PG: invalid signature"
+        );
+
+        // Mark as refunded before transfer (reentrancy protection)
+        refundedPayments[originalPaymentId] = true;
+
+        // Get the actual sender (merchant) - supports meta-transactions
+        address merchantAddress = _msgSender();
+
+        // Transfer tokens from merchant to original payer
+        IERC20(tokenAddress).safeTransferFrom(merchantAddress, payerAddress, amount);
+
+        // Emit event
+        emit RefundCompleted(
+            originalPaymentId,
+            merchantId,
+            payerAddress,
+            merchantAddress,
+            tokenAddress,
+            amount,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Internal function to verify refund server signature
+     * @param originalPaymentId Original payment identifier
+     * @param tokenAddress Token address
+     * @param amount Refund amount
+     * @param payerAddress Payer address (refund recipient)
+     * @param merchantId Merchant identifier
+     * @param signature Server signature
+     * @return True if signature is valid
+     */
+    function _verifyRefundSignature(
+        bytes32 originalPaymentId,
+        address tokenAddress,
+        uint256 amount,
+        address payerAddress,
+        bytes32 merchantId,
+        bytes calldata signature
+    ) internal view returns (bool) {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                REFUND_REQUEST_TYPEHASH,
+                originalPaymentId,
+                tokenAddress,
+                amount,
+                payerAddress,
+                merchantId
+            )
+        );
+
+        bytes32 hash = _hashTypedDataV4(structHash);
+        address recoveredSigner = hash.recover(signature);
+
+        return recoveredSigner == signerAddress;
+    }
+
+    /**
+     * @notice Check if a payment has been refunded
+     * @param paymentId The payment ID to check
+     * @return True if the payment has been refunded
+     */
+    function isPaymentRefunded(bytes32 paymentId) external view returns (bool) {
+        return refundedPayments[paymentId];
+    }
+
+    // ============ View Functions ============
 
     /**
      * @notice Check if a payment ID has been used
