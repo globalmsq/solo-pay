@@ -1,15 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import WalletConnect from './WalletConnect';
 import TokenApproval from './TokenApproval';
 import PaymentConfirm from './PaymentConfirm';
 import PaymentProcessing from './PaymentProcessing';
 import PaymentComplete from './PaymentComplete';
-import type {
-  PaymentStepType,
-  PaymentInfo,
-  WalletInfo,
-  TransactionResult,
-} from '../../types/index';
+import { useWallet } from '../../hooks/useWallet';
+import type { PaymentStepType, PaymentInfo, TransactionResult } from '../../types/index';
 
 interface PaymentStepProps {
   initialPaymentInfo?: PaymentInfo;
@@ -26,15 +22,19 @@ const DEFAULT_PAYMENT_INFO: PaymentInfo = {
 export default function PaymentStep({ initialPaymentInfo }: PaymentStepProps) {
   const [currentStep, setCurrentStep] = useState<PaymentStepType>('wallet-connect');
 
+  // Wallet connection state from wagmi
+  const { address, isConnected, disconnect } = useWallet();
+
   // Payment info from props or default (mock data for UI preview)
   const [paymentInfo] = useState<PaymentInfo>(initialPaymentInfo ?? DEFAULT_PAYMENT_INFO);
 
-  // TODO: Replace with actual wallet data from RainbowKit/wagmi after connection
-  // Mock wallet info for UI preview
-  const [walletInfo] = useState<WalletInfo>({
-    address: '0x1234...abcd',
-    balance: '1,000.00',
-  });
+  // Format wallet address for display
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  // mock balance
+  const mockBalance = '1,000.00';
 
   // TODO: Replace with actual transaction result after payment completion
   // Mock transaction result for UI preview
@@ -53,6 +53,22 @@ export default function PaymentStep({ initialPaymentInfo }: PaymentStepProps) {
 
   // Step navigation handlers
   const goToWalletConnect = () => setCurrentStep('wallet-connect');
+
+  // TODO: Replace with gas check API call after wallet connection
+  // Current: wallet connect → token-approval
+  // Future: wallet connect → gas check API → token-approval (if approve needed) or payment-confirm (if already approved)
+  useEffect(() => {
+    if (isConnected && address) {
+      setCurrentStep('token-approval');
+    }
+  }, [isConnected, address]);
+
+  // Disconnect handler: disconnect wallet and return to WalletConnect step
+  const handleDisconnect = useCallback(() => {
+    disconnect();
+    goToWalletConnect();
+  }, [disconnect]);
+
   const goToTokenApproval = () => setCurrentStep('token-approval');
   const goToPaymentConfirm = () => setCurrentStep('payment-confirm');
   const goToPaymentProcessing = () => setCurrentStep('payment-processing');
@@ -77,12 +93,12 @@ export default function PaymentStep({ initialPaymentInfo }: PaymentStepProps) {
       case 'token-approval':
         return (
           <TokenApproval
-            walletAddress={walletInfo.address}
-            balance={walletInfo.balance}
+            walletAddress={address ? formatAddress(address) : ''}
+            balance={mockBalance}
             token={paymentInfo.token}
             onGetGas={handleGetGas}
             onApprove={goToPaymentConfirm}
-            onBack={goToWalletConnect}
+            onDisconnect={handleDisconnect}
           />
         );
 

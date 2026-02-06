@@ -4,7 +4,7 @@ interface TokenApprovalProps {
   token: string;
   onApprove?: () => void;
   onGetGas?: () => void;
-  onBack?: () => void;
+  onDisconnect?: () => void;
 }
 
 export default function TokenApproval({
@@ -13,29 +13,10 @@ export default function TokenApproval({
   token,
   onApprove,
   onGetGas,
-  onBack,
+  onDisconnect,
 }: TokenApprovalProps) {
   return (
     <div className="w-full p-4 sm:p-8">
-      {onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 hover:text-gray-700 mb-4 sm:mb-6 cursor-pointer"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-          Back
-        </button>
-      )}
-
       {/* Title */}
       <div className="text-center mb-6 sm:mb-8">
         <h1 className="text-base sm:text-lg font-bold text-gray-900">Token Approval</h1>
@@ -50,10 +31,28 @@ export default function TokenApproval({
           <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
             Connected Wallet
           </span>
-          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-green-50 text-green-700 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            Connected
-          </span>
+          {onDisconnect && (
+            <button
+              type="button"
+              onClick={onDisconnect}
+              className="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+            >
+              <svg
+                className="w-3.5 h-3.5 sm:w-3 sm:h-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+                />
+              </svg>
+              <span className="hidden sm:inline">Disconnect</span>
+            </button>
+          )}
         </div>
 
         {/* Address */}
