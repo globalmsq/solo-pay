@@ -9,12 +9,35 @@ env:
   AWS_REGION: ap-northeast-2
 
 jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      overlay: ${{ steps.meta.outputs.overlay }}
+      targets: ${{ steps.meta.outputs.targets }}
+      kustomize_targets: ${{ steps.meta.outputs.kustomize_targets }}
+    steps:
+      - name: Extract metadata
+        id: meta
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/release-* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/release-}" >> $GITHUB_OUTPUT
+            echo "overlay=prod" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+            echo "overlay=dev" >> $GITHUB_OUTPUT
+          fi
+          echo 'targets=["hardhat","contracts","gateway","demo","simple-relayer","guide"]' >> $GITHUB_OUTPUT
+          echo 'kustomize_targets=["gateway","demo","guide"]' >> $GITHUB_OUTPUT
+
   build:
     name: Build ${{ matrix.target }} (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    needs: setup
     strategy:
       matrix:
-        target: [hardhat, contracts, gateway, demo, simple-relayer, guide]
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
         arch: [amd64, arm64]
         include:
           - arch: amd64
@@ -38,27 +61,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Extract metadata
-        id: meta
-        run: |
-          IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/solo-pay/${{ matrix.target }}
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-            echo "tag=${IMAGE}:${VERSION}-${{ matrix.arch }}" >> $GITHUB_OUTPUT
-          else
-            SHORT_SHA=${GITHUB_SHA:0:7}
-            echo "tag=${IMAGE}:${SHORT_SHA}-${{ matrix.arch }}" >> $GITHUB_OUTPUT
-          fi
-          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
-
       - name: Build and push
         uses: docker/build-push-action@v6
+        env:
+          IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/solo-pay/${{ matrix.target }}
         with:
           context: .
           file: docker/Dockerfile.packages
           target: ${{ matrix.target }}
           push: true
-          tags: ${{ steps.meta.outputs.tag }}
+          tags: ${{ env.IMAGE }}:${{ needs.setup.outputs.tag }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.target }}-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.arch }}
           provenance: false
@@ -66,10 +78,10 @@ jobs:
   manifest:
     name: Create manifest ${{ matrix.target }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, setup]
     strategy:
       matrix:
-        target: [hardhat, contracts, gateway, demo, simple-relayer, guide]
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -82,39 +94,65 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Create and push manifest
+        env:
+          IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/solo-pay/${{ matrix.target }}
+          TAG: ${{ needs.setup.outputs.tag }}
+          OVERLAY: ${{ needs.setup.outputs.overlay }}
         run: |
-          IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/solo-pay/${{ matrix.target }}
+          docker manifest create ${IMAGE}:${TAG} \
+            ${IMAGE}:${TAG}-amd64 \
+            ${IMAGE}:${TAG}-arm64
+          docker manifest push ${IMAGE}:${TAG}
 
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-            MAJOR_MINOR=${VERSION%.*}
-
-            docker manifest create ${IMAGE}:${VERSION} \
-              ${IMAGE}:${VERSION}-amd64 \
-              ${IMAGE}:${VERSION}-arm64
-            docker manifest push ${IMAGE}:${VERSION}
-
+          if [[ "$OVERLAY" == "prod" ]]; then
+            MAJOR_MINOR=${TAG%.*}
             docker manifest create ${IMAGE}:${MAJOR_MINOR} \
-              ${IMAGE}:${VERSION}-amd64 \
-              ${IMAGE}:${VERSION}-arm64
+              ${IMAGE}:${TAG}-amd64 \
+              ${IMAGE}:${TAG}-arm64
             docker manifest push ${IMAGE}:${MAJOR_MINOR}
 
             docker manifest create ${IMAGE}:latest \
-              ${IMAGE}:${VERSION}-amd64 \
-              ${IMAGE}:${VERSION}-arm64
+              ${IMAGE}:${TAG}-amd64 \
+              ${IMAGE}:${TAG}-arm64
             docker manifest push ${IMAGE}:latest
           else
-            SHORT_SHA=${GITHUB_SHA:0:7}
-
-            # Create manifest for specific commit
-            docker manifest create ${IMAGE}:${SHORT_SHA} \
-              ${IMAGE}:${SHORT_SHA}-amd64 \
-              ${IMAGE}:${SHORT_SHA}-arm64
-            docker manifest push ${IMAGE}:${SHORT_SHA}
-
-            # Update latest nightly tag
             docker manifest create ${IMAGE}:nightly \
-              ${IMAGE}:${SHORT_SHA}-amd64 \
-              ${IMAGE}:${SHORT_SHA}-arm64
+              ${IMAGE}:${TAG}-amd64 \
+              ${IMAGE}:${TAG}-arm64
             docker manifest push ${IMAGE}:nightly
           fi
+
+  update-kustomize:
+    name: Update Kustomize
+    runs-on: ubuntu-latest
+    needs: [manifest, setup]
+    env:
+      TAG: ${{ needs.setup.outputs.tag }}
+      OVERLAY: ${{ needs.setup.outputs.overlay }}
+    steps:
+      - name: Checkout infra repo
+        uses: actions/checkout@v4
+        with:
+          repository: globalmsq/solo-pay-infra
+          token: ${{ secrets.PAT_TOKEN }}
+          path: solo-pay-infra
+
+      - name: Update kustomization
+        working-directory: solo-pay-infra/k8s/overlays/${{ env.OVERLAY }}
+        env:
+          ECR_BASE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/solo-pay
+          TARGETS: ${{ needs.setup.outputs.kustomize_targets }}
+        run: |
+          for target in $(echo "$TARGETS" | jq -r '.[]'); do
+            kustomize edit set image ${ECR_BASE}/${target}=${ECR_BASE}/${target}:${TAG}
+          done
+          npx prettier --write kustomization.yaml
+
+      - name: Commit and push
+        working-directory: solo-pay-infra
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "chore: update image tag to ${TAG} (${OVERLAY})"
+          git push
