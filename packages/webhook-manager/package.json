@@ -1,0 +1,39 @@
+{
+  "name": "@solo-pay/webhook-manager",
+  "version": "0.1.0",
+  "description": "Webhook delivery worker: sends payment.confirmed to merchant URLs via Redis queue",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/worker.js",
+    "start:worker": "node dist/worker.js",
+    "dev": "tsx watch src/worker.ts",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage",
+    "lint": "eslint",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "bullmq": "^5.34.0",
+    "ioredis": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.0.17",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.14"
+  },
+  "keywords": [
+    "webhook",
+    "queue",
+    "payment",
+    "bullmq",
+    "redis"
+  ],
+  "author": "MSQ Team",
+  "license": "MIT"
+}

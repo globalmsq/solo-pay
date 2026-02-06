@@ -20,6 +20,7 @@
     "@fastify/swagger": "^9.6.1",
     "@fastify/swagger-ui": "^5.2.4",
     "@solo-pay/contracts": "workspace:*",
+    "@solo-pay/webhook-manager": "workspace:*",
     "@prisma/client": "^6.0.0",
     "dotenv": "^16.4.0",
     "fastify": "^5.0.0",

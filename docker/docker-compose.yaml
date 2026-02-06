@@ -93,6 +93,25 @@ services:
       retries: 3
       start_period: 10s
 
+  # Webhook Manager  (sends payment.confirmed to merchant webhook_url via Redis queue)
+  webhook-manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: webhook-manager
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/webhook-manager:nightly
+    container_name: solo-pay-webhook-manager
+    restart: always
+    environment:
+      NODE_ENV: production
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - solo-pay-network
+
   # Payment Gateway (Fastify)
   gateway:
     build:

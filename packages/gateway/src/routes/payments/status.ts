@@ -1,12 +1,20 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
+import { MerchantService } from '../../services/merchant.service';
+import {
+  resolveWebhookUrl,
+  buildPaymentConfirmedBody,
+  type WebhookQueueAdapter,
+} from '../../services/webhook-queue.service';
 import { PaymentStatusResponseSchema, ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getPaymentStatusRoute(
   app: FastifyInstance,
   blockchainService: BlockchainService,
-  paymentService: PaymentService
+  paymentService: PaymentService,
+  merchantService: MerchantService,
+  webhookQueue: WebhookQueueAdapter
 ) {
   app.get<{
     Params: { id: string };
@@ -114,7 +122,7 @@ Retrieves the current status of a payment by its payment hash.
           paymentStatus.status === 'completed' &&
           ['CREATED', 'PENDING'].includes(paymentData.status)
         ) {
-          await paymentService.updateStatusByHash(
+          const updatedPayment = await paymentService.updateStatusByHash(
             paymentData.payment_hash,
             'CONFIRMED',
             paymentStatus.transactionHash
@@ -123,6 +131,20 @@ Retrieves the current status of a payment by its payment hash.
             await paymentService.updatePayerAddress(id, paymentStatus.payerAddress);
           }
           finalStatus = 'CONFIRMED';
+
+          // Enqueue webhook: payment.confirmed (fire-and-forget, do not block response)
+          const merchant = await merchantService.findById(updatedPayment.merchant_id);
+          const webhookUrl = resolveWebhookUrl(updatedPayment, merchant);
+          if (webhookUrl) {
+            webhookQueue
+              .addPaymentConfirmed({
+                url: webhookUrl,
+                body: buildPaymentConfirmedBody(updatedPayment),
+              })
+              .catch((err) => {
+                app.log.warn({ err, paymentId: id }, 'Webhook enqueue failed');
+              });
+          }
         }
 
         return reply.code(200).send({

@@ -4,20 +4,26 @@ import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
 import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
 import { MerchantService } from '../../services/merchant.service';
+import {
+  resolveWebhookUrl,
+  buildPaymentConfirmedBody,
+  type WebhookQueueAdapter,
+} from '../../services/webhook-queue.service';
 import { ErrorResponseSchema } from '../../docs/schemas';
 
 /**
  * Syncs payment status from blockchain: if on-chain status is completed and DB status is
  * CREATED or PENDING, updates DB to CONFIRMED and mutates the payment object in place.
+ * @returns true if status was updated to CONFIRMED (caller may enqueue webhook).
  */
 async function syncPaymentStatusFromChain(
   blockchainService: BlockchainService,
   paymentService: PaymentService,
   payment: Payment
-): Promise<void> {
+): Promise<boolean> {
   const chainId = payment.network_id;
   if (!blockchainService.isChainSupported(chainId)) {
-    return;
+    return false;
   }
   const paymentStatus = await blockchainService.getPaymentStatus(chainId, payment.payment_hash);
   if (paymentStatus?.status === 'completed' && ['CREATED', 'PENDING'].includes(payment.status)) {
@@ -36,7 +42,9 @@ async function syncPaymentStatusFromChain(
       );
       payment.payer_address = withPayer.payer_address ?? payment.payer_address;
     }
+    return true;
   }
+  return false;
 }
 
 function buildPaymentDetailResponse(payment: {
@@ -71,7 +79,8 @@ export async function paymentDetailRoute(
   app: FastifyInstance,
   blockchainService: BlockchainService,
   merchantService: MerchantService,
-  paymentService: PaymentService
+  paymentService: PaymentService,
+  webhookQueue: WebhookQueueAdapter
 ) {
   const authMiddleware = createMerchantAuthMiddleware(merchantService);
 
@@ -142,7 +151,25 @@ Retrieves payment by merchant order ID. API Key required. Same response format a
           });
         }
 
-        await syncPaymentStatusFromChain(blockchainService, paymentService, payment);
+        const statusJustConfirmed = await syncPaymentStatusFromChain(
+          blockchainService,
+          paymentService,
+          payment
+        );
+        if (statusJustConfirmed && payment.status === 'CONFIRMED') {
+          const merchantForWebhook = await merchantService.findById(payment.merchant_id);
+          const webhookUrl = resolveWebhookUrl(payment, merchantForWebhook);
+          if (webhookUrl) {
+            webhookQueue
+              .addPaymentConfirmed({
+                url: webhookUrl,
+                body: buildPaymentConfirmedBody(payment),
+              })
+              .catch((err) => {
+                app.log.warn({ err, paymentId: payment.payment_hash }, 'Webhook enqueue failed');
+              });
+          }
+        }
 
         return reply.code(200).send(buildPaymentDetailResponse(payment));
       } catch (error) {
@@ -204,7 +231,25 @@ Syncs latest status from blockchain.
           });
         }
 
-        await syncPaymentStatusFromChain(blockchainService, paymentService, payment);
+        const statusJustConfirmed = await syncPaymentStatusFromChain(
+          blockchainService,
+          paymentService,
+          payment
+        );
+        if (statusJustConfirmed && payment.status === 'CONFIRMED') {
+          const merchantForWebhook = await merchantService.findById(payment.merchant_id);
+          const webhookUrl = resolveWebhookUrl(payment, merchantForWebhook);
+          if (webhookUrl) {
+            webhookQueue
+              .addPaymentConfirmed({
+                url: webhookUrl,
+                body: buildPaymentConfirmedBody(payment),
+              })
+              .catch((err) => {
+                app.log.warn({ err, paymentId: payment.payment_hash }, 'Webhook enqueue failed');
+              });
+          }
+        }
 
         return reply.code(200).send(buildPaymentDetailResponse(payment));
       } catch (error) {

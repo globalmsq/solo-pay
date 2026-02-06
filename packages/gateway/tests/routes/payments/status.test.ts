@@ -4,16 +4,21 @@ import cors from '@fastify/cors';
 import { getPaymentStatusRoute } from '../../../src/routes/payments/status';
 import { BlockchainService } from '../../../src/services/blockchain.service';
 import { PaymentService } from '../../../src/services/payment.service';
+import { MerchantService } from '../../../src/services/merchant.service';
+import type { WebhookQueueAdapter } from '../../../src/services/webhook-queue.service';
 import { PaymentStatus } from '../../../src/schemas/payment.schema';
 
 describe('GET /payments/:id/status', () => {
   let app: FastifyInstance;
   let blockchainService: Partial<BlockchainService>;
   let paymentService: Partial<PaymentService>;
+  let merchantService: Partial<MerchantService>;
+  let webhookQueue: WebhookQueueAdapter;
 
   const mockPaymentData = {
-    id: 'payment-db-id',
+    id: 1,
     payment_hash: 'payment-123',
+    merchant_id: 1,
     network_id: 31337,
     token_symbol: 'USDC',
     status: 'PENDING',
@@ -55,12 +60,28 @@ describe('GET /payments/:id/status', () => {
     paymentService = {
       findByHash: vi.fn().mockResolvedValue(mockPaymentData),
       updateStatusByHash: vi.fn().mockResolvedValue(mockPaymentData),
+      updatePayerAddress: vi
+        .fn()
+        .mockResolvedValue({ ...mockPaymentData, payer_address: '0xpayer' }),
+    };
+
+    merchantService = {
+      findById: vi.fn().mockResolvedValue({
+        id: 1,
+        webhook_url: 'https://merchant.example/webhook',
+      }),
+    };
+
+    webhookQueue = {
+      addPaymentConfirmed: vi.fn().mockResolvedValue(undefined),
     };
 
     await getPaymentStatusRoute(
       app,
       blockchainService as BlockchainService,
-      paymentService as PaymentService
+      paymentService as PaymentService,
+      merchantService as MerchantService,
+      webhookQueue
     );
   });
 
@@ -167,6 +188,78 @@ describe('GET /payments/:id/status', () => {
         // DB status is returned (uppercase)
         expect(body.data.status).toBe(status.toUpperCase());
       }
+    });
+  });
+
+  describe('Webhook enqueue', () => {
+    it('when status syncs to CONFIRMED and merchant has webhook_url, enqueues webhook job', async () => {
+      const paymentCreated = {
+        ...mockPaymentData,
+        status: 'CREATED',
+        order_id: 'order-1',
+        webhook_url: null,
+        tx_hash: null,
+        confirmed_at: null,
+      };
+      const updatedPayment = {
+        ...paymentCreated,
+        status: 'CONFIRMED',
+        tx_hash: '0xtxhash',
+        confirmed_at: new Date('2024-01-26T12:00:00.000Z'),
+      };
+      const merchantWithWebhook = {
+        id: 1,
+        webhook_url: 'https://merchant.example/webhook',
+      };
+
+      paymentService.findByHash = vi.fn().mockResolvedValue(paymentCreated);
+      paymentService.updateStatusByHash = vi.fn().mockResolvedValue(updatedPayment);
+      paymentService.updatePayerAddress = vi.fn().mockResolvedValue(updatedPayment);
+      blockchainService.getPaymentStatus = vi.fn().mockResolvedValue({
+        ...mockPaymentStatus,
+        status: 'completed',
+        transactionHash: '0xtxhash',
+      });
+      merchantService.findById = vi.fn().mockResolvedValue(merchantWithWebhook);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/payments/payment-123/status',
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(webhookQueue.addPaymentConfirmed).toHaveBeenCalledTimes(1);
+      expect(webhookQueue.addPaymentConfirmed).toHaveBeenCalledWith({
+        url: 'https://merchant.example/webhook',
+        body: expect.objectContaining({
+          paymentId: 'payment-123',
+          orderId: 'order-1',
+          status: 'CONFIRMED',
+          txHash: '0xtxhash',
+          tokenSymbol: 'USDC',
+          amount: '1000000000000000000',
+        }),
+      });
+    });
+
+    it('when merchant has no webhook_url, does not call addPaymentConfirmed', async () => {
+      const paymentCreated = { ...mockPaymentData, status: 'CREATED' };
+      const updatedPayment = { ...paymentCreated, status: 'CONFIRMED' };
+      paymentService.findByHash = vi.fn().mockResolvedValue(paymentCreated);
+      paymentService.updateStatusByHash = vi.fn().mockResolvedValue(updatedPayment);
+      paymentService.updatePayerAddress = vi.fn().mockResolvedValue(updatedPayment);
+      blockchainService.getPaymentStatus = vi.fn().mockResolvedValue({
+        ...mockPaymentStatus,
+        status: 'completed',
+      });
+      merchantService.findById = vi.fn().mockResolvedValue({ id: 1, webhook_url: null });
+
+      await app.inject({
+        method: 'GET',
+        url: '/payments/payment-123/status',
+      });
+
+      expect(webhookQueue.addPaymentConfirmed).not.toHaveBeenCalled();
     });
   });
 
