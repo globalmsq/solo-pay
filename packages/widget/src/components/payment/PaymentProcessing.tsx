@@ -11,6 +11,10 @@ interface PaymentProcessingProps {
   amount: string;
   token: string;
   onComplete?: () => void;
+  /** Whether payment transaction is pending */
+  isPending?: boolean;
+  /** Error message from payment */
+  error?: string;
 }
 
 function StepIndicator({ status }: { status: StepStatus }) {
@@ -58,15 +62,35 @@ function StepItem({ label, status }: StepProps) {
   );
 }
 
-export default function PaymentProcessing({ amount, token, onComplete }: PaymentProcessingProps) {
-  // Simulate payment processing - auto-complete after 3 seconds (will be updated)
+export default function PaymentProcessing({
+  amount,
+  token,
+  onComplete,
+  isPending = true,
+  error,
+}: PaymentProcessingProps) {
+  // Call onComplete when transaction is confirmed (isPending becomes false with no error)
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (!isPending && !error) {
       onComplete?.();
-    }, 3000);
+    }
+  }, [isPending, error, onComplete]);
 
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+  // Determine step statuses based on isPending state
+  const getStepStatus = (step: 'requesting' | 'signing' | 'confirming'): StepStatus => {
+    if (error) {
+      // On error, show the signing step as where we stopped
+      if (step === 'requesting') return 'completed';
+      return 'waiting';
+    }
+    if (isPending) {
+      if (step === 'requesting') return 'completed';
+      if (step === 'signing') return 'processing';
+      return 'waiting';
+    }
+    // All done
+    return 'completed';
+  };
 
   return (
     <div className="w-full p-4 sm:p-8">
@@ -89,15 +113,40 @@ export default function PaymentProcessing({ amount, token, onComplete }: Payment
         </p>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 sm:mb-6 p-4 rounded-xl bg-red-50 border border-red-200">
+          <div className="flex items-start gap-2">
+            <svg
+              className="w-5 h-5 text-red-500 shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+              />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-red-700">Transaction Failed</p>
+              <p className="text-xs text-red-600 mt-1">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Progress Steps */}
       <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 sm:p-5">
         <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">
           Payment Status
         </h2>
         <div className="space-y-3 sm:space-y-4">
-          <StepItem label="Requesting Payment" status="completed" />
-          <StepItem label="Signing Transaction" status="processing" />
-          <StepItem label="Confirming Payment" status="waiting" />
+          <StepItem label="Requesting Payment" status={getStepStatus('requesting')} />
+          <StepItem label="Signing Transaction" status={getStepStatus('signing')} />
+          <StepItem label="Confirming Payment" status={getStepStatus('confirming')} />
         </div>
       </div>
     </div>

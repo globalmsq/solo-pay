@@ -5,6 +5,12 @@ interface TokenApprovalProps {
   onApprove?: () => void;
   onGetGas?: () => void;
   onDisconnect?: () => void;
+  /** Whether approval transaction is pending */
+  isApproving?: boolean;
+  /** Whether user needs to approve (false if already approved) */
+  needsApproval?: boolean;
+  /** Error message from approval */
+  error?: string;
 }
 
 export default function TokenApproval({
@@ -14,6 +20,9 @@ export default function TokenApproval({
   onApprove,
   onGetGas,
   onDisconnect,
+  isApproving = false,
+  needsApproval = true,
+  error,
 }: TokenApprovalProps) {
   return (
     <div className="w-full p-4 sm:p-8">
@@ -101,13 +110,36 @@ export default function TokenApproval({
         </button>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-xs text-red-600">{error}</p>
+        </div>
+      )}
+
       {/* Approve Button */}
       <button
         type="button"
-        className="w-full py-3 sm:py-3.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 active:bg-blue-700 transition-colors cursor-pointer"
+        className={`w-full py-3 sm:py-3.5 rounded-xl text-white text-sm font-semibold transition-colors ${
+          isApproving
+            ? 'bg-blue-400 cursor-not-allowed'
+            : needsApproval
+              ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 cursor-pointer'
+              : 'bg-green-600 hover:bg-green-500 cursor-pointer'
+        }`}
         onClick={onApprove}
+        disabled={isApproving}
       >
-        Approve Token
+        {isApproving ? (
+          <span className="flex items-center justify-center gap-2">
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            Approving...
+          </span>
+        ) : needsApproval ? (
+          'Approve Token'
+        ) : (
+          'Continue to Payment'
+        )}
       </button>
     </div>
   );

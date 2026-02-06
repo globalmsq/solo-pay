@@ -22,12 +22,13 @@ export const config = createConfig({
   ],
   chains,
   transports: {
-    [mainnet.id]: http(),
-    [polygon.id]: http(),
-    [optimism.id]: http(),
-    [arbitrum.id]: http(),
-    [base.id]: http(),
-    [sepolia.id]: http(),
+    // Use publicnode RPCs - they have proper CORS headers
+    [mainnet.id]: http('https://ethereum-rpc.publicnode.com'),
+    [polygon.id]: http('https://polygon-bor-rpc.publicnode.com'),
+    [optimism.id]: http('https://optimism-rpc.publicnode.com'),
+    [arbitrum.id]: http('https://arbitrum-one-rpc.publicnode.com'),
+    [base.id]: http('https://base-rpc.publicnode.com'),
+    [sepolia.id]: http('https://ethereum-sepolia-rpc.publicnode.com'),
   },
   ssr: true,
 });

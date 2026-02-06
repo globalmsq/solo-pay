@@ -5,6 +5,70 @@ export type PaymentStepType =
   | 'payment-processing'
   | 'payment-complete';
 
+/**
+ * URL parameters for widget initialization
+ * Matches: /?pk=xxx&orderId=xxx&amount=xxx&successUrl=xxx&failUrl=xxx&webhookUrl=xxx
+ */
+export interface WidgetUrlParams {
+  /** Public key for merchant authentication (required) */
+  pk: string;
+  /** Merchant order ID (required) */
+  orderId: string;
+  /** Payment amount in human readable format (required) */
+  amount: string;
+  /** Redirect URL on success (required) */
+  successUrl: string;
+  /** Redirect URL on failure (required) */
+  failUrl: string;
+  /** Server notification URL (optional) */
+  webhookUrl?: string;
+}
+
+/**
+ * Validation result for URL parameters
+ */
+export interface UrlParamsValidationResult {
+  /** Whether validation passed */
+  isValid: boolean;
+  /** Validated parameters (only if isValid is true) */
+  params?: WidgetUrlParams;
+  /** Validation errors (only if isValid is false) */
+  errors?: string[];
+}
+
+/**
+ * API response from POST /payments/create-public
+ */
+export interface PaymentDetails {
+  /** Payment hash for smart contract */
+  paymentId: string;
+  /** Merchant order ID */
+  orderId: string;
+  /** Server signature for contract verification */
+  signature: string;
+  /** Blockchain network ID */
+  chainId: number;
+  /** ERC20 token contract address */
+  tokenAddress: string;
+  /** PaymentGateway contract address */
+  gatewayAddress: string;
+  /** Amount in wei (string) */
+  amount: string;
+  /** Token decimals */
+  tokenDecimals: number;
+  /** Token symbol (e.g., USDT) */
+  tokenSymbol: string;
+  /** Redirect URL on success */
+  successUrl: string;
+  /** Redirect URL on failure */
+  failUrl: string;
+  /** Payment expiration time (ISO string) */
+  expiresAt: string;
+}
+
+/**
+ * @deprecated Use WidgetUrlParams and PaymentDetails instead
+ */
 export interface PaymentInfo {
   product: string;
   amount: string;
