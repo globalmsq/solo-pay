@@ -135,12 +135,13 @@ jobs:
         with:
           repository: globalmsq/solo-pay-infra
           token: ${{ secrets.PAT_TOKEN }}
+          path: solo-pay-infra
 
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
 
       - name: Update kustomization
-        working-directory: k8s/overlays/${{ env.OVERLAY }}
+        working-directory: solo-pay-infra/k8s/overlays/${{ env.OVERLAY }}
         env:
           ECR_BASE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/solo-pay
           TARGETS: ${{ needs.setup.outputs.kustomize_targets }}
@@ -149,6 +150,9 @@ jobs:
             kustomize edit set image ${ECR_BASE}/${target}=${ECR_BASE}/${target}:${TAG}
           done
 
+      - name: Commit and push
+        working-directory: solo-pay-infra
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
