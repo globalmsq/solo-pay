@@ -14,6 +14,8 @@ export interface WalletState {
   chain: { id: number; name: string } | undefined;
   /** Connection in progress */
   isPending: boolean;
+  /** Connection error (failed to connect wallet) */
+  error: Error | null;
   /** Is mobile device or tablet */
   isMobile: boolean;
   /** Inside Trust Wallet browser (mobile) or extension available (desktop) */
@@ -188,7 +190,7 @@ export function getTrustWalletDeeplink(url?: string): string {
 
 export function useWallet(): UseWalletReturn {
   const { address, isConnected, chain } = useAccount();
-  const { connect, connectors, isPending, variables: connectVariables } = useConnect();
+  const { connect, connectors, isPending, error, variables: connectVariables } = useConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
 
   const [isMobile, setIsMobile] = useState(false);
@@ -262,6 +264,7 @@ export function useWallet(): UseWalletReturn {
     isConnected,
     chain: chain ? { id: chain.id, name: chain.name } : undefined,
     isPending,
+    error,
     isMobile,
     isTrustWalletBrowser,
     isMetaMaskBrowser,

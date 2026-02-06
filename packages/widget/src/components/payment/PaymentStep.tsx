@@ -23,7 +23,7 @@ export default function PaymentStep({ initialPaymentInfo }: PaymentStepProps) {
   const [currentStep, setCurrentStep] = useState<PaymentStepType>('wallet-connect');
 
   // Wallet connection state from wagmi
-  const { address, isConnected, disconnect } = useWallet();
+  const { address, isConnected, disconnect, error } = useWallet();
 
   // Payment info from props or default (mock data for UI preview)
   const [paymentInfo] = useState<PaymentInfo>(initialPaymentInfo ?? DEFAULT_PAYMENT_INFO);
@@ -62,6 +62,13 @@ export default function PaymentStep({ initialPaymentInfo }: PaymentStepProps) {
       setCurrentStep('token-approval');
     }
   }, [isConnected, address]);
+
+  // Show alert when wallet connection fails (network error, etc.)
+  useEffect(() => {
+    if (error) {
+      alert('Failed to connect wallet. Please try again.');
+    }
+  }, [error]);
 
   // Disconnect handler: disconnect wallet and return to WalletConnect step
   const handleDisconnect = useCallback(() => {
