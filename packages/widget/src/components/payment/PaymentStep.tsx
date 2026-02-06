@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import WalletConnect from './WalletConnect';
 import TokenApproval from './TokenApproval';
 import PaymentConfirm from './PaymentConfirm';
 import PaymentProcessing from './PaymentProcessing';
 import PaymentComplete from './PaymentComplete';
 import { useWallet } from '../../hooks/useWallet';
 import type { PaymentStepType, PaymentInfo, TransactionResult } from '../../types/index';
+import { ConnectButton } from '../ConnectButton';
 
 interface PaymentStepProps {
   initialPaymentInfo?: PaymentInfo;
@@ -95,7 +95,7 @@ export default function PaymentStep({ initialPaymentInfo }: PaymentStepProps) {
   const renderStep = () => {
     switch (currentStep) {
       case 'wallet-connect':
-        return <WalletConnect onConnect={goToTokenApproval} />;
+        return <ConnectButton />;
 
       case 'token-approval':
         return (
