@@ -78,6 +78,8 @@ Creates a refund request for a confirmed payment.
                   tokenAddress: { type: 'string', example: '0xE4C6...' },
                   payerAddress: { type: 'string', example: '0x7bE4...' },
                   status: { type: 'string', example: 'PENDING' },
+                  serverSignature: { type: 'string', example: '0xabcd...' },
+                  merchantId: { type: 'string', example: '0x1234...' },
                   createdAt: { type: 'string', format: 'date-time' },
                 },
               },

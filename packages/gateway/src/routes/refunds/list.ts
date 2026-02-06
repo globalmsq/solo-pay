@@ -114,14 +114,10 @@ export async function getRefundListRoute(
           paymentId,
         });
 
-        // Get payment hashes for each refund
+        // Get payment hashes for each refund (single batch query)
         const paymentIds = [...new Set(result.items.map((r) => r.payment_id))];
-        const payments = await Promise.all(paymentIds.map((id) => paymentService.findById(id)));
-        const paymentMap = new Map(
-          payments
-            .filter((p): p is NonNullable<typeof p> => p !== null)
-            .map((p) => [p.id, p.payment_hash])
-        );
+        const payments = await paymentService.findByIds(paymentIds);
+        const paymentMap = new Map(payments.map((p) => [p.id, p.payment_hash]));
 
         const items = result.items.map((refund) => ({
           refundId: refund.refund_hash,

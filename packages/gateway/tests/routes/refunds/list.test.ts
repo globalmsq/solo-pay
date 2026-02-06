@@ -92,6 +92,11 @@ describe('GET /refunds', () => {
 
     paymentService = {
       findById: vi.fn().mockImplementation((id: number) => Promise.resolve(createMockPayment(id))),
+      findByIds: vi
+        .fn()
+        .mockImplementation((ids: number[]) =>
+          Promise.resolve(ids.map((id) => createMockPayment(id)))
+        ),
     };
 
     refundService = {
@@ -469,7 +474,7 @@ describe('GET /refunds', () => {
     });
 
     it('PaymentService 오류 발생 시에도 목록은 반환되어야 함', async () => {
-      paymentService.findById = vi.fn().mockResolvedValue(null);
+      paymentService.findByIds = vi.fn().mockResolvedValue([]);
 
       const response = await app.inject({
         method: 'GET',

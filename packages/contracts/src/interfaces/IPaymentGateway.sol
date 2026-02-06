@@ -130,9 +130,16 @@ interface IPaymentGateway {
     ) external;
 
     /**
-     * @notice Check if a payment has been refunded
+     * @notice Check if a payment has been refunded (mapping getter)
      * @param paymentId The payment ID to check
      * @return True if the payment has been refunded
      */
     function refundedPayments(bytes32 paymentId) external view returns (bool);
+
+    /**
+     * @notice Check if a payment has been refunded (convenience function)
+     * @param paymentId The payment ID to check
+     * @return True if the payment has been refunded
+     */
+    function isPaymentRefunded(bytes32 paymentId) external view returns (bool);
 }
