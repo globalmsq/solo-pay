@@ -20,6 +20,8 @@ export interface UseTokenParams {
   userAddress: `0x${string}` | undefined;
   /** Token decimals for formatting */
   decimals?: number;
+  /** Chain ID for the transaction */
+  chainId?: number;
 }
 
 export interface UseTokenReturn {
@@ -82,6 +84,7 @@ export function useToken({
   spenderAddress,
   userAddress,
   decimals = 18,
+  chainId,
 }: UseTokenParams): UseTokenReturn {
   // Read balance
   const {
@@ -139,9 +142,10 @@ export function useToken({
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [spenderAddress, amount],
+        chainId,
       });
     },
-    [tokenAddress, spenderAddress, writeContract]
+    [tokenAddress, spenderAddress, chainId, writeContract]
   );
 
   // Check if allowance is sufficient

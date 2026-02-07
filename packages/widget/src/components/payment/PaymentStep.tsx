@@ -52,6 +52,48 @@ function formatAddress(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
+/**
+ * Parse blockchain error message to user-friendly text
+ */
+function parseErrorMessage(error: string | undefined): string | undefined {
+  if (!error) return undefined;
+
+  // User rejected transaction
+  if (error.includes('User rejected') || error.includes('User denied')) {
+    return 'Transaction was cancelled by user';
+  }
+
+  // Insufficient funds for gas
+  if (error.includes('insufficient funds')) {
+    return 'Insufficient funds for gas fee';
+  }
+
+  // Gas fee exceeds cap (usually wrong network)
+  if (error.includes('exceeds the configured cap')) {
+    return 'Transaction failed. Please check you are on the correct network';
+  }
+
+  // Contract revert
+  if (error.includes('reverted') || error.includes('revert')) {
+    // Try to extract revert reason
+    const match = error.match(/reason:\s*([^,\n]+)/i);
+    if (match) return match[1].trim();
+    return 'Transaction failed. Please try again';
+  }
+
+  // Network error
+  if (error.includes('network') || error.includes('connection')) {
+    return 'Network error. Please check your connection';
+  }
+
+  // Default: truncate long messages
+  if (error.length > 100) {
+    return error.substring(0, 100) + '...';
+  }
+
+  return error;
+}
+
 export default function PaymentStep({ urlParams }: PaymentStepProps) {
   const [currentStep, setCurrentStep] = useState<PaymentStepType>('wallet-connect');
   const [completionDate, setCompletionDate] = useState<string>('');
@@ -82,6 +124,7 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     spenderAddress: paymentDetails?.gatewayAddress as `0x${string}` | undefined,
     userAddress: address,
     decimals: paymentDetails?.tokenDecimals,
+    chainId: paymentDetails?.chainId,
   });
 
   // Payment transaction
@@ -157,12 +200,10 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     }
   }, [txHash, isPaymentConfirming, paymentError]);
 
-  // Show alert when wallet connection fails
-  useEffect(() => {
-    if (walletError) {
-      alert('Failed to connect wallet. Please try again.');
-    }
-  }, [walletError]);
+  // Check if user has sufficient balance
+  const hasSufficientBalance = formattedBalance
+    ? parseFloat(formattedBalance) >= parseFloat(displayAmount)
+    : true; // Assume true while loading
 
   // Disconnect handler
   const handleDisconnect = useCallback(() => {
@@ -188,7 +229,12 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     pay();
   }, [pay]);
 
-  // Confirm/redirect handler
+  // Retry payment handler
+  const handleRetryPayment = useCallback(() => {
+    pay();
+  }, [pay]);
+
+  // Confirm/redirect handler (success)
   const handleConfirm = useCallback(() => {
     if (paymentDetails?.successUrl) {
       window.location.href = paymentDetails.successUrl;
@@ -196,6 +242,13 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     }
     goToWalletConnect();
   }, [paymentDetails?.successUrl]);
+
+  // Cancel/fail redirect handler
+  const handleCancel = useCallback(() => {
+    if (urlParams?.failUrl) {
+      window.location.href = urlParams.failUrl;
+    }
+  }, [urlParams?.failUrl]);
 
   // Loading state
   if (isLoading) {
@@ -253,9 +306,14 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
             onGetGas={() => { /* TODO: Implement gas sponsorship API */ }}
             onApprove={handleApprove}
             onDisconnect={handleDisconnect}
+            onCancel={urlParams?.failUrl ? handleCancel : undefined}
             isApproving={isApproving || isApprovalConfirming}
             needsApproval={needsApproval}
-            error={approvalError?.message}
+            error={
+              !hasSufficientBalance
+                ? `Insufficient balance. You need ${displayAmount} ${paymentDetails.tokenSymbol}`
+                : parseErrorMessage(approvalError?.message)
+            }
           />
         );
 
@@ -277,8 +335,10 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
             amount={displayAmount}
             token={paymentDetails.tokenSymbol}
             onComplete={goToPaymentComplete}
+            onRetry={handleRetryPayment}
+            onCancel={urlParams?.failUrl ? handleCancel : undefined}
             isPending={isPaying || isPaymentConfirming}
-            error={paymentError?.message}
+            error={parseErrorMessage(paymentError?.message)}
           />
         );
 

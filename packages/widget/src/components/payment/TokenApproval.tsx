@@ -5,6 +5,8 @@ interface TokenApprovalProps {
   onApprove?: () => void;
   onGetGas?: () => void;
   onDisconnect?: () => void;
+  /** Cancel handler - redirects to failUrl */
+  onCancel?: () => void;
   /** Whether approval transaction is pending */
   isApproving?: boolean;
   /** Whether user needs to approve (false if already approved) */
@@ -20,6 +22,7 @@ export default function TokenApproval({
   onApprove,
   onGetGas,
   onDisconnect,
+  onCancel,
   isApproving = false,
   needsApproval = true,
   error,
@@ -121,14 +124,14 @@ export default function TokenApproval({
       <button
         type="button"
         className={`w-full py-3 sm:py-3.5 rounded-xl text-white text-sm font-semibold transition-colors ${
-          isApproving
+          isApproving || error
             ? 'bg-blue-400 cursor-not-allowed'
             : needsApproval
               ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 cursor-pointer'
               : 'bg-green-600 hover:bg-green-500 cursor-pointer'
         }`}
         onClick={onApprove}
-        disabled={isApproving}
+        disabled={isApproving || !!error}
       >
         {isApproving ? (
           <span className="flex items-center justify-center gap-2">
@@ -141,6 +144,17 @@ export default function TokenApproval({
           'Continue to Payment'
         )}
       </button>
+
+      {/* Cancel Button - shown when there's an error */}
+      {error && onCancel && (
+        <button
+          type="button"
+          className="w-full mt-3 py-3 sm:py-3.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+          onClick={onCancel}
+        >
+          Cancel Payment
+        </button>
+      )}
     </div>
   );
 }

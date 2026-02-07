@@ -94,18 +94,16 @@ export function usePayment({ paymentDetails }: UsePaymentParams): UsePaymentRetu
 
   // Pay function
   const pay = useCallback(() => {
-    if (!gatewayAddress || !tokenAddress || !paymentId || !amount) {
-      console.error('Missing payment details for pay transaction');
-      return;
-    }
+    if (!gatewayAddress || !tokenAddress || !paymentId || !amount) return;
 
     writeContract({
       address: gatewayAddress,
       abi: PAYMENT_GATEWAY_ABI,
       functionName: 'pay',
       args: [paymentId, tokenAddress, amount],
+      chainId: paymentDetails?.chainId,
     });
-  }, [gatewayAddress, tokenAddress, paymentId, amount, writeContract]);
+  }, [gatewayAddress, tokenAddress, paymentId, amount, paymentDetails?.chainId, writeContract]);
 
   // Check if payment was processed
   const checkIfProcessed = useCallback(async (): Promise<boolean> => {

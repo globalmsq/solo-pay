@@ -11,6 +11,10 @@ interface PaymentProcessingProps {
   amount: string;
   token: string;
   onComplete?: () => void;
+  /** Retry payment after error */
+  onRetry?: () => void;
+  /** Cancel and redirect to failUrl */
+  onCancel?: () => void;
   /** Whether payment transaction is pending */
   isPending?: boolean;
   /** Error message from payment */
@@ -66,6 +70,8 @@ export default function PaymentProcessing({
   amount,
   token,
   onComplete,
+  onRetry,
+  onCancel,
   isPending = true,
   error,
 }: PaymentProcessingProps) {
@@ -100,18 +106,35 @@ export default function PaymentProcessing({
         <p className="text-xs sm:text-sm text-gray-500 mt-1">Please wait a moment</p>
       </div>
 
-      {/* Spinner */}
-      <div className="flex justify-center mb-4 sm:mb-6">
-        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
-      </div>
+      { !error && (
+        <>
+          {/* Spinner */}
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
+          </div>
 
-      {/* Amount */}
-      <div className="text-center mb-6 sm:mb-8">
-        <p className="text-xs text-gray-500 mb-1">Payment Amount</p>
-        <p className="text-xl sm:text-2xl font-bold text-gray-900">
-          {amount} {token}
-        </p>
-      </div>
+          {/* Amount */}
+          <div className="text-center mb-6 sm:mb-8">
+            <p className="text-xs text-gray-500 mb-1">Payment Amount</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">
+              {amount} {token}
+            </p>
+          </div>
+
+          {/* Progress Steps */}
+          <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 sm:p-5">
+            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">
+              Payment Status
+            </h2>
+            <div className="space-y-3 sm:space-y-4">
+              <StepItem label="Requesting Payment" status={getStepStatus('requesting')} />
+              <StepItem label="Signing Transaction" status={getStepStatus('signing')} />
+              <StepItem label="Confirming Payment" status={getStepStatus('confirming')} />
+            </div>
+          </div>
+        </>
+      )}
+      
 
       {/* Error Message */}
       {error && (
@@ -138,17 +161,29 @@ export default function PaymentProcessing({
         </div>
       )}
 
-      {/* Progress Steps */}
-      <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 sm:p-5">
-        <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">
-          Payment Status
-        </h2>
-        <div className="space-y-3 sm:space-y-4">
-          <StepItem label="Requesting Payment" status={getStepStatus('requesting')} />
-          <StepItem label="Signing Transaction" status={getStepStatus('signing')} />
-          <StepItem label="Confirming Payment" status={getStepStatus('confirming')} />
+      {/* Action Buttons - shown on error */}
+      {error && (
+        <div className="mt-4 sm:mt-6 space-y-3">
+          {onRetry && (
+            <button
+              type="button"
+              className="w-full py-3 sm:py-3.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition-colors cursor-pointer"
+              onClick={onRetry}
+            >
+              Try Again
+            </button>
+          )}
+          {onCancel && (
+            <button
+              type="button"
+              className="w-full py-3 sm:py-3.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
