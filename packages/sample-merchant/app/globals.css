@@ -1,1 +1,12 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@theme inline {
+  --color-surface: #fafafa;
+  --color-surface-card: #f0f0f0;
+  --color-border: #e5e5e5;
+  --color-primary: #b45309;
+  --color-primary-hover: #92400e;
+  --color-text-primary: #171717;
+  --color-text-secondary: #525252;
+  --color-text-muted: #a3a3a3;
+}
