@@ -231,8 +231,9 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 -- chain_id=1 (Localhost chain)
 -- recipient_address: Account #1 (recipient) for receiving payments
 -- public_key, public_key_hash, allowed_domains: NULL by default; configure via POST /merchants/me/public-key
+-- webhook_url: Demo app receives webhooks at /api/webhook (Docker: http://demo:3000/api/webhook)
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
-('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'https://webhook.site/demo', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
+('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'http://demo:3000/api/webhook', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
 
 -- MetaStar Merchant (id=2)
 -- API Key: msq_sk_metastar_123 -> SHA-256 hash
