@@ -24,3 +24,9 @@ export {
   type UsePaymentParams,
   type UsePaymentReturn,
 } from './usePayment';
+
+export {
+  useGaslessPayment,
+  type UseGaslessPaymentParams,
+  type UseGaslessPaymentReturn,
+} from './useGaslessPayment';
