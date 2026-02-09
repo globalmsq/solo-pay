@@ -9,6 +9,7 @@ import { useToken } from '../../hooks/useToken';
 import { useGaslessPayment } from '../../hooks/useGaslessPayment';
 import { ConnectButton } from '../ConnectButton';
 import type { PaymentStepType, WidgetUrlParams } from '../../types/index';
+import { formatUnits } from 'viem';
 
 interface PaymentStepProps {
   /** Validated URL parameters from widget initialization */
