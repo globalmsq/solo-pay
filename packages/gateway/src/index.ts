@@ -33,6 +33,10 @@ import { getMerchantRoute } from './routes/merchants/get';
 import { merchantPublicKeyRoute } from './routes/merchants/public-key';
 import { paymentMethodsRoute } from './routes/merchants/payment-methods';
 import { getChainsRoute } from './routes/chains/get';
+import { RefundService } from './services/refund.service';
+import { createRefundRoute } from './routes/refunds/create';
+import { getRefundStatusRoute } from './routes/refunds/status';
+import { getRefundListRoute } from './routes/refunds/list';
 
 const server = Fastify({
   logger: true,
@@ -72,6 +76,7 @@ const merchantService = new MerchantService(prisma);
 const tokenService = new TokenService(prisma);
 const paymentMethodService = new PaymentMethodService(prisma);
 const relayService = new RelayService(prisma);
+const refundService = new RefundService(prisma);
 
 // Route auth (same merchant key and API):
 // - createMerchantAuthMiddleware: POST /payments/create, POST /payments/info (body.merchantId must match x-api-key owner)
@@ -192,6 +197,18 @@ const registerRoutes = async () => {
     tokenService,
     chainService
   );
+
+  // Refund routes
+  await createRefundRoute(
+    server,
+    merchantService,
+    paymentService,
+    refundService,
+    blockchainService,
+    signingServices
+  );
+  await getRefundStatusRoute(server, merchantService, paymentService, refundService);
+  await getRefundListRoute(server, merchantService, paymentService, refundService);
 };
 
 // Graceful shutdown

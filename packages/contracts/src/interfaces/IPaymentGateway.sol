@@ -51,6 +51,26 @@ interface IPaymentGateway {
     event SignerChanged(address indexed oldSigner, address indexed newSigner);
 
     /**
+     * @notice Emitted when a refund is completed
+     * @param originalPaymentId The original payment ID being refunded
+     * @param merchantId Merchant identifier
+     * @param payerAddress Address receiving the refund (original payer)
+     * @param merchantAddress Address of the merchant who initiated refund
+     * @param tokenAddress Address of the ERC20 token refunded
+     * @param amount Refund amount
+     * @param timestamp Block timestamp when refund was processed
+     */
+    event RefundCompleted(
+        bytes32 indexed originalPaymentId,
+        bytes32 indexed merchantId,
+        address indexed payerAddress,
+        address merchantAddress,
+        address tokenAddress,
+        uint256 amount,
+        uint256 timestamp
+    );
+
+    /**
      * @notice Process a payment with server signature verification
      * @param paymentId Unique identifier for this payment
      * @param tokenAddress Address of the ERC20 token to transfer
@@ -90,4 +110,36 @@ interface IPaymentGateway {
      * @param supported Whether the token should be supported
      */
     function setSupportedToken(address tokenAddress, bool supported) external;
+
+    /**
+     * @notice Process a refund with server signature verification
+     * @param originalPaymentId The original payment ID to refund
+     * @param tokenAddress Address of the ERC20 token to refund
+     * @param amount Amount to refund (in token's smallest unit)
+     * @param payerAddress Address to receive the refund (original payer)
+     * @param merchantId Merchant identifier (from server signature)
+     * @param serverSignature Server's EIP-712 signature
+     */
+    function refund(
+        bytes32 originalPaymentId,
+        address tokenAddress,
+        uint256 amount,
+        address payerAddress,
+        bytes32 merchantId,
+        bytes calldata serverSignature
+    ) external;
+
+    /**
+     * @notice Check if a payment has been refunded (mapping getter)
+     * @param paymentId The payment ID to check
+     * @return True if the payment has been refunded
+     */
+    function refundedPayments(bytes32 paymentId) external view returns (bool);
+
+    /**
+     * @notice Check if a payment has been refunded (convenience function)
+     * @param paymentId The payment ID to check
+     * @return True if the payment has been refunded
+     */
+    function isPaymentRefunded(bytes32 paymentId) external view returns (bool);
 }

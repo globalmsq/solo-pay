@@ -62,6 +62,13 @@ export class PaymentService {
     });
   }
 
+  async findByIds(ids: number[]): Promise<Payment[]> {
+    if (ids.length === 0) return [];
+    return this.prisma.payment.findMany({
+      where: { id: { in: ids } },
+    });
+  }
+
   async findByHash(paymentHash: string): Promise<Payment | null> {
     const cacheKey = this.getCacheKey(paymentHash);
 

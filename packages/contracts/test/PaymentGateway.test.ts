@@ -46,6 +46,44 @@ describe('PaymentGatewayV1', function () {
     return signer.signTypedData(domain, types, message);
   }
 
+  // Helper function to create refund server signature
+  async function createRefundSignature(
+    signer: HardhatEthersSigner,
+    gateway: PaymentGatewayV1,
+    originalPaymentId: string,
+    tokenAddress: string,
+    amount: bigint,
+    payerAddress: string,
+    merchantId: string
+  ) {
+    const domain = {
+      name: 'SoloPayGateway',
+      version: '1',
+      chainId: (await ethers.provider.getNetwork()).chainId,
+      verifyingContract: await gateway.getAddress(),
+    };
+
+    const types = {
+      RefundRequest: [
+        { name: 'originalPaymentId', type: 'bytes32' },
+        { name: 'tokenAddress', type: 'address' },
+        { name: 'amount', type: 'uint256' },
+        { name: 'payerAddress', type: 'address' },
+        { name: 'merchantId', type: 'bytes32' },
+      ],
+    };
+
+    const message = {
+      originalPaymentId,
+      tokenAddress,
+      amount,
+      payerAddress,
+      merchantId,
+    };
+
+    return signer.signTypedData(domain, types, message);
+  }
+
   // Test fixtures
   async function deployFixture() {
     const [owner, treasury, payer, other, signer, merchantRecipient] = await ethers.getSigners();
@@ -774,6 +812,377 @@ describe('PaymentGatewayV1', function () {
       await expect(gateway.connect(owner).setTreasury(ethers.ZeroAddress)).to.be.revertedWith(
         'PG: invalid treasury'
       );
+    });
+  });
+
+  describe('Refund', function () {
+    // Helper to make a payment first (needed for refund tests)
+    async function makePaymentFixture() {
+      const fixture = await loadFixture(deployFixture);
+      const { gateway, token, payer, signer, merchantRecipient, merchantId } = fixture;
+
+      const paymentId = ethers.id('REFUND_TEST_PAYMENT');
+      const amount = ethers.parseEther('100');
+      const feeBps = 0;
+
+      const signature = await createServerSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        merchantRecipient.address,
+        merchantId,
+        feeBps
+      );
+
+      await token.connect(payer).approve(await gateway.getAddress(), amount);
+
+      await gateway
+        .connect(payer)
+        .pay(
+          paymentId,
+          await token.getAddress(),
+          amount,
+          merchantRecipient.address,
+          merchantId,
+          feeBps,
+          signature
+        );
+
+      return { ...fixture, paymentId, amount };
+    }
+
+    it('Should process refund successfully', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId, paymentId, amount } =
+        await makePaymentFixture();
+
+      // Merchant needs to approve the gateway to spend tokens for refund
+      await token.connect(merchantRecipient).approve(await gateway.getAddress(), amount);
+
+      // Note: merchantRecipient already has the tokens from the payment
+
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        payer.address,
+        merchantId
+      );
+
+      const payerBalanceBefore = await token.balanceOf(payer.address);
+
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            payer.address,
+            merchantId,
+            refundSignature
+          )
+      )
+        .to.emit(gateway, 'RefundCompleted')
+        .withArgs(
+          paymentId,
+          merchantId,
+          payer.address,
+          merchantRecipient.address,
+          await token.getAddress(),
+          amount,
+          (timestamp: bigint) => timestamp > 0n
+        );
+
+      // Verify refund status
+      expect(await gateway.refundedPayments(paymentId)).to.equal(true);
+      expect(await gateway.isPaymentRefunded(paymentId)).to.equal(true);
+
+      // Verify payer received tokens back
+      const payerBalanceAfter = await token.balanceOf(payer.address);
+      expect(payerBalanceAfter - payerBalanceBefore).to.equal(amount);
+    });
+
+    it('Should reject refund for non-existent payment', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId } =
+        await loadFixture(deployFixture);
+
+      const nonExistentPaymentId = ethers.id('NON_EXISTENT_PAYMENT');
+      const amount = ethers.parseEther('100');
+
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        nonExistentPaymentId,
+        await token.getAddress(),
+        amount,
+        payer.address,
+        merchantId
+      );
+
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(
+            nonExistentPaymentId,
+            await token.getAddress(),
+            amount,
+            payer.address,
+            merchantId,
+            refundSignature
+          )
+      ).to.be.revertedWith('PG: payment not found');
+    });
+
+    it('Should reject duplicate refund', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId, paymentId, amount } =
+        await makePaymentFixture();
+
+      // Mint extra tokens to merchant for second refund attempt
+      await token.mint(merchantRecipient.address, amount);
+      await token.connect(merchantRecipient).approve(await gateway.getAddress(), amount * 2n);
+
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        payer.address,
+        merchantId
+      );
+
+      // First refund should succeed
+      await gateway
+        .connect(merchantRecipient)
+        .refund(
+          paymentId,
+          await token.getAddress(),
+          amount,
+          payer.address,
+          merchantId,
+          refundSignature
+        );
+
+      // Second refund should fail
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            payer.address,
+            merchantId,
+            refundSignature
+          )
+      ).to.be.revertedWith('PG: already refunded');
+    });
+
+    it('Should reject refund with invalid signature', async function () {
+      const { gateway, token, payer, other, merchantRecipient, merchantId, paymentId, amount } =
+        await makePaymentFixture();
+
+      await token.connect(merchantRecipient).approve(await gateway.getAddress(), amount);
+
+      // Sign with wrong signer
+      const refundSignature = await createRefundSignature(
+        other,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        payer.address,
+        merchantId
+      );
+
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            payer.address,
+            merchantId,
+            refundSignature
+          )
+      ).to.be.revertedWith('PG: invalid signature');
+    });
+
+    it('Should reject refund with zero amount', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId, paymentId } =
+        await makePaymentFixture();
+
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        0n,
+        payer.address,
+        merchantId
+      );
+
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(
+            paymentId,
+            await token.getAddress(),
+            0,
+            payer.address,
+            merchantId,
+            refundSignature
+          )
+      ).to.be.revertedWith('PG: amount must be > 0');
+    });
+
+    it('Should reject refund with zero token address', async function () {
+      const { gateway, payer, signer, merchantRecipient, merchantId, paymentId, amount } =
+        await makePaymentFixture();
+
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        paymentId,
+        ethers.ZeroAddress,
+        amount,
+        payer.address,
+        merchantId
+      );
+
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(paymentId, ethers.ZeroAddress, amount, payer.address, merchantId, refundSignature)
+      ).to.be.revertedWith('PG: invalid token');
+    });
+
+    it('Should reject refund with zero payer address', async function () {
+      const { gateway, token, signer, merchantRecipient, merchantId, paymentId, amount } =
+        await makePaymentFixture();
+
+      await token.connect(merchantRecipient).approve(await gateway.getAddress(), amount);
+
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        ethers.ZeroAddress,
+        merchantId
+      );
+
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            ethers.ZeroAddress,
+            merchantId,
+            refundSignature
+          )
+      ).to.be.revertedWith('PG: invalid payer');
+    });
+
+    it('Should work with meta-transaction for refund', async function () {
+      const {
+        gateway,
+        forwarder,
+        token,
+        payer,
+        signer,
+        merchantRecipient,
+        merchantId,
+        paymentId,
+        amount,
+      } = await makePaymentFixture();
+
+      // Merchant approves gateway
+      await token.connect(merchantRecipient).approve(await gateway.getAddress(), amount);
+
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        payer.address,
+        merchantId
+      );
+
+      // Encode the refund function call
+      const data = gateway.interface.encodeFunctionData('refund', [
+        paymentId,
+        await token.getAddress(),
+        amount,
+        payer.address,
+        merchantId,
+        refundSignature,
+      ]);
+
+      // Get nonce for merchant
+      const nonce = await forwarder.nonces(merchantRecipient.address);
+      const forwarderDeadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
+
+      // Sign the forward request
+      const domain = {
+        name: 'MSQPayForwarder',
+        version: '1',
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: await forwarder.getAddress(),
+      };
+
+      const types = {
+        ForwardRequest: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'gas', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'deadline', type: 'uint48' },
+          { name: 'data', type: 'bytes' },
+        ],
+      };
+
+      const message = {
+        from: merchantRecipient.address,
+        to: await gateway.getAddress(),
+        value: 0n,
+        gas: 500000n,
+        nonce: nonce,
+        deadline: forwarderDeadline,
+        data: data,
+      };
+
+      const forwarderSignature = await merchantRecipient.signTypedData(domain, types, message);
+
+      const requestData = {
+        from: merchantRecipient.address,
+        to: await gateway.getAddress(),
+        value: 0n,
+        gas: 500000n,
+        deadline: forwarderDeadline,
+        data: data,
+        signature: forwarderSignature,
+      };
+
+      const payerBalanceBefore = await token.balanceOf(payer.address);
+
+      // Execute via forwarder
+      await expect(forwarder.execute(requestData)).to.emit(gateway, 'RefundCompleted');
+
+      // Verify refund
+      expect(await gateway.isPaymentRefunded(paymentId)).to.equal(true);
+      const payerBalanceAfter = await token.balanceOf(payer.address);
+      expect(payerBalanceAfter - payerBalanceBefore).to.equal(amount);
     });
   });
 });
