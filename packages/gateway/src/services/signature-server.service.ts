@@ -14,6 +14,17 @@ interface PaymentRequest {
 }
 
 /**
+ * EIP-712 RefundRequest type for server signing
+ */
+interface RefundRequest {
+  originalPaymentId: Hex;
+  tokenAddress: Address;
+  amount: bigint;
+  payerAddress: Address;
+  merchantId: Hex;
+}
+
+/**
  * Server signing service for generating EIP-712 payment signatures
  *
  * This service signs payment requests with the server's private key.
@@ -123,5 +134,55 @@ export class ServerSigningService {
    */
   static merchantKeyToId(merchantKey: string): Hex {
     return keccak256(encodePacked(['string'], [merchantKey]));
+  }
+
+  /**
+   * Get RefundRequest type definition
+   */
+  getRefundRequestTypes() {
+    return {
+      RefundRequest: [
+        { name: 'originalPaymentId', type: 'bytes32' },
+        { name: 'tokenAddress', type: 'address' },
+        { name: 'amount', type: 'uint256' },
+        { name: 'payerAddress', type: 'address' },
+        { name: 'merchantId', type: 'bytes32' },
+      ],
+    } as const;
+  }
+
+  /**
+   * Sign a refund request
+   *
+   * @param originalPaymentId - Original payment identifier (bytes32)
+   * @param tokenAddress - ERC20 token address
+   * @param amount - Refund amount in wei
+   * @param payerAddress - Payer address (refund recipient)
+   * @param merchantId - Merchant identifier (bytes32)
+   * @returns EIP-712 signature
+   */
+  async signRefundRequest(
+    originalPaymentId: Hex,
+    tokenAddress: Address,
+    amount: bigint,
+    payerAddress: Address,
+    merchantId: Hex
+  ): Promise<Hex> {
+    const message: RefundRequest = {
+      originalPaymentId,
+      tokenAddress,
+      amount,
+      payerAddress,
+      merchantId,
+    };
+
+    const signature = await this.account.signTypedData({
+      domain: this.getDomain(),
+      types: this.getRefundRequestTypes(),
+      primaryType: 'RefundRequest',
+      message,
+    });
+
+    return signature;
   }
 }

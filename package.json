@@ -38,7 +38,8 @@
   },
   "pnpm": {
     "overrides": {
-      "hardhat-gas-reporter": "^2.3.0"
+      "hardhat-gas-reporter": "^2.3.0",
+      "ioredis": "^5.4.0"
     }
   }
 }
