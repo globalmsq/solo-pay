@@ -6,7 +6,7 @@ import PaymentComplete from './PaymentComplete';
 import { usePaymentApi } from '../../hooks/usePaymentApi';
 import { useWallet } from '../../hooks/useWallet';
 import { useToken } from '../../hooks/useToken';
-import { usePayment } from '../../hooks/usePayment';
+import { useGaslessPayment } from '../../hooks/useGaslessPayment';
 import { ConnectButton } from '../ConnectButton';
 import type {
   PaymentStepType,
@@ -98,8 +98,14 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
   const [currentStep, setCurrentStep] = useState<PaymentStepType>('wallet-connect');
   const [completionDate, setCompletionDate] = useState<string>('');
 
+  // Track if payment was initiated in this session (prevents stale txHash from triggering success)
+  const paymentInitiated = useRef(false);
+
+  // Error for invalid payment configuration
+  const [configError, setConfigError] = useState<string | null>(null);
+
   // Wallet connection state from wagmi
-  const { address, isConnected, disconnect, error: walletError } = useWallet();
+  const { address, isConnected, disconnect } = useWallet();
 
   // API hook for payment operations
   const {
@@ -127,14 +133,15 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     chainId: paymentDetails?.chainId,
   });
 
-  // Payment transaction
+  // Gasless payment (meta-transaction)
   const {
-    pay,
-    isPaying,
-    isConfirming: isPaymentConfirming,
-    txHash,
-    error: paymentError,
-  } = usePayment({ paymentDetails });
+    payGasless,
+    isPayingGasless,
+    isRelayConfirming,
+    relayTxHash,
+    error: gaslessError,
+    isGaslessSupported,
+  } = useGaslessPayment({ paymentDetails });
 
   // Prevent double API call in React Strict Mode
   const isInitialized = useRef(false);
@@ -183,10 +190,16 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     }
   }, [approvalTxHash, isApprovalConfirming, approvalError, refetchToken]);
 
-  // Auto-advance when payment confirms
+  // Auto-advance when gasless payment confirms
   useEffect(() => {
-    if (txHash && !isPaymentConfirming && !paymentError) {
-      // Set completion date on client only to avoid hydration mismatch
+    // Only advance if payment was initiated in this session and we have a confirmed relay transaction
+    if (
+      paymentInitiated.current &&
+      currentStep === 'payment-processing' &&
+      relayTxHash &&
+      !isRelayConfirming &&
+      !gaslessError
+    ) {
       setCompletionDate(new Date().toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
@@ -198,7 +211,7 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
       }));
       goToPaymentComplete();
     }
-  }, [txHash, isPaymentConfirming, paymentError]);
+  }, [currentStep, relayTxHash, isRelayConfirming, gaslessError]);
 
   // Check if user has sufficient balance
   const hasSufficientBalance = formattedBalance
@@ -223,16 +236,40 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     }
   }, [needsApproval, approve]);
 
-  // Pay handler
+  // Pay handler (gasless only)
   const handlePay = useCallback(() => {
-    goToPaymentProcessing();
-    pay();
-  }, [pay]);
+    // Clear any previous config error
+    setConfigError(null);
 
-  // Retry payment handler
+    // Validate required payment details before proceeding
+    if (!paymentDetails?.signature) {
+      setConfigError('Payment configuration error: Missing server signature. Please contact support.');
+      console.error('Missing server signature - check SIGNER_PRIVATE_KEY configuration');
+      return;
+    }
+    if (!paymentDetails?.recipientAddress || !paymentDetails?.merchantId) {
+      setConfigError('Payment configuration error: Missing recipient details. Please contact support.');
+      console.error('Missing payment details:', {
+        recipientAddress: paymentDetails?.recipientAddress,
+        merchantId: paymentDetails?.merchantId,
+      });
+      return;
+    }
+    if (!isGaslessSupported) {
+      setConfigError('Gasless payment is not configured for this network. Please contact support.');
+      console.error('Missing forwarderAddress - gasless not supported');
+      return;
+    }
+
+    paymentInitiated.current = true;
+    goToPaymentProcessing();
+    payGasless();
+  }, [payGasless, isGaslessSupported, paymentDetails]);
+
+  // Retry payment handler (gasless only)
   const handleRetryPayment = useCallback(() => {
-    pay();
-  }, [pay]);
+    payGasless();
+  }, [payGasless]);
 
   // Confirm/redirect handler (success)
   const handleConfirm = useCallback(() => {
@@ -319,14 +356,22 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
 
       case 'payment-confirm':
         return (
-          <PaymentConfirm
-            product={`Order #${paymentDetails.orderId}`}
-            amount={displayAmount}
-            token={paymentDetails.tokenSymbol}
-            network={getNetworkName(paymentDetails.chainId)}
-            onPay={handlePay}
-            onBack={goToTokenApproval}
-          />
+          <div>
+            {/* Configuration Error */}
+            {configError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{configError}</p>
+              </div>
+            )}
+            <PaymentConfirm
+              product={`Order #${paymentDetails.orderId}`}
+              amount={displayAmount}
+              token={paymentDetails.tokenSymbol}
+              network={getNetworkName(paymentDetails.chainId)}
+              onPay={handlePay}
+              onBack={goToTokenApproval}
+            />
+          </div>
         );
 
       case 'payment-processing':
@@ -334,11 +379,10 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
           <PaymentProcessing
             amount={displayAmount}
             token={paymentDetails.tokenSymbol}
-            onComplete={goToPaymentComplete}
             onRetry={handleRetryPayment}
             onCancel={urlParams?.failUrl ? handleCancel : undefined}
-            isPending={isPaying || isPaymentConfirming}
-            error={parseErrorMessage(paymentError?.message)}
+            isPending={isPayingGasless || isRelayConfirming}
+            error={parseErrorMessage(gaslessError?.message)}
           />
         );
 
@@ -348,7 +392,7 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
             amount={displayAmount}
             token={paymentDetails.tokenSymbol}
             date={completionDate}
-            txHash={txHash || ''}
+            txHash={relayTxHash || ''}
             onConfirm={handleConfirm}
           />
         );

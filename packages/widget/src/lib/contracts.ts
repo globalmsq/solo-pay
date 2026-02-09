@@ -56,15 +56,19 @@ export const ERC20_ABI = [
 
 export const PAYMENT_GATEWAY_ABI = [
   {
+    type: 'function',
+    name: 'pay',
     inputs: [
       { name: 'paymentId', type: 'bytes32' },
       { name: 'tokenAddress', type: 'address' },
       { name: 'amount', type: 'uint256' },
+      { name: 'recipientAddress', type: 'address' },
+      { name: 'merchantId', type: 'bytes32' },
+      { name: 'feeBps', type: 'uint16' },
+      { name: 'serverSignature', type: 'bytes' },
     ],
-    name: 'pay',
     outputs: [],
     stateMutability: 'nonpayable',
-    type: 'function',
   },
   {
     inputs: [{ name: 'paymentId', type: 'bytes32' }],
@@ -99,5 +103,19 @@ export const PAYMENT_GATEWAY_ABI = [
     ],
     name: 'PaymentCompleted',
     type: 'event',
+  },
+] as const;
+
+// ============================================================================
+// ERC2771Forwarder ABI (for gasless payments)
+// ============================================================================
+
+export const FORWARDER_ABI = [
+  {
+    type: 'function',
+    name: 'nonces',
+    inputs: [{ name: 'owner', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
   },
 ] as const;

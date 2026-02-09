@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 type StepStatus = 'waiting' | 'processing' | 'completed';
 
 interface StepProps {
@@ -10,7 +8,6 @@ interface StepProps {
 interface PaymentProcessingProps {
   amount: string;
   token: string;
-  onComplete?: () => void;
   /** Retry payment after error */
   onRetry?: () => void;
   /** Cancel and redirect to failUrl */
@@ -69,18 +66,13 @@ function StepItem({ label, status }: StepProps) {
 export default function PaymentProcessing({
   amount,
   token,
-  onComplete,
   onRetry,
   onCancel,
   isPending = true,
   error,
 }: PaymentProcessingProps) {
-  // Call onComplete when transaction is confirmed (isPending becomes false with no error)
-  useEffect(() => {
-    if (!isPending && !error) {
-      onComplete?.();
-    }
-  }, [isPending, error, onComplete]);
+  // Note: Auto-advance to payment-complete is handled in PaymentStep.tsx
+  // based on actual transaction confirmation (txHash && !isConfirming)
 
   // Determine step statuses based on isPending state
   const getStepStatus = (step: 'requesting' | 'signing' | 'confirming'): StepStatus => {

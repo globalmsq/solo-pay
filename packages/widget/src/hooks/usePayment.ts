@@ -4,8 +4,17 @@ import {
   useWaitForTransactionReceipt,
   useReadContract,
 } from 'wagmi';
+import { parseGwei } from 'viem';
 import { PAYMENT_GATEWAY_ABI } from '../lib/contracts';
 import type { PaymentDetails } from '../types';
+
+// Polygon networks require higher gas fees (min 25 gwei priority fee)
+const POLYGON_CHAIN_IDS = [137, 80002]; // Polygon Mainnet, Polygon Amoy
+const POLYGON_GAS_CONFIG = {
+  maxPriorityFeePerGas: parseGwei('30'), // 30 gwei (above 25 gwei minimum)
+  maxFeePerGas: parseGwei('100'), // 100 gwei max
+  gas: BigInt(300000), // Explicit gas limit to avoid estimation failures
+};
 
 // ============================================================================
 // Types
@@ -64,6 +73,10 @@ export function usePayment({ paymentDetails }: UsePaymentParams): UsePaymentRetu
   const tokenAddress = paymentDetails?.tokenAddress as `0x${string}` | undefined;
   const paymentId = paymentDetails?.paymentId as `0x${string}` | undefined;
   const amount = paymentDetails?.amount ? BigInt(paymentDetails.amount) : undefined;
+  const recipientAddress = paymentDetails?.recipientAddress as `0x${string}` | undefined;
+  const merchantId = paymentDetails?.merchantId as `0x${string}` | undefined;
+  const feeBps = paymentDetails?.feeBps ?? 0;
+  const serverSignature = paymentDetails?.signature as `0x${string}` | undefined;
 
   // Check if payment is already processed
   const { data: isProcessed, refetch: refetchProcessed } = useReadContract({
@@ -94,16 +107,33 @@ export function usePayment({ paymentDetails }: UsePaymentParams): UsePaymentRetu
 
   // Pay function
   const pay = useCallback(() => {
-    if (!gatewayAddress || !tokenAddress || !paymentId || !amount) return;
+    if (!gatewayAddress || !tokenAddress || !paymentId || !amount || !recipientAddress || !merchantId || !serverSignature) {
+      console.error('Missing payment details:', { gatewayAddress, tokenAddress, paymentId, amount, recipientAddress, merchantId, serverSignature });
+      return;
+    }
+
+    // Polygon networks require higher gas fees
+    const gasConfig = paymentDetails?.chainId && POLYGON_CHAIN_IDS.includes(paymentDetails.chainId)
+      ? POLYGON_GAS_CONFIG
+      : {};
 
     writeContract({
       address: gatewayAddress,
       abi: PAYMENT_GATEWAY_ABI,
       functionName: 'pay',
-      args: [paymentId, tokenAddress, amount],
+      args: [
+        paymentId,
+        tokenAddress,
+        amount,
+        recipientAddress,
+        merchantId,
+        feeBps,
+        serverSignature,
+      ],
       chainId: paymentDetails?.chainId,
+      ...gasConfig,
     });
-  }, [gatewayAddress, tokenAddress, paymentId, amount, paymentDetails?.chainId, writeContract]);
+  }, [gatewayAddress, tokenAddress, paymentId, amount, recipientAddress, merchantId, feeBps, serverSignature, paymentDetails?.chainId, writeContract]);
 
   // Check if payment was processed
   const checkIfProcessed = useCallback(async (): Promise<boolean> => {

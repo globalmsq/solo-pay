@@ -252,3 +252,145 @@ export async function pollPaymentStatus(
 
   throw new PaymentApiError('TIMEOUT', 'Payment confirmation timeout', 408);
 }
+
+// ============================================================================
+// Gasless Payment (Meta-Transaction)
+// ============================================================================
+
+/**
+ * ERC2771 ForwardRequest type for gasless payments
+ */
+export interface ForwardRequest {
+  from: string;
+  to: string;
+  value: string;
+  gas: string;
+  nonce: string;
+  deadline: string;
+  data: string;
+  signature: string;
+}
+
+/**
+ * Gasless payment submission response
+ */
+export interface GaslessPaymentResponse {
+  relayRequestId: string;
+  status: string;
+}
+
+/**
+ * Relay transaction status response
+ * Note: Gateway returns 'transactionHash', not 'txHash'
+ */
+export interface RelayStatusResponse {
+  status: 'pending' | 'submitted' | 'mined' | 'confirmed' | 'failed';
+  transactionHash?: string;
+  error?: string;
+}
+
+/**
+ * Submit a gasless payment via relay service
+ *
+ * @param paymentId - Payment ID (hash)
+ * @param forwarderAddress - ERC2771Forwarder contract address
+ * @param forwardRequest - Signed ERC2771 ForwardRequest
+ * @returns Relay request ID for tracking
+ */
+export async function submitGaslessPayment(
+  paymentId: string,
+  forwarderAddress: string,
+  forwardRequest: ForwardRequest
+): Promise<GaslessPaymentResponse> {
+  const apiUrl = getApiUrl();
+
+  const response = await fetch(`${apiUrl}/payments/${paymentId}/gasless`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      paymentId,
+      forwarderAddress,
+      forwardRequest,
+    }),
+    cache: 'no-store',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = data as ErrorResponse;
+    throw new PaymentApiError(
+      error.code || 'GASLESS_ERROR',
+      error.message || 'Failed to submit gasless payment',
+      response.status,
+      error.details
+    );
+  }
+
+  return data as GaslessPaymentResponse;
+}
+
+/**
+ * Get relay transaction status
+ *
+ * @param relayRequestId - Relay request ID from submitGaslessPayment
+ * @returns Current relay status
+ */
+export async function getRelayStatus(relayRequestId: string): Promise<RelayStatusResponse> {
+  const apiUrl = getApiUrl();
+
+  const response = await fetch(`${apiUrl}/payments/relay/${relayRequestId}/status`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = data as ErrorResponse;
+    throw new PaymentApiError(
+      error.code || 'RELAY_ERROR',
+      error.message || 'Failed to get relay status',
+      response.status,
+      error.details
+    );
+  }
+
+  return data as RelayStatusResponse;
+}
+
+/**
+ * Wait for relay transaction to complete
+ *
+ * @param relayRequestId - Relay request ID
+ * @param options - Timeout and interval options
+ * @returns Final relay status
+ */
+export async function waitForRelayTransaction(
+  relayRequestId: string,
+  options: { timeout?: number; interval?: number } = {}
+): Promise<RelayStatusResponse> {
+  const { timeout = 120000, interval = 3000 } = options;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const status = await getRelayStatus(relayRequestId);
+
+    if (status.status === 'mined' || status.status === 'confirmed') {
+      return status;
+    }
+
+    if (status.status === 'failed') {
+      throw new PaymentApiError('RELAY_FAILED', status.error || 'Relay transaction failed', 400);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+
+  throw new PaymentApiError('RELAY_TIMEOUT', 'Relay transaction confirmation timeout', 408);
+}

@@ -64,7 +64,18 @@ export interface PaymentDetails {
   failUrl: string;
   /** Payment expiration time (ISO string) */
   expiresAt: string;
+  /** Recipient/treasury address */
+  recipientAddress: string;
+  /** Merchant ID (bytes32) */
+  merchantId: string;
+  /** Fee in basis points (e.g., 100 = 1%) */
+  feeBps: number;
+  /** ERC2771Forwarder contract address (for gasless payments) */
+  forwarderAddress?: string;
 }
+
+/** Gas payment mode */
+export type GasMode = 'direct' | 'gasless';
 
 /**
  * @deprecated Use WidgetUrlParams and PaymentDetails instead
