@@ -1,12 +1,13 @@
-import { http, createConfig } from 'wagmi';
+import { http, fallback, createConfig } from 'wagmi';
 import { injected, metaMask } from 'wagmi/connectors';
-import { arbitrum, base, mainnet, optimism, polygon, sepolia } from 'wagmi/chains';
+import { arbitrum, base, mainnet, optimism, polygon, polygonAmoy, sepolia } from 'wagmi/chains';
 
 const enableTestnets = process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true';
 
 const chains = [
   mainnet,
   polygon,
+  polygonAmoy,
   optimism,
   arbitrum,
   base,
@@ -22,12 +23,19 @@ export const config = createConfig({
   ],
   chains,
   transports: {
-    [mainnet.id]: http(),
-    [polygon.id]: http(),
-    [optimism.id]: http(),
-    [arbitrum.id]: http(),
-    [base.id]: http(),
-    [sepolia.id]: http(),
+    // Use publicnode RPCs - they have proper CORS headers
+    [mainnet.id]: http('https://ethereum-rpc.publicnode.com'),
+    [polygon.id]: http('https://polygon-bor-rpc.publicnode.com'),
+    // Polygon Amoy - use fallback RPCs for reliability
+    [polygonAmoy.id]: fallback([
+      http('https://polygon-amoy.drpc.org'),
+      http('https://polygon-amoy-bor-rpc.publicnode.com'),
+      http('https://rpc-amoy.polygon.technology'),
+    ]),
+    [optimism.id]: http('https://optimism-rpc.publicnode.com'),
+    [arbitrum.id]: http('https://arbitrum-one-rpc.publicnode.com'),
+    [base.id]: http('https://base-rpc.publicnode.com'),
+    [sepolia.id]: http('https://ethereum-sepolia-rpc.publicnode.com'),
   },
   ssr: true,
 });
