@@ -157,7 +157,7 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
   // Human-readable amount (for display)
   const displayAmount = urlParams?.amount ?? (
     paymentDetails
-      ? (parseInt(paymentDetails.amount) / Math.pow(10, paymentDetails.tokenDecimals)).toString()
+      ? formatUnits(BigInt(paymentDetails.amount), paymentDetails.tokenDecimals)
       : '0'
   );
 
