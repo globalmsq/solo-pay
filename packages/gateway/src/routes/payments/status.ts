@@ -3,8 +3,7 @@ import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
 import { MerchantService } from '../../services/merchant.service';
 import {
-  resolveWebhookUrl,
-  buildPaymentConfirmedBody,
+  enqueuePaymentConfirmedWebhook,
   type WebhookQueueAdapter,
 } from '../../services/webhook-queue.service';
 import { PaymentStatusResponseSchema, ErrorResponseSchema } from '../../docs/schemas';
@@ -134,17 +133,9 @@ Retrieves the current status of a payment by its payment hash.
 
           // Enqueue webhook: payment.confirmed (fire-and-forget, do not block response)
           const merchant = await merchantService.findById(updatedPayment.merchant_id);
-          const webhookUrl = resolveWebhookUrl(updatedPayment, merchant);
-          if (webhookUrl) {
-            webhookQueue
-              .addPaymentConfirmed({
-                url: webhookUrl,
-                body: buildPaymentConfirmedBody(updatedPayment),
-              })
-              .catch((err) => {
-                app.log.warn({ err, paymentId: id }, 'Webhook enqueue failed');
-              });
-          }
+          enqueuePaymentConfirmedWebhook(webhookQueue, updatedPayment, merchant, (err, paymentId) =>
+            app.log.warn({ err, paymentId }, 'Webhook enqueue failed')
+          );
         }
 
         return reply.code(200).send({

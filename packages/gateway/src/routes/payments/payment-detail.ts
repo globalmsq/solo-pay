@@ -5,8 +5,7 @@ import { PaymentService } from '../../services/payment.service';
 import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
 import { MerchantService } from '../../services/merchant.service';
 import {
-  resolveWebhookUrl,
-  buildPaymentConfirmedBody,
+  enqueuePaymentConfirmedWebhook,
   type WebhookQueueAdapter,
 } from '../../services/webhook-queue.service';
 import { ErrorResponseSchema } from '../../docs/schemas';
@@ -158,17 +157,12 @@ Retrieves payment by merchant order ID. API Key required. Same response format a
         );
         if (statusJustConfirmed && payment.status === 'CONFIRMED') {
           const merchantForWebhook = await merchantService.findById(payment.merchant_id);
-          const webhookUrl = resolveWebhookUrl(payment, merchantForWebhook);
-          if (webhookUrl) {
-            webhookQueue
-              .addPaymentConfirmed({
-                url: webhookUrl,
-                body: buildPaymentConfirmedBody(payment),
-              })
-              .catch((err) => {
-                app.log.warn({ err, paymentId: payment.payment_hash }, 'Webhook enqueue failed');
-              });
-          }
+          enqueuePaymentConfirmedWebhook(
+            webhookQueue,
+            payment,
+            merchantForWebhook,
+            (err, paymentId) => app.log.warn({ err, paymentId }, 'Webhook enqueue failed')
+          );
         }
 
         return reply.code(200).send(buildPaymentDetailResponse(payment));
@@ -238,17 +232,12 @@ Syncs latest status from blockchain.
         );
         if (statusJustConfirmed && payment.status === 'CONFIRMED') {
           const merchantForWebhook = await merchantService.findById(payment.merchant_id);
-          const webhookUrl = resolveWebhookUrl(payment, merchantForWebhook);
-          if (webhookUrl) {
-            webhookQueue
-              .addPaymentConfirmed({
-                url: webhookUrl,
-                body: buildPaymentConfirmedBody(payment),
-              })
-              .catch((err) => {
-                app.log.warn({ err, paymentId: payment.payment_hash }, 'Webhook enqueue failed');
-              });
-          }
+          enqueuePaymentConfirmedWebhook(
+            webhookQueue,
+            payment,
+            merchantForWebhook,
+            (err, paymentId) => app.log.warn({ err, paymentId }, 'Webhook enqueue failed')
+          );
         }
 
         return reply.code(200).send(buildPaymentDetailResponse(payment));

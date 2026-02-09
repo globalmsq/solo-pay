@@ -36,7 +36,7 @@ function main(): void {
 
   const shutdown = async (): Promise<void> => {
     await worker.close();
-    redis.quit();
+    await redis.quit();
     process.exit(0);
   };
 

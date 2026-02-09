@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     appendWebhook(body);
     return NextResponse.json({ received: true }, { status: 200 });
-  } catch {
-    return NextResponse.json({ received: false }, { status: 200 });
+  } catch (error) {
+    console.error('Failed to process webhook payload:', error);
+    return NextResponse.json({ received: false, error: 'Invalid payload' }, { status: 200 });
   }
 }

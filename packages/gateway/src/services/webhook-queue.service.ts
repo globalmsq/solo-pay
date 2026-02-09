@@ -7,6 +7,31 @@ export interface WebhookQueueAdapter {
 }
 
 /**
+ * Callback when webhook enqueue fails (for logging). Receives error and payment hash.
+ */
+export type WebhookEnqueueErrorLogger = (err: unknown, paymentId: string) => void;
+
+/**
+ * Resolves webhook URL, builds body, and enqueues payment.confirmed (fire-and-forget).
+ * Logs via onError when addPaymentConfirmed rejects. Call from status and payment-detail routes.
+ */
+export function enqueuePaymentConfirmedWebhook(
+  webhookQueue: WebhookQueueAdapter,
+  payment: Payment,
+  merchant: Merchant | null,
+  onError: WebhookEnqueueErrorLogger
+): void {
+  const webhookUrl = resolveWebhookUrl(payment, merchant);
+  if (!webhookUrl) return;
+  webhookQueue
+    .addPaymentConfirmed({
+      url: webhookUrl,
+      body: buildPaymentConfirmedBody(payment),
+    })
+    .catch((err) => onError(err, payment.payment_hash));
+}
+
+/**
  * Resolve webhook URL: payment.webhook_url ?? merchant.webhook_url.
  * Returns null if neither is set.
  */

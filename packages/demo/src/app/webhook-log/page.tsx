@@ -58,19 +58,23 @@ export default function WebhookLogPage() {
         </div>
       ) : (
         <ul className="space-y-4">
-          {log.map((entry, i) => (
-            <li
-              key={`${entry.receivedAt}-${i}`}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800/50"
-            >
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                {new Date(entry.receivedAt).toLocaleString()}
-              </p>
-              <pre className="text-sm overflow-x-auto bg-gray-50 dark:bg-gray-900 p-3 rounded">
-                {JSON.stringify(entry.body, null, 2)}
-              </pre>
-            </li>
-          ))}
+          {log.map((entry, i) => {
+            const paymentId = (entry.body as { paymentId?: string }).paymentId;
+            const key = paymentId ? `${paymentId}-${entry.receivedAt}` : `${entry.receivedAt}-${i}`;
+            return (
+              <li
+                key={key}
+                className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800/50"
+              >
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  {new Date(entry.receivedAt).toLocaleString()}
+                </p>
+                <pre className="text-sm overflow-x-auto bg-gray-50 dark:bg-gray-900 p-3 rounded">
+                  {JSON.stringify(entry.body, null, 2)}
+                </pre>
+              </li>
+            );
+          })}
         </ul>
       )}
     </main>
