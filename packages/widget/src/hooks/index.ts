@@ -13,17 +13,9 @@ export {
   type UsePaymentApiReturn,
 } from './usePaymentApi';
 
-export {
-  useToken,
-  type UseTokenParams,
-  type UseTokenReturn,
-} from './useToken';
+export { useToken, type UseTokenParams, type UseTokenReturn } from './useToken';
 
-export {
-  usePayment,
-  type UsePaymentParams,
-  type UsePaymentReturn,
-} from './usePayment';
+export { usePayment, type UsePaymentParams, type UsePaymentReturn } from './usePayment';
 
 export {
   useGaslessPayment,

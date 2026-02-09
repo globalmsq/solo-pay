@@ -98,7 +98,7 @@ export default function PaymentProcessing({
         <p className="text-xs sm:text-sm text-gray-500 mt-1">Please wait a moment</p>
       </div>
 
-      { !error && (
+      {!error && (
         <>
           {/* Spinner */}
           <div className="flex justify-center mb-4 sm:mb-6">
@@ -126,7 +126,6 @@ export default function PaymentProcessing({
           </div>
         </>
       )}
-      
 
       {/* Error Message */}
       {error && (

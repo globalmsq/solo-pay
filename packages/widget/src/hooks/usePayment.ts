@@ -1,9 +1,5 @@
 import { useCallback } from 'react';
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useReadContract,
-} from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseGwei } from 'viem';
 import { PAYMENT_GATEWAY_ABI } from '../lib/contracts';
 import type { PaymentDetails } from '../types';
@@ -98,24 +94,38 @@ export function usePayment({ paymentDetails }: UsePaymentParams): UsePaymentRetu
   } = useWriteContract();
 
   // Wait for transaction confirmation
-  const {
-    isLoading: isConfirming,
-    error: receiptError,
-  } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, error: receiptError } = useWaitForTransactionReceipt({
     hash: txHash,
   });
 
   // Pay function
   const pay = useCallback(() => {
-    if (!gatewayAddress || !tokenAddress || !paymentId || !amount || !recipientAddress || !merchantId || !serverSignature) {
-      console.error('Missing payment details:', { gatewayAddress, tokenAddress, paymentId, amount, recipientAddress, merchantId, serverSignature });
+    if (
+      !gatewayAddress ||
+      !tokenAddress ||
+      !paymentId ||
+      !amount ||
+      !recipientAddress ||
+      !merchantId ||
+      !serverSignature
+    ) {
+      console.error('Missing payment details:', {
+        gatewayAddress,
+        tokenAddress,
+        paymentId,
+        amount,
+        recipientAddress,
+        merchantId,
+        serverSignature,
+      });
       return;
     }
 
     // Polygon networks require higher gas fees
-    const gasConfig = paymentDetails?.chainId && POLYGON_CHAIN_IDS.includes(paymentDetails.chainId)
-      ? POLYGON_GAS_CONFIG
-      : {};
+    const gasConfig =
+      paymentDetails?.chainId && POLYGON_CHAIN_IDS.includes(paymentDetails.chainId)
+        ? POLYGON_GAS_CONFIG
+        : {};
 
     writeContract({
       address: gatewayAddress,
@@ -133,7 +143,18 @@ export function usePayment({ paymentDetails }: UsePaymentParams): UsePaymentRetu
       chainId: paymentDetails?.chainId,
       ...gasConfig,
     });
-  }, [gatewayAddress, tokenAddress, paymentId, amount, recipientAddress, merchantId, feeBps, serverSignature, paymentDetails?.chainId, writeContract]);
+  }, [
+    gatewayAddress,
+    tokenAddress,
+    paymentId,
+    amount,
+    recipientAddress,
+    merchantId,
+    feeBps,
+    serverSignature,
+    paymentDetails?.chainId,
+    writeContract,
+  ]);
 
   // Check if payment was processed
   const checkIfProcessed = useCallback(async (): Promise<boolean> => {

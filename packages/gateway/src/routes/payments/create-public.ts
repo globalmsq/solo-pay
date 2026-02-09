@@ -97,10 +97,16 @@ Creates a payment from the widget (client-side). Uses Public Key auth and Origin
               successUrl: { type: 'string' },
               failUrl: { type: 'string' },
               expiresAt: { type: 'string', format: 'date-time' },
-              recipientAddress: { type: 'string', description: 'Merchant recipient wallet address' },
+              recipientAddress: {
+                type: 'string',
+                description: 'Merchant recipient wallet address',
+              },
               merchantId: { type: 'string', description: 'Merchant ID (bytes32)' },
               feeBps: { type: 'integer', description: 'Fee in basis points (100 = 1%)' },
-              forwarderAddress: { type: 'string', description: 'ERC2771Forwarder address for gasless payments' },
+              forwarderAddress: {
+                type: 'string',
+                description: 'ERC2771Forwarder address for gasless payments',
+              },
             },
           },
           400: ErrorResponseSchema,

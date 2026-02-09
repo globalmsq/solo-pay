@@ -1,9 +1,5 @@
 import { useCallback } from 'react';
-import {
-  useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-} from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { ERC20_ABI } from '../lib/contracts';
 import { formatUnits, parseGwei } from 'viem';
 
@@ -133,12 +129,10 @@ export function useToken({
   } = useWriteContract();
 
   // Wait for approval confirmation
-  const {
-    isLoading: isApprovalConfirming,
-    error: approvalReceiptError,
-  } = useWaitForTransactionReceipt({
-    hash: approvalTxHash,
-  });
+  const { isLoading: isApprovalConfirming, error: approvalReceiptError } =
+    useWaitForTransactionReceipt({
+      hash: approvalTxHash,
+    });
 
   // Approve function
   const approve = useCallback(
@@ -146,9 +140,7 @@ export function useToken({
       if (!tokenAddress || !spenderAddress) return;
 
       // Polygon networks require higher gas fees
-      const gasConfig = chainId && POLYGON_CHAIN_IDS.includes(chainId)
-        ? POLYGON_GAS_CONFIG
-        : {};
+      const gasConfig = chainId && POLYGON_CHAIN_IDS.includes(chainId) ? POLYGON_GAS_CONFIG : {};
 
       writeContract({
         address: tokenAddress,
@@ -172,9 +164,7 @@ export function useToken({
   );
 
   // Format balance for display
-  const formattedBalance = balance !== undefined
-    ? formatUnits(balance, decimals)
-    : '0';
+  const formattedBalance = balance !== undefined ? formatUnits(balance, decimals) : '0';
 
   // Refetch both balance and allowance
   const refetch = useCallback(() => {

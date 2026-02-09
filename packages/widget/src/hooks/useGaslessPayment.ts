@@ -2,11 +2,7 @@ import { useCallback, useState } from 'react';
 import { useReadContract, useWalletClient } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { PAYMENT_GATEWAY_ABI, FORWARDER_ABI } from '../lib/contracts';
-import {
-  submitGaslessPayment,
-  waitForRelayTransaction,
-  type ForwardRequest,
-} from '../lib/api';
+import { submitGaslessPayment, waitForRelayTransaction, type ForwardRequest } from '../lib/api';
 import type { PaymentDetails } from '../types';
 
 // ============================================================================

@@ -8,10 +8,7 @@ import { useWallet } from '../../hooks/useWallet';
 import { useToken } from '../../hooks/useToken';
 import { useGaslessPayment } from '../../hooks/useGaslessPayment';
 import { ConnectButton } from '../ConnectButton';
-import type {
-  PaymentStepType,
-  WidgetUrlParams,
-} from '../../types/index';
+import type { PaymentStepType, WidgetUrlParams } from '../../types/index';
 
 interface PaymentStepProps {
   /** Validated URL parameters from widget initialization */
@@ -108,12 +105,7 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
   const { address, isConnected, disconnect } = useWallet();
 
   // API hook for payment operations
-  const {
-    payment: paymentDetails,
-    isLoading,
-    error: apiError,
-    createPayment,
-  } = usePaymentApi();
+  const { payment: paymentDetails, isLoading, error: apiError, createPayment } = usePaymentApi();
 
   // Token operations (balance, allowance, approve)
   const {
@@ -155,11 +147,11 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
   }, [urlParams, createPayment]);
 
   // Human-readable amount (for display)
-  const displayAmount = urlParams?.amount ?? (
-    paymentDetails
+  const displayAmount =
+    urlParams?.amount ??
+    (paymentDetails
       ? formatUnits(BigInt(paymentDetails.amount), paymentDetails.tokenDecimals)
-      : '0'
-  );
+      : '0');
 
   // Payment amount in wei (bigint)
   const paymentAmountWei = paymentDetails ? BigInt(paymentDetails.amount) : BigInt(0);
@@ -200,15 +192,17 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
       !isRelayConfirming &&
       !gaslessError
     ) {
-      setCompletionDate(new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      }));
+      setCompletionDate(
+        new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        })
+      );
       goToPaymentComplete();
     }
   }, [currentStep, relayTxHash, isRelayConfirming, gaslessError]);
@@ -228,7 +222,9 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
   const handleApprove = useCallback(() => {
     if (needsApproval) {
       // Approve max amount for better UX (user won't need to approve again)
-      const maxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+      const maxUint256 = BigInt(
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+      );
       approve(maxUint256);
     } else {
       // Already approved, go to confirm
@@ -243,12 +239,16 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
 
     // Validate required payment details before proceeding
     if (!paymentDetails?.signature) {
-      setConfigError('Payment configuration error: Missing server signature. Please contact support.');
+      setConfigError(
+        'Payment configuration error: Missing server signature. Please contact support.'
+      );
       console.error('Missing server signature - check SIGNER_PRIVATE_KEY configuration');
       return;
     }
     if (!paymentDetails?.recipientAddress || !paymentDetails?.merchantId) {
-      setConfigError('Payment configuration error: Missing recipient details. Please contact support.');
+      setConfigError(
+        'Payment configuration error: Missing recipient details. Please contact support.'
+      );
       console.error('Missing payment details:', {
         recipientAddress: paymentDetails?.recipientAddress,
         merchantId: paymentDetails?.merchantId,
@@ -302,15 +302,25 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     return (
       <div className="text-center py-8">
         <div className="text-red-500 mb-4">
-          <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg
+            className="w-12 h-12 mx-auto mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
           <p className="font-medium">Payment Error</p>
         </div>
         <p className="text-sm text-gray-600 mb-4">{apiError}</p>
         {urlParams?.failUrl && (
           <button
-            onClick={() => window.location.href = urlParams.failUrl}
+            onClick={() => (window.location.href = urlParams.failUrl)}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200"
           >
             Go Back
@@ -340,7 +350,9 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
             walletAddress={address ? formatAddress(address) : ''}
             balance={formatBalance(formattedBalance)}
             token={paymentDetails.tokenSymbol}
-            onGetGas={() => { /* TODO: Implement gas sponsorship API */ }}
+            onGetGas={() => {
+              /* TODO: Implement gas sponsorship API */
+            }}
             onApprove={handleApprove}
             onDisconnect={handleDisconnect}
             onCancel={urlParams?.failUrl ? handleCancel : undefined}
