@@ -12,7 +12,7 @@ export const TEST_CHAINS: Record<string, ChainFixture> = {
   hardhat: {
     chainId: TEST_CHAIN_ID,
     name: 'Hardhat',
-    rpcUrl: process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8546',
+    rpcUrl: process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8545',
     gatewayAddress: CONTRACT_ADDRESSES.paymentGateway,
     forwarderAddress: CONTRACT_ADDRESSES.forwarder,
   },

@@ -224,7 +224,9 @@ INSERT INTO chains (network_id, name, rpc_url, gateway_address, forwarder_addres
 INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 (1, '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512', 'TEST', 18),
 (5, '0x98965474EcBeC2F532F1f780ee37b0b05F77Ca55', 'SUT', 18),
-(3, '0xE4C687167705Abf55d709395f92e254bdF5825a2', 'SUT', 18);
+(5, '0x6A8Ec2d9BfBDD20A7F5A4E89D640F7E7cebA4499', 'MSQ', 18),
+(3, '0xE4C687167705Abf55d709395f92e254bdF5825a2', 'SUT', 18),
+(3, '0x7350C119cb048c2Ea6b2532bcE82c2F7c042ff6b', 'MSQ', 18);
 
 -- Demo Merchant (id=1)
 -- API Key: 123 -> SHA-256 hash
@@ -250,7 +252,7 @@ INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, 
 -- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3)
 INSERT INTO merchant_payment_methods (merchant_id, token_id) VALUES
 (1, 1),
-(2, 3);
+(2, 5);
 
 -- Show created tables
 SHOW TABLES;

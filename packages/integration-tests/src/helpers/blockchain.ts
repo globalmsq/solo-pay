@@ -6,7 +6,7 @@ import PaymentGatewayArtifact from '@solo-pay/contracts/artifacts/src/PaymentGat
 import MockERC20Artifact from '@solo-pay/contracts/artifacts/src/mocks/MockERC20.sol/MockERC20.json';
 import ERC2771ForwarderArtifact from '@solo-pay/contracts/artifacts/@openzeppelin/contracts/metatx/ERC2771Forwarder.sol/ERC2771Forwarder.json';
 
-const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8546';
+const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8545';
 
 // Export ABIs for use in tests
 export const PaymentGatewayABI = PaymentGatewayArtifact.abi;

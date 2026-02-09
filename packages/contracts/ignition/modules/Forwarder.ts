@@ -16,7 +16,7 @@ const ForwarderModule: ReturnType<
   typeof buildModule<'Forwarder', string, IgnitionModuleResult<string>>
 > = buildModule('Forwarder', (m) => {
   // Domain name must match client (PaymentModal.tsx) and relay-api (signature-verifier.service.ts)
-  const forwarder = m.contract('ERC2771Forwarder', ['MSQForwarder']);
+  const forwarder = m.contract('ERC2771Forwarder', ['SoloForwarder']);
 
   return { forwarder };
 });
