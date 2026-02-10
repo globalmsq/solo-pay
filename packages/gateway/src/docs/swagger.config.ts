@@ -87,7 +87,15 @@ All errors follow a consistent format:
           type: 'apiKey',
           in: 'header',
           name: 'x-api-key',
-          description: 'Merchant API key for authentication.',
+          description:
+            'Merchant API key (admin routes: merchant, payment methods, refunds, payment detail, history, info).',
+        },
+        PublicKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-public-key',
+          description:
+            'Merchant public key for payment creation. Also send Origin header; it must match merchant allowed_domains.',
         },
       },
       schemas: {

@@ -145,6 +145,7 @@ services:
       SOLO_PAY_API_URL: http://gateway:3001
       # Merchant API Key (same as docker-compose.yaml: merchant_demo_001)
       SOLO_PAY_API_KEY: '123'
+      SOLO_PAY_PUBLIC_KEY: 'pk_test_demo'
     depends_on:
       - gateway
     networks:

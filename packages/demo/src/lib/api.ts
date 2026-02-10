@@ -434,26 +434,34 @@ export enum ApiErrorCode {
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
 }
 
-// Payment API Schemas
+// Payment API Schemas (matches gateway POST /payments/create - public key + Origin)
 export const CreatePaymentRequestSchema = z.object({
-  chainId: z.number().int().positive('Chain ID must be positive'),
-  amount: z.string().refine((val) => {
-    const num = BigInt(val);
-    return num > 0n;
-  }, 'Amount must be positive'),
-  merchantId: z.string().min(1, 'Merchant ID is required'),
+  orderId: z.string().min(1, 'orderId is required'),
+  amount: z.number().positive('amount must be positive'),
+  successUrl: z.string().url('successUrl must be a valid URL'),
+  failUrl: z.string().url('failUrl must be a valid URL'),
+  webhookUrl: z.string().url().optional(),
 });
 
 export type CreatePaymentRequest = z.infer<typeof CreatePaymentRequestSchema>;
 
 export const CreatePaymentResponseSchema = z.object({
-  success: z.boolean(),
   paymentId: z.string(),
+  orderId: z.string(),
+  serverSignature: z.string(),
+  chainId: z.number(),
   tokenAddress: z.string(),
   gatewayAddress: z.string(),
-  forwarderAddress: z.string(),
   amount: z.string(),
-  status: z.string(),
+  tokenDecimals: z.number(),
+  tokenSymbol: z.string(),
+  successUrl: z.string(),
+  failUrl: z.string(),
+  expiresAt: z.string(),
+  recipientAddress: z.string(),
+  merchantId: z.string(),
+  feeBps: z.number(),
+  forwarderAddress: z.string().optional(),
 });
 
 export type CreatePaymentResponse = z.infer<typeof CreatePaymentResponseSchema>;
@@ -493,14 +501,13 @@ async function retryWithDelay(
 }
 
 /**
- * Create a payment request with the server
- * @param request Payment request with chainId, amount, merchantId
+ * Create a payment via demo API (proxies to gateway with public key + Origin).
+ * @param request orderId, amount, successUrl, failUrl, optional webhookUrl
  * @returns Promise with payment response or error
  */
 export async function createPayment(
   request: CreatePaymentRequest
 ): Promise<ApiResponse<CreatePaymentResponse>> {
-  // Validate request
   const validation = CreatePaymentRequestSchema.safeParse(request);
   if (!validation.success) {
     return {
@@ -513,18 +520,17 @@ export async function createPayment(
   const validatedRequest = validation.data;
 
   try {
-    // Make request with retry logic
     const response = await retryWithDelay(
       async () => {
         return fetch(`${API_URL}/payments/create`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            chainId: validatedRequest.chainId,
+            orderId: validatedRequest.orderId,
             amount: validatedRequest.amount,
-            merchantId: validatedRequest.merchantId,
+            successUrl: validatedRequest.successUrl,
+            failUrl: validatedRequest.failUrl,
+            webhookUrl: validatedRequest.webhookUrl,
           }),
         });
       },

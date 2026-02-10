@@ -43,9 +43,9 @@ interface ErrorResponse {
 // ============================================================================
 
 /**
- * Request body for POST /payments/create-public
+ * Request body for POST /payments/create
  */
-export interface CreatePublicPaymentRequest {
+export interface CreatePaymentRequest {
   orderId: string;
   amount: number;
   successUrl: string;
@@ -54,30 +54,30 @@ export interface CreatePublicPaymentRequest {
 }
 
 /**
- * Response from POST /payments/create-public
+ * Response from POST /payments/create
  * This matches PaymentDetails type
  */
-export interface CreatePublicPaymentResponse extends PaymentDetails {}
+export interface CreatePaymentResponse extends PaymentDetails {}
 
 // ============================================================================
 // API Functions
 // ============================================================================
 
 /**
- * Create a payment using public key authentication
+ * Create a payment (POST /payments/create).
  *
  * This is the main API call for the widget. It creates a payment record
  * on the server and returns all the information needed to execute the
- * blockchain transaction.
+ * blockchain transaction. Auth: x-public-key header + Origin.
  *
  * @param publicKey - Merchant's public key (pk_live_xxx or pk_test_xxx)
  * @param params - Payment parameters from URL
- * @returns Payment details including paymentId, signature, addresses, etc.
+ * @returns Payment details including paymentId, serverSignature, addresses, etc.
  * @throws PaymentApiError if the API call fails
  *
  * @example
  * ```typescript
- * const payment = await createPublicPayment(
+ * const payment = await createPayment(
  *   'pk_live_xxx',
  *   {
  *     orderId: '123',
@@ -86,16 +86,16 @@ export interface CreatePublicPaymentResponse extends PaymentDetails {}
  *     failUrl: 'https://example.com/fail',
  *   }
  * );
- * console.log(payment.paymentId, payment.signature);
+ * console.log(payment.paymentId, payment.serverSignature);
  * ```
  */
-export async function createPublicPayment(
+export async function createPayment(
   publicKey: string,
-  params: CreatePublicPaymentRequest
-): Promise<CreatePublicPaymentResponse> {
+  params: CreatePaymentRequest
+): Promise<CreatePaymentResponse> {
   const apiUrl = getApiUrl();
 
-  const response = await fetch(`${apiUrl}/payments/create-public`, {
+  const response = await fetch(`${apiUrl}/payments/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export async function createPublicPayment(
     );
   }
 
-  return data as CreatePublicPaymentResponse;
+  return data as CreatePaymentResponse;
 }
 
 /**
@@ -139,8 +139,8 @@ export async function createPublicPayment(
  */
 export async function createPaymentFromUrlParams(
   urlParams: WidgetUrlParams
-): Promise<CreatePublicPaymentResponse> {
-  return createPublicPayment(urlParams.pk, {
+): Promise<CreatePaymentResponse> {
+  return createPayment(urlParams.pk, {
     orderId: urlParams.orderId,
     amount: parseFloat(urlParams.amount),
     successUrl: urlParams.successUrl,

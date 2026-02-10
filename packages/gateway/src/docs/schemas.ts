@@ -41,28 +41,36 @@ export const PaymentHashSchema = {
 
 export const CreatePaymentRequestSchema = {
   type: 'object',
+  required: ['orderId', 'amount', 'successUrl', 'failUrl'],
   properties: {
-    merchantId: {
+    orderId: {
       type: 'string',
-      description: 'Unique merchant identifier (merchant_key)',
-      example: 'merchant_demo_001',
+      description: 'Merchant order identifier',
+      example: 'order_001',
     },
     amount: {
       type: 'number',
       description: 'Payment amount in base token units (e.g., 10.5 for 10.5 TEST)',
       example: 10,
     },
-    chainId: {
-      type: 'integer',
-      description: 'Blockchain network ID',
-      example: 31337,
-    },
-    tokenAddress: {
+    successUrl: {
       type: 'string',
-      description: 'ERC20 token contract address',
-      example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+      format: 'uri',
+      description: 'Redirect URL on success',
+      example: 'https://example.com/success',
     },
-    // Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
+    failUrl: {
+      type: 'string',
+      format: 'uri',
+      description: 'Redirect URL on failure',
+      example: 'https://example.com/fail',
+    },
+    webhookUrl: {
+      type: 'string',
+      format: 'uri',
+      description: 'Optional server notification URL',
+      example: 'https://example.com/webhook',
+    },
   },
 } as const;
 
@@ -189,6 +197,13 @@ export const CreatePaymentResponseSchema = {
       description: 'Server EIP-712 signature for payment authorization',
       example: '0x1234...abcd',
     },
+    orderId: {
+      type: 'string',
+      description: 'Merchant order identifier',
+      example: 'order_001',
+    },
+    successUrl: { type: 'string', format: 'uri', example: 'https://example.com/success' },
+    failUrl: { type: 'string', format: 'uri', example: 'https://example.com/fail' },
   },
 } as const;
 

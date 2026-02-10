@@ -18,87 +18,83 @@ describe('createPayment', () => {
     vi.restoreAllMocks();
   });
 
-  it('should create a payment with valid request parameters', async () => {
-    const mockResponse = {
-      success: true,
-      paymentId: 'payment-123',
-      tokenAddress: '0x1234567890123456789012345678901234567890',
-      gatewayAddress: '0x0987654321098765432109876543210987654321',
-      forwarderAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-      amount: '1000000000000000000',
-      status: 'pending',
-    };
+  const validRequest: CreatePaymentRequest = {
+    orderId: 'order-123',
+    amount: 100,
+    successUrl: 'https://example.com/success',
+    failUrl: 'https://example.com/fail',
+  };
 
+  const mockCreateResponse = {
+    paymentId: 'payment-123',
+    orderId: 'order-123',
+    serverSignature: '0x',
+    chainId: 80002,
+    tokenAddress: '0x1234567890123456789012345678901234567890',
+    gatewayAddress: '0x0987654321098765432109876543210987654321',
+    amount: '1000000000000000000',
+    tokenDecimals: 18,
+    tokenSymbol: 'SUT',
+    successUrl: 'https://example.com/success',
+    failUrl: 'https://example.com/fail',
+    expiresAt: new Date().toISOString(),
+    recipientAddress: '0x',
+    merchantId: '0x',
+    feeBps: 0,
+    forwarderAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+  };
+
+  it('should create a payment with valid request parameters', async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponse,
+      json: async () => mockCreateResponse,
     });
 
-    const request: CreatePaymentRequest = {
-      chainId: 80002,
-      amount: '100',
-      merchantId: 'merchant-123',
-    };
-
-    const result = await createPayment(request);
+    const result = await createPayment(validRequest);
 
     expect(result.success).toBe(true);
     expect(result.data?.paymentId).toBe('payment-123');
-    expect(result.data?.tokenAddress).toBe(mockResponse.tokenAddress);
-    expect(result.data?.gatewayAddress).toBe(mockResponse.gatewayAddress);
+    expect(result.data?.tokenAddress).toBe(mockCreateResponse.tokenAddress);
+    expect(result.data?.gatewayAddress).toBe(mockCreateResponse.gatewayAddress);
   });
 
-  it('should return VALIDATION_ERROR for invalid chainId (-1)', async () => {
-    const request: CreatePaymentRequest = {
-      chainId: -1,
-      amount: '100',
-      merchantId: 'merchant-123',
-    };
-
-    const result = await createPayment(request);
-
+  it('should return VALIDATION_ERROR for empty orderId', async () => {
+    const result = await createPayment({
+      ...validRequest,
+      orderId: '',
+    });
     expect(result.success).toBe(false);
     expect(result.code).toBe(ApiErrorCode.VALIDATION_ERROR);
   });
 
-  it('should return VALIDATION_ERROR for negative amount', async () => {
-    const request: CreatePaymentRequest = {
-      chainId: 80002,
-      amount: '-100',
-      merchantId: 'merchant-123',
-    };
-
-    const result = await createPayment(request);
-
+  it('should return VALIDATION_ERROR for non-positive amount', async () => {
+    const result = await createPayment({
+      ...validRequest,
+      amount: 0,
+    });
     expect(result.success).toBe(false);
     expect(result.code).toBe(ApiErrorCode.VALIDATION_ERROR);
   });
 
-  it('should return VALIDATION_ERROR for empty merchantId', async () => {
-    const request: CreatePaymentRequest = {
-      chainId: 80002,
-      amount: '100',
-      merchantId: '',
-    };
+  it('should return VALIDATION_ERROR for invalid successUrl', async () => {
+    const result = await createPayment({
+      ...validRequest,
+      successUrl: 'not-a-url',
+    });
+    expect(result.success).toBe(false);
+    expect(result.code).toBe(ApiErrorCode.VALIDATION_ERROR);
+  });
 
-    const result = await createPayment(request);
-
+  it('should return VALIDATION_ERROR for empty failUrl', async () => {
+    const result = await createPayment({
+      ...validRequest,
+      failUrl: '',
+    });
     expect(result.success).toBe(false);
     expect(result.code).toBe(ApiErrorCode.VALIDATION_ERROR);
   });
 
   it('should retry on 5xx errors and succeed after 2 failures', async () => {
-    const mockResponse = {
-      success: true,
-      paymentId: 'payment-123',
-      tokenAddress: '0x1234567890123456789012345678901234567890',
-      gatewayAddress: '0x0987654321098765432109876543210987654321',
-      forwarderAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-      amount: '1000000000000000000',
-      status: 'pending',
-    };
-
-    // Mock: first 500, second 500, third success
     (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
         ok: false,
@@ -112,68 +108,41 @@ describe('createPayment', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        json: async () => mockCreateResponse,
       });
 
-    const request: CreatePaymentRequest = {
-      chainId: 80002,
-      amount: '100',
-      merchantId: 'merchant-123',
-    };
-
-    const result = await createPayment(request);
+    const result = await createPayment(validRequest);
 
     expect(result.success).toBe(true);
     expect(result.data?.paymentId).toBe('payment-123');
-    // Should have called fetch 3 times (2 failures + 1 success)
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
   it('should return error after 3 consecutive 5xx errors', async () => {
-    // Mock: three 500 errors
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
       status: 500,
       json: async () => ({ message: 'Server error' }),
     });
 
-    const request: CreatePaymentRequest = {
-      chainId: 80002,
-      amount: '100',
-      merchantId: 'merchant-123',
-    };
-
-    const result = await createPayment(request);
+    const result = await createPayment(validRequest);
 
     expect(result.success).toBe(false);
     expect(result.code).toBe(ApiErrorCode.SERVER_ERROR);
-    // Should have called fetch 3 times (max retries)
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
   it('should not retry on 4xx errors and return immediately', async () => {
-    const mockErrorResponse = {
-      message: 'Bad request',
-      code: 'INVALID_REQUEST',
-    };
-
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 400,
-      json: async () => mockErrorResponse,
+      json: async () => ({ message: 'Bad request', code: 'INVALID_REQUEST' }),
     });
 
-    const request: CreatePaymentRequest = {
-      chainId: 80002,
-      amount: '100',
-      merchantId: 'merchant-123',
-    };
-
-    const result = await createPayment(request);
+    const result = await createPayment(validRequest);
 
     expect(result.success).toBe(false);
     expect(result.code).toBe(ApiErrorCode.CLIENT_ERROR);
-    // Should have called fetch only once (no retry for 4xx)
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 });

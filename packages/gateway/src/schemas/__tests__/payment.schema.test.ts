@@ -2,33 +2,32 @@ import { describe, it, expect } from 'vitest';
 import { CreatePaymentSchema } from '../payment.schema';
 
 describe('payment.schema.ts - CreatePaymentSchema', () => {
-  // Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
   const validPayload = {
-    merchantId: 'merchant_001',
+    orderId: 'order_001',
     amount: 100,
-    chainId: 80002,
-    tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+    successUrl: 'https://example.com/success',
+    failUrl: 'https://example.com/fail',
   };
 
   describe('Valid payloads', () => {
-    it('should accept valid payment with chainId and tokenAddress', () => {
+    it('should accept valid payment with orderId, amount, successUrl, failUrl', () => {
       const result = CreatePaymentSchema.safeParse(validPayload);
       expect(result.success).toBe(true);
       if (result.success) {
+        expect(result.data.orderId).toBe('order_001');
         expect(result.data.amount).toBe(100);
-        expect(result.data.chainId).toBe(80002);
-        expect(result.data.tokenAddress).toBe('0xE4C687167705Abf55d709395f92e254bdF5825a2');
+        expect(result.data.successUrl).toBe('https://example.com/success');
+        expect(result.data.failUrl).toBe('https://example.com/fail');
       }
     });
 
-    it('should accept valid payment with chainId 31337 (Hardhat)', () => {
-      const payload = {
-        ...validPayload,
-        chainId: 31337,
-        tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-      };
+    it('should accept valid payment with optional webhookUrl', () => {
+      const payload = { ...validPayload, webhookUrl: 'https://example.com/webhook' };
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.webhookUrl).toBe('https://example.com/webhook');
+      }
     });
 
     it('should accept different amounts', () => {
@@ -61,77 +60,65 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject missing tokenAddress', () => {
+    it('should reject missing orderId', () => {
       const payload = { ...validPayload };
-      delete (payload as Partial<typeof validPayload>).tokenAddress;
+      delete (payload as Partial<typeof validPayload>).orderId;
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
 
-    it('should reject invalid tokenAddress format', () => {
-      const payload = { ...validPayload, tokenAddress: 'invalid' };
+    it('should reject empty orderId', () => {
+      const payload = { ...validPayload, orderId: '' };
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
 
-    it('should reject missing chainId', () => {
+    it('should reject invalid successUrl', () => {
+      const payload = { ...validPayload, successUrl: 'not-a-url' };
+      const result = CreatePaymentSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject missing successUrl', () => {
       const payload = { ...validPayload };
-      delete (payload as Partial<typeof validPayload>).chainId;
+      delete (payload as Partial<typeof validPayload>).successUrl;
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
 
-    it('should reject negative chainId', () => {
-      const payload = { ...validPayload, chainId: -1 };
+    it('should reject invalid failUrl', () => {
+      const payload = { ...validPayload, failUrl: 'not-a-url' };
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
 
-    it('should reject zero chainId', () => {
-      const payload = { ...validPayload, chainId: 0 };
-      const result = CreatePaymentSchema.safeParse(payload);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject non-integer chainId', () => {
-      const payload = { ...validPayload, chainId: 80002.5 };
+    it('should reject missing failUrl', () => {
+      const payload = { ...validPayload };
+      delete (payload as Partial<typeof validPayload>).failUrl;
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
   });
 
   describe('Schema field requirements', () => {
-    it('should have required fields: merchantId, amount, chainId, tokenAddress', () => {
+    it('should have required fields: orderId, amount, successUrl, failUrl', () => {
       const schema = CreatePaymentSchema.shape;
-      expect(schema).toHaveProperty('merchantId');
+      expect(schema).toHaveProperty('orderId');
       expect(schema).toHaveProperty('amount');
-      expect(schema).toHaveProperty('chainId');
-      expect(schema).toHaveProperty('tokenAddress');
+      expect(schema).toHaveProperty('successUrl');
+      expect(schema).toHaveProperty('failUrl');
     });
 
-    it('should NOT have recipientAddress field (컨트랙트가 treasury로 고정 결제)', () => {
+    it('should have optional webhookUrl field', () => {
       const schema = CreatePaymentSchema.shape;
-      expect(schema).not.toHaveProperty('recipientAddress');
+      expect(schema).toHaveProperty('webhookUrl');
     });
 
-    it('should NOT require userId field (not in schema)', () => {
-      // userId는 스키마에 없음
+    it('should NOT have merchantId, chainId, tokenAddress (create uses merchant config)', () => {
       const schema = CreatePaymentSchema.shape;
-      expect(schema).not.toHaveProperty('userId');
-    });
-
-    it('should NOT have currency field (removed from schema)', () => {
-      // currency는 스키마에서 제거됨, tokenAddress 사용
-      const schema = CreatePaymentSchema.shape;
-      expect(schema).not.toHaveProperty('currency');
-    });
-
-    it('should require tokenAddress field', () => {
-      // tokenAddress는 필수 필드
-      const payloadWithoutToken = { ...validPayload };
-      delete (payloadWithoutToken as Partial<typeof validPayload>).tokenAddress;
-      const result = CreatePaymentSchema.safeParse(payloadWithoutToken);
-      expect(result.success).toBe(false);
+      expect(schema).not.toHaveProperty('merchantId');
+      expect(schema).not.toHaveProperty('chainId');
+      expect(schema).not.toHaveProperty('tokenAddress');
     });
   });
 });

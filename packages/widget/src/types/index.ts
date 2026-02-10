@@ -37,15 +37,15 @@ export interface UrlParamsValidationResult {
 }
 
 /**
- * API response from POST /payments/create-public
+ * API response from POST /payments/create
  */
 export interface PaymentDetails {
   /** Payment hash for smart contract */
   paymentId: string;
   /** Merchant order ID */
   orderId: string;
-  /** Server signature for contract verification */
-  signature: string;
+  /** Server EIP-712 signature for contract verification */
+  serverSignature: string;
   /** Blockchain network ID */
   chainId: number;
   /** ERC20 token contract address */

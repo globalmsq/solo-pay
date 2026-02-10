@@ -20,7 +20,16 @@ export async function GET(request: NextRequest) {
     }
 
     const apiUrl = process.env.SOLO_PAY_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/payments/history?chainId=${chainId}&payer=${payer}`);
+    const apiKey = process.env.SOLO_PAY_API_KEY || '';
+    if (!apiKey) {
+      return NextResponse.json(
+        { success: false, message: 'SOLO_PAY_API_KEY not configured' },
+        { status: 500 }
+      );
+    }
+    const response = await fetch(`${apiUrl}/payments/history?chainId=${chainId}&payer=${payer}`, {
+      headers: { 'x-api-key': apiKey },
+    });
     const data = await response.json();
 
     return NextResponse.json(data);

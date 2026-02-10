@@ -18,9 +18,13 @@ import type {
 export class SoloPayClient {
   private apiUrl: string;
   private apiKey: string;
+  private publicKey?: string;
+  private origin?: string;
 
   constructor(config: SoloPayConfig) {
     this.apiKey = config.apiKey;
+    this.publicKey = config.publicKey;
+    this.origin = config.origin;
 
     if (config.environment === 'custom') {
       if (!config.apiUrl) {
@@ -41,7 +45,27 @@ export class SoloPayClient {
   }
 
   async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResponse> {
-    return this.request<CreatePaymentResponse>('POST', '/payments/create', params);
+    if (!this.publicKey || !this.origin) {
+      throw new Error(
+        'createPayment requires publicKey and origin in SoloPayConfig (for POST /payments/create auth)'
+      );
+    }
+    const response = await fetch(`${this.apiUrl}/payments/create`, {
+      method: 'POST',
+      headers: {
+        ...DEFAULT_HEADERS,
+        'x-public-key': this.publicKey,
+        Origin: this.origin,
+      },
+      body: JSON.stringify(params),
+      cache: 'no-store',
+    });
+    const data = (await response.json()) as CreatePaymentResponse | ErrorResponse;
+    if (!response.ok) {
+      const error = data as ErrorResponse;
+      throw new SoloPayError(error.code, error.message, response.status, error.details);
+    }
+    return data as CreatePaymentResponse;
   }
 
   async getPaymentStatus(paymentId: string): Promise<PaymentStatusResponse> {
@@ -76,7 +100,7 @@ export class SoloPayClient {
   private async request<T>(
     method: string,
     path: string,
-    body?: CreatePaymentParams | GaslessParams | RelayParams
+    body?: GaslessParams | RelayParams
   ): Promise<T> {
     const headers = {
       ...DEFAULT_HEADERS,

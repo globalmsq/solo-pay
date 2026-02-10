@@ -18,7 +18,6 @@ import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
 import { createWebhookQueue } from '@solo-pay/webhook-manager';
 import { createPaymentRoute } from './routes/payments/create';
-import { createPublicPaymentRoute } from './routes/payments/create-public';
 import { prepareWalletRoute } from './routes/payments/prepare-wallet';
 import { paymentDetailRoute } from './routes/payments/payment-detail';
 import { paymentInfoRoute } from './routes/payments/info';
@@ -80,8 +79,9 @@ const relayService = new RelayService(prisma);
 const refundService = new RefundService(prisma);
 
 // Route auth (same merchant key and API):
-// - createMerchantAuthMiddleware: POST /payments/create, POST /payments/info (body.merchantId must match x-api-key owner)
-// - createPaymentAuthMiddleware: POST /payments/:id/gasless, POST /payments/:id/relay (payment must belong to x-api-key owner)
+// - createPayment (POST /payments/create): public key + Origin only
+// - POST /payments/:id/gasless: no auth (payment ID + amount/signature validated in handler)
+// - createMerchantAuthMiddleware: POST /payments/info (body.merchantId must match x-api-key owner)
 // - createAuthMiddleware: GET /merchants/me, PATCH /merchants/me, payment-methods (no body.merchantId; uses request.merchant only)
 const registerRoutes = async () => {
   // Health check endpoint
@@ -153,16 +153,6 @@ const registerRoutes = async () => {
     paymentService,
     signingServices
   );
-  await createPublicPaymentRoute(
-    server,
-    blockchainService,
-    merchantService,
-    chainService,
-    tokenService,
-    paymentMethodService,
-    paymentService,
-    signingServices
-  );
   await prepareWalletRoute(
     server,
     blockchainService,
@@ -194,9 +184,15 @@ const registerRoutes = async () => {
     merchantService,
     webhookQueueInstance
   );
-  await submitGaslessRoute(server, relayerService, relayService, paymentService, merchantService);
+  await submitGaslessRoute(server, relayerService, relayService, paymentService);
   await getRelayStatusRoute(server, relayerService);
-  await getPaymentHistoryRoute(server, blockchainService, paymentService, relayService);
+  await getPaymentHistoryRoute(
+    server,
+    blockchainService,
+    paymentService,
+    relayService,
+    merchantService
+  );
   await getTokenBalanceRoute(server, blockchainService);
   await getTokenAllowanceRoute(server, blockchainService);
   await getTransactionStatusRoute(server, blockchainService);

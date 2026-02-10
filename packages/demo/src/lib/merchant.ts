@@ -33,12 +33,18 @@ export interface MerchantConfig {
 
   /** 토큰 소수점 자릿수 */
   tokenDecimals: number;
+
+  /** Public key for POST /payments/create (must be in merchant allowed_domains) */
+  publicKey: string;
+
+  /** Origin for POST /payments/create (must match one of merchant allowed_domains) */
+  origin: string;
 }
 
 /**
  * 체인별 설정
  */
-const CHAIN_CONFIGS: Record<number, Omit<MerchantConfig, 'merchantId'>> = {
+const CHAIN_CONFIGS: Record<number, Omit<MerchantConfig, 'merchantId' | 'publicKey' | 'origin'>> = {
   // Hardhat Local (chainId: 31337)
   // Deployment order: Forwarder (nonce 0) → Token (nonce 1)
   // Same address as msq-relayer-service SampleToken
@@ -73,8 +79,20 @@ export function getMerchantConfig(): MerchantConfig {
   const chainId = Number(process.env.CHAIN_ID) || Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 31337;
   const chainConfig = CHAIN_CONFIGS[chainId] || CHAIN_CONFIGS[31337];
 
+  const publicKey =
+    process.env.SOLO_PAY_PUBLIC_KEY || process.env.NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY || '';
+  // Origin for POST /payments/create. Server-side requests do not send Origin automatically;
+  // this value is sent by the SDK. Only browser requests send Origin automatically.
+  const origin =
+    process.env.SOLO_PAY_ORIGIN ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    'http://localhost:3000';
+
   return {
     merchantId: 'merchant_demo_001',
     ...chainConfig,
+    publicKey,
+    origin,
   };
 }

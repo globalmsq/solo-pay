@@ -14,6 +14,8 @@ const PAY_SERVER_URL = process.env.PAY_SERVER_URL || 'http://localhost:3011';
 export interface TestMerchant {
   merchantId: string;
   apiKey: string;
+  publicKey?: string;
+  origin?: string;
 }
 
 /**
@@ -22,6 +24,8 @@ export interface TestMerchant {
 export const TEST_MERCHANT: TestMerchant = {
   merchantId: 'merchant_demo_001',
   apiKey: '123',
+  publicKey: 'pk_test_demo',
+  origin: process.env.PAY_SERVER_ORIGIN || 'http://localhost:3000',
 };
 
 export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): SoloPayClient {
@@ -29,6 +33,8 @@ export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): SoloPa
     environment: 'custom',
     apiUrl: PAY_SERVER_URL,
     apiKey: merchant.apiKey,
+    publicKey: merchant.publicKey,
+    origin: merchant.origin,
   });
 }
 
@@ -38,7 +44,21 @@ export function createTestClientFromFixture(merchantName: string = 'default'): S
     environment: 'custom',
     apiUrl: PAY_SERVER_URL,
     apiKey: fixture.apiKey,
+    publicKey: fixture.publicKey,
+    origin: fixture.origin,
   });
+}
+
+/** Build params for createPayment (POST /payments/create uses orderId, amount, successUrl, failUrl). */
+export function makeCreatePaymentParams(amount: number, orderId?: string): CreatePaymentParams {
+  const base = process.env.PAY_SERVER_ORIGIN || 'http://localhost:3000';
+  const oid = orderId ?? `order-${Date.now()}`;
+  return {
+    orderId: oid,
+    amount,
+    successUrl: `${base}/success?orderId=${oid}`,
+    failUrl: `${base}/fail?orderId=${oid}`,
+  };
 }
 
 export async function createPayment(

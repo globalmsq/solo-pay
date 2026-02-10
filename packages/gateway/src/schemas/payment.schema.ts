@@ -2,21 +2,8 @@ import { z } from 'zod';
 import { decodeFunctionData } from 'viem';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
-// 결제 생성 요청 스키마
-// Note: recipientAddress는 컨트랙트에서 treasury로 고정되어 있으므로 요청에서 제거됨
+// Create payment request (POST /payments/create): orderId, amount, successUrl, failUrl, webhookUrl optional
 export const CreatePaymentSchema = z.object({
-  merchantId: z.string().min(1, '상점 ID는 필수입니다'),
-  amount: z.number().positive('금액은 양수여야 합니다'),
-  chainId: z.number().int().positive('지원하는 체인 ID여야 합니다'),
-  tokenAddress: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{40}$/, '유효한 토큰 주소여야 합니다 (0x + 40자 hex)'),
-});
-
-export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
-
-// Client-side public payment creation (widget): orderId, amount, successUrl, failUrl, webhookUrl optional
-export const CreatePublicPaymentSchema = z.object({
   orderId: z.string().min(1, 'orderId is required'),
   amount: z.number().positive('amount must be positive'),
   successUrl: z.string().url('successUrl must be a valid URL'),
@@ -24,7 +11,7 @@ export const CreatePublicPaymentSchema = z.object({
   webhookUrl: z.string().url().optional(),
 });
 
-export type CreatePublicPaymentRequest = z.infer<typeof CreatePublicPaymentSchema>;
+export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
 
 // Prepare wallet: paymentId + walletAddress (public auth)
 export const PrepareWalletSchema = z.object({

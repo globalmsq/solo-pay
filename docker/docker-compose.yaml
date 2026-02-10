@@ -176,6 +176,9 @@ services:
       SOLO_PAY_API_URL: http://gateway:3001
       # API Key for merchant_demo_001 (SHA-256 hash: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3)
       SOLO_PAY_API_KEY: '123'
+      # Public key + origin for POST /payments/create (must match merchant allowed_domains in DB)
+      SOLO_PAY_PUBLIC_KEY: 'pk_test_demo'
+      # SOLO_PAY_ORIGIN optional; default http://localhost:3000 matches init.sql allowed_domains
     depends_on:
       - gateway
     networks:

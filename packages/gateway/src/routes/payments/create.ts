@@ -11,18 +11,15 @@ import { TokenService } from '../../services/token.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { PaymentService } from '../../services/payment.service';
 import { ServerSigningService } from '../../services/signature-server.service';
-import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
-import {
-  CreatePaymentRequestSchema,
-  CreatePaymentResponseSchema,
-  ErrorResponseSchema,
-} from '../../docs/schemas';
+import { createPublicAuthMiddleware } from '../../middleware/public-auth.middleware';
+import { ErrorResponseSchema } from '../../docs/schemas';
 
-export interface CreatePaymentRequest {
-  merchantId: string;
+export interface CreatePaymentBody {
+  orderId: string;
   amount: number;
-  chainId: number;
-  tokenAddress: string;
+  successUrl: string;
+  failUrl: string;
+  webhookUrl?: string;
 }
 
 export async function createPaymentRoute(
@@ -35,228 +32,219 @@ export async function createPaymentRoute(
   paymentService: PaymentService,
   signingServices?: Map<number, ServerSigningService>
 ) {
-  // Auth + merchant ownership middleware
-  // Enforce same merchant key and API: body.merchantId must match x-api-key owner
-  const authMiddleware = createMerchantAuthMiddleware(merchantService);
+  const publicAuth = createPublicAuthMiddleware(merchantService);
 
-  app.post<{ Body: CreatePaymentRequest }>(
+  app.post<{ Body: CreatePaymentBody }>(
     '/payments/create',
     {
       schema: {
         operationId: 'createPayment',
         tags: ['Payments'],
-        summary: 'Create a new payment',
+        summary: 'Create payment (public key + Origin)',
         description: `
-Creates a new payment request for a merchant.
+Creates a payment. Single endpoint for both widget and backend. Uses Public Key auth and Origin validation.
 
-**Flow:**
-1. Client calls this endpoint with payment details
-2. Server validates merchant, chain, and token configuration
-3. Server creates a payment record with unique payment hash
-4. Client uses the returned payment info to submit on-chain transaction
+**Headers (required):** \`x-public-key\` = public key (pk_live_xxx or pk_test_xxx). \`Origin\` = request origin; must **exactly** match one of merchant \`allowed_domains\` (no trailing slash). In a browser the browser sets Origin automatically; in server-to-server or Swagger/curl set it manually to one of your allowed domains.
 
-**Notes:**
-- Payment expires after 30 minutes
-- Amount is converted to wei based on token decimals
-- Gasless payments use the returned forwarderAddress
+**Flow:** Public Key + Origin -> merchant -> chain/token from merchant config -> amount to wei -> payment_hash -> Payment record -> server signature.
+
+**Response:** paymentId, serverSignature, chainId, tokenAddress, gatewayAddress, amount (wei), tokenDecimals, tokenSymbol, successUrl, failUrl, expiresAt, recipientAddress, merchantId, feeBps, forwarderAddress.
         `,
-        security: [{ ApiKeyAuth: [] }],
-        body: CreatePaymentRequestSchema,
+        security: [{ PublicKeyAuth: [] }],
+        headers: {
+          type: 'object',
+          required: ['x-public-key', 'origin'],
+          properties: {
+            'x-public-key': {
+              type: 'string',
+              description:
+                'Public key (pk_live_xxx). Get from POST /merchants/me/public-key with API Key.',
+            },
+            origin: {
+              type: 'string',
+              description:
+                'Request origin. Must exactly match one of merchant allowed_domains (e.g. http://localhost:3000). In browser this is set automatically; in server-to-server/Swagger set it to the same value as one of your allowed_domains.',
+            },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['orderId', 'amount', 'successUrl', 'failUrl'],
+          properties: {
+            orderId: { type: 'string', description: 'Merchant order ID' },
+            amount: { type: 'number', description: 'Payment amount' },
+            successUrl: { type: 'string', format: 'uri', description: 'Redirect URL on success' },
+            failUrl: { type: 'string', format: 'uri', description: 'Redirect URL on failure' },
+            webhookUrl: {
+              type: 'string',
+              format: 'uri',
+              description: 'Optional per-payment webhook',
+            },
+          },
+        },
         response: {
-          201: CreatePaymentResponseSchema,
+          201: {
+            type: 'object',
+            properties: {
+              success: {
+                type: 'boolean',
+                example: true,
+                description: 'Indicates the request succeeded',
+              },
+              paymentId: { type: 'string' },
+              orderId: { type: 'string', description: 'Merchant order ID' },
+              serverSignature: {
+                type: 'string',
+                description: 'Server EIP-712 signature for payment authorization',
+              },
+              chainId: { type: 'integer' },
+              tokenAddress: { type: 'string' },
+              gatewayAddress: { type: 'string' },
+              amount: { type: 'string', description: 'Wei' },
+              tokenDecimals: { type: 'integer' },
+              tokenSymbol: { type: 'string' },
+              successUrl: { type: 'string' },
+              failUrl: { type: 'string' },
+              expiresAt: { type: 'string', format: 'date-time' },
+              recipientAddress: {
+                type: 'string',
+                description: 'Merchant recipient wallet address',
+              },
+              merchantId: { type: 'string', description: 'Merchant ID (bytes32)' },
+              feeBps: { type: 'integer', description: 'Fee in basis points (100 = 1%)' },
+              forwarderAddress: {
+                type: 'string',
+                description: 'ERC2771Forwarder address for gasless payments',
+              },
+            },
+          },
           400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           404: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
       },
-      preHandler: authMiddleware,
+      preHandler: publicAuth,
     },
     async (request, reply) => {
       try {
-        // 입력 검증
-        const validatedData = CreatePaymentSchema.parse(request.body);
+        const validated = CreatePaymentSchema.parse(request.body);
+        const merchant = (
+          request as {
+            merchant?: {
+              id: number;
+              merchant_key: string;
+              chain_id: number;
+              recipient_address: string | null;
+              fee_bps: number;
+            };
+          }
+        ).merchant;
+        if (!merchant) {
+          return reply.code(403).send({ code: 'UNAUTHORIZED', message: 'Merchant required' });
+        }
 
-        // 1. 체인 지원 여부 확인
-        if (!blockchainService.isChainSupported(validatedData.chainId)) {
+        const origin = (request.headers['origin'] as string) ?? '';
+
+        if (!merchant.chain_id) {
+          return reply.code(400).send({
+            code: 'CHAIN_NOT_CONFIGURED',
+            message: 'Merchant chain is not configured',
+          });
+        }
+
+        const chain = await chainService.findById(merchant.chain_id);
+        if (!chain || !chain.gateway_address) {
+          return reply.code(404).send({
+            code: 'CHAIN_NOT_FOUND',
+            message: 'Merchant chain or gateway not found',
+          });
+        }
+
+        const chainId = chain.network_id;
+        if (!blockchainService.isChainSupported(chainId)) {
           return reply.code(400).send({
             code: 'UNSUPPORTED_CHAIN',
             message: 'Unsupported chain',
           });
         }
 
-        // 2. 토큰 검증: 심볼 존재 + 주소 일치 확인
-        const tokenAddress = validatedData.tokenAddress;
-        if (!tokenAddress) {
-          return reply.code(400).send({
-            code: 'INVALID_REQUEST',
-            message: 'tokenAddress is required',
-          });
+        const paymentMethods = await paymentMethodService.findAllForMerchant(merchant.id);
+        let token: Awaited<ReturnType<TokenService['findById']>> = null;
+        let paymentMethod: Awaited<ReturnType<PaymentMethodService['findById']>> = null;
+        for (const pm of paymentMethods) {
+          if (!pm.is_enabled) continue;
+          const t = await tokenService.findById(pm.token_id);
+          if (t && t.chain_id === merchant.chain_id) {
+            token = t;
+            paymentMethod = pm;
+            break;
+          }
         }
 
-        if (!blockchainService.validateTokenByAddress(validatedData.chainId, tokenAddress)) {
-          return reply.code(400).send({
-            code: 'UNSUPPORTED_TOKEN',
-            message: 'Unsupported token',
-          });
-        }
-
-        // 3. 토큰 설정 가져오기 (주소 기반)
-        const tokenConfig = blockchainService.getTokenConfigByAddress(
-          validatedData.chainId,
-          tokenAddress
-        );
-        if (!tokenConfig) {
-          return reply.code(400).send({
-            code: 'UNSUPPORTED_TOKEN',
-            message: 'Unsupported token',
-          });
-        }
-
-        // 4. DB에서 Merchant 조회 (merchant_key로)
-        const merchant = await merchantService.findByMerchantKey(validatedData.merchantId);
-        if (!merchant) {
+        if (!token || !paymentMethod) {
           return reply.code(404).send({
-            code: 'MERCHANT_NOT_FOUND',
-            message: 'Merchant not found',
+            code: 'PAYMENT_METHOD_NOT_FOUND',
+            message: 'No enabled payment method for merchant chain',
           });
         }
 
-        if (!merchant.is_enabled) {
-          return reply.code(403).send({
-            code: 'MERCHANT_DISABLED',
-            message: 'Merchant is disabled',
+        const tokenAddress = token.address;
+        if (!blockchainService.validateTokenByAddress(chainId, tokenAddress)) {
+          return reply.code(400).send({
+            code: 'UNSUPPORTED_TOKEN',
+            message: 'Unsupported token',
           });
         }
 
-        // 5. Validate merchant has recipient address configured
-        if (!merchant.recipient_address) {
+        let tokenDecimals = token.decimals;
+        let tokenSymbol = token.symbol;
+        try {
+          tokenDecimals = await blockchainService.getDecimals(chainId, tokenAddress);
+        } catch (err) {
+          app.log.warn({ err, chainId, tokenAddress }, 'getDecimals failed, using DB value');
+        }
+        try {
+          tokenSymbol = await blockchainService.getTokenSymbolOnChain(chainId, tokenAddress);
+        } catch (err) {
+          app.log.warn(
+            { err, chainId, tokenAddress },
+            'getTokenSymbolOnChain failed, using DB value'
+          );
+        }
+
+        const amountInWei = parseUnits(validated.amount.toString(), tokenDecimals);
+        const contracts = blockchainService.getChainContracts(chainId);
+        const random = randomBytes(32);
+        const paymentHash = keccak256(
+          toHex(`${merchant.merchant_key}:${Date.now()}:${random.toString('hex')}`)
+        );
+
+        const merchantId = ServerSigningService.merchantKeyToId(merchant.merchant_key);
+        const recipientAddress = (merchant.recipient_address ?? '') as Address;
+        if (!recipientAddress) {
           return reply.code(400).send({
             code: 'RECIPIENT_NOT_CONFIGURED',
             message: 'Merchant recipient address is not configured',
           });
         }
-        const recipientAddress = merchant.recipient_address as Address;
-
-        // 6. Validate merchant's chain matches requested chain
-        if (merchant.chain_id) {
-          const merchantChain = await chainService.findById(merchant.chain_id);
-          if (merchantChain && merchantChain.network_id !== validatedData.chainId) {
-            return reply.code(400).send({
-              code: 'CHAIN_MISMATCH',
-              message: `Merchant is configured for chain ${merchantChain.network_id}, but payment requested for chain ${validatedData.chainId}`,
-            });
-          }
-        }
-
-        // 6. DB에서 Chain 조회 (network_id로)
-        const chain = await chainService.findByNetworkId(validatedData.chainId);
-        if (!chain) {
-          return reply.code(404).send({
-            code: 'CHAIN_NOT_FOUND',
-            message: 'Chain not found in database',
-          });
-        }
-
-        // 7. DB에서 Token 조회 (chain.id + address로)
-        const token = await tokenService.findByAddress(chain.id, tokenAddress);
-        if (!token) {
-          return reply.code(404).send({
-            code: 'TOKEN_NOT_FOUND',
-            message: 'Token not found in database',
-          });
-        }
-
-        // 8. Validate token's chain matches merchant's chain
-        if (merchant.chain_id && token.chain_id !== merchant.chain_id) {
-          return reply.code(400).send({
-            code: 'CHAIN_MISMATCH',
-            message: `Token belongs to chain ${token.chain_id}, but merchant is configured for chain ${merchant.chain_id}`,
-          });
-        }
-
-        // 9. DB에서 MerchantPaymentMethod 조회
-        const paymentMethod = await paymentMethodService.findByMerchantAndToken(
-          merchant.id,
-          token.id
-        );
-        if (!paymentMethod) {
-          return reply.code(404).send({
-            code: 'PAYMENT_METHOD_NOT_FOUND',
-            message: 'Payment method not configured for this merchant and token',
-          });
-        }
-
-        if (!paymentMethod.is_enabled) {
-          return reply.code(403).send({
-            code: 'PAYMENT_METHOD_DISABLED',
-            message: 'Payment method is disabled',
-          });
-        }
-
-        // Get token decimals and symbol from on-chain data (source of truth)
-        // Fallback to database if on-chain call fails
-        let tokenDecimals: number;
-        let tokenSymbol: string;
-
-        try {
-          tokenDecimals = await blockchainService.getDecimals(validatedData.chainId, tokenAddress);
-        } catch (error) {
-          // Fallback to database value if on-chain call fails
-          app.log.warn(
-            { err: error, tokenAddress },
-            `Failed to get decimals from on-chain for token ${tokenAddress}, using database value: ${token.decimals}`
-          );
-          tokenDecimals = token.decimals;
-        }
-
-        try {
-          tokenSymbol = await blockchainService.getTokenSymbolOnChain(
-            validatedData.chainId,
-            tokenAddress
-          );
-        } catch (error) {
-          // Fallback to database value if on-chain call fails
-          app.log.warn(
-            { err: error, tokenAddress },
-            `Failed to get symbol from on-chain for token ${tokenAddress}, using database value: ${token.symbol}`
-          );
-          tokenSymbol = token.symbol;
-        }
-
-        // amount를 wei로 변환 (on-chain decimals 사용 - 보안 강화)
-        const amountInWei = parseUnits(validatedData.amount.toString(), tokenDecimals);
-
-        // 체인 컨트랙트 정보 조회
-        const contracts = blockchainService.getChainContracts(validatedData.chainId);
-
-        // Generate payment: create bytes32 hash based on merchantId + timestamp + random bytes
-        const random = randomBytes(32);
-        const paymentHash = keccak256(
-          toHex(`${validatedData.merchantId}:${Date.now()}:${random.toString('hex')}`)
-        );
-
-        // Generate merchantId (bytes32) from merchant_key
-        const merchantId = ServerSigningService.merchantKeyToId(validatedData.merchantId);
-
-        // Get fee from merchant config
-        const feeBps = merchant.fee_bps;
 
         // Generate server signature if signing service is available for this chain
         let serverSignature: Hex | undefined;
-        const signingService = signingServices?.get(validatedData.chainId);
+        const signingService = signingServices?.get(chainId);
         if (signingService) {
           try {
             serverSignature = await signingService.signPaymentRequest(
               paymentHash as Hex,
-              tokenConfig.address as Address,
+              tokenAddress as Address,
               amountInWei,
               recipientAddress,
               merchantId,
-              feeBps
+              merchant.fee_bps
             );
-          } catch (error) {
-            app.log.error({ err: error }, 'Failed to generate server signature');
+          } catch (err) {
+            app.log.error({ err }, 'Failed to generate server signature');
             return reply.code(500).send({
               code: 'SIGNATURE_ERROR',
               message: 'Failed to generate payment signature',
@@ -264,49 +252,52 @@ Creates a new payment request for a merchant.
           }
         }
 
-        // 8. DB에 Payment 저장
-        const payment = await paymentService.create({
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+        await paymentService.create({
           payment_hash: paymentHash,
           merchant_id: merchant.id,
           payment_method_id: paymentMethod.id,
           amount: new Decimal(amountInWei.toString()),
-          token_decimals: tokenDecimals, // Use on-chain decimals (or fallback from DB)
-          token_symbol: tokenSymbol, // Use on-chain symbol (or fallback from DB)
-          network_id: chain.network_id,
-          expires_at: new Date(Date.now() + 30 * 60 * 1000), // 30분 후 만료
+          token_decimals: tokenDecimals,
+          token_symbol: tokenSymbol,
+          network_id: chainId,
+          expires_at: expiresAt,
+          order_id: validated.orderId,
+          success_url: validated.successUrl,
+          fail_url: validated.failUrl,
+          webhook_url: validated.webhookUrl,
+          origin,
         });
 
         return reply.code(201).send({
           success: true,
           paymentId: paymentHash,
-          chainId: validatedData.chainId,
-          tokenAddress: tokenConfig.address,
-          tokenSymbol, // From on-chain (or fallback from DB)
-          tokenDecimals, // From on-chain (or fallback from DB)
-          gatewayAddress: contracts?.gateway,
-          forwarderAddress: contracts?.forwarder,
+          orderId: validated.orderId,
+          serverSignature: serverSignature ?? '',
+          chainId,
+          tokenAddress,
+          gatewayAddress: contracts?.gateway ?? '',
           amount: amountInWei.toString(),
-          status: payment.status.toLowerCase(),
-          expiresAt: payment.expires_at.toISOString(),
-          // V2 fields for server signature
+          tokenDecimals,
+          tokenSymbol,
+          successUrl: validated.successUrl,
+          failUrl: validated.failUrl,
+          expiresAt: expiresAt.toISOString(),
           recipientAddress,
           merchantId,
-          feeBps,
-          serverSignature,
+          feeBps: merchant.fee_bps,
+          forwarderAddress: chain.forwarder_address ?? undefined,
         });
-      } catch (error) {
-        if (error instanceof ZodError) {
+      } catch (err) {
+        if (err instanceof ZodError) {
           return reply.code(400).send({
             code: 'VALIDATION_ERROR',
-            message: '입력 검증 실패',
-            details: error.errors,
+            message: 'Input validation failed',
+            details: err.errors,
           });
         }
-        const message = error instanceof Error ? error.message : '결제를 생성할 수 없습니다';
-        return reply.code(500).send({
-          code: 'INTERNAL_ERROR',
-          message,
-        });
+        const message = err instanceof Error ? err.message : 'Failed to create payment';
+        return reply.code(500).send({ code: 'INTERNAL_ERROR', message });
       }
     }
   );

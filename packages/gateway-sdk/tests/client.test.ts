@@ -81,21 +81,28 @@ describe('SoloPayClient', () => {
   });
 
   describe('createPayment', () => {
-    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
+    const clientWithCreate = new SoloPayClient({
+      environment: 'development',
+      apiKey: 'test-api-key',
+      publicKey: 'pk_test_demo',
+      origin: 'http://localhost:3000',
+    });
     const validParams: CreatePaymentParams = {
-      merchantId: 'merchant_demo_001',
+      orderId: 'order-001',
       amount: 1000,
-      chainId: 31337,
-      tokenAddress: '0x1234567890123456789012345678901234567890',
+      successUrl: 'https://example.com/success',
+      failUrl: 'https://example.com/fail',
     };
 
     it('TC-001: should create payment successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        status: 200,
+        status: 201,
         json: async () => ({
           success: true,
           paymentId: 'pay-123',
+          orderId: 'order-001',
+          serverSignature: '0x' + 'a'.repeat(130),
           chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
           tokenSymbol: 'TEST',
@@ -103,22 +110,28 @@ describe('SoloPayClient', () => {
           gatewayAddress: '0xGateway',
           forwarderAddress: '0xForwarder',
           amount: '1000',
-          status: 'CREATED',
+          successUrl: validParams.successUrl,
+          failUrl: validParams.failUrl,
           expiresAt: '2025-12-31T00:00:00Z',
+          recipientAddress: '0xRecipient',
+          merchantId: '0xMerchant',
+          feeBps: 0,
         }),
       });
 
-      const result = await client.createPayment(validParams);
+      const result = await clientWithCreate.createPayment(validParams);
 
       expect(result.success).toBe(true);
       expect(result.paymentId).toBe('pay-123');
-      expect(result.status).toBe('CREATED');
+      expect(result.orderId).toBe('order-001');
+      expect(result.serverSignature).toBeDefined();
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3001/payments/create',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'x-api-key': 'test-api-key',
+            'x-public-key': 'pk_test_demo',
+            Origin: 'http://localhost:3000',
             'Content-Type': 'application/json',
           }),
         })
@@ -130,13 +143,12 @@ describe('SoloPayClient', () => {
         ok: false,
         status: 400,
         json: async () => ({
-          success: false,
           code: 'VALIDATION_ERROR',
           message: '입력 검증 실패',
         }),
       });
 
-      await expect(client.createPayment(validParams)).rejects.toMatchObject({
+      await expect(clientWithCreate.createPayment(validParams)).rejects.toMatchObject({
         code: 'VALIDATION_ERROR',
         statusCode: 400,
       });
@@ -147,7 +159,6 @@ describe('SoloPayClient', () => {
         ok: false,
         status: 400,
         json: async () => ({
-          success: false,
           code: 'INVALID_REQUEST',
           message: 'Invalid request format',
           details: { field: 'amount', error: 'must be positive' },
@@ -155,7 +166,7 @@ describe('SoloPayClient', () => {
       });
 
       try {
-        await client.createPayment(validParams);
+        await clientWithCreate.createPayment(validParams);
         expect.fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(SoloPayError);
@@ -171,13 +182,12 @@ describe('SoloPayClient', () => {
         ok: false,
         status: 500,
         json: async () => ({
-          success: false,
           code: 'INTERNAL_ERROR',
           message: '서버 내부 오류',
         }),
       });
 
-      await expect(client.createPayment(validParams)).rejects.toMatchObject({
+      await expect(clientWithCreate.createPayment(validParams)).rejects.toMatchObject({
         code: 'INTERNAL_ERROR',
         statusCode: 500,
       });
@@ -478,25 +488,33 @@ describe('SoloPayClient', () => {
   });
 
   describe('Error handling', () => {
+    const clientWithCreate = new SoloPayClient({
+      environment: 'development',
+      apiKey: 'test-api-key',
+      publicKey: 'pk_test_demo',
+      origin: 'http://localhost:3000',
+    });
+    const createParams: CreatePaymentParams = {
+      orderId: 'order-1',
+      amount: 100,
+      successUrl: 'https://example.com/success',
+      failUrl: 'https://example.com/fail',
+    };
+
     it('should preserve error message', async () => {
       const errorMessage = 'Custom error message';
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
         json: async () => ({
-          success: false,
           code: 'VALIDATION_ERROR',
           message: errorMessage,
         }),
       });
 
       try {
-        await client.createPayment({
-          merchantId: 'merchant_demo_001',
-          amount: 1000,
-          chainId: 31337,
-          tokenAddress: '0x1234567890123456789012345678901234567890',
-        });
+        await clientWithCreate.createPayment(createParams);
+        expect.fail('Should have thrown');
       } catch (error) {
         expect((error as SoloPayError).message).toBe(errorMessage);
       }
@@ -505,14 +523,7 @@ describe('SoloPayClient', () => {
     it('should handle fetch errors gracefully', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(
-        client.createPayment({
-          merchantId: 'merchant_demo_001',
-          amount: 1000,
-          chainId: 31337,
-          tokenAddress: '0x1234567890123456789012345678901234567890',
-        })
-      ).rejects.toThrow('Network error');
+      await expect(clientWithCreate.createPayment(createParams)).rejects.toThrow('Network error');
     });
   });
 
@@ -675,12 +686,20 @@ describe('SoloPayClient', () => {
 
   describe('Request payload', () => {
     it('should send correct payload for createPayment', async () => {
+      const clientWithCreate = new SoloPayClient({
+        environment: 'development',
+        apiKey: 'test-api-key',
+        publicKey: 'pk_test_demo',
+        origin: 'http://localhost:3000',
+      });
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        status: 200,
+        status: 201,
         json: async () => ({
           success: true,
           paymentId: 'pay-123',
+          orderId: 'order-1',
+          serverSignature: '0x' + 'a'.repeat(130),
           chainId: 31337,
           tokenAddress: '0x1234567890123456789012345678901234567890',
           tokenSymbol: 'TEST',
@@ -688,19 +707,23 @@ describe('SoloPayClient', () => {
           gatewayAddress: '0xGateway',
           forwarderAddress: '0xForwarder',
           amount: '1000',
-          status: 'CREATED',
+          successUrl: 'https://example.com/success',
+          failUrl: 'https://example.com/fail',
           expiresAt: '2025-12-31T00:00:00Z',
+          recipientAddress: '0xRecipient',
+          merchantId: '0xMerchant',
+          feeBps: 0,
         }),
       });
 
       const params: CreatePaymentParams = {
-        merchantId: 'merchant_demo_001',
+        orderId: 'order-1',
         amount: 1000,
-        chainId: 31337,
-        tokenAddress: '0x1234567890123456789012345678901234567890',
+        successUrl: 'https://example.com/success',
+        failUrl: 'https://example.com/fail',
       };
 
-      await client.createPayment(params);
+      await clientWithCreate.createPayment(params);
 
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);

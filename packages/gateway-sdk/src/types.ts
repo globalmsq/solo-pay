@@ -2,21 +2,27 @@ export type Environment = 'development' | 'staging' | 'production' | 'custom';
 
 export interface SoloPayConfig {
   environment: Environment;
+  /** API key for admin routes (merchant, payment methods, refunds, payment detail, history, info) */
   apiKey: string;
   apiUrl?: string;
+  /** Public key (pk_live_xxx or pk_test_xxx) for POST /payments/create. Required when using createPayment(). */
+  publicKey?: string;
+  /** Origin header value; must match one of merchant allowed_domains. Required when using createPayment(). */
+  origin?: string;
 }
 
-// Request types
-// Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
+/** Params for POST /payments/create (public key + Origin auth). Chain/token come from merchant config. */
 export interface CreatePaymentParams {
-  /** 상점 고유 식별자 */
-  merchantId: string;
-  /** 결제 금액 (토큰 단위) */
+  /** Merchant order ID */
+  orderId: string;
+  /** Payment amount (token units) */
   amount: number;
-  /** 블록체인 체인 ID */
-  chainId: number;
-  /** 결제 토큰 컨트랙트 주소 */
-  tokenAddress: string;
+  /** Redirect URL on success */
+  successUrl: string;
+  /** Redirect URL on failure */
+  failUrl: string;
+  /** Optional per-payment webhook URL */
+  webhookUrl?: string;
 }
 
 /**
@@ -55,29 +61,28 @@ export interface GetPaymentHistoryParams {
   limit?: number;
 }
 
-// Response types
+// Response types (matches gateway POST /payments/create 201 response)
 export interface CreatePaymentResponse {
-  success: boolean;
+  /** Present when gateway returns 201; omitted in error paths */
+  success?: true;
   paymentId: string;
+  orderId: string;
+  /** Server EIP-712 signature for payment authorization */
+  serverSignature: string;
   chainId: number;
   tokenAddress: string;
-  /** Token symbol fetched from on-chain */
-  tokenSymbol: string;
-  /** Token decimals fetched from on-chain */
-  tokenDecimals: number;
   gatewayAddress: string;
-  forwarderAddress: string;
   amount: string; // wei
-  status: string;
+  tokenDecimals: number;
+  tokenSymbol: string;
+  successUrl: string;
+  failUrl: string;
   expiresAt: string;
-  /** Recipient address (merchant's wallet to receive payment) */
-  recipientAddress?: string;
-  /** Merchant identifier (bytes32, keccak256 of merchant_key) */
-  merchantId?: string;
-  /** Fee in basis points (0-10000, where 10000 = 100%) */
-  feeBps?: number;
-  /** Server EIP-712 signature for payment authorization */
-  serverSignature?: string;
+  recipientAddress: string;
+  merchantId: string;
+  feeBps: number;
+  /** ERC2771Forwarder address for gasless payments */
+  forwarderAddress?: string;
 }
 
 export interface PaymentStatusResponse {

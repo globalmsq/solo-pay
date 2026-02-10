@@ -71,7 +71,7 @@ export function useGaslessPayment({
   const recipientAddress = paymentDetails?.recipientAddress as `0x${string}` | undefined;
   const merchantId = paymentDetails?.merchantId as `0x${string}` | undefined;
   const feeBps = paymentDetails?.feeBps ?? 0;
-  const serverSignature = paymentDetails?.signature as `0x${string}` | undefined;
+  const serverSignature = paymentDetails?.serverSignature as `0x${string}` | undefined;
 
   // Check if gasless is supported
   const isGaslessSupported = !!forwarderAddress;

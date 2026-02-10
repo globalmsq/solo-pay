@@ -9,8 +9,6 @@ import {
 import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
-import { MerchantService } from '../../services/merchant.service';
-import { createPaymentAuthMiddleware } from '../../middleware/auth.middleware';
 import {
   GaslessRequestSchema as GaslessRequestDocSchema,
   GaslessResponseSchema,
@@ -27,12 +25,8 @@ export async function submitGaslessRoute(
   app: FastifyInstance,
   relayerService: RelayerService,
   relayService: RelayService,
-  paymentService: PaymentService,
-  merchantService: MerchantService
+  paymentService: PaymentService
 ) {
-  // Auth + payment ownership middleware
-  const authMiddleware = createPaymentAuthMiddleware(merchantService, paymentService);
-
   app.post<{ Params: { id: string }; Body: SubmitGaslessRequest }>(
     '/payments/:id/gasless',
     {
@@ -54,11 +48,11 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
 - EIP-712 signature from the payer
 - Token approval for PaymentGateway contract
 
-**Security:**
+**Security (no auth required):**
+- Payment ID is validated (payment must exist; amount and status checked)
 - Amount in forwardRequest.data is validated against DB amount
 - Signature format is validated before relay submission
         `,
-        security: [{ ApiKeyAuth: [] }],
         params: {
           type: 'object',
           properties: {
@@ -77,7 +71,6 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
           500: ErrorResponseSchema,
         },
       },
-      preHandler: authMiddleware,
     },
     async (request, reply) => {
       try {
