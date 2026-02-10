@@ -3,13 +3,15 @@ import { decodeFunctionData } from 'viem';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 // Create payment request (POST /payments/create): orderId, amount, successUrl, failUrl, webhookUrl optional
-export const CreatePaymentSchema = z.object({
-  orderId: z.string().min(1, 'orderId is required'),
-  amount: z.number().positive('amount must be positive'),
-  successUrl: z.string().url('successUrl must be a valid URL'),
-  failUrl: z.string().url('failUrl must be a valid URL'),
-  webhookUrl: z.string().url().optional(),
-});
+export const CreatePaymentSchema = z
+  .object({
+    orderId: z.string().min(1, 'orderId is required'),
+    amount: z.number().positive('amount must be positive'),
+    successUrl: z.string().url('successUrl must be a valid URL'),
+    failUrl: z.string().url('failUrl must be a valid URL'),
+    webhookUrl: z.string().url().optional(),
+  })
+  .strict(); // Reject unknown keys so only allowed params are accepted
 
 export type CreatePaymentRequest = z.infer<typeof CreatePaymentSchema>;
 

@@ -98,6 +98,12 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
+
+    it('should reject payload with unknown keys (strict)', () => {
+      const payload = { ...validPayload, unknownField: 'value' };
+      const result = CreatePaymentSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
   });
 
   describe('Schema field requirements', () => {
