@@ -41,7 +41,7 @@ export const PaymentHashSchema = {
 
 export const CreatePaymentRequestSchema = {
   type: 'object',
-  required: ['orderId', 'amount', 'successUrl', 'failUrl'],
+  required: ['orderId', 'amount', 'tokenAddress', 'successUrl', 'failUrl'],
   properties: {
     orderId: {
       type: 'string',
@@ -52,6 +52,12 @@ export const CreatePaymentRequestSchema = {
       type: 'number',
       description: 'Payment amount in base token units (e.g., 10.5 for 10.5 TEST)',
       example: 10,
+    },
+    tokenAddress: {
+      type: 'string',
+      pattern: '^0x[a-fA-F0-9]{40}$',
+      description: 'ERC-20 token contract address (must be whitelisted and enabled for merchant)',
+      example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
     },
     successUrl: {
       type: 'string',

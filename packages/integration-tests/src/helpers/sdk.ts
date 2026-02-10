@@ -49,13 +49,23 @@ export function createTestClientFromFixture(merchantName: string = 'default'): S
   });
 }
 
-/** Build params for createPayment (POST /payments/create uses orderId, amount, successUrl, failUrl). */
-export function makeCreatePaymentParams(amount: number, orderId?: string): CreatePaymentParams {
+/**
+ * Default token for merchant_demo_001 (init.sql: chain_id=1, token_id=1, address 0xe7f17...)
+ */
+const DEFAULT_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+
+/** Build params for createPayment (POST /payments/create uses orderId, amount, tokenAddress, successUrl, failUrl). */
+export function makeCreatePaymentParams(
+  amount: number,
+  orderId?: string,
+  tokenAddress: string = DEFAULT_TOKEN_ADDRESS
+): CreatePaymentParams {
   const base = process.env.PAY_SERVER_ORIGIN || 'http://localhost:3000';
   const oid = orderId ?? `order-${Date.now()}`;
   return {
     orderId: oid,
     amount,
+    tokenAddress,
     successUrl: `${base}/success?orderId=${oid}`,
     failUrl: `${base}/fail?orderId=${oid}`,
   };

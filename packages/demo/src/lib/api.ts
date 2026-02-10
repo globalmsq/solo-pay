@@ -438,6 +438,9 @@ export enum ApiErrorCode {
 export const CreatePaymentRequestSchema = z.object({
   orderId: z.string().min(1, 'orderId is required'),
   amount: z.number().positive('amount must be positive'),
+  tokenAddress: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/, 'tokenAddress must be a valid Ethereum address (0x + 40 hex)'),
   successUrl: z.string().url('successUrl must be a valid URL'),
   failUrl: z.string().url('failUrl must be a valid URL'),
   webhookUrl: z.string().url().optional(),
@@ -528,6 +531,7 @@ export async function createPayment(
           body: JSON.stringify({
             orderId: validatedRequest.orderId,
             amount: validatedRequest.amount,
+            tokenAddress: validatedRequest.tokenAddress,
             successUrl: validatedRequest.successUrl,
             failUrl: validatedRequest.failUrl,
             webhookUrl: validatedRequest.webhookUrl,

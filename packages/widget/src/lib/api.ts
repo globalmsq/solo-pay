@@ -48,6 +48,7 @@ interface ErrorResponse {
 export interface CreatePaymentRequest {
   orderId: string;
   amount: number;
+  tokenAddress: string;
   successUrl: string;
   failUrl: string;
   webhookUrl?: string;
@@ -82,6 +83,7 @@ export interface CreatePaymentResponse extends PaymentDetails {}
  *   {
  *     orderId: '123',
  *     amount: 10,
+ *     tokenAddress: '0x...',
  *     successUrl: 'https://example.com/success',
  *     failUrl: 'https://example.com/fail',
  *   }
@@ -143,6 +145,7 @@ export async function createPaymentFromUrlParams(
   return createPayment(urlParams.pk, {
     orderId: urlParams.orderId,
     amount: parseFloat(urlParams.amount),
+    tokenAddress: urlParams.tokenAddress,
     successUrl: urlParams.successUrl,
     failUrl: urlParams.failUrl,
     webhookUrl: urlParams.webhookUrl,

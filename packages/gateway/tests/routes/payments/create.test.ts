@@ -229,6 +229,7 @@ describe('POST /payments/create', () => {
       const validPayment = {
         orderId: 'order-001',
         amount: 100,
+        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         successUrl: 'https://example.com/success',
         failUrl: 'https://example.com/fail',
       };
@@ -265,6 +266,7 @@ describe('POST /payments/create', () => {
       const minimalPayment = {
         orderId: 'order-002',
         amount: 50,
+        tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
         successUrl: 'https://example.com/success',
         failUrl: 'https://example.com/fail',
       };
@@ -287,6 +289,7 @@ describe('POST /payments/create', () => {
       const invalidPayment = {
         orderId: 'order-001',
         amount: 0,
+        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         successUrl: 'https://example.com/success',
         failUrl: 'https://example.com/fail',
       };
@@ -307,6 +310,7 @@ describe('POST /payments/create', () => {
       const invalidPayment = {
         orderId: 'order-001',
         amount: -50,
+        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         successUrl: 'https://example.com/success',
         failUrl: 'https://example.com/fail',
       };
@@ -329,6 +333,7 @@ describe('POST /payments/create', () => {
       const incompletePayment = {
         orderId: 'order-001',
         amount: 100,
+        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         // successUrl, failUrl 누락
       };
 
@@ -352,12 +357,59 @@ describe('POST /payments/create', () => {
         payload: {
           orderId: 'order-001',
           amount: 100,
+          tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
           successUrl: 'https://example.com/success',
           failUrl: 'https://example.com/fail',
         },
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('tokenAddress가 whitelist에 없으면 404 TOKEN_NOT_FOUND를 반환해야 함', async () => {
+      (tokenService as { findByAddress: ReturnType<typeof vi.fn> }).findByAddress = vi
+        .fn()
+        .mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/payments/create',
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
+        payload: {
+          orderId: 'order-001',
+          amount: 100,
+          tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+          successUrl: 'https://example.com/success',
+          failUrl: 'https://example.com/fail',
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      const body = JSON.parse(response.body);
+      expect(body.code).toBe('TOKEN_NOT_FOUND');
+    });
+
+    it('token이 merchant payment method에 없거나 disabled면 400 TOKEN_NOT_ENABLED를 반환해야 함', async () => {
+      (
+        paymentMethodService as { findByMerchantAndToken: ReturnType<typeof vi.fn> }
+      ).findByMerchantAndToken = vi.fn().mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/payments/create',
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
+        payload: {
+          orderId: 'order-001',
+          amount: 100,
+          tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
+          successUrl: 'https://example.com/success',
+          failUrl: 'https://example.com/fail',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.code).toBe('TOKEN_NOT_ENABLED');
     });
 
     it('decimals 조회 오류 발생 시에도 fallback으로 진행해야 함', async () => {
@@ -370,6 +422,7 @@ describe('POST /payments/create', () => {
         payload: {
           orderId: 'order-001',
           amount: 100,
+          tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
           successUrl: 'https://example.com/success',
           failUrl: 'https://example.com/fail',
         },

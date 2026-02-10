@@ -5,6 +5,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
   const validPayload = {
     orderId: 'order_001',
     amount: 100,
+    tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
     successUrl: 'https://example.com/success',
     failUrl: 'https://example.com/fail',
   };
@@ -21,7 +22,7 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
       }
     });
 
-    it('should accept valid payment with optional webhookUrl', () => {
+    it('should accept valid payment with tokenAddress and optional webhookUrl', () => {
       const payload = { ...validPayload, webhookUrl: 'https://example.com/webhook' };
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(true);
@@ -104,6 +105,23 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
       const result = CreatePaymentSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
+
+    it('should reject missing tokenAddress', () => {
+      const rest = {
+        orderId: validPayload.orderId,
+        amount: validPayload.amount,
+        successUrl: validPayload.successUrl,
+        failUrl: validPayload.failUrl,
+      };
+      const result = CreatePaymentSchema.safeParse(rest);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid tokenAddress format', () => {
+      const payload = { ...validPayload, tokenAddress: 'not-an-address' };
+      const result = CreatePaymentSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
   });
 
   describe('Schema field requirements', () => {
@@ -120,11 +138,11 @@ describe('payment.schema.ts - CreatePaymentSchema', () => {
       expect(schema).toHaveProperty('webhookUrl');
     });
 
-    it('should NOT have merchantId, chainId, tokenAddress (create uses merchant config)', () => {
+    it('should have tokenAddress and NOT have merchantId, chainId', () => {
       const schema = CreatePaymentSchema.shape;
+      expect(schema).toHaveProperty('tokenAddress');
       expect(schema).not.toHaveProperty('merchantId');
       expect(schema).not.toHaveProperty('chainId');
-      expect(schema).not.toHaveProperty('tokenAddress');
     });
   });
 });

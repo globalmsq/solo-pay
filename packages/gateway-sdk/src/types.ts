@@ -11,12 +11,14 @@ export interface SoloPayConfig {
   origin?: string;
 }
 
-/** Params for POST /payments/create (public key + Origin auth). Chain/token come from merchant config. */
+/** Params for POST /payments/create (public key + Origin auth). tokenAddress must be whitelisted and enabled for merchant. */
 export interface CreatePaymentParams {
   /** Merchant order ID */
   orderId: string;
   /** Payment amount (token units) */
   amount: number;
+  /** ERC-20 token contract address (must be whitelisted and enabled for merchant) */
+  tokenAddress: string;
   /** Redirect URL on success */
   successUrl: string;
   /** Redirect URL on failure */

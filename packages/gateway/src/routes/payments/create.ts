@@ -17,6 +17,7 @@ import { ErrorResponseSchema } from '../../docs/schemas';
 export interface CreatePaymentBody {
   orderId: string;
   amount: number;
+  tokenAddress: string;
   successUrl: string;
   failUrl: string;
   webhookUrl?: string;
@@ -46,7 +47,7 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
 
 **Headers (required):** \`x-public-key\` = public key (pk_live_xxx or pk_test_xxx). \`Origin\` = request origin; must **exactly** match one of merchant \`allowed_domains\` (no trailing slash). In a browser the browser sets Origin automatically; in server-to-server or Swagger/curl set it manually to one of your allowed domains.
 
-**Flow:** Public Key + Origin -> merchant -> chain/token from merchant config -> amount to wei -> payment_hash -> Payment record -> server signature.
+**Flow:** Public Key + Origin -> merchant -> token from request body (must be whitelisted and enabled for merchant) -> amount to wei -> payment_hash -> Payment record -> server signature.
 
 **Response:** paymentId, serverSignature, chainId, tokenAddress, gatewayAddress, amount (wei), tokenDecimals, tokenSymbol, successUrl, failUrl, expiresAt, recipientAddress, merchantId, feeBps, forwarderAddress.
         `,
@@ -69,10 +70,16 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
         },
         body: {
           type: 'object',
-          required: ['orderId', 'amount', 'successUrl', 'failUrl'],
+          required: ['orderId', 'amount', 'tokenAddress', 'successUrl', 'failUrl'],
           properties: {
             orderId: { type: 'string', description: 'Merchant order ID' },
             amount: { type: 'number', description: 'Payment amount' },
+            tokenAddress: {
+              type: 'string',
+              pattern: '^0x[a-fA-F0-9]{40}$',
+              description:
+                'ERC-20 token contract address (must be whitelisted and enabled for merchant)',
+            },
             successUrl: { type: 'string', format: 'uri', description: 'Redirect URL on success' },
             failUrl: { type: 'string', format: 'uri', description: 'Redirect URL on failure' },
             webhookUrl: {
@@ -170,23 +177,29 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
           });
         }
 
-        const paymentMethods = await paymentMethodService.findAllForMerchant(merchant.id);
-        let token: Awaited<ReturnType<TokenService['findById']>> = null;
-        let paymentMethod: Awaited<ReturnType<PaymentMethodService['findById']>> = null;
-        for (const pm of paymentMethods) {
-          if (!pm.is_enabled) continue;
-          const t = await tokenService.findById(pm.token_id);
-          if (t && t.chain_id === merchant.chain_id) {
-            token = t;
-            paymentMethod = pm;
-            break;
-          }
-        }
-
-        if (!token || !paymentMethod) {
+        // Resolve token from request: must be in our whitelist (chain) and enabled for this merchant (combined filter)
+        const token = await tokenService.findByAddress(chain.id, validated.tokenAddress);
+        if (!token) {
           return reply.code(404).send({
-            code: 'PAYMENT_METHOD_NOT_FOUND',
-            message: 'No enabled payment method for merchant chain',
+            code: 'TOKEN_NOT_FOUND',
+            message: 'Token not found or not whitelisted for this chain',
+          });
+        }
+        if (token.chain_id !== merchant.chain_id) {
+          return reply.code(400).send({
+            code: 'CHAIN_MISMATCH',
+            message: 'Token does not belong to merchant chain',
+          });
+        }
+        const paymentMethod = await paymentMethodService.findByMerchantAndToken(
+          merchant.id,
+          token.id
+        );
+        if (!paymentMethod || !paymentMethod.is_enabled) {
+          return reply.code(400).send({
+            code: 'TOKEN_NOT_ENABLED',
+            message:
+              'Token is not enabled for this merchant. Add and enable it in payment methods first.',
           });
         }
 

@@ -3,7 +3,7 @@ import type { WidgetUrlParams, UrlParamsValidationResult } from '../types';
 /**
  * Validate URL parameters for widget initialization
  *
- * Required params: pk, orderId, amount, successUrl, failUrl
+ * Required params: pk, orderId, amount, tokenAddress, successUrl, failUrl
  * Optional params: webhookUrl
  *
  * @example
@@ -28,6 +28,7 @@ export function validateWidgetUrlParams(
   const pk = searchParams.get('pk');
   const orderId = searchParams.get('orderId');
   const amount = searchParams.get('amount');
+  const tokenAddress = searchParams.get('tokenAddress');
   const successUrl = searchParams.get('successUrl');
   const failUrl = searchParams.get('failUrl');
   const webhookUrl = searchParams.get('webhookUrl');
@@ -50,6 +51,12 @@ export function validateWidgetUrlParams(
     if (isNaN(amountNum) || amountNum <= 0) {
       errors.push('amount must be a positive number');
     }
+  }
+
+  if (!tokenAddress || tokenAddress.trim() === '') {
+    errors.push('tokenAddress is required');
+  } else if (!/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
+    errors.push('tokenAddress must be a valid Ethereum address (0x + 40 hex characters)');
   }
 
   if (!successUrl || successUrl.trim() === '') {
@@ -80,6 +87,7 @@ export function validateWidgetUrlParams(
       pk: pk!,
       orderId: orderId!,
       amount: amount!,
+      tokenAddress: tokenAddress!,
       successUrl: successUrl!,
       failUrl: failUrl!,
       webhookUrl: webhookUrl && webhookUrl.trim() !== '' ? webhookUrl : undefined,

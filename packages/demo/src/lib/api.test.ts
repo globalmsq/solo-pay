@@ -21,6 +21,7 @@ describe('createPayment', () => {
   const validRequest: CreatePaymentRequest = {
     orderId: 'order-123',
     amount: 100,
+    tokenAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
     successUrl: 'https://example.com/success',
     failUrl: 'https://example.com/fail',
   };

@@ -100,13 +100,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create payment via gateway (public key + Origin). orderId and redirect URLs required.
+    // Create payment via gateway (public key + Origin). orderId, tokenAddress, and redirect URLs required.
     const orderId = `order-${Date.now()}`;
     const baseUrl = merchantConfig.origin.replace(/\/$/, '');
     const client = getSoloPayClient();
     const payment = await client.createPayment({
       orderId,
       amount: totalAmount,
+      tokenAddress: merchantConfig.tokenAddress,
       successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
       failUrl: `${baseUrl}/payment/fail?orderId=${orderId}`,
     });

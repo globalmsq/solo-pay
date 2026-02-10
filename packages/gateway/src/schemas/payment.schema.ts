@@ -2,11 +2,14 @@ import { z } from 'zod';
 import { decodeFunctionData } from 'viem';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
-// Create payment request (POST /payments/create): orderId, amount, successUrl, failUrl, webhookUrl optional
+// Create payment request (POST /payments/create): orderId, amount, tokenAddress, successUrl, failUrl, webhookUrl optional
 export const CreatePaymentSchema = z
   .object({
     orderId: z.string().min(1, 'orderId is required'),
     amount: z.number().positive('amount must be positive'),
+    tokenAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, 'tokenAddress must be a valid Ethereum address (0x + 40 hex)'),
     successUrl: z.string().url('successUrl must be a valid URL'),
     failUrl: z.string().url('failUrl must be a valid URL'),
     webhookUrl: z.string().url().optional(),

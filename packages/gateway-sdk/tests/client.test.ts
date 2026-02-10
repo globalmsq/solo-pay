@@ -90,6 +90,7 @@ describe('SoloPayClient', () => {
     const validParams: CreatePaymentParams = {
       orderId: 'order-001',
       amount: 1000,
+      tokenAddress: '0x1234567890123456789012345678901234567890',
       successUrl: 'https://example.com/success',
       failUrl: 'https://example.com/fail',
     };
@@ -497,6 +498,7 @@ describe('SoloPayClient', () => {
     const createParams: CreatePaymentParams = {
       orderId: 'order-1',
       amount: 100,
+      tokenAddress: '0x1234567890123456789012345678901234567890',
       successUrl: 'https://example.com/success',
       failUrl: 'https://example.com/fail',
     };
@@ -719,6 +721,7 @@ describe('SoloPayClient', () => {
       const params: CreatePaymentParams = {
         orderId: 'order-1',
         amount: 1000,
+        tokenAddress: '0x1234567890123456789012345678901234567890',
         successUrl: 'https://example.com/success',
         failUrl: 'https://example.com/fail',
       };
