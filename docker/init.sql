@@ -213,7 +213,7 @@ INSERT INTO chains (network_id, name, rpc_url, gateway_address, forwarder_addres
 (11155111, 'Sepolia', 'https://ethereum-sepolia-rpc.publicnode.com', NULL, NULL, TRUE),
 (80002, 'Amoy', 'https://rpc-amoy.polygon.technology', '0x2024b6669A2BE5fF9624792cB1BB657d20C4b24B', '0xE8a3C8e530dddd14e02DA1C81Df6a15f41ad78DE', TRUE),
 (97, 'BNB Chain Testnet', 'https://data-seed-prebsc-1-s1.binance.org:8545', NULL, NULL, TRUE),
-(137, 'Polygon', 'https://polygon-rpc.com', NULL, NULL, FALSE),
+(137, 'Polygon', 'https://polygon-rpc.com', "0x4F81a1481fc3d6479E2e6d56052fC60539F707ec", "0xec63c3E7BD0c51AA6DC08f587A2B147a671cf888", FALSE),
 (1, 'Ethereum', 'https://eth.llamarpc.com', NULL, NULL, FALSE),
 (56, 'BNB Chain', 'https://bsc-dataseed.binance.org', NULL, NULL, FALSE);
 
