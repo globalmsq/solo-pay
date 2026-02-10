@@ -83,7 +83,7 @@ export async function relayRoutes(
 
         return {
           transactionId: result.transactionId,
-          transactionHash: result.hash,
+          transactionHash: result.transactionHash,
           status: result.status,
         };
       } catch (error) {
@@ -162,7 +162,7 @@ export async function relayRoutes(
 
         return {
           transactionId: result.transactionId,
-          transactionHash: result.hash ?? null,
+          transactionHash: result.transactionHash ?? null,
           status: result.status,
           createdAt: new Date(result.createdAt).toISOString(),
         };
@@ -218,7 +218,7 @@ export async function relayRoutes(
 
         return {
           transactionId: result.transactionId,
-          transactionHash: result.hash ?? null,
+          transactionHash: result.transactionHash ?? null,
           status: result.status,
           createdAt: new Date(result.createdAt).toISOString(),
         };
