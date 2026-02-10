@@ -61,6 +61,13 @@ const CHAIN_CONFIGS: Record<number, Omit<MerchantConfig, 'merchantId' | 'publicK
     tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
     tokenDecimals: 18,
   },
+  // Polygon Mainnet (chainId: 137)
+  137: {
+    chainId: 137,
+    tokenSymbol: 'TEST-MSQ',
+    tokenAddress: '0x3894c0a581eee053f9e220c4d2b4434f825af437',
+    tokenDecimals: 18,
+  },
 };
 
 /**
