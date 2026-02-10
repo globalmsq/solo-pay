@@ -302,9 +302,15 @@ importers:
 
   packages/sample-merchant:
     dependencies:
+      '@prisma/client':
+        specifier: ^6.19.2
+        version: 6.19.2(prisma@6.19.2(typescript@5.5.4))(typescript@5.5.4)
       next:
         specifier: 16.1.6
         version: 16.1.6(@playwright/test@1.58.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      prisma:
+        specifier: ^6.19.2
+        version: 6.19.2(typescript@5.5.4)
       react:
         specifier: 19.2.3
         version: 19.2.3
