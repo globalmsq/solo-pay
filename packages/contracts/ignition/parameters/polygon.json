@@ -1,9 +1,8 @@
 {
-    "PaymentGateway": {
-      "owner": "0x98Bda6261D5b590AB3e7F86167B6D6f5d7A7F52d",
-      "treasury": "0xC09d370360eAf612852219B69536331DD2A03BdB",
-      "signerAddress": "0xa6F4ca3e30F0173Bf963Dcc48d9667c5763327B1",
-      "forwarderAddress": "0xec63c3E7BD0c51AA6DC08f587A2B147a671cf888"
-    }
+  "PaymentGateway": {
+    "owner": "0x98Bda6261D5b590AB3e7F86167B6D6f5d7A7F52d",
+    "treasury": "0xC09d370360eAf612852219B69536331DD2A03BdB",
+    "signerAddress": "0xa6F4ca3e30F0173Bf963Dcc48d9667c5763327B1",
+    "forwarderAddress": "0xec63c3E7BD0c51AA6DC08f587A2B147a671cf888"
   }
-  
+}
