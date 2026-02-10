@@ -118,7 +118,7 @@ export CHAIN_ID=80002
 cat > ignition/parameters/amoy.json << EOF
 {
   "PaymentGateway": {
-    "forwarderAddress": "0xF034a404241707F347A952Cd4095f9035AF877Bf"
+    "forwarderAddress": "0xE8a3C8e530dddd14e02DA1C81Df6a15f41ad78DE"
   }
 }
 EOF
@@ -151,7 +151,7 @@ npx hardhat ignition verify chain-{CHAIN_ID}
 | ------------------- | -------------------------------------------- |
 | PaymentGatewayProxy | `0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d` |
 | PaymentGatewayV1    | `0x6b08b0EaD9370605AC9F34A17897515aACa0954a` |
-| ERC2771Forwarder    | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
+| ERC2771Forwarder    | `0xE8a3C8e530dddd14e02DA1C81Df6a15f41ad78DE` |
 | SUT Token           | `0xE4C687167705Abf55d709395f92e254bdF5825a2` |
 
 > [View on Polygonscan](https://amoy.polygonscan.com/address/0x57F7E705d10e0e94DFB880fFaf58064210bAaf8d)
