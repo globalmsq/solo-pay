@@ -9,7 +9,7 @@ import type {
 
 import { getMerchant } from '../fixtures/merchant';
 
-const PAY_SERVER_URL = process.env.PAY_SERVER_URL || 'http://localhost:3011';
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3001';
 
 export interface TestMerchant {
   merchantId: string;
@@ -31,7 +31,7 @@ export const TEST_MERCHANT: TestMerchant = {
 export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): SoloPayClient {
   return new SoloPayClient({
     environment: 'custom',
-    apiUrl: PAY_SERVER_URL,
+    apiUrl: GATEWAY_URL,
     apiKey: merchant.apiKey,
     publicKey: merchant.publicKey,
     origin: merchant.origin,
@@ -42,7 +42,7 @@ export function createTestClientFromFixture(merchantName: string = 'default'): S
   const fixture = getMerchant(merchantName);
   return new SoloPayClient({
     environment: 'custom',
-    apiUrl: PAY_SERVER_URL,
+    apiUrl: GATEWAY_URL,
     apiKey: fixture.apiKey,
     publicKey: fixture.publicKey,
     origin: fixture.origin,

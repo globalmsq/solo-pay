@@ -26,14 +26,14 @@ import {
  * 전체 스택 테스트를 위해서는 다음이 필요합니다:
  * pnpm --filter @globalmsq/integration-tests test:setup
  *
- * 이 테스트는 pay-server, simple-relayer, hardhat node가 Docker로 실행 중일 때 동작합니다.
+ * 이 테스트는 gateway, simple-relayer, hardhat node가 Docker로 실행 중일 때 동작합니다.
  *
  * Note: 머천트는 특정 체인에 바인딩됨
  * - Demo Merchant (chain_id=1) → Localhost (31337) → TEST 토큰
  * - MetaStar Merchant (chain_id=3) → Amoy (80002) → SUT 토큰
  */
 
-const PAY_SERVER_URL = process.env.PAY_SERVER_URL || 'http://localhost:3011';
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3001';
 
 describe('SDK Integration', () => {
   // Demo Merchant uses Localhost chain and TEST token
@@ -45,10 +45,10 @@ describe('SDK Integration', () => {
   const payerPrivateKey = HARDHAT_ACCOUNTS.payer.privateKey;
   const payerAddress = HARDHAT_ACCOUNTS.payer.address;
 
-  // Check if pay-server is running
-  async function isPayServerRunning(): Promise<boolean> {
+  // Check if gateway is running
+  async function isGatewayRunning(): Promise<boolean> {
     try {
-      const response = await fetch(`${PAY_SERVER_URL}/health`, {
+      const response = await fetch(`${GATEWAY_URL}/health`, {
         signal: AbortSignal.timeout(2000),
       });
       return response.ok;
@@ -58,10 +58,10 @@ describe('SDK Integration', () => {
   }
 
   beforeAll(async () => {
-    const serverRunning = await isPayServerRunning();
+    const serverRunning = await isGatewayRunning();
     if (!serverRunning) {
       console.warn(
-        '\n⚠️  pay-server is not running. SDK integration tests will be skipped.\n' +
+        '\n⚠️  gateway is not running. SDK integration tests will be skipped.\n' +
           '   Run: pnpm --filter @globalmsq/integration-tests test:setup\n'
       );
     }
@@ -76,11 +76,11 @@ describe('SDK Integration', () => {
   describe('Client Configuration', () => {
     it('should create SDK client with custom environment', async () => {
       const client = createTestClient(TEST_MERCHANT);
-      expect(client.getApiUrl()).toBe(PAY_SERVER_URL);
+      expect(client.getApiUrl()).toBe(GATEWAY_URL);
     });
 
     it('should handle API key in headers', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -100,7 +100,7 @@ describe('SDK Integration', () => {
 
   describe('Payment Creation via SDK', () => {
     it('should create payment through SDK', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -122,7 +122,7 @@ describe('SDK Integration', () => {
     });
 
     it('should return payment hash and gateway address', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -146,7 +146,7 @@ describe('SDK Integration', () => {
 
   describe('Payment Status via SDK', () => {
     it('should get payment status through SDK', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -167,7 +167,7 @@ describe('SDK Integration', () => {
 
   describe('Direct Payment Flow via SDK', () => {
     it('should complete direct payment flow: create -> approve -> pay -> status', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -202,7 +202,7 @@ describe('SDK Integration', () => {
 
   describe('Gasless Payment via SDK', () => {
     it('should submit gasless payment through SDK', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -275,7 +275,7 @@ describe('SDK Integration', () => {
     });
 
     it('should track relay status', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -354,7 +354,7 @@ describe('SDK Integration', () => {
 
   describe('Error Handling', () => {
     it('should reject createPayment when public key is invalid', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -369,7 +369,7 @@ describe('SDK Integration', () => {
     });
 
     it('should handle non-existent payment ID', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
@@ -381,7 +381,7 @@ describe('SDK Integration', () => {
     });
 
     it('should reject createPayment when origin is not in allowed_domains', async () => {
-      const serverRunning = await isPayServerRunning();
+      const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }

@@ -56,7 +56,7 @@ const PAYMENT_REQUEST_TYPES = {
 
 export function getEIP712Domain(forwarderAddress: string, chainId: number = TEST_CHAIN_ID) {
   return {
-    name: 'MSQForwarder',
+    name: 'SoloForwarder',
     version: '1',
     chainId: chainId,
     verifyingContract: forwarderAddress,
