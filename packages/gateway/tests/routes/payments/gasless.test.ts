@@ -6,25 +6,10 @@ import { submitGaslessRoute } from '../../../src/routes/payments/gasless';
 import { RelayerService } from '../../../src/services/relayer.service';
 import { RelayService } from '../../../src/services/relay.service';
 import { PaymentService } from '../../../src/services/payment.service';
-import { MerchantService } from '../../../src/services/merchant.service';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 // Test API key for authentication
 const TEST_API_KEY = 'test-api-key-123';
-
-// Mock merchant data for auth
-const mockMerchant = {
-  id: 1,
-  merchant_key: 'merchant_demo_001',
-  name: 'Demo Store',
-  api_key_hash: 'hashed',
-  webhook_url: null,
-  is_enabled: true,
-  is_deleted: false,
-  created_at: new Date(),
-  updated_at: new Date(),
-  deleted_at: null,
-};
 
 // 유효한 pay() calldata 생성 헬퍼
 // Pay function: pay(paymentId, tokenAddress, amount, recipientAddress, merchantId, feeBps, serverSignature)
@@ -72,11 +57,11 @@ const createValidGaslessRequest = (
   ...overrides,
 });
 
-// Mock payment data - merchant_id must match mockMerchant.id
+// Mock payment data
 const mockPaymentData = {
   id: 1,
   payment_hash: 'payment-123',
-  merchant_id: 1, // matches mockMerchant.id
+  merchant_id: 1,
   status: 'CREATED',
   amount: '1000000000000000000', // 1 token in wei (18 decimals)
   chain_id: 80002,
@@ -89,7 +74,6 @@ describe('POST /payments/:id/gasless', () => {
   let relayerService: Partial<RelayerService>;
   let relayService: Partial<RelayService>;
   let paymentService: Partial<PaymentService>;
-  let merchantService: Partial<MerchantService>;
 
   beforeEach(async () => {
     app = Fastify({
@@ -123,16 +107,11 @@ describe('POST /payments/:id/gasless', () => {
       updateStatus: vi.fn().mockResolvedValue(mockPaymentData),
     };
 
-    merchantService = {
-      findByApiKey: vi.fn().mockResolvedValue(mockMerchant),
-    };
-
     await submitGaslessRoute(
       app,
       relayerService as RelayerService,
       relayService as RelayService,
-      paymentService as PaymentService,
-      merchantService as MerchantService
+      paymentService as PaymentService
     );
   });
 
