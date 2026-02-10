@@ -12,10 +12,7 @@ const AMOY_BACKUP_RPCS = [
   'https://polygon-amoy-bor-rpc.publicnode.com',
 ];
 
-const POLYGON_BACKUP_RPCS = [
-  'https://polygon.drpc.org',
-  'https://polygon-bor-rpc.publicnode.com',
-];
+const POLYGON_BACKUP_RPCS = ['https://polygon.drpc.org', 'https://polygon-bor-rpc.publicnode.com'];
 
 // Singleton cache for wagmi config (prevents disconnect on re-render/StrictMode)
 let cachedWagmiConfig: Config | null = null;
@@ -66,10 +63,7 @@ function createWagmiConfig(chainConfig: ChainConfig): Config {
     80002: AMOY_BACKUP_RPCS,
   };
   const backupRpcs = BACKUP_RPCS[chainConfig.chainId] || [];
-  const httpTransports = [
-    http(chainConfig.rpcUrl),
-    ...backupRpcs.map((url) => http(url)),
-  ];
+  const httpTransports = [http(chainConfig.rpcUrl), ...backupRpcs.map((url) => http(url))];
 
   return getDefaultConfig({
     appName: 'Solo Pay Demo',
