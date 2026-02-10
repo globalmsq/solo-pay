@@ -12,17 +12,16 @@ export default defineConfig({
       concurrent: false,
     },
     maxWorkers: 1,
-    minWorkers: 1,
     // Environment variables are inherited from the shell
     // Override defaults only if not set externally
     env: {
-      DATABASE_URL: process.env.DATABASE_URL || 'mysql://solopay:pass@localhost:3307/solopay_test',
+      DATABASE_URL: process.env.DATABASE_URL || 'mysql://solopay:pass@localhost:3306/solopay',
       REDIS_HOST: process.env.REDIS_HOST || 'localhost',
-      REDIS_PORT: process.env.REDIS_PORT || '6380',
-      BLOCKCHAIN_RPC_URL: process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8546',
+      REDIS_PORT: process.env.REDIS_PORT || '6379',
+      BLOCKCHAIN_RPC_URL: process.env.BLOCKCHAIN_RPC_URL || 'http://localhost:8545',
       CHAIN_ID: process.env.CHAIN_ID || '31337',
-      PAY_SERVER_URL: process.env.PAY_SERVER_URL || 'http://localhost:3011',
-      RELAYER_URL: process.env.RELAY_API_URL || process.env.RELAYER_URL || 'http://localhost:3012',
+      GATEWAY_URL: process.env.GATEWAY_URL || 'http://localhost:3001',
+      RELAYER_URL: process.env.RELAY_API_URL || process.env.RELAYER_URL || 'http://localhost:3002',
     },
   },
 });

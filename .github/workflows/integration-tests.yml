@@ -24,8 +24,8 @@ jobs:
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       BLOCKCHAIN_RPC_URL: http://127.0.0.1:8545
-      PAY_SERVER_URL: http://127.0.0.1:3011
-      RELAY_API_URL: http://127.0.0.1:3012
+      GATEWAY_URL: http://127.0.0.1:3001
+      RELAY_API_URL: http://127.0.0.1:3002
       RPC_URL: http://127.0.0.1:8545
       CHAIN_ID: 31337
       # Hardhat Account #2 - Relayer (DO NOT use on mainnet/testnet)
@@ -102,7 +102,7 @@ jobs:
       - name: Start gateway
         env:
           NODE_ENV: test
-          PORT: 3011
+          PORT: 3001
         run: |
           cd packages/gateway
           pnpm start &
@@ -112,7 +112,7 @@ jobs:
       - name: Start simple-relayer
         env:
           NODE_ENV: test
-          PORT: 3012
+          PORT: 3002
           HOST: 0.0.0.0
           FORWARDER_ADDRESS: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
         run: |
@@ -125,7 +125,7 @@ jobs:
         run: |
           echo "Waiting for services to be ready..."
           for i in {1..30}; do
-            if curl -sf $PAY_SERVER_URL/health > /dev/null 2>&1 && \
+            if curl -sf $GATEWAY_URL/health > /dev/null 2>&1 && \
                curl -sf $RELAY_API_URL/health > /dev/null 2>&1; then
               echo "All services ready!"
               break
@@ -141,7 +141,7 @@ jobs:
             -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 
           echo "Checking gateway..."
-          curl -sf $PAY_SERVER_URL/health
+          curl -sf $GATEWAY_URL/health
 
           echo "Checking simple-relayer..."
           curl -sf $RELAY_API_URL/health

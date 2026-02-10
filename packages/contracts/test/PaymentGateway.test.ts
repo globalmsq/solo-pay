@@ -99,7 +99,7 @@ describe('PaymentGatewayV1', function () {
 
     // Deploy ERC2771Forwarder
     const Forwarder = await ethers.getContractFactory('ERC2771Forwarder');
-    const forwarder = (await Forwarder.deploy('MSQPayForwarder')) as unknown as ERC2771Forwarder;
+    const forwarder = (await Forwarder.deploy('SoloForwarder')) as unknown as ERC2771Forwarder;
     await forwarder.waitForDeployment();
 
     // Deploy PaymentGatewayV1 via proxy (owner, treasury, signer)
@@ -641,7 +641,7 @@ describe('PaymentGatewayV1', function () {
 
       // Sign the request using EIP-712 (OZ v5 format - nonce is included in signing but not in struct)
       const domain = {
-        name: 'MSQPayForwarder',
+        name: 'SoloForwarder',
         version: '1',
         chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: await forwarder.getAddress(),
@@ -1134,7 +1134,7 @@ describe('PaymentGatewayV1', function () {
 
       // Sign the forward request
       const domain = {
-        name: 'MSQPayForwarder',
+        name: 'SoloForwarder',
         version: '1',
         chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: await forwarder.getAddress(),

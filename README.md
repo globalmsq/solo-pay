@@ -151,7 +151,7 @@ pnpm dev
 | ----------------------- | -------------------------------------------- |
 | PaymentGateway (Proxy)  | `0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5` |
 | PaymentGatewayV1 (Impl) | `0xDc40C3735163fEd63c198c3920B65B66DB54b1Bf` |
-| ERC2771Forwarder        | `0xF034a404241707F347A952Cd4095f9035AF877Bf` |
+| ERC2771Forwarder        | `0xE8a3C8e530dddd14e02DA1C81Df6a15f41ad78DE` |
 
 Block Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com/address/0xF3a0661743cD5cF970144a4Ed022E27c05b33BB5)
 

@@ -49,7 +49,7 @@ describe('Contract Deployment Verification', () => {
 
       const forwarder = getContract(forwarderAddress, ERC2771ForwarderABI);
       const domain = await forwarder.eip712Domain();
-      expect(domain[1]).toBe('MSQForwarder');
+      expect(domain[1]).toBe('SoloForwarder');
       expect(domain[2]).toBe('1');
     });
 

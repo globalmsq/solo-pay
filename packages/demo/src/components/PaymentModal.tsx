@@ -444,7 +444,7 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
       // 2. Create EIP-712 typed data for gasless payment forward request
       // OZ ERC2771Forwarder expects: ForwardRequest(address from,address to,uint256 value,uint256 gas,uint256 nonce,uint48 deadline,bytes data)
       const domain = {
-        name: 'MSQForwarder', // Must match deployed contract name
+        name: 'SoloForwarder', // Must match deployed contract name
         version: '1',
         chainId: BigInt(serverConfig.chainId),
         verifyingContract: serverConfig.forwarderAddress as Address,
