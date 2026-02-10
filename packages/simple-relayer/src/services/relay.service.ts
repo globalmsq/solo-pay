@@ -47,7 +47,7 @@ export interface ForwardRelayRequest {
 
 export interface TransactionRecord {
   transactionId: string;
-  hash?: `0x${string}`;
+  transactionHash?: `0x${string}`;
   status: 'pending' | 'sent' | 'submitted' | 'mined' | 'confirmed' | 'failed';
   to: `0x${string}`;
   data: `0x${string}`;
@@ -203,7 +203,7 @@ export class RelayService {
         gas: BigInt(request.gasLimit ?? '200000'),
       });
 
-      record.hash = hash;
+      record.transactionHash = hash;
       record.status = 'sent';
       record.updatedAt = Date.now();
       this.transactions.set(transactionId, record);
@@ -344,7 +344,7 @@ export class RelayService {
         gas: BigInt(request.gasLimit ?? '500000'),
       });
 
-      record.hash = hash;
+      record.transactionHash = hash;
       record.status = 'sent';
       record.updatedAt = Date.now();
       this.transactions.set(transactionId, record);

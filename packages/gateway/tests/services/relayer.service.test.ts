@@ -47,7 +47,7 @@ describe('relayerService', () => {
         ok: true,
         json: async () => ({
           transactionId: 'tx-mock-123',
-          hash: '0x' + 'a'.repeat(64),
+          transactionHash: '0x' + 'a'.repeat(64),
           status: 'pending',
         }),
       });
@@ -88,7 +88,7 @@ describe('relayerService', () => {
         ok: true,
         json: async () => ({
           transactionId: 'tx-mock-123',
-          hash: '0x' + 'a'.repeat(64),
+          transactionHash: '0x' + 'a'.repeat(64),
           status: 'pending',
         }),
       });
@@ -225,7 +225,7 @@ describe('relayerService', () => {
         ok: true,
         json: async () => ({
           transactionId: 'tx-mock-123',
-          hash: '0x' + 'a'.repeat(64),
+          transactionHash: '0x' + 'a'.repeat(64),
           status: 'mined',
         }),
       });
@@ -295,7 +295,7 @@ describe('relayerService', () => {
         ok: true,
         json: async () => ({
           transactionId: 'tx-mock-123',
-          hash: '0x' + 'a'.repeat(64),
+          transactionHash: '0x' + 'a'.repeat(64),
           status: 'mined',
         }),
       });
