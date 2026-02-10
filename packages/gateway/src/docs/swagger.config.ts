@@ -52,7 +52,16 @@ All errors follow a consistent format:
       `,
       version: '0.1.0',
     },
-    servers: [],
+    servers: [
+      {
+        url: '/',
+        description: 'Current Server',
+      },
+      {
+        url: 'http://localhost:3001',
+        description: 'Local Development',
+      },
+    ],
     tags: [
       {
         name: 'Merchants',
