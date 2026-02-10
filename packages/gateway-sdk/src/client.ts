@@ -45,27 +45,7 @@ export class SoloPayClient {
   }
 
   async createPayment(params: CreatePaymentParams): Promise<CreatePaymentResponse> {
-    if (!this.publicKey || !this.origin) {
-      throw new Error(
-        'createPayment requires publicKey and origin in SoloPayConfig (for POST /payments/create auth)'
-      );
-    }
-    const response = await fetch(`${this.apiUrl}/payments/create`, {
-      method: 'POST',
-      headers: {
-        ...DEFAULT_HEADERS,
-        'x-public-key': this.publicKey,
-        Origin: this.origin,
-      },
-      body: JSON.stringify(params),
-      cache: 'no-store',
-    });
-    const data = (await response.json()) as CreatePaymentResponse | ErrorResponse;
-    if (!response.ok) {
-      const error = data as ErrorResponse;
-      throw new SoloPayError(error.code, error.message, response.status, error.details);
-    }
-    return data as CreatePaymentResponse;
+    return this.requestWithPublicKey<CreatePaymentResponse>('POST', '/payments/create', params);
   }
 
   async getPaymentStatus(paymentId: string): Promise<PaymentStatusResponse> {
@@ -120,6 +100,39 @@ export class SoloPayClient {
       const error = data as ErrorResponse;
       const statusCode = response.status;
       throw new SoloPayError(error.code, error.message, statusCode, error.details);
+    }
+
+    return data as T;
+  }
+
+  private async requestWithPublicKey<T>(
+    method: string,
+    path: string,
+    body?: CreatePaymentParams
+  ): Promise<T> {
+    if (!this.publicKey || !this.origin) {
+      throw new Error(
+        'requestWithPublicKey requires publicKey and origin in SoloPayConfig (for POST /payments/create auth)'
+      );
+    }
+    const headers = {
+      ...DEFAULT_HEADERS,
+      'x-public-key': this.publicKey,
+      Origin: this.origin,
+    };
+
+    const response = await fetch(`${this.apiUrl}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      cache: 'no-store',
+    });
+
+    const data = (await response.json()) as T | ErrorResponse;
+
+    if (!response.ok) {
+      const error = data as ErrorResponse;
+      throw new SoloPayError(error.code, error.message, response.status, error.details);
     }
 
     return data as T;
