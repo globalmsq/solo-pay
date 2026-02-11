@@ -102,7 +102,7 @@ Opens the payment widget.
 | Parameter      | Type     | Required | Description                           |
 | -------------- | -------- | -------- | ------------------------------------- |
 | `orderId`      | `string` | Yes      | Unique order identifier               |
-| `amount`       | `string` | Yes      | Payment amount                        |
+| `amount`       | `string \| number` | Yes      | Payment amount                        |
 | `tokenAddress` | `string` | Yes      | Token contract address                |
 | `successUrl`   | `string` | Yes      | Redirect URL on success               |
 | `failUrl`      | `string` | Yes      | Redirect URL on failure               |

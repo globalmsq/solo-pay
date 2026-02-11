@@ -14,9 +14,10 @@ export function validatePaymentRequest(request: PaymentRequest): ValidationResul
     errors.orderId = 'Order ID is required';
   }
 
-  if (!request.amount || request.amount.trim() === '') {
+  const amountStr = request.amount != null ? String(request.amount).trim() : '';
+  if (!amountStr) {
     errors.amount = 'Amount is required';
-  } else if (isNaN(parseFloat(request.amount)) || parseFloat(request.amount) <= 0) {
+  } else if (isNaN(parseFloat(amountStr)) || parseFloat(amountStr) <= 0) {
     errors.amount = 'Amount must be a positive number';
   }
 

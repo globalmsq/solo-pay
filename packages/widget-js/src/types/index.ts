@@ -21,8 +21,8 @@ export type RedirectMode = 'auto' | 'redirect' | 'iframe';
 export interface PaymentRequest {
   /** Merchant order ID (required) */
   orderId: string;
-  /** Payment amount in human readable format, e.g., "10" or "10.50" (required) */
-  amount: string;
+  /** Payment amount in human readable format, e.g., "10", "10.50", or 10 (required) */
+  amount: string | number;
   /** ERC-20 token contract address (required) */
   tokenAddress: string;
   /** Redirect URL on success (required) */
