@@ -8,8 +8,20 @@ const banner = `/*!
  * Released under the MIT License.
  */`;
 
+// Shared typescript plugin config
+const tsPlugin = (emitDeclarations = false) =>
+  typescript({
+    tsconfig: './tsconfig.json',
+    declaration: emitDeclarations,
+    declarationDir: emitDeclarations ? './dist' : undefined,
+    compilerOptions: {
+      // Prevent incremental builds that can cause hangs
+      incremental: false,
+    },
+  });
+
 export default [
-  // IIFE build (for <script> tag)
+  // IIFE build (for <script> tag) - also emits declarations
   {
     input: 'src/iife.ts',
     output: {
@@ -20,14 +32,7 @@ export default [
       banner,
       sourcemap: true,
     },
-    plugins: [
-      resolve(),
-      typescript({
-        tsconfig: './tsconfig.json',
-        declaration: true,
-        declarationDir: './dist',
-      }),
-    ],
+    plugins: [resolve(), tsPlugin(true)],
   },
   // Minified IIFE build
   {
@@ -42,10 +47,7 @@ export default [
     },
     plugins: [
       resolve(),
-      typescript({
-        tsconfig: './tsconfig.json',
-        declaration: false,
-      }),
+      tsPlugin(false),
       terser({
         format: {
           comments: /^!/,
@@ -62,12 +64,6 @@ export default [
       banner,
       sourcemap: true,
     },
-    plugins: [
-      resolve(),
-      typescript({
-        tsconfig: './tsconfig.json',
-        declaration: false,
-      }),
-    ],
+    plugins: [resolve(), tsPlugin(false)],
   },
 ];

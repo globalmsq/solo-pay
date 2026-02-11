@@ -194,7 +194,6 @@ export class WidgetLauncher {
     };
     document.addEventListener('keydown', handleEscape);
 
-
     // Animate in
     requestAnimationFrame(() => {
       if (this.modalOverlay) {
