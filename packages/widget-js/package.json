@@ -1,6 +1,6 @@
 {
   "name": "@solo-pay/widget-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Lightweight, framework-agnostic payment widget for SoloPay",
   "main": "dist/widget.js",
