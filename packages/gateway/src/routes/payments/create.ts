@@ -51,7 +51,6 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
 
 **Response:** paymentId, serverSignature, chainId, tokenAddress, gatewayAddress, amount (wei), tokenDecimals, tokenSymbol, successUrl, failUrl, expiresAt, recipientAddress, merchantId, feeBps, forwarderAddress.
         `,
-        security: [{ PublicKeyAuth: [] }],
         headers: {
           type: 'object',
           required: ['x-public-key', 'origin'],
@@ -77,6 +76,8 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
             tokenAddress: {
               type: 'string',
               pattern: '^0x[a-fA-F0-9]{40}$',
+              default: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+              example: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
               description:
                 'ERC-20 token contract address (must be whitelisted and enabled for merchant)',
             },

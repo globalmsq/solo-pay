@@ -39,7 +39,6 @@ Public Key auth.
 
 **Headers (required):** \`x-public-key\` = public key (pk_live_xxx). \`Origin\` = allowed origin (must be in merchant allowed_domains).
         `,
-        security: [{ PublicKeyAuth: [] }],
         headers: {
           type: 'object',
           required: ['x-public-key', 'origin'],
