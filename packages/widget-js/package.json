@@ -1,0 +1,70 @@
+{
+  "name": "@solo-pay/widget-js",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Lightweight, framework-agnostic payment widget for SoloPay",
+  "main": "dist/widget.js",
+  "module": "dist/widget.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/widget.mjs",
+      "require": "./dist/widget.js",
+      "default": "./dist/widget.mjs"
+    },
+    "./dist/*": "./dist/*"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "build:watch": "rollup -c -w",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run clean && pnpm run build",
+    "example": "npx serve -p 4002 ."
+  },
+  "keywords": [
+    "payment",
+    "widget",
+    "solo-pay",
+    "solopay",
+    "crypto",
+    "blockchain",
+    "erc20",
+    "usdt",
+    "stablecoin",
+    "web3",
+    "msq",
+    "sut"
+  ],
+  "author": "MSQ Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rollup": "^4.9.6",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aspect-build/solo-pay.git",
+    "directory": "packages/widget-js"
+  },
+  "homepage": "https://solo-pay.com",
+  "bugs": {
+    "url": "https://github.com/aspect-build/solo-pay/issues"
+  }
+}
