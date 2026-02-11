@@ -34,7 +34,7 @@ export class WidgetLauncher {
     const params = new URLSearchParams({
       pk: this.publicKey,
       orderId: request.orderId,
-      amount: request.amount,
+      amount: String(request.amount),
       tokenAddress: request.tokenAddress,
       successUrl: request.successUrl,
       failUrl: request.failUrl,
