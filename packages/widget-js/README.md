@@ -49,15 +49,19 @@ export default function CheckoutButton() {
   }, []);
 
   const handlePay = () => {
-    soloPayRef.current?.requestPayment({
-      orderId: 'order-123',
-      amount: '10',
-      tokenAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-      successUrl: `${window.location.origin}/success`,
-      failUrl: `${window.location.origin}/fail`,
-    }, undefined, {
-      onClose: () => console.log('Widget closed'),
-    });
+    soloPayRef.current?.requestPayment(
+      {
+        orderId: 'order-123',
+        amount: '10',
+        tokenAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+        successUrl: `${window.location.origin}/success`,
+        failUrl: `${window.location.origin}/fail`,
+      },
+      undefined,
+      {
+        onClose: () => console.log('Widget closed'),
+      }
+    );
   };
 
   return <button onClick={handlePay}>Pay Now</button>;
@@ -70,14 +74,15 @@ export default function CheckoutButton() {
 
 ### `new SoloPay(config)`
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `publicKey` | `string` | required | Your SoloPay public key |
-| `widgetUrl` | `string` | `https://widget.solo-pay.com` | Widget URL |
-| `debug` | `boolean` | `false` | Enable debug logging |
-| `redirectMode` | `'auto' \| 'iframe' \| 'redirect'` | `'auto'` | How to open widget |
+| Option         | Type                               | Default                       | Description             |
+| -------------- | ---------------------------------- | ----------------------------- | ----------------------- |
+| `publicKey`    | `string`                           | required                      | Your SoloPay public key |
+| `widgetUrl`    | `string`                           | `https://widget.solo-pay.com` | Widget URL              |
+| `debug`        | `boolean`                          | `false`                       | Enable debug logging    |
+| `redirectMode` | `'auto' \| 'iframe' \| 'redirect'` | `'auto'`                      | How to open widget      |
 
 **Redirect modes:**
+
 - `'auto'` - iframe modal on desktop, redirect on mobile (default)
 - `'iframe'` - Always open in iframe modal
 - `'redirect'` - Always redirect to widget page
@@ -87,26 +92,27 @@ export default function CheckoutButton() {
 Opens the payment widget.
 
 **Parameters:**
+
 - `request` - Payment request object (see below)
 - `mode` - Override redirect mode for this payment (optional)
 - `options` - Additional options (optional)
 
 **Request:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `orderId` | `string` | Yes | Unique order identifier |
-| `amount` | `string` | Yes | Payment amount |
-| `tokenAddress` | `string` | Yes | Token contract address |
-| `successUrl` | `string` | Yes | Redirect URL on success |
-| `failUrl` | `string` | Yes | Redirect URL on failure |
-| `webhookUrl` | `string` | No | Webhook URL for payment notifications |
+| Parameter      | Type     | Required | Description                           |
+| -------------- | -------- | -------- | ------------------------------------- |
+| `orderId`      | `string` | Yes      | Unique order identifier               |
+| `amount`       | `string` | Yes      | Payment amount                        |
+| `tokenAddress` | `string` | Yes      | Token contract address                |
+| `successUrl`   | `string` | Yes      | Redirect URL on success               |
+| `failUrl`      | `string` | Yes      | Redirect URL on failure               |
+| `webhookUrl`   | `string` | No       | Webhook URL for payment notifications |
 
 **Options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `onClose` | `() => void` | Callback when widget is closed |
+| Option            | Type          | Description                          |
+| ----------------- | ------------- | ------------------------------------ |
+| `onClose`         | `() => void`  | Callback when widget is closed       |
 | `iframeContainer` | `HTMLElement` | Custom container for embedded iframe |
 
 ### `soloPay.getWidgetUrl(request)`

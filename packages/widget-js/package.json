@@ -25,6 +25,7 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "pnpm run clean && pnpm run build",
+    "publish:npm": "pnpm publish --access public",
     "example": "npx serve -p 4002 ."
   },
   "keywords": [
@@ -60,11 +61,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/aspect-build/solo-pay.git",
+    "url": "https://github.com/globalmsq/solo-pay",
     "directory": "packages/widget-js"
   },
-  "homepage": "https://solo-pay.com",
+  "homepage": "",
   "bugs": {
-    "url": "https://github.com/aspect-build/solo-pay/issues"
+    "url": "https://github.com/globalmsq/solo-pay/issues"
   }
 }
