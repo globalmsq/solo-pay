@@ -1,8 +1,17 @@
 import { http, fallback, createConfig } from 'wagmi';
 import { injected, metaMask } from 'wagmi/connectors';
 import { arbitrum, base, mainnet, optimism, polygon, polygonAmoy, sepolia } from 'wagmi/chains';
+import { defineChain } from 'viem';
 
-const enableTestnets = process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true';
+const hardhat = defineChain({
+  id: 31337,
+  name: 'Hardhat',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['http://127.0.0.1:8545'] },
+  },
+  testnet: true,
+});
 
 const chains = [
   mainnet,
@@ -11,7 +20,8 @@ const chains = [
   optimism,
   arbitrum,
   base,
-  ...(enableTestnets ? ([sepolia] as const) : []),
+  sepolia,
+  hardhat,
 ] as const;
 
 export const config = createConfig({
@@ -36,6 +46,7 @@ export const config = createConfig({
     [arbitrum.id]: http('https://arbitrum-one-rpc.publicnode.com'),
     [base.id]: http('https://base-rpc.publicnode.com'),
     [sepolia.id]: http('https://ethereum-sepolia-rpc.publicnode.com'),
+    [hardhat.id]: http('http://127.0.0.1:8545'),
   },
   ssr: true,
 });
