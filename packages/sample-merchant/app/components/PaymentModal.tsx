@@ -19,7 +19,10 @@ export default function PaymentModal({
     url.searchParams.set('pk', process.env.NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY || '');
     url.searchParams.set('orderId', `${paymentId}`);
     url.searchParams.set('amount', `${product.price}`);
-    url.searchParams.set('successUrl', `${window.location.origin}/payments/success?paymentId=${paymentId}`);
+    url.searchParams.set(
+      'successUrl',
+      `${window.location.origin}/payments/success?paymentId=${paymentId}`
+    );
     url.searchParams.set('failUrl', `${window.location.origin}`);
     return url.toString();
   }, [paymentId]);
