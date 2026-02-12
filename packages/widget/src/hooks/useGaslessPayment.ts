@@ -136,7 +136,7 @@ export function useGaslessPayment({
 
       // 2. Create EIP-712 typed data for gasless payment forward request
       const domain = {
-        name: 'MSQForwarder',
+        name: 'SoloForwarder',
         version: '1',
         chainId: BigInt(paymentDetails?.chainId ?? 0),
         verifyingContract: forwarderAddress,

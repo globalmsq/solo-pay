@@ -19,10 +19,8 @@ export default function PaymentModal({
     url.searchParams.set('pk', process.env.NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY || '');
     url.searchParams.set('orderId', `${paymentId}`);
     url.searchParams.set('amount', `${product.price}`);
-    const webhookBase = process.env.NEXT_PUBLIC_WEBHOOK_BASE_URL || window.location.origin;
     url.searchParams.set('successUrl', `${window.location.origin}/payments/success?paymentId=${paymentId}`);
     url.searchParams.set('failUrl', `${window.location.origin}`);
-    url.searchParams.set('webhookUrl', `${webhookBase}/api/webhook`);
     return url.toString();
   }, [paymentId]);
 
