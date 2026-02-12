@@ -13,6 +13,14 @@ function getApiUrl(): string {
   return process.env.NEXT_PUBLIC_GATEWAY_API_URL || 'http://localhost:3001';
 }
 
+/**
+ * Get Faucet (request-gas) API URL. Faucet-manager runs as a separate service.
+ * Default: Docker host 3003; for local run set NEXT_PUBLIC_FAUCET_API_URL=http://localhost:3002.
+ */
+function getFaucetApiUrl(): string {
+  return process.env.NEXT_PUBLIC_FAUCET_API_URL || 'http://localhost:3003';
+}
+
 // ============================================================================
 // Error Handling
 // ============================================================================
@@ -251,6 +259,57 @@ export async function pollPaymentStatus(
   }
 
   throw new PaymentApiError('TIMEOUT', 'Payment confirmation timeout', 408);
+}
+
+// ============================================================================
+// Request Gas (Faucet)
+// ============================================================================
+
+/**
+ * Response from POST /payments/request-gas
+ */
+export interface RequestGasResponse {
+  txHash: string;
+  amount: string;
+  chainId: number;
+}
+
+/**
+ * Request one-time gas grant for approve. Requires public key + origin.
+ * Fails if not approved, already has gas, or already granted for (wallet, chain).
+ */
+export async function requestGas(
+  publicKey: string,
+  origin: string,
+  paymentId: string,
+  walletAddress: string
+): Promise<RequestGasResponse> {
+  const apiUrl = getFaucetApiUrl();
+
+  const response = await fetch(`${apiUrl}/payments/request-gas`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-public-key': publicKey,
+      Origin: origin,
+    },
+    body: JSON.stringify({ paymentId, walletAddress }),
+    cache: 'no-store',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = data as ErrorResponse;
+    throw new PaymentApiError(
+      error.code || 'REQUEST_GAS_ERROR',
+      error.message || 'Failed to request gas',
+      response.status,
+      error.details
+    );
+  }
+
+  return data as RequestGasResponse;
 }
 
 // ============================================================================

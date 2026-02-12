@@ -13,6 +13,7 @@ COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/gateway-sdk/package.json ./packages/gateway-sdk/
 COPY packages/gateway/package.json ./packages/gateway/
 COPY packages/webhook-manager/package.json ./packages/webhook-manager/
+COPY packages/faucet-manager/package.json ./packages/faucet-manager/
 COPY packages/simple-relayer/package.json ./packages/simple-relayer/
 COPY packages/guide/package.json ./packages/guide/
 COPY packages/demo/package.json ./packages/demo/
@@ -20,6 +21,7 @@ COPY packages/demo/package.json ./packages/demo/
 RUN pnpm install --frozen-lockfile
 
 COPY packages/webhook-manager ./packages/webhook-manager
+COPY packages/faucet-manager ./packages/faucet-manager
 COPY packages/contracts ./packages/contracts
 WORKDIR /app/packages/contracts
 RUN npx hardhat compile
@@ -48,6 +50,12 @@ CMD ["npx", "hardhat", "run", "scripts/check-and-deploy.ts", "--network", "local
 FROM deps AS webhook-manager-builder
 
 WORKDIR /app/packages/webhook-manager
+RUN pnpm build
+
+# === Faucet Manager Builder ===
+FROM deps AS faucet-manager-builder
+
+WORKDIR /app/packages/faucet-manager
 RUN pnpm build
 
 # === Gateway Builder ===
@@ -155,6 +163,25 @@ WORKDIR /app/packages/webhook-manager
 ENV NODE_ENV=production
 # No EXPOSE (worker, no HTTP); optional healthcheck via Redis ping
 CMD ["node", "dist/worker.js"]
+
+# === Faucet Manager Runtime ===
+FROM node:20-alpine AS faucet-manager
+
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/faucet-manager/node_modules ./packages/faucet-manager/node_modules
+COPY --from=faucet-manager-builder /app/packages/faucet-manager/dist ./packages/faucet-manager/dist
+COPY --from=faucet-manager-builder /app/packages/faucet-manager/package.json ./packages/faucet-manager/package.json
+
+WORKDIR /app/packages/faucet-manager
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3002
+EXPOSE 3002
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -sf http://127.0.0.1:3002/health || exit 1
+CMD ["node", "dist/server.js"]
 
 # === Guide Builder ===
 FROM deps AS guide-builder
