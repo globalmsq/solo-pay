@@ -54,6 +54,10 @@ All errors follow a consistent format:
     },
     servers: [
       {
+        url: '/',
+        description: 'Current Server',
+      },
+      {
         url: 'http://localhost:3001',
         description: 'Local Development',
       },

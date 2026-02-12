@@ -1,6 +1,6 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { fallback, http, type Config } from 'wagmi';
-import { polygonAmoy, hardhat, type Chain } from 'wagmi/chains';
+import { polygon, polygonAmoy, hardhat, type Chain } from 'wagmi/chains';
 import type { ChainConfig } from '@/app/api/config/route';
 
 // WalletConnect Project ID - Get one at https://cloud.walletconnect.com/
@@ -11,6 +11,8 @@ const AMOY_BACKUP_RPCS = [
   'https://polygon-amoy.drpc.org',
   'https://polygon-amoy-bor-rpc.publicnode.com',
 ];
+
+const POLYGON_BACKUP_RPCS = ['https://polygon.drpc.org', 'https://polygon-bor-rpc.publicnode.com'];
 
 // Singleton cache for wagmi config (prevents disconnect on re-render/StrictMode)
 let cachedWagmiConfig: Config | null = null;
@@ -38,7 +40,12 @@ export function getOrCreateWagmiConfig(chainConfig: ChainConfig): Config {
  */
 function createWagmiConfig(chainConfig: ChainConfig): Config {
   // 체인 ID에 따라 체인 객체 선택
-  const chain: Chain = chainConfig.chainId === 80002 ? polygonAmoy : hardhat;
+  const CHAIN_MAP: Record<number, Chain> = {
+    137: polygon,
+    80002: polygonAmoy,
+    31337: hardhat,
+  };
+  const chain: Chain = CHAIN_MAP[chainConfig.chainId] || hardhat;
 
   // 커스텀 RPC URL로 체인 오버라이드 (default와 public 모두 설정)
   const customChain: Chain = {
@@ -50,11 +57,13 @@ function createWagmiConfig(chainConfig: ChainConfig): Config {
     },
   };
 
-  // Amoy인 경우 백업 RPC 추가, 그 외는 단일 RPC
-  const httpTransports =
-    chainConfig.chainId === 80002
-      ? [http(chainConfig.rpcUrl), ...AMOY_BACKUP_RPCS.map((url) => http(url))]
-      : [http(chainConfig.rpcUrl)];
+  // 체인별 백업 RPC 매핑
+  const BACKUP_RPCS: Record<number, string[]> = {
+    137: POLYGON_BACKUP_RPCS,
+    80002: AMOY_BACKUP_RPCS,
+  };
+  const backupRpcs = BACKUP_RPCS[chainConfig.chainId] || [];
+  const httpTransports = [http(chainConfig.rpcUrl), ...backupRpcs.map((url) => http(url))];
 
   return getDefaultConfig({
     appName: 'Solo Pay Demo',

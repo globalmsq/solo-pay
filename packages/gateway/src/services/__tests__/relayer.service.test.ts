@@ -92,7 +92,7 @@ describe('RelayerService', () => {
         json: () =>
           Promise.resolve({
             transactionId: 'tx-123',
-            hash: '0x' + 'f'.repeat(64),
+            transactionHash: '0x' + 'f'.repeat(64),
             status: 'submitted',
           }),
       });
@@ -193,7 +193,7 @@ describe('RelayerService', () => {
         json: () =>
           Promise.resolve({
             transactionId: 'tx-123',
-            hash: '0x' + 'f'.repeat(64),
+            transactionHash: '0x' + 'f'.repeat(64),
             status: 'confirmed',
           }),
       });
@@ -346,7 +346,7 @@ describe('RelayerService', () => {
         json: () =>
           Promise.resolve({
             transactionId: 'tx-123',
-            hash: '0x' + 'f'.repeat(64),
+            transactionHash: '0x' + 'f'.repeat(64),
             status: 'confirmed',
           }),
       });

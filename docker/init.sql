@@ -218,9 +218,9 @@ CREATE TABLE IF NOT EXISTS refunds (
 INSERT INTO chains (network_id, name, rpc_url, gateway_address, forwarder_address, is_testnet) VALUES
 (31337, 'Localhost', 'http://hardhat-node:8545', '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9', '0x5FbDB2315678afecb367f032d93F642f64180aa3', TRUE),
 (11155111, 'Sepolia', 'https://ethereum-sepolia-rpc.publicnode.com', NULL, NULL, TRUE),
-(80002, 'Amoy', 'https://rpc-amoy.polygon.technology', '0x2024b6669A2BE5fF9624792cB1BB657d20C4b24B', '0xF034a404241707F347A952Cd4095f9035AF877Bf', TRUE),
+(80002, 'Amoy', 'https://rpc-amoy.polygon.technology', '0x2024b6669A2BE5fF9624792cB1BB657d20C4b24B', '0xE8a3C8e530dddd14e02DA1C81Df6a15f41ad78DE', TRUE),
 (97, 'BNB Chain Testnet', 'https://data-seed-prebsc-1-s1.binance.org:8545', NULL, NULL, TRUE),
-(137, 'Polygon', 'https://polygon-rpc.com', NULL, NULL, FALSE),
+(137, 'Polygon', 'https://polygon-rpc.com', '0x4F81a1481fc3d6479E2e6d56052fC60539F707ec', '0xec63c3E7BD0c51AA6DC08f587A2B147a671cf888', FALSE),
 (1, 'Ethereum', 'https://eth.llamarpc.com', NULL, NULL, FALSE),
 (56, 'BNB Chain', 'https://bsc-dataseed.binance.org', NULL, NULL, FALSE);
 
@@ -231,7 +231,9 @@ INSERT INTO chains (network_id, name, rpc_url, gateway_address, forwarder_addres
 INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 (1, '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512', 'TEST', 18),
 (5, '0x98965474EcBeC2F532F1f780ee37b0b05F77Ca55', 'SUT', 18),
-(3, '0xE4C687167705Abf55d709395f92e254bdF5825a2', 'SUT', 18);
+(5, '0x6A8Ec2d9BfBDD20A7F5A4E89D640F7E7cebA4499', 'MSQ', 18),
+(3, '0xE4C687167705Abf55d709395f92e254bdF5825a2', 'SUT', 18),
+(3, '0x7350C119cb048c2Ea6b2532bcE82c2F7c042ff6b', 'MSQ', 18);
 
 -- Demo Merchant (id=1)
 -- API Key: 123 -> SHA-256 hash
@@ -266,7 +268,7 @@ INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, public_key, p
 -- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3)
 INSERT INTO merchant_payment_methods (merchant_id, token_id) VALUES
 (1, 1),
-(2, 3),
+(2, 5),
 (3, 1);
 
 -- Show created tables

@@ -68,7 +68,7 @@ const forwardRequest = {
 // EIP-712 서명
 const signature = await signTypedDataAsync({
   domain: {
-    name: 'MSQForwarder',
+    name: 'SoloForwarder',
     version: '1',
     chainId: 80002, // Polygon Amoy
     verifyingContract: FORWARDER_ADDRESS,
@@ -94,7 +94,7 @@ const signature = await signTypedDataAsync({
 사용자 지갑에서 다음과 같은 내용이 표시됩니다:
 
 ```
-MSQForwarder
+SoloForwarder
 
 ForwardRequest
 ───────────────

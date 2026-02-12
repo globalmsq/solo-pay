@@ -52,7 +52,7 @@ services:
   #     RELAYER_PRIVATE_KEY: "${RELAYER_PRIVATE_KEY}"
   #     RPC_URL: https://rpc-amoy.polygon.technology
   #     CHAIN_ID: 80002
-  #     FORWARDER_ADDRESS: "0xF034a404241707F347A952Cd4095f9035AF877Bf"
+  #     FORWARDER_ADDRESS: "0xE8a3C8e530dddd14e02DA1C81Df6a15f41ad78DE"
   #   networks:
   #     - solo-pay-network
   #   healthcheck:

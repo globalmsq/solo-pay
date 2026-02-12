@@ -62,7 +62,7 @@ export async function relayRoutes(
             type: 'object',
             properties: {
               transactionId: { type: 'string' },
-              hash: { type: 'string' },
+              transactionHash: { type: 'string' },
               status: { type: 'string' },
             },
           },
@@ -83,7 +83,7 @@ export async function relayRoutes(
 
         return {
           transactionId: result.transactionId,
-          hash: result.hash,
+          transactionHash: result.transactionHash,
           status: result.status,
         };
       } catch (error) {
@@ -133,7 +133,7 @@ export async function relayRoutes(
             type: 'object',
             properties: {
               transactionId: { type: 'string' },
-              hash: { type: ['string', 'null'] },
+              transactionHash: { type: ['string', 'null'] },
               status: { type: 'string' },
               createdAt: { type: 'string' },
             },
@@ -162,7 +162,7 @@ export async function relayRoutes(
 
         return {
           transactionId: result.transactionId,
-          hash: result.hash ?? null,
+          transactionHash: result.transactionHash ?? null,
           status: result.status,
           createdAt: new Date(result.createdAt).toISOString(),
         };
@@ -197,7 +197,7 @@ export async function relayRoutes(
             type: 'object',
             properties: {
               transactionId: { type: 'string' },
-              hash: { type: ['string', 'null'] },
+              transactionHash: { type: ['string', 'null'] },
               status: { type: 'string' },
               createdAt: { type: 'string' },
             },
@@ -218,7 +218,7 @@ export async function relayRoutes(
 
         return {
           transactionId: result.transactionId,
-          hash: result.hash ?? null,
+          transactionHash: result.transactionHash ?? null,
           status: result.status,
           createdAt: new Date(result.createdAt).toISOString(),
         };

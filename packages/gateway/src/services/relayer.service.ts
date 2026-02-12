@@ -19,7 +19,7 @@ type RelayerTxStatus =
 
 interface RelayerApiResponse {
   transactionId: string;
-  hash?: string;
+  transactionHash?: string;
   status: RelayerTxStatus;
 }
 
@@ -147,7 +147,7 @@ export class RelayerService {
 
       return {
         relayRequestId: tx.transactionId,
-        transactionHash: tx.hash,
+        transactionHash: tx.transactionHash,
         status: this.mapStatus(tx.status),
       };
     } catch (error) {
@@ -197,7 +197,7 @@ export class RelayerService {
 
       return {
         relayRequestId: tx.transactionId,
-        transactionHash: tx.hash,
+        transactionHash: tx.transactionHash,
         status: this.mapStatus(tx.status),
       };
     } catch (error) {

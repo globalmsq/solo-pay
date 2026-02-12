@@ -126,7 +126,7 @@ describe('RelayService', () => {
       expect(result.transactionId).toContain('mock_tx_');
       // 트랜잭션이 성공적으로 제출되면 'sent' 또는 모니터링 후 'mined' 상태
       expect(['sent', 'mined', 'confirmed']).toContain(result.status);
-      expect(result.hash).toBeDefined();
+      expect(result.transactionHash).toBeDefined();
     });
 
     it('value와 gasLimit 옵션을 받아들여야 함', async () => {
@@ -195,7 +195,7 @@ describe('RelayService', () => {
 
       expect(result.transactionId).toContain('mock_tx_');
       expect(['sent', 'mined', 'confirmed']).toContain(result.status);
-      expect(result.hash).toBeDefined();
+      expect(result.transactionHash).toBeDefined();
       expect(result.to).toBe(config.forwarderAddress);
     });
 
