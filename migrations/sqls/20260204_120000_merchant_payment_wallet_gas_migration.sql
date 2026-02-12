@@ -2,7 +2,7 @@
 -- Date: 2026-02-04 12:00:00
 -- Aligns with Prisma schema for client-side integration (public key, orderId, successUrl, failUrl, webhookUrl)
 
-USE msqpay;
+USE solopay;
 
 -- ============================================================
 -- 1. Merchant: public_key, public_key_hash, allowed_domains

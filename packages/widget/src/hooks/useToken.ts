@@ -90,7 +90,7 @@ export function useToken({
   decimals = 18,
   chainId,
 }: UseTokenParams): UseTokenReturn {
-  // Read balance
+  // Read balance from the payment's chain (so balance is correct even before user switches network)
   const {
     data: balance,
     isLoading: isBalanceLoading,
@@ -100,12 +100,13 @@ export function useToken({
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
+    chainId: chainId,
     query: {
       enabled: !!tokenAddress && !!userAddress,
     },
   });
 
-  // Read allowance
+  // Read allowance from the payment's chain
   const {
     data: allowance,
     isLoading: isAllowanceLoading,
@@ -115,6 +116,7 @@ export function useToken({
     abi: ERC20_ABI,
     functionName: 'allowance',
     args: userAddress && spenderAddress ? [userAddress, spenderAddress] : undefined,
+    chainId: chainId,
     query: {
       enabled: !!tokenAddress && !!userAddress && !!spenderAddress,
     },
