@@ -215,8 +215,9 @@ export function useGaslessPayment({
       // 7. Trigger gateway to sync on-chain status and fire webhook
       try {
         await getPaymentStatus(paymentId);
-      } catch {
+      } catch (e) {
         // Non-critical: webhook may fire later via other means
+        console.warn('Failed to trigger immediate payment status sync:', e);
       }
 
       setRelayTxHash(relayResult.transactionHash);
