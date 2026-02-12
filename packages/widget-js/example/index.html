@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoloPay Widget - Example</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    h1 { color: #1a1a1a; margin-bottom: 0.5rem; }
+    .subtitle { color: #666; margin-bottom: 2rem; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card h2 { margin-top: 0; font-size: 1.25rem; color: #333; }
+    .config-form { display: grid; gap: 1rem; margin-bottom: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+    .form-group label { font-size: 0.875rem; font-weight: 500; color: #333; }
+    .form-group input, .form-group select {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .log-container {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.75rem;
+    }
+    .log-entry { color: #10b981; margin: 0.25rem 0; }
+    .log-entry.error { color: #ef4444; }
+    .log-entry.info { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>SoloPay Widget</h1>
+  <p class="subtitle">Test the payment widget locally</p>
+
+  <div class="card">
+    <h2>Configuration</h2>
+    <div class="config-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="publicKey">Public Key</label>
+          <input type="text" id="publicKey" value="pk_live_YzYW8hmWtjmR29x21dCKhzrsDKnrqr0D">
+        </div>
+        <div class="form-group">
+          <label for="widgetUrl">Widget URL</label>
+          <input type="text" id="widgetUrl" value="http://localhost:3000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="redirectMode">Redirect Mode</label>
+          <select id="redirectMode">
+            <option value="auto" selected>auto</option>
+            <option value="iframe">iframe</option>
+            <option value="redirect">redirect</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="debug">Debug</label>
+          <select id="debug">
+            <option value="true" selected>Enabled</option>
+            <option value="false">Disabled</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="initSDK()">Re-initialize</button>
+  </div>
+
+  <div class="card">
+    <h2>Payment</h2>
+    <div class="config-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="orderId">Order ID</label>
+          <input type="text" id="orderId" placeholder="Auto-generated">
+        </div>
+        <div class="form-group">
+          <label for="amount">Amount</label>
+          <input type="text" id="amount" value="10">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="tokenAddress">Token Address</label>
+        <input type="text" id="tokenAddress" value="0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="successUrl">Success URL</label>
+          <input type="text" id="successUrl" placeholder="Current page">
+        </div>
+        <div class="form-group">
+          <label for="failUrl">Fail URL</label>
+          <input type="text" id="failUrl" placeholder="Current page">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="pay()" style="width: 100%;">Pay</button>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <div class="log-container" id="logContainer">
+      <p class="log-entry info">SDK not initialized...</p>
+    </div>
+    <button class="btn btn-secondary" onclick="clearLog()" style="margin-top: 1rem;">Clear</button>
+  </div>
+
+  <script src="../dist/widget.js"></script>
+  <script>
+    let soloPay = null;
+
+    function log(msg, type = 'default') {
+      const c = document.getElementById('logContainer');
+      const e = document.createElement('p');
+      e.className = `log-entry ${type}`;
+      e.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      c.appendChild(e);
+      c.scrollTop = c.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('logContainer').innerHTML = '<p class="log-entry info">Log cleared</p>';
+    }
+
+    function initSDK() {
+      if (soloPay) { soloPay.destroy(); log('SDK destroyed', 'info'); }
+      const config = {
+        publicKey: document.getElementById('publicKey').value,
+        widgetUrl: document.getElementById('widgetUrl').value,
+        redirectMode: document.getElementById('redirectMode').value,
+        debug: document.getElementById('debug').value === 'true',
+      };
+      soloPay = new SoloPay(config);
+      log(`SDK initialized: ${JSON.stringify(config)}`, 'info');
+    }
+
+    function pay() {
+      if (!soloPay) { log('SDK not initialized!', 'error'); return; }
+      const req = {
+        orderId: document.getElementById('orderId').value || `order-${Date.now()}`,
+        amount: document.getElementById('amount').value || '10',
+        tokenAddress: document.getElementById('tokenAddress').value,
+        successUrl: document.getElementById('successUrl').value || window.location.href,
+        failUrl: document.getElementById('failUrl').value || window.location.href,
+      };
+      log(`Payment: ${JSON.stringify(req)}`, 'info');
+      try {
+        soloPay.requestPayment(req, undefined, {
+          onClose: () => log('Widget closed', 'info')
+        });
+      } catch (e) { log(`Error: ${e.message}`, 'error'); }
+    }
+
+    window.addEventListener('DOMContentLoaded', initSDK);
+  </script>
+</body>
+</html>
