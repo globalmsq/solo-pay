@@ -30,7 +30,7 @@ export default function TokenApproval({
   return (
     <div className="w-full p-4 sm:p-8">
       {/* Title */}
-      <div className="text-center mb-6 sm:mb-8">
+      <div className="text-center mb-5 sm:mb-6">
         <h1 className="text-base sm:text-lg font-bold text-gray-900">Token Approval</h1>
         <p className="text-xs sm:text-sm text-gray-500 mt-1">
           Please approve token spending permission to proceed
@@ -38,7 +38,7 @@ export default function TokenApproval({
       </div>
 
       {/* Wallet Info */}
-      <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 sm:p-5 mb-4 sm:mb-6">
+      <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 sm:p-5 mb-4 sm:mb-5">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
             Connected Wallet
@@ -82,7 +82,7 @@ export default function TokenApproval({
       </div>
 
       {/* GET GAS Section */}
-      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 sm:p-5 mb-4 sm:mb-6">
+      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 sm:p-5 mb-4 sm:mb-5">
         <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
           <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
             <svg
