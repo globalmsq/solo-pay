@@ -195,3 +195,16 @@ model Refund {
   @@index([created_at])
   @@map("refunds")
 }
+
+// Gas faucet: one-time native token grant per wallet per chain (for approve gas)
+model WalletGasGrant {
+  id              Int       @id @default(autoincrement())
+  wallet_address  String    @db.VarChar(42)
+  chain_id        Int       // EIP-155 network_id
+  amount          String    @db.VarChar(78)   // wei (string for bigint)
+  tx_hash         String?   @db.VarChar(66)
+  created_at      DateTime  @default(now())
+
+  @@unique([wallet_address, chain_id])
+  @@map("wallet_gas_grants")
+}

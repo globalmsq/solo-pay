@@ -112,6 +112,36 @@ services:
     networks:
       - solo-pay-network
 
+  # Faucet Manager (one-time gas grant per wallet per chain)
+  faucet-manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: faucet-manager
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/faucet-manager:nightly
+    container_name: solo-pay-faucet-manager
+    restart: always
+    ports:
+      - '3003:3002' # host 3003 (relayer uses host 3002)
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      HOST: 0.0.0.0
+      DATABASE_URL: mysql://solopay:pass@mysql:3306/solopay
+      # Same dev account as relayer for local testing (faucet wallet)
+      FAUCET_PRIVATE_KEY: '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - solo-pay-network
+    healthcheck:
+      test: ['CMD', 'curl', '-sf', 'http://127.0.0.1:3002/health']
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
   # Payment Gateway (Fastify)
   gateway:
     build:
