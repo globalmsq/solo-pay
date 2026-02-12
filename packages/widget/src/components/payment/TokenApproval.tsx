@@ -13,6 +13,12 @@ interface TokenApprovalProps {
   needsApproval?: boolean;
   /** Error message from approval */
   error?: string;
+  /** Whether gas faucet request is in progress */
+  isRequestingGas?: boolean;
+  /** Error message from gas request */
+  gasRequestError?: string | null;
+  /** Gas was successfully received from faucet */
+  gasReceived?: boolean;
 }
 
 export default function TokenApproval({
@@ -26,6 +32,9 @@ export default function TokenApproval({
   isApproving = false,
   needsApproval = true,
   error,
+  isRequestingGas = false,
+  gasRequestError = null,
+  gasReceived = false,
 }: TokenApprovalProps) {
   return (
     <div className="w-full p-4 sm:p-8">
@@ -82,35 +91,72 @@ export default function TokenApproval({
       </div>
 
       {/* GET GAS Section */}
-      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 sm:p-5 mb-4 sm:mb-5">
-        <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
-          <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-            <svg
-              className="w-3 h-3 text-blue-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
-              />
-            </svg>
+      <div
+        className={`rounded-xl border p-4 sm:p-5 mb-4 sm:mb-5 ${
+          gasReceived ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-100'
+        }`}
+      >
+        {gasReceived ? (
+          <div className="flex items-center gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+              <svg
+                className="w-4 h-4 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-green-800">Gas received</p>
+              <p className="text-xs text-green-700 mt-0.5">
+                Native token has been sent to your wallet. You can now approve the token below.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-blue-700 leading-relaxed">
-            We provide free gas for token approval once per account. If you do not have enough gas,
-            click the button below to receive it.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="w-full py-2 sm:py-2.5 rounded-lg bg-white border border-blue-200 text-xs sm:text-sm font-semibold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
-          onClick={onGetGas}
-        >
-          GET GAS
-        </button>
+        ) : (
+          <>
+            <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg
+                  className="w-3 h-3 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+                  />
+                </svg>
+              </div>
+              <p className="text-xs text-blue-700 leading-relaxed">
+                We provide free gas for token approval once per account. If you do not have enough
+                gas, click the button below to receive it.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="w-full py-2 sm:py-2.5 rounded-lg bg-white border border-blue-200 text-xs sm:text-sm font-semibold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={onGetGas}
+              disabled={isRequestingGas}
+            >
+              {isRequestingGas ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  Requesting gas...
+                </span>
+              ) : (
+                'GET GAS'
+              )}
+            </button>
+            {gasRequestError && <p className="mt-2 text-xs text-red-600">{gasRequestError}</p>}
+          </>
+        )}
       </div>
 
       {/* Error Message */}

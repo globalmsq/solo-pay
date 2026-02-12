@@ -90,7 +90,7 @@ export function useToken({
   decimals = 18,
   chainId,
 }: UseTokenParams): UseTokenReturn {
-  // Read balance
+  // Read balance from the payment's chain (so balance is correct even before user switches network)
   const {
     data: balance,
     isLoading: isBalanceLoading,
@@ -106,7 +106,7 @@ export function useToken({
     },
   });
 
-  // Read allowance
+  // Read allowance from the payment's chain
   const {
     data: allowance,
     isLoading: isAllowanceLoading,

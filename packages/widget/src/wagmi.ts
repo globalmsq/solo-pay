@@ -13,7 +13,20 @@ const hardhat = defineChain({
   testnet: true,
 });
 
+// Localhost (Hardhat/Anvil) for local dev - so widget can read balance on same chain as payment
+const localhost = defineChain({
+  id: 31337,
+  name: 'Localhost',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: [process.env.NEXT_PUBLIC_LOCALHOST_RPC || 'http://127.0.0.1:8545'],
+    },
+  },
+});
+
 const chains = [
+  localhost,
   mainnet,
   polygon,
   polygonAmoy,
@@ -33,6 +46,7 @@ export const config = createConfig({
   ],
   chains,
   transports: {
+    [localhost.id]: http(process.env.NEXT_PUBLIC_LOCALHOST_RPC || 'http://127.0.0.1:8545'),
     // Use publicnode RPCs - they have proper CORS headers
     [mainnet.id]: http('https://ethereum-rpc.publicnode.com'),
     [polygon.id]: http('https://polygon-bor-rpc.publicnode.com'),
