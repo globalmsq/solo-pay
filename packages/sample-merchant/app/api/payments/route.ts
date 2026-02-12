@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ paymentId: payment.id });
   } catch (error) {
+    console.error('[payments] Failed to create payment:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

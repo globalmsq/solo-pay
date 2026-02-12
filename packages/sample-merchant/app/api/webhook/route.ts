@@ -34,7 +34,8 @@ async function verifyPaymentWithGateway(orderId: string): Promise<GatewayPayment
     if (!response.ok) return null;
 
     return (await response.json()) as GatewayPaymentResponse;
-  } catch {
+  } catch (error) {
+    console.error('[webhook] Gateway request failed:', error);
     return null;
   }
 }

@@ -15,7 +15,7 @@ export default function PaymentModal({
 
   // Build widget iframe URL with payment params as query string
   const widgetUrl = useMemo(() => {
-    const url = new URL(process.env.NEXT_PUBLIC_WIDGET_URL || 'localhost:3005');
+    const url = new URL(process.env.NEXT_PUBLIC_WIDGET_URL || 'http://localhost:3005');
     url.searchParams.set('pk', process.env.NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY || '');
     url.searchParams.set('orderId', `${paymentId}`);
     url.searchParams.set('amount', `${product.price}`);
@@ -25,7 +25,7 @@ export default function PaymentModal({
     );
     url.searchParams.set('failUrl', `${window.location.origin}`);
     return url.toString();
-  }, [paymentId]);
+  }, [paymentId, product.price]);
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function PaymentModal({
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onClose, router]);
+  }, [onClose, router, paymentId]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
