@@ -221,7 +221,7 @@ services:
     container_name: solo-pay-sample-merchant
     restart: always
     ports:
-      - '3003:3003'
+      - '3004:3004'
     environment:
       NODE_ENV: production
       DATABASE_URL: mysql://solopay:pass@mysql:3306/solopay_sample_merchant

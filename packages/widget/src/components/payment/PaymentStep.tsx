@@ -304,7 +304,8 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     if (paymentDetails?.successUrl) {
       const isIframe = window.parent !== window;
       if (isIframe) {
-        window.parent.postMessage({ type: 'payment_complete', status: 'success' }, '*');
+        const targetOrigin = new URL(paymentDetails.successUrl).origin;
+        window.parent.postMessage({ type: 'payment_complete', status: 'success' }, targetOrigin);
       } else {
         window.location.href = paymentDetails.successUrl;
       }
@@ -318,7 +319,8 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     if (urlParams?.failUrl) {
       const isIframe = window.parent !== window;
       if (isIframe) {
-        window.parent.postMessage({ type: 'payment_complete', status: 'fail' }, '*');
+        const targetOrigin = new URL(urlParams.failUrl).origin;
+        window.parent.postMessage({ type: 'payment_complete', status: 'fail' }, targetOrigin);
       } else {
         window.location.href = urlParams.failUrl;
       }

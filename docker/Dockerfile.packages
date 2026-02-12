@@ -135,7 +135,7 @@ COPY eslint.config.ts ./
 COPY packages/sample-merchant ./packages/sample-merchant
 RUN cd /app/packages/sample-merchant && pnpm exec prisma generate
 ENV NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY=pk_live_xqKZ6PpVdfUaaVBJhS6qI8RbUbZUbvSq
-ENV NEXT_PUBLIC_WIDGET_URL=http://localhost:3004
+ENV NEXT_PUBLIC_WIDGET_URL=http://localhost:3005
 WORKDIR /app/packages/sample-merchant
 RUN pnpm build
 
@@ -157,10 +157,10 @@ COPY --from=sample-merchant-builder /app/packages/sample-merchant/prisma ./packa
 
 WORKDIR /app/packages/sample-merchant
 ENV NODE_ENV=production
-EXPOSE 3003
+EXPOSE 3004
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
-  CMD curl -sf http://localhost:3003 || exit 1
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npx next start -p 3003"]
+  CMD curl -sf http://localhost:3004 || exit 1
+CMD ["sh", "-c", "npx prisma db push --skip-generate && npx next start -p 3004"]
 
 # === Simple Relayer Builder ===
 FROM deps AS simple-relayer-builder

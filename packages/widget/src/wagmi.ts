@@ -3,16 +3,6 @@ import { injected, metaMask } from 'wagmi/connectors';
 import { arbitrum, base, mainnet, optimism, polygon, polygonAmoy, sepolia } from 'wagmi/chains';
 import { defineChain } from 'viem';
 
-const hardhat = defineChain({
-  id: 31337,
-  name: 'Hardhat',
-  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['http://127.0.0.1:8545'] },
-  },
-  testnet: true,
-});
-
 // Localhost (Hardhat/Anvil) for local dev - so widget can read balance on same chain as payment
 const localhost = defineChain({
   id: 31337,
@@ -34,7 +24,6 @@ const chains = [
   arbitrum,
   base,
   sepolia,
-  hardhat,
 ] as const;
 
 export const config = createConfig({
@@ -60,7 +49,6 @@ export const config = createConfig({
     [arbitrum.id]: http('https://arbitrum-one-rpc.publicnode.com'),
     [base.id]: http('https://base-rpc.publicnode.com'),
     [sepolia.id]: http('https://ethereum-sepolia-rpc.publicnode.com'),
-    [hardhat.id]: http('http://127.0.0.1:8545'),
   },
   ssr: true,
 });

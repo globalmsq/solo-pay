@@ -15,7 +15,7 @@ export default function PaymentModal({
 
   // Build widget iframe URL with payment params as query string
   const widgetUrl = useMemo(() => {
-    const url = new URL(process.env.NEXT_PUBLIC_WIDGET_URL || 'localhost:3004');
+    const url = new URL(process.env.NEXT_PUBLIC_WIDGET_URL || 'localhost:3005');
     url.searchParams.set('pk', process.env.NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY || '');
     url.searchParams.set('orderId', `${paymentId}`);
     url.searchParams.set('amount', `${product.price}`);

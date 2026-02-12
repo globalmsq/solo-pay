@@ -271,9 +271,9 @@ INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, 
 -- chain_id=1 (Localhost chain)
 -- recipient_address: Account #6 (recipient) for receiving payments
 -- public_key, public_key_hash, allowed_domains: NULL by default; configure via POST /merchants/me/public-key
--- webhook_url: http://sample-merchant:3003/api/webhook (Docker internal network)
+-- webhook_url: http://sample-merchant:3004/api/webhook (Docker internal network)
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, public_key, public_key_hash, allowed_domains, webhook_url, fee_bps, recipient_address) VALUES
-('merchant_sample_001', 'Sample Merchant', 1, '9074171b675d51a53e7524e3b79d1dfa920d72063dcaab734856dd8f97749bd3', 'pk_live_xqKZ6PpVdfUaaVBJhS6qI8RbUbZUbvSq', '05994e195c9cde2a1548d848fa5d40d3506da18d0071785981db25daeb86d4f6', '["http://localhost:3004"]', 'http://sample-merchant:3003/api/webhook', 0, '0x976EA74026E726554dB657fA54763abd0C3a0aa9');
+('merchant_sample_001', 'Sample Merchant', 1, '9074171b675d51a53e7524e3b79d1dfa920d72063dcaab734856dd8f97749bd3', 'pk_live_xqKZ6PpVdfUaaVBJhS6qI8RbUbZUbvSq', '05994e195c9cde2a1548d848fa5d40d3506da18d0071785981db25daeb86d4f6', '["http://localhost:3005"]', 'http://sample-merchant:3004/api/webhook', 0, '0x976EA74026E726554dB657fA54763abd0C3a0aa9');
 
 -- Payment Methods
 -- Note: Payment methods must use tokens from the merchant's chain
