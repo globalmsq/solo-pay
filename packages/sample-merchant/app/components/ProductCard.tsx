@@ -1,6 +1,32 @@
+'use client';
+
+import { useState } from 'react';
 import { Product } from '../data/products';
+import PaymentModal from './PaymentModal';
 
 export default function ProductCard({ product }: { product: Product }) {
+  const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+
+  const handleClickPayNow = async () => {
+    const response = await fetch('/api/payments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        productId: product.id,
+        price: product.price,
+        tokenSymbol: 'TEST',
+      }),
+    });
+
+    const { paymentId } = await response.json();
+
+    setPaymentId(paymentId);
+    setIsWidgetOpen(true);
+  };
+
   return (
     <div className="rounded-2xl border border-border bg-white p-5 flex flex-col">
       {/* Product Image */}
@@ -28,9 +54,17 @@ export default function ProductCard({ product }: { product: Product }) {
         <button
           type="button"
           className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold text-xs transition-colors cursor-pointer"
+          onClick={handleClickPayNow}
         >
           Pay Now
         </button>
+        {isWidgetOpen && paymentId && (
+          <PaymentModal
+            product={product}
+            paymentId={paymentId}
+            onClose={() => setIsWidgetOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
