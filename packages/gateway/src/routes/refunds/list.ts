@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { RefundStatus } from '@prisma/client';
+import { RefundStatus } from '@solo-pay/database';
 import { MerchantService } from '../../services/merchant.service';
 import { PaymentService } from '../../services/payment.service';
 import { RefundService } from '../../services/refund.service';

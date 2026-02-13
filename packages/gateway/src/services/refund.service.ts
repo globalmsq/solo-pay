@@ -1,5 +1,5 @@
-import { PrismaClient, Refund, RefundStatus } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaClient, Refund, RefundStatus } from '@solo-pay/database';
+import { Decimal } from '@solo-pay/database';
 
 export interface CreateRefundInput {
   refund_hash: string;

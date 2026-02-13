@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@solo-pay/database';
 
 export interface Merchant {
   id: number;

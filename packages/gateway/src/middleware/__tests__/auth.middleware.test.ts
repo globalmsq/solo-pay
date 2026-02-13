@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Decimal } from '@prisma/client/runtime/library';
-import { PaymentStatus } from '@prisma/client';
+import { Decimal } from '@solo-pay/database';
+import { PaymentStatus } from '@solo-pay/database';
 import {
   createAuthMiddleware,
   createMerchantAuthMiddleware,

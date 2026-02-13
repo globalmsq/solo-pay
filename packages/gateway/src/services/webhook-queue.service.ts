@@ -1,5 +1,5 @@
-import type { Payment } from '@prisma/client';
-import type { Merchant } from '@prisma/client';
+import type { Payment } from '@solo-pay/database';
+import type { Merchant } from '@solo-pay/database';
 import type { PaymentConfirmedBody, WebhookJobData } from '@solo-pay/webhook-manager';
 
 export interface WebhookQueueAdapter {

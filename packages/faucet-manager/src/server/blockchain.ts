@@ -8,7 +8,7 @@ import {
   type PublicClient,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@solo-pay/database';
 
 const ERC20_ABI = [
   {
