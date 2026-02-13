@@ -134,8 +134,10 @@ WORKDIR /app
 COPY eslint.config.ts ./
 COPY packages/sample-merchant ./packages/sample-merchant
 RUN cd /app/packages/sample-merchant && pnpm exec prisma generate
-ENV NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY=pk_live_xqKZ6PpVdfUaaVBJhS6qI8RbUbZUbvSq
-ENV NEXT_PUBLIC_WIDGET_URL=http://localhost:3005
+ARG NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY
+ARG NEXT_PUBLIC_WIDGET_URL
+ENV NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY=${NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY}
+ENV NEXT_PUBLIC_WIDGET_URL=${NEXT_PUBLIC_WIDGET_URL}
 WORKDIR /app/packages/sample-merchant
 RUN pnpm build
 

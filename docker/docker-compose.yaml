@@ -217,6 +217,9 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.packages
       target: sample-merchant
+      args:
+        NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY: ${NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY:-pk_live_xqKZ6PpVdfUaaVBJhS6qI8RbUbZUbvSq}
+        NEXT_PUBLIC_WIDGET_URL: ${NEXT_PUBLIC_WIDGET_URL:-http://localhost:3005}
     image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/sample-merchant:nightly
     container_name: solo-pay-sample-merchant
     restart: always

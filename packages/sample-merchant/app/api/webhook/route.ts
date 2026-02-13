@@ -75,13 +75,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment not confirmed on gateway' }, { status: 400 });
     }
 
-    // 4. Verify amount matches (convert gateway wei → human amount)
-    const gatewayAmount =
-      Number(BigInt(gatewayPayment.amount)) / 10 ** gatewayPayment.tokenDecimals;
-    const localAmount = Number(localPayment.amount);
+    // 4. Verify amount matches (compare wei directly — no floating point conversion)
+    const gatewayAmountWei = BigInt(gatewayPayment.amount);
+    const localAmountWei = BigInt(localPayment.amount.toString());
 
-    if (gatewayAmount !== localAmount) {
-      console.error(`[webhook] Amount mismatch: local=${localAmount}, gateway=${gatewayAmount}`);
+    if (gatewayAmountWei !== localAmountWei) {
+      console.error(
+        `[webhook] Amount mismatch: local=${localAmountWei}, gateway=${gatewayAmountWei}`
+      );
       return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
     }
 
