@@ -1,0 +1,67 @@
+<svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Forest silhouette -->
+  <g opacity="0.1" stroke="#3C2415" stroke-width="1.2">
+    <line x1="50" y1="170" x2="50" y2="100"/>
+    <line x1="60" y1="170" x2="60" y2="85"/>
+    <line x1="70" y1="170" x2="70" y2="95"/>
+    <line x1="80" y1="170" x2="80" y2="80"/>
+    <line x1="90" y1="170" x2="90" y2="90"/>
+    <line x1="150" y1="170" x2="150" y2="90"/>
+    <line x1="160" y1="170" x2="160" y2="80"/>
+    <line x1="170" y1="170" x2="170" y2="95"/>
+    <line x1="180" y1="170" x2="180" y2="85"/>
+    <line x1="190" y1="170" x2="190" y2="100"/>
+  </g>
+
+  <!-- Canopy suggestion -->
+  <g opacity="0.06" fill="#3C2415">
+    <circle cx="50" cy="98" r="8"/>
+    <circle cx="60" cy="83" r="9"/>
+    <circle cx="70" cy="93" r="7"/>
+    <circle cx="80" cy="78" r="10"/>
+    <circle cx="90" cy="88" r="8"/>
+    <circle cx="150" cy="88" r="8"/>
+    <circle cx="160" cy="78" r="10"/>
+    <circle cx="170" cy="93" r="7"/>
+    <circle cx="180" cy="83" r="9"/>
+    <circle cx="190" cy="98" r="8"/>
+  </g>
+
+  <!-- Cupping bowl -->
+  <path d="M95 130 Q90 155 100 165 L140 165 Q150 155 145 130" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Bowl rim - flared -->
+  <path d="M90 130 Q120 125 150 130" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+  <path d="M92 128 Q120 123 148 128" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Coffee surface -->
+  <ellipse cx="120" cy="132" rx="24" ry="3" fill="#3C2415" opacity="0.08"/>
+
+  <!-- Heavy layered steam -->
+  <path d="M108 125 Q102 110 108 95 Q112 85 106 75" stroke="#3C2415" stroke-width="1.2" fill="none" opacity="0.4" stroke-linecap="round"/>
+  <path d="M120 123 Q118 105 122 90 Q124 80 120 68" stroke="#3C2415" stroke-width="1.2" fill="none" opacity="0.45" stroke-linecap="round"/>
+  <path d="M132 125 Q138 110 132 95 Q128 85 134 75" stroke="#3C2415" stroke-width="1.2" fill="none" opacity="0.4" stroke-linecap="round"/>
+
+  <!-- Cedar branch near steam -->
+  <g transform="translate(155, 70)" opacity="0.25">
+    <line x1="0" y1="10" x2="0" y2="-10" stroke="#3C2415" stroke-width="0.8"/>
+    <line x1="0" y1="-5" x2="6" y2="-10" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="0" x2="7" y2="-3" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="-5" x2="-6" y2="-10" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="0" x2="-7" y2="-3" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="5" x2="6" y2="2" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="5" x2="-6" y2="2" stroke="#3C2415" stroke-width="0.6"/>
+  </g>
+  <g transform="translate(82, 65)" opacity="0.2">
+    <line x1="0" y1="8" x2="0" y2="-8" stroke="#3C2415" stroke-width="0.8"/>
+    <line x1="0" y1="-4" x2="5" y2="-8" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="0" x2="5" y2="-2" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="-4" x2="-5" y2="-8" stroke="#3C2415" stroke-width="0.6"/>
+    <line x1="0" y1="0" x2="-5" y2="-2" stroke="#3C2415" stroke-width="0.6"/>
+  </g>
+
+  <!-- Root-like curves at base -->
+  <g opacity="0.15" stroke="#3C2415" stroke-width="0.8" fill="none">
+    <path d="M85 172 Q100 178 115 172 Q130 166 145 172 Q155 176 165 172" stroke-linecap="round"/>
+    <path d="M90 176 Q105 182 118 176 Q132 170 148 176" stroke-linecap="round"/>
+  </g>
+</svg>

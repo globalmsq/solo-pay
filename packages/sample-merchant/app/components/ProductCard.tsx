@@ -1,10 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Product } from '../data/products';
 import PaymentModal from './PaymentModal';
 
-export default function ProductCard({ product }: { product: Product }) {
+interface Product {
+  id: number;
+  name: string;
+  roast: string;
+  weight: string;
+  price: number;
+  description: string;
+  image_url: string | null;
+}
+
+const roastBgMap: Record<string, string> = {
+  'Light Roast': 'bg-roast-light',
+  'Light-Medium Roast': 'bg-roast-light-medium',
+  'Medium Roast': 'bg-roast-medium',
+  'Medium-Dark Roast': 'bg-roast-medium-dark',
+  'Dark Roast': 'bg-roast-dark',
+};
+
+export default function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [paymentId, setPaymentId] = useState<string | null>(null);
 
@@ -27,45 +44,66 @@ export default function ProductCard({ product }: { product: Product }) {
     setIsWidgetOpen(true);
   };
 
+  const roastBg = roastBgMap[product.roast] || 'bg-roast-medium';
+
   return (
-    <div className="rounded-2xl border border-border bg-white p-5 flex flex-col">
-      {/* Product Image */}
-      <div className="aspect-4/3 w-full rounded-xl bg-surface-card flex items-center justify-center mb-5 overflow-hidden">
-        <div className="text-center">
-          <div className="text-5xl mb-2 grayscale opacity-80">&#9749;</div>
-          <p className="text-text-muted text-xs tracking-widest uppercase">{product.roast}</p>
+    <>
+      <div
+        className="animate-fade-in-up rounded-2xl bg-surface-card overflow-hidden shadow-card hover:-translate-y-1.5 hover:shadow-card-hover transition-all duration-400 cursor-pointer flex flex-col"
+        style={{ animationDelay: `${index * 80}ms` }}
+      >
+        {/* Illustration Zone */}
+        <div className={`aspect-4/3 w-full ${roastBg} flex items-center justify-center p-6`}>
+          {product.image_url && (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-contain transition-transform duration-500 hover:-translate-y-1"
+            />
+          )}
         </div>
-      </div>
 
-      {/* Product Info */}
-      <div className="flex-1 space-y-3 mb-2">
-        <div>
-          <h2 className="text-text-primary text-lg font-medium">{product.name}</h2>
-          <p className="text-text-secondary text-sm mt-1">
-            {product.roast} &middot; {product.weight}
+        {/* Content Zone */}
+        <div className="p-6 flex-1 flex flex-col">
+          {/* Roast Badge */}
+          <span className="inline-block self-start px-3 py-1 rounded-full text-[11px] font-medium tracking-widest uppercase text-accent-gold bg-roast-light mb-3">
+            {product.roast}
+          </span>
+
+          {/* Product Name */}
+          <h2 className="font-playfair text-xl font-semibold text-text-primary mb-2">
+            {product.name}
+          </h2>
+
+          {/* Description */}
+          <p className="text-text-secondary text-sm leading-relaxed mb-5 flex-1">
+            {product.description}
           </p>
+
+          {/* Price + Button Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-text-primary text-lg font-semibold">${product.price}</span>
+              <span className="text-text-muted text-xs">{product.weight}</span>
+            </div>
+            <button
+              type="button"
+              className="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+              onClick={handleClickPayNow}
+            >
+              Order
+            </button>
+          </div>
         </div>
-        <p className="text-text-muted text-sm leading-relaxed">{product.description}</p>
       </div>
 
-      {/* Price + Pay Button */}
-      <div className="flex items-center justify-between mt-auto">
-        <p className="text-text-primary text-lg font-semibold">${product.price}</p>
-        <button
-          type="button"
-          className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold text-xs transition-colors cursor-pointer"
-          onClick={handleClickPayNow}
-        >
-          Pay Now
-        </button>
-        {isWidgetOpen && paymentId && (
-          <PaymentModal
-            product={product}
-            paymentId={paymentId}
-            onClose={() => setIsWidgetOpen(false)}
-          />
-        )}
-      </div>
-    </div>
+      {isWidgetOpen && paymentId && (
+        <PaymentModal
+          product={product}
+          paymentId={paymentId}
+          onClose={() => setIsWidgetOpen(false)}
+        />
+      )}
+    </>
   );
 }
