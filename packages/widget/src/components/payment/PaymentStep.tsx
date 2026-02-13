@@ -167,7 +167,6 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
 
   // Step navigation handlers
   const goToWalletConnect = () => setCurrentStep('wallet-connect');
-  const goToTokenApproval = () => setCurrentStep('token-approval');
   const goToPaymentConfirm = () => setCurrentStep('payment-confirm');
   const goToPaymentProcessing = () => setCurrentStep('payment-processing');
   const goToPaymentComplete = () => setCurrentStep('payment-complete');
@@ -422,7 +421,6 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
               token={paymentDetails.tokenSymbol}
               network={getNetworkName(paymentDetails.chainId)}
               onPay={handlePay}
-              onBack={goToTokenApproval}
             />
           </div>
         );

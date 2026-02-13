@@ -4,7 +4,6 @@ interface PaymentConfirmProps {
   token: string;
   network: string;
   onPay?: () => void;
-  onBack?: () => void;
 }
 
 export default function PaymentConfirm({
@@ -13,29 +12,9 @@ export default function PaymentConfirm({
   token,
   network,
   onPay,
-  onBack,
 }: PaymentConfirmProps) {
   return (
     <div className="w-full px-4 pt-0 pb-4 sm:px-8 sm:pt-0 sm:pb-8">
-      {onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 hover:text-gray-700 mb-10 sm:mb-12 cursor-pointer"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-          Back
-        </button>
-      )}
-
       {/* Title */}
       <div className="text-center mb-8 sm:mb-10">
         <h1 className="text-base sm:text-lg font-bold text-gray-900">Confirm Payment</h1>
