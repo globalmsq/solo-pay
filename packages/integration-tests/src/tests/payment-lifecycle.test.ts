@@ -16,6 +16,7 @@ import {
   generatePaymentId,
   merchantKeyToId,
   getDeadline,
+  ZERO_PERMIT,
   type ForwardRequest,
   type PaymentParams,
 } from '../helpers/signature';
@@ -189,7 +190,8 @@ describe('Payment Lifecycle Integration', () => {
         recipientAddress,
         merchantId,
         feeBps,
-        serverSignature
+        serverSignature,
+        ZERO_PERMIT
       );
       await tx.wait();
 
@@ -201,7 +203,8 @@ describe('Payment Lifecycle Integration', () => {
           recipientAddress,
           merchantId,
           feeBps,
-          serverSignature
+          serverSignature,
+          ZERO_PERMIT
         )
       ).rejects.toThrow();
     });
@@ -240,7 +243,8 @@ describe('Payment Lifecycle Integration', () => {
           recipientAddress,
           merchantId,
           feeBps,
-          serverSignature
+          serverSignature,
+          ZERO_PERMIT
         );
         await tx.wait();
       }

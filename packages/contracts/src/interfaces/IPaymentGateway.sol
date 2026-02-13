@@ -8,6 +8,16 @@ pragma solidity ^0.8.24;
  */
 interface IPaymentGateway {
     /**
+     * @notice ERC20 Permit signature data for gasless approval
+     * @dev If deadline is 0, permit is skipped and traditional approve is used
+     */
+    struct PermitSignature {
+        uint256 deadline;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+    /**
      * @notice Event emitted when the treasury address is changed
      * @param oldTreasuryAddress Previous treasury address
      * @param newTreasuryAddress New treasury address
@@ -79,6 +89,7 @@ interface IPaymentGateway {
      * @param merchantId Merchant identifier (from server signature)
      * @param feeBps Fee percentage in basis points (from server signature)
      * @param serverSignature Server's EIP-712 signature
+     * @param permit Permit signature for gasless token approval (deadline=0 to skip)
      */
     function pay(
         bytes32 paymentId,
@@ -87,7 +98,8 @@ interface IPaymentGateway {
         address recipientAddress,
         bytes32 merchantId,
         uint16 feeBps,
-        bytes calldata serverSignature
+        bytes calldata serverSignature,
+        PermitSignature calldata permit
     ) external;
 
     /**
@@ -119,6 +131,7 @@ interface IPaymentGateway {
      * @param payerAddress Address to receive the refund (original payer)
      * @param merchantId Merchant identifier (from server signature)
      * @param serverSignature Server's EIP-712 signature
+     * @param permit Permit signature for gasless token approval (deadline=0 to skip)
      */
     function refund(
         bytes32 originalPaymentId,
@@ -126,7 +139,8 @@ interface IPaymentGateway {
         uint256 amount,
         address payerAddress,
         bytes32 merchantId,
-        bytes calldata serverSignature
+        bytes calldata serverSignature,
+        PermitSignature calldata permit
     ) external;
 
     /**

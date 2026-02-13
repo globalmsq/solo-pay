@@ -139,6 +139,12 @@ export function usePayment({ paymentDetails }: UsePaymentParams): UsePaymentRetu
         merchantId,
         feeBps,
         serverSignature,
+        {
+          deadline: 0n,
+          v: 0,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        },
       ],
       chainId: paymentDetails?.chainId,
       ...gasConfig,

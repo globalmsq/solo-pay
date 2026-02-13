@@ -1,8 +1,16 @@
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
 import type { PaymentGatewayV1, MockERC20, ERC2771Forwarder } from '../typechain-types';
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
+
+// Zero permit for skipping permit (using traditional approve)
+const ZERO_PERMIT = {
+  deadline: 0n,
+  v: 0,
+  r: ethers.ZeroHash,
+  s: ethers.ZeroHash,
+};
 
 describe('PaymentGatewayV1', function () {
   // Helper function to create server signature
@@ -82,6 +90,55 @@ describe('PaymentGatewayV1', function () {
     };
 
     return signer.signTypedData(domain, types, message);
+  }
+
+  // Helper function to create ERC20 Permit signature
+  async function createPermitSignature(
+    token: MockERC20,
+    owner: HardhatEthersSigner,
+    spender: string,
+    value: bigint,
+    deadline: bigint
+  ) {
+    const nonce = await token.nonces(owner.address);
+    const chainId = (await ethers.provider.getNetwork()).chainId;
+    const tokenAddress = await token.getAddress();
+    const name = await token.name();
+
+    const domain = {
+      name,
+      version: '1',
+      chainId,
+      verifyingContract: tokenAddress,
+    };
+
+    const types = {
+      Permit: [
+        { name: 'owner', type: 'address' },
+        { name: 'spender', type: 'address' },
+        { name: 'value', type: 'uint256' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' },
+      ],
+    };
+
+    const message = {
+      owner: owner.address,
+      spender,
+      value,
+      nonce,
+      deadline,
+    };
+
+    const signature = await owner.signTypedData(domain, types, message);
+    const sig = ethers.Signature.from(signature);
+
+    return {
+      deadline,
+      v: sig.v,
+      r: sig.r,
+      s: sig.s,
+    };
   }
 
   // Test fixtures
@@ -189,7 +246,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       )
         .to.emit(gateway, 'PaymentCompleted')
@@ -242,8 +300,9 @@ describe('PaymentGatewayV1', function () {
           merchantRecipient.address,
           merchantId,
           feeBps,
-          signature
-        );
+          signature,
+            ZERO_PERMIT
+          );
 
       // Second payment with same ID should fail
       await expect(
@@ -256,7 +315,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: already processed');
     });
@@ -289,7 +349,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: amount must be > 0');
     });
@@ -323,7 +384,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: invalid token');
     });
@@ -360,7 +422,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: invalid signature');
     });
@@ -396,7 +459,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: fee too high');
     });
@@ -438,7 +502,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       )
         .to.emit(gateway, 'PaymentCompleted')
@@ -489,7 +554,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       )
         .to.emit(gateway, 'PaymentCompleted')
@@ -564,7 +630,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: token not supported');
 
@@ -582,7 +649,8 @@ describe('PaymentGatewayV1', function () {
             merchantRecipient.address,
             merchantId,
             feeBps,
-            signature
+            signature,
+            ZERO_PERMIT
           )
       ).to.emit(gateway, 'PaymentCompleted');
     });
@@ -633,6 +701,7 @@ describe('PaymentGatewayV1', function () {
         merchantId,
         feeBps,
         serverSignature,
+        ZERO_PERMIT,
       ]);
 
       // Get nonce for payer (OZ v5 format)
@@ -752,8 +821,9 @@ describe('PaymentGatewayV1', function () {
           merchantRecipient.address,
           merchantId,
           feeBps,
-          signature
-        );
+          signature,
+            ZERO_PERMIT
+          );
 
       expect(await gateway.isPaymentProcessed(paymentId)).to.equal(true);
     });
@@ -847,8 +917,9 @@ describe('PaymentGatewayV1', function () {
           merchantRecipient.address,
           merchantId,
           feeBps,
-          signature
-        );
+          signature,
+            ZERO_PERMIT
+          );
 
       return { ...fixture, paymentId, amount };
     }
@@ -883,7 +954,8 @@ describe('PaymentGatewayV1', function () {
             amount,
             payer.address,
             merchantId,
-            refundSignature
+            refundSignature,
+            ZERO_PERMIT
           )
       )
         .to.emit(gateway, 'RefundCompleted')
@@ -932,7 +1004,8 @@ describe('PaymentGatewayV1', function () {
             amount,
             payer.address,
             merchantId,
-            refundSignature
+            refundSignature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: payment not found');
     });
@@ -964,7 +1037,8 @@ describe('PaymentGatewayV1', function () {
           amount,
           payer.address,
           merchantId,
-          refundSignature
+          refundSignature,
+            ZERO_PERMIT
         );
 
       // Second refund should fail
@@ -977,7 +1051,8 @@ describe('PaymentGatewayV1', function () {
             amount,
             payer.address,
             merchantId,
-            refundSignature
+            refundSignature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: already refunded');
     });
@@ -1008,7 +1083,8 @@ describe('PaymentGatewayV1', function () {
             amount,
             payer.address,
             merchantId,
-            refundSignature
+            refundSignature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: invalid signature');
     });
@@ -1036,7 +1112,8 @@ describe('PaymentGatewayV1', function () {
             0,
             payer.address,
             merchantId,
-            refundSignature
+            refundSignature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: amount must be > 0');
     });
@@ -1058,7 +1135,7 @@ describe('PaymentGatewayV1', function () {
       await expect(
         gateway
           .connect(merchantRecipient)
-          .refund(paymentId, ethers.ZeroAddress, amount, payer.address, merchantId, refundSignature)
+          .refund(paymentId, ethers.ZeroAddress, amount, payer.address, merchantId, refundSignature, ZERO_PERMIT)
       ).to.be.revertedWith('PG: invalid token');
     });
 
@@ -1087,7 +1164,8 @@ describe('PaymentGatewayV1', function () {
             amount,
             ethers.ZeroAddress,
             merchantId,
-            refundSignature
+            refundSignature,
+            ZERO_PERMIT
           )
       ).to.be.revertedWith('PG: invalid payer');
     });
@@ -1126,6 +1204,7 @@ describe('PaymentGatewayV1', function () {
         payer.address,
         merchantId,
         refundSignature,
+        ZERO_PERMIT,
       ]);
 
       // Get nonce for merchant
@@ -1183,6 +1262,231 @@ describe('PaymentGatewayV1', function () {
       expect(await gateway.isPaymentRefunded(paymentId)).to.equal(true);
       const payerBalanceAfter = await token.balanceOf(payer.address);
       expect(payerBalanceAfter - payerBalanceBefore).to.equal(amount);
+    });
+  });
+
+  describe('ERC20 Permit Support', function () {
+    it('Should accept payment with valid permit signature', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId } =
+        await loadFixture(deployFixture);
+
+      const paymentId = ethers.id('PERMIT_ORDER_001');
+      const amount = ethers.parseEther('50');
+      const feeBps = 0;
+
+      // Create server signature
+      const serverSignature = await createServerSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        merchantRecipient.address,
+        merchantId,
+        feeBps
+      );
+
+      // Create permit signature (no approve needed!)
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour from now
+      const permit = await createPermitSignature(
+        token,
+        payer,
+        await gateway.getAddress(),
+        amount,
+        deadline
+      );
+
+      // Make payment with permit (NO prior approve needed)
+      await expect(
+        gateway
+          .connect(payer)
+          .pay(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            merchantRecipient.address,
+            merchantId,
+            feeBps,
+            serverSignature,
+            permit
+          )
+      )
+        .to.emit(gateway, 'PaymentCompleted')
+        .withArgs(
+          paymentId,
+          merchantId,
+          payer.address,
+          merchantRecipient.address,
+          await token.getAddress(),
+          amount,
+          0n,
+          (timestamp: bigint) => timestamp > 0n
+        );
+
+      expect(await gateway.processedPayments(paymentId)).to.equal(true);
+      expect(await token.balanceOf(merchantRecipient.address)).to.equal(amount);
+    });
+
+    it('Should reject payment with expired permit', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId } =
+        await loadFixture(deployFixture);
+
+      const paymentId = ethers.id('PERMIT_ORDER_002');
+      const amount = ethers.parseEther('50');
+      const feeBps = 0;
+
+      const serverSignature = await createServerSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        merchantRecipient.address,
+        merchantId,
+        feeBps
+      );
+
+      // Create permit with past deadline
+      const expiredDeadline = BigInt(Math.floor(Date.now() / 1000) - 3600); // 1 hour ago
+      const permit = await createPermitSignature(
+        token,
+        payer,
+        await gateway.getAddress(),
+        amount,
+        expiredDeadline
+      );
+
+      await expect(
+        gateway
+          .connect(payer)
+          .pay(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            merchantRecipient.address,
+            merchantId,
+            feeBps,
+            serverSignature,
+            permit
+          )
+      ).to.be.revertedWith('PG: permit expired');
+    });
+
+    it('Should allow traditional approve flow when permit deadline is 0', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId } =
+        await loadFixture(deployFixture);
+
+      const paymentId = ethers.id('TRADITIONAL_ORDER_001');
+      const amount = ethers.parseEther('50');
+      const feeBps = 0;
+
+      const serverSignature = await createServerSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        merchantRecipient.address,
+        merchantId,
+        feeBps
+      );
+
+      // Traditional approve
+      await token.connect(payer).approve(await gateway.getAddress(), amount);
+
+      // Make payment with ZERO_PERMIT (traditional flow)
+      await expect(
+        gateway
+          .connect(payer)
+          .pay(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            merchantRecipient.address,
+            merchantId,
+            feeBps,
+            serverSignature,
+            ZERO_PERMIT
+          )
+      ).to.emit(gateway, 'PaymentCompleted');
+
+      expect(await gateway.processedPayments(paymentId)).to.equal(true);
+    });
+
+    it('Should work with permit for refund', async function () {
+      const { gateway, token, payer, signer, merchantRecipient, merchantId } =
+        await loadFixture(deployFixture);
+
+      // First make a payment
+      const paymentId = ethers.id('REFUND_PERMIT_001');
+      const amount = ethers.parseEther('100');
+      const feeBps = 0;
+
+      const paymentSignature = await createServerSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        merchantRecipient.address,
+        merchantId,
+        feeBps
+      );
+
+      await token.connect(payer).approve(await gateway.getAddress(), amount);
+      await gateway
+        .connect(payer)
+        .pay(
+          paymentId,
+          await token.getAddress(),
+          amount,
+          merchantRecipient.address,
+          merchantId,
+          feeBps,
+          paymentSignature,
+          ZERO_PERMIT
+        );
+
+      // Mint tokens to merchant for refund
+      await token.mint(merchantRecipient.address, amount);
+
+      // Create refund signature
+      const refundSignature = await createRefundSignature(
+        signer,
+        gateway,
+        paymentId,
+        await token.getAddress(),
+        amount,
+        payer.address,
+        merchantId
+      );
+
+      // Create permit for refund (merchant approving gateway)
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
+      const permit = await createPermitSignature(
+        token,
+        merchantRecipient,
+        await gateway.getAddress(),
+        amount,
+        deadline
+      );
+
+      // Process refund with permit (NO prior approve needed)
+      await expect(
+        gateway
+          .connect(merchantRecipient)
+          .refund(
+            paymentId,
+            await token.getAddress(),
+            amount,
+            payer.address,
+            merchantId,
+            refundSignature,
+            permit
+          )
+      ).to.emit(gateway, 'RefundCompleted');
+
+      expect(await gateway.isPaymentRefunded(paymentId)).to.equal(true);
     });
   });
 });

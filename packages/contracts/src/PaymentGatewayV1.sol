@@ -9,6 +9,7 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IPaymentGateway} from "./interfaces/IPaymentGateway.sol";
 
@@ -136,6 +137,7 @@ contract PaymentGatewayV1 is
      * @notice Process a payment with server signature verification
      * @dev Transfers ERC20 tokens from the payer: fee to treasury, rest to recipient
      *      Uses _msgSender() to support both direct calls and meta-transactions
+     *      Supports ERC20 Permit for gasless token approval
      * @param paymentId Unique identifier for this payment (should be hash of order ID)
      * @param tokenAddress Address of the ERC20 token to transfer
      * @param amount Amount to transfer (in token's smallest unit)
@@ -143,6 +145,7 @@ contract PaymentGatewayV1 is
      * @param merchantId Merchant identifier (from server signature)
      * @param feeBps Fee percentage in basis points (from server signature)
      * @param serverSignature Server's EIP-712 signature
+     * @param permit Permit signature for gasless token approval (deadline=0 to skip)
      */
     function pay(
         bytes32 paymentId,
@@ -151,9 +154,26 @@ contract PaymentGatewayV1 is
         address recipientAddress,
         bytes32 merchantId,
         uint16 feeBps,
-        bytes calldata serverSignature
+        bytes calldata serverSignature,
+        IPaymentGateway.PermitSignature calldata permit
     ) external nonReentrant {
-        _processPayment(paymentId, tokenAddress, amount, recipientAddress, merchantId, feeBps, serverSignature, _msgSender());
+        address payerAddress = _msgSender();
+
+        // Process permit if deadline > 0
+        if (permit.deadline > 0) {
+            require(permit.deadline >= block.timestamp, "PG: permit expired");
+            IERC20Permit(tokenAddress).permit(
+                payerAddress,
+                address(this),
+                amount,
+                permit.deadline,
+                permit.v,
+                permit.r,
+                permit.s
+            );
+        }
+
+        _processPayment(paymentId, tokenAddress, amount, recipientAddress, merchantId, feeBps, serverSignature, payerAddress);
     }
 
     /**
@@ -313,12 +333,14 @@ contract PaymentGatewayV1 is
      * @notice Process a refund with server signature verification
      * @dev Transfers ERC20 tokens from the merchant (msg.sender) to the original payer
      *      Uses _msgSender() to support both direct calls and meta-transactions
+     *      Supports ERC20 Permit for gasless token approval
      * @param originalPaymentId The original payment ID to refund
      * @param tokenAddress Address of the ERC20 token to refund
      * @param amount Amount to refund (in token's smallest unit)
      * @param payerAddress Address to receive the refund (original payer)
      * @param merchantId Merchant identifier (from server signature)
      * @param serverSignature Server's EIP-712 signature
+     * @param permit Permit signature for gasless token approval (deadline=0 to skip)
      */
     function refund(
         bytes32 originalPaymentId,
@@ -326,8 +348,25 @@ contract PaymentGatewayV1 is
         uint256 amount,
         address payerAddress,
         bytes32 merchantId,
-        bytes calldata serverSignature
+        bytes calldata serverSignature,
+        IPaymentGateway.PermitSignature calldata permit
     ) external nonReentrant {
+        // Get the actual sender (merchant) - supports meta-transactions
+        address merchantAddress = _msgSender();
+
+        // Process permit if deadline > 0
+        if (permit.deadline > 0) {
+            require(permit.deadline >= block.timestamp, "PG: permit expired");
+            IERC20Permit(tokenAddress).permit(
+                merchantAddress,
+                address(this),
+                amount,
+                permit.deadline,
+                permit.v,
+                permit.r,
+                permit.s
+            );
+        }
         // Validation
         require(processedPayments[originalPaymentId], "PG: payment not found");
         require(!refundedPayments[originalPaymentId], "PG: already refunded");
@@ -350,9 +389,6 @@ contract PaymentGatewayV1 is
 
         // Mark as refunded before transfer (reentrancy protection)
         refundedPayments[originalPaymentId] = true;
-
-        // Get the actual sender (merchant) - supports meta-transactions
-        address merchantAddress = _msgSender();
 
         // Transfer tokens from merchant to original payer
         IERC20(tokenAddress).safeTransferFrom(merchantAddress, payerAddress, amount);
