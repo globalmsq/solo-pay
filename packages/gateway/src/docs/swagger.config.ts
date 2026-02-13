@@ -25,8 +25,7 @@ Solo Pay Gateway provides a comprehensive payment API for blockchain-based trans
 ## Features
 - **Payment Creation**: Create payment requests for merchants
 - **Gasless Transactions**: Submit meta-transactions via ERC-2771 forwarder (users don't need ETH for gas)
-- **Token Operations**: Check ERC20 balances and allowances
-- **Transaction Status**: Track payment and relay status in real-time
+- **Chain Info**: Retrieve supported chains and tokens
 
 ## Authentication
 All merchant API requests require an API key passed in the \`x-api-key\` header.
@@ -65,22 +64,22 @@ All errors follow a consistent format:
     ],
     tags: [
       {
-        name: 'Merchants',
+        name: 'Payment',
         description:
-          'Merchant profile and payment method management. GET /merchants/me includes chainTokens (chains and tokens for payment methods).',
+          'Create payment requests, check status, and submit gasless relay transactions (meta-transaction). Public auth (x-public-key + Origin).',
       },
       {
-        name: 'Tokens',
-        description: 'Check token balance and allowance before payment.',
-      },
-      {
-        name: 'Payments',
+        name: 'Merchant',
         description:
-          'Create payment requests, submit gasless transactions (meta-transaction), check status, and payment detail.',
+          'Merchant profile, payment method management, and payment history/detail. Private auth (x-api-key).',
       },
       {
-        name: 'Refunds',
-        description: 'Refund requests for confirmed payments.',
+        name: 'Refund',
+        description: 'Refund requests for confirmed payments. Private auth (x-api-key).',
+      },
+      {
+        name: 'Chain',
+        description: 'Supported blockchain networks and tokens. No authentication required.',
       },
     ],
     components: {
@@ -90,7 +89,7 @@ All errors follow a consistent format:
           in: 'header',
           name: 'x-api-key',
           description:
-            'Merchant API key (admin routes: merchant, payment methods, refunds, payment detail, history, info).',
+            'Merchant API key for private routes (merchant profile, payment methods, payment history/detail, refunds).',
         },
       },
       schemas: {

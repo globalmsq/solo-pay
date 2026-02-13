@@ -19,17 +19,14 @@ import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
 import { createWebhookQueue } from '@solo-pay/webhook-manager';
 import { createPaymentRoute } from './routes/payments/create';
-import { paymentDetailRoute } from './routes/payments/payment-detail';
-import { getPaymentStatusRoute } from './routes/payments/status';
+import { getPaymentStatusRoute } from './routes/payments/get-status';
 import { submitGaslessRoute } from './routes/payments/gasless';
-import { getTokenBalanceRoute } from './routes/tokens/balance';
-import { getTokenAllowanceRoute } from './routes/tokens/allowance';
-import { updateMerchantRoute } from './routes/merchants/update';
+import { getRelayStatusRoute as getPaymentRelayStatusRoute } from './routes/payments/relay-status';
 import { getMerchantRoute } from './routes/merchants/get';
-import { merchantPublicKeyRoute } from './routes/merchants/public-key';
 import { paymentMethodsRoute } from './routes/merchants/payment-methods';
+import { merchantPaymentRoute } from './routes/merchants/payment';
+import { getChainsRoute } from './routes/chains/get';
 import { RefundService } from './services/refund.service';
-import { getRelayStatusRoute } from './routes/payments/relay-status';
 import { createRefundRoute } from './routes/refunds/create';
 import { getRefundStatusRoute } from './routes/refunds/status';
 import { getRefundListRoute } from './routes/refunds/list';
@@ -74,7 +71,7 @@ const paymentMethodService = new PaymentMethodService(prisma);
 const relayService = new RelayService(prisma);
 const refundService = new RefundService(prisma);
 
-// Route auth: createPayment = public key + Origin; gasless = no auth (validated in handler); others = x-api-key
+// Route auth: Public key + Origin for payment endpoints; x-api-key for merchant endpoints; no auth for chains/health
 const registerRoutes = async () => {
   // Health and root: no version prefix
   server.get(
@@ -140,6 +137,7 @@ const registerRoutes = async () => {
   // All business routes under API_V1_BASE_PATH
   await server.register(
     async (scope) => {
+      // Public (x-public-key + Origin)
       await createPaymentRoute(
         scope,
         blockchainService,
@@ -149,13 +147,6 @@ const registerRoutes = async () => {
         paymentMethodService,
         paymentService,
         signingServices
-      );
-      await paymentDetailRoute(
-        scope,
-        blockchainService,
-        merchantService,
-        paymentService,
-        webhookQueue
       );
       await getPaymentStatusRoute(
         scope,
@@ -171,9 +162,14 @@ const registerRoutes = async () => {
         paymentService,
         merchantService
       );
-      await getTokenBalanceRoute(scope, blockchainService, merchantService);
-      await getTokenAllowanceRoute(scope, blockchainService, merchantService);
-      await updateMerchantRoute(scope, merchantService);
+      await getPaymentRelayStatusRoute(
+        scope,
+        relayService,
+        paymentService,
+        merchantService
+      );
+
+      // Private (x-api-key)
       await getMerchantRoute(
         scope,
         merchantService,
@@ -181,7 +177,13 @@ const registerRoutes = async () => {
         tokenService,
         chainService
       );
-      await merchantPublicKeyRoute(scope, merchantService);
+      await merchantPaymentRoute(
+        scope,
+        blockchainService,
+        merchantService,
+        paymentService,
+        webhookQueue
+      );
       await paymentMethodsRoute(
         scope,
         merchantService,
@@ -189,7 +191,6 @@ const registerRoutes = async () => {
         tokenService,
         chainService
       );
-      await getRelayStatusRoute(scope, relayerService);
       await createRefundRoute(
         scope,
         merchantService,
@@ -200,6 +201,9 @@ const registerRoutes = async () => {
       );
       await getRefundStatusRoute(scope, merchantService, paymentService, refundService);
       await getRefundListRoute(scope, merchantService, paymentService, refundService);
+
+      // No Auth
+      await getChainsRoute(scope, chainService, tokenService);
     },
     { prefix: API_V1_BASE_PATH }
   );

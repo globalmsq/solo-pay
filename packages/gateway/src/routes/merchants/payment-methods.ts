@@ -29,13 +29,13 @@ export async function paymentMethodsRoute(
 ) {
   const authMiddleware = createAuthMiddleware(merchantService);
 
-  // GET /merchants/me/payment-methods - List all payment methods
+  // GET /merchant/payment-method - List all payment methods
   app.get(
-    '/merchants/me/payment-methods',
+    '/merchant/payment-method',
     {
       schema: {
         operationId: 'listPaymentMethods',
-        tags: ['Merchants'],
+        tags: ['Merchant'],
         summary: 'List payment methods',
         description: 'Returns all payment methods configured for the authenticated merchant',
         security: [{ ApiKeyAuth: [] }],
@@ -117,13 +117,13 @@ export async function paymentMethodsRoute(
     }
   );
 
-  // POST /merchants/me/payment-methods - Create payment method
+  // POST /merchant/payment-method - Create payment method
   app.post<{ Body: z.infer<typeof CreatePaymentMethodSchema> }>(
-    '/merchants/me/payment-methods',
+    '/merchant/payment-method',
     {
       schema: {
         operationId: 'createPaymentMethod',
-        tags: ['Merchants'],
+        tags: ['Merchant'],
         summary: 'Create payment method',
         description: 'Creates a new payment method for the authenticated merchant',
         security: [{ ApiKeyAuth: [] }],
@@ -300,13 +300,13 @@ export async function paymentMethodsRoute(
     }
   );
 
-  // PATCH /merchants/me/payment-methods/:id - Update payment method
+  // PATCH /merchant/payment-method/:id - Update payment method
   app.patch<{ Params: { id: string }; Body: z.infer<typeof UpdatePaymentMethodSchema> }>(
-    '/merchants/me/payment-methods/:id',
+    '/merchant/payment-method/:id',
     {
       schema: {
         operationId: 'updatePaymentMethod',
-        tags: ['Merchants'],
+        tags: ['Merchant'],
         summary: 'Update payment method',
         description: 'Updates an existing payment method',
         security: [{ ApiKeyAuth: [] }],
@@ -471,13 +471,13 @@ export async function paymentMethodsRoute(
     }
   );
 
-  // DELETE /merchants/me/payment-methods/:id - Delete payment method
+  // DELETE /merchant/payment-method/:id - Delete payment method
   app.delete<{ Params: { id: string } }>(
-    '/merchants/me/payment-methods/:id',
+    '/merchant/payment-method/:id',
     {
       schema: {
         operationId: 'deletePaymentMethod',
-        tags: ['Merchants'],
+        tags: ['Merchant'],
         summary: 'Delete payment method',
         description: 'Soft-deletes a payment method',
         security: [{ ApiKeyAuth: [] }],

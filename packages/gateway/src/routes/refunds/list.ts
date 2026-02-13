@@ -21,11 +21,11 @@ export async function getRefundListRoute(
   const authMiddleware = createAuthMiddleware(merchantService);
 
   app.get<{ Querystring: RefundListQuery }>(
-    '/refunds',
+    '/refund',
     {
       schema: {
         operationId: 'getRefundList',
-        tags: ['Refunds'],
+        tags: ['Refund'],
         summary: 'List refunds',
         description: 'Returns a paginated list of refunds for the authenticated merchant.',
         security: [{ ApiKeyAuth: [] }],

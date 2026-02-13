@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { Payment } from '@prisma/client';
 import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
-import { createMerchantAuthMiddleware } from '../../middleware/auth.middleware';
+import { createAuthMiddleware } from '../../middleware/auth.middleware';
 import { MerchantService } from '../../services/merchant.service';
 import {
   enqueuePaymentConfirmedWebhook,
@@ -74,14 +74,14 @@ function buildPaymentDetailResponse(payment: {
   };
 }
 
-export async function paymentDetailRoute(
+export async function merchantPaymentRoute(
   app: FastifyInstance,
   blockchainService: BlockchainService,
   merchantService: MerchantService,
   paymentService: PaymentService,
   webhookQueue: WebhookQueueAdapter
 ) {
-  const authMiddleware = createMerchantAuthMiddleware(merchantService);
+  const authMiddleware = createAuthMiddleware(merchantService);
 
   const detailResponseSchema = {
     type: 'object',
@@ -100,17 +100,16 @@ export async function paymentDetailRoute(
     },
   };
 
-  // GET /payments?orderId=xxx – API Key, findByOrderId (static route first)
+  // GET /merchant/payment?orderId=xxx – API Key, findByOrderId
   app.get<{ Querystring: { orderId?: string } }>(
-    '/payments',
+    '/merchant/payment',
     {
       schema: {
-        operationId: 'getPaymentByOrderId',
-        tags: ['Payments'],
+        operationId: 'getMerchantPaymentByOrderId',
+        tags: ['Merchant'],
         summary: 'Get payment by order ID',
-        description: `
-Retrieves payment by merchant order ID. API Key required. Same response format as GET /payments/:paymentId.
-        `,
+        description:
+          'Retrieves payment by merchant order ID. API Key required.',
         security: [{ ApiKeyAuth: [] }],
         querystring: {
           type: 'object',
@@ -173,23 +172,21 @@ Retrieves payment by merchant order ID. API Key required. Same response format a
     }
   );
 
-  // GET /payments/:paymentId – API Key, merchant ownership, sync status (parameterized)
-  app.get<{ Params: { paymentId: string } }>(
-    '/payments/:paymentId',
+  // GET /merchant/payment/:id – API Key, merchant ownership, sync status
+  app.get<{ Params: { id: string } }>(
+    '/merchant/payment/:id',
     {
       schema: {
-        operationId: 'getPaymentById',
-        tags: ['Payments'],
-        summary: 'Get payment by ID (API Key, merchant verification)',
-        description: `
-Retrieves payment by payment hash. API Key required. Validates payment belongs to merchant.
-Syncs latest status from blockchain.
-        `,
+        operationId: 'getMerchantPaymentById',
+        tags: ['Merchant'],
+        summary: 'Get payment detail by ID',
+        description:
+          'Retrieves payment by payment hash. API Key required. Validates payment belongs to merchant. Syncs latest status from blockchain.',
         security: [{ ApiKeyAuth: [] }],
         params: {
           type: 'object',
-          properties: { paymentId: { type: 'string', description: 'Payment hash' } },
-          required: ['paymentId'],
+          properties: { id: { type: 'string', description: 'Payment hash' } },
+          required: ['id'],
         },
         response: {
           200: detailResponseSchema,
@@ -204,13 +201,13 @@ Syncs latest status from blockchain.
     },
     async (request, reply) => {
       try {
-        const { paymentId } = request.params;
+        const { id } = request.params;
         const merchant = (request as { merchant?: { id: number } }).merchant;
         if (!merchant) {
           return reply.code(401).send({ code: 'UNAUTHORIZED', message: 'Authentication required' });
         }
 
-        const payment = await paymentService.findByHash(paymentId);
+        const payment = await paymentService.findByHash(id);
         if (!payment) {
           return reply.code(404).send({
             code: 'NOT_FOUND',

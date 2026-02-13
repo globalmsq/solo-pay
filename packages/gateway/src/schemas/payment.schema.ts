@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { decodeFunctionData } from 'viem';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
-// Create payment request (POST /payments/create): orderId, amount, tokenAddress, successUrl, failUrl, webhookUrl optional
+// Create payment request (POST /payment): orderId, amount, tokenAddress, successUrl, failUrl, webhookUrl optional
 export const CreatePaymentSchema = z
   .object({
     orderId: z.string().min(1, 'orderId is required'),

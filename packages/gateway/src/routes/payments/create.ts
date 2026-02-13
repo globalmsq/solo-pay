@@ -36,11 +36,11 @@ export async function createPaymentRoute(
   const publicAuth = createPublicAuthMiddleware(merchantService);
 
   app.post<{ Body: CreatePaymentBody }>(
-    '/payments/create',
+    '/payment',
     {
       schema: {
         operationId: 'createPayment',
-        tags: ['Payments'],
+        tags: ['Payment'],
         summary: 'Create payment (public key + Origin)',
         description: `
 Creates a payment. Single endpoint for both widget and backend. Uses Public Key auth and Origin validation.
@@ -57,7 +57,7 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
             'x-public-key': {
               type: 'string',
               description:
-                'Public key (pk_live_xxx). Get from POST /merchants/me/public-key with API Key.',
+                'Public key (pk_live_xxx or pk_test_xxx)',
             },
             origin: {
               type: 'string',

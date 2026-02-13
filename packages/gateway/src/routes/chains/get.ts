@@ -8,13 +8,13 @@ export async function getChainsRoute(
   chainService: ChainService,
   tokenService: TokenService
 ) {
-  // GET /chains - Get all available chains (public endpoint)
+  // GET /chain - Get all available chains (public endpoint)
   app.get(
-    '/chains',
+    '/chain',
     {
       schema: {
         operationId: 'getChains',
-        tags: ['Chains'],
+        tags: ['Chain'],
         summary: 'Get all chains',
         description: 'Returns all available blockchain networks (public endpoint)',
         response: {
@@ -65,13 +65,13 @@ export async function getChainsRoute(
     }
   );
 
-  // GET /chains/tokens - Get all available chains with their tokens (public endpoint)
+  // GET /chain/token - Get all available chains with their tokens (public endpoint)
   app.get(
-    '/chains/tokens',
+    '/chain/token',
     {
       schema: {
         operationId: 'getChainsWithTokens',
-        tags: ['Chains'],
+        tags: ['Chain'],
         summary: 'Get all chains with tokens',
         description:
           'Returns all available blockchain networks with their supported tokens (public endpoint)',

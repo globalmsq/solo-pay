@@ -280,7 +280,7 @@ export const GaslessRequestSchema = {
   properties: {
     paymentId: {
       type: 'string',
-      description: 'Payment hash from /payments/create',
+      description: 'Payment hash from POST /payment',
       example: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
     },
     forwarderAddress: {
@@ -296,13 +296,10 @@ export const GaslessResponseSchema = {
   type: 'object',
   properties: {
     success: { type: 'boolean', example: true },
-    relayRequestId: {
-      type: 'string',
-      description: 'Relay request ID for tracking',
-    },
     status: {
       type: 'string',
-      enum: ['submitted', 'pending', 'mined', 'confirmed', 'failed'],
+      enum: ['submitted', 'pending'],
+      description: 'Relay submission status',
     },
     message: {
       type: 'string',

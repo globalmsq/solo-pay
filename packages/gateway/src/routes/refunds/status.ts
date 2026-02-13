@@ -17,11 +17,11 @@ export async function getRefundStatusRoute(
   const authMiddleware = createAuthMiddleware(merchantService);
 
   app.get<{ Params: RefundStatusParams }>(
-    '/refunds/:refundId',
+    '/refund/:refundId',
     {
       schema: {
         operationId: 'getRefundStatus',
-        tags: ['Refunds'],
+        tags: ['Refund'],
         summary: 'Get refund status',
         description: 'Returns the current status of a refund request.',
         security: [{ ApiKeyAuth: [] }],

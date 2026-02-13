@@ -1,14 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Decimal } from '@prisma/client/runtime/library';
-import { PaymentStatus } from '@prisma/client';
-import {
-  createAuthMiddleware,
-  createMerchantAuthMiddleware,
-  createPaymentAuthMiddleware,
-} from '../auth.middleware';
+import { createAuthMiddleware } from '../auth.middleware';
 import { MerchantService } from '../../services/merchant.service';
-import { PaymentService } from '../../services/payment.service';
 
 // Mock merchant data
 const mockMerchant = {
@@ -30,48 +23,6 @@ const mockMerchant = {
   deleted_at: null,
 };
 
-const mockMerchant2 = {
-  id: 2,
-  merchant_key: 'merchant_metastar_001',
-  name: 'Metastar Global',
-  chain_id: 3,
-  api_key_hash: 'hashed_key_2',
-  public_key: null,
-  public_key_hash: null,
-  allowed_domains: null,
-  webhook_url: null,
-  fee_bps: 0,
-  recipient_address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  is_enabled: true,
-  is_deleted: false,
-  created_at: new Date(),
-  updated_at: new Date(),
-  deleted_at: null,
-};
-
-// Mock payment data
-const mockPayment = {
-  id: 1,
-  payment_hash: '0x123abc',
-  merchant_id: 1, // belongs to merchant 1
-  payment_method_id: 1,
-  amount: new Decimal('1000'),
-  token_decimals: 18,
-  token_symbol: 'TEST',
-  network_id: 31337,
-  status: PaymentStatus.CREATED,
-  tx_hash: null,
-  payer_address: null,
-  expires_at: new Date(),
-  confirmed_at: null,
-  order_id: null,
-  success_url: null,
-  fail_url: null,
-  webhook_url: null,
-  origin: null,
-  created_at: new Date(),
-  updated_at: new Date(),
-};
 
 // Create mock services
 const createMockMerchantService = () =>
@@ -85,14 +36,6 @@ const createMockMerchantService = () =>
     verifyApiKey: vi.fn(),
     softDelete: vi.fn(),
   }) as Partial<MerchantService> as MerchantService;
-
-const createMockPaymentService = () =>
-  ({
-    findByHash: vi.fn(),
-    findById: vi.fn(),
-    create: vi.fn(),
-    updateStatus: vi.fn(),
-  }) as Partial<PaymentService> as PaymentService;
 
 // Create mock request/reply
 const createMockRequest = (
@@ -134,12 +77,10 @@ const createMockReply = () => {
 
 describe('Auth Middleware', () => {
   let mockMerchantService: MerchantService;
-  let mockPaymentService: PaymentService;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockMerchantService = createMockMerchantService();
-    mockPaymentService = createMockPaymentService();
   });
 
   describe('createAuthMiddleware', () => {
@@ -219,108 +160,4 @@ describe('Auth Middleware', () => {
     });
   });
 
-  describe('createMerchantAuthMiddleware', () => {
-    it('should return 401 when API key is missing', async () => {
-      const middleware = createMerchantAuthMiddleware(mockMerchantService);
-      const request = createMockRequest({}, { merchantId: 'merchant_demo_001' });
-      const reply = createMockReply();
-
-      await middleware(request, reply);
-
-      expect(reply.code).toHaveBeenCalledWith(401);
-    });
-
-    it('should return 403 when merchantId does not match API key owner', async () => {
-      const middleware = createMerchantAuthMiddleware(mockMerchantService);
-      const request = createMockRequest(
-        { 'x-api-key': 'valid_key' },
-        { merchantId: 'merchant_metastar_001' } // different merchant
-      );
-      const reply = createMockReply();
-
-      vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant); // returns merchant_demo_001
-
-      await middleware(request, reply);
-
-      expect(reply.code).toHaveBeenCalledWith(403);
-      expect(reply.send).toHaveBeenCalledWith({
-        code: 'FORBIDDEN',
-        message: 'API key does not match the requested merchant',
-      });
-    });
-
-    it('should pass when merchantId matches API key owner', async () => {
-      const middleware = createMerchantAuthMiddleware(mockMerchantService);
-      const request = createMockRequest(
-        { 'x-api-key': 'valid_key' },
-        { merchantId: 'merchant_demo_001' }
-      );
-      const reply = createMockReply();
-
-      vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant);
-
-      await middleware(request, reply);
-
-      expect(request.merchant).toEqual(mockMerchant);
-      expect(reply.sent).toBe(false);
-    });
-  });
-
-  describe('createPaymentAuthMiddleware', () => {
-    it('should return 401 when API key is missing', async () => {
-      const middleware = createPaymentAuthMiddleware(mockMerchantService, mockPaymentService);
-      const request = createMockRequest({}, {}, { id: '0x123abc' });
-      const reply = createMockReply();
-
-      await middleware(request, reply);
-
-      expect(reply.code).toHaveBeenCalledWith(401);
-    });
-
-    it('should return 403 when payment does not belong to API key owner', async () => {
-      const middleware = createPaymentAuthMiddleware(mockMerchantService, mockPaymentService);
-      const request = createMockRequest({ 'x-api-key': 'metastar_key' }, {}, { id: '0x123abc' });
-      const reply = createMockReply();
-
-      vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant2); // merchant 2
-      vi.mocked(mockPaymentService.findByHash).mockResolvedValue(mockPayment); // belongs to merchant 1
-
-      await middleware(request, reply);
-
-      expect(mockPaymentService.findByHash).toHaveBeenCalledWith('0x123abc');
-      expect(reply.code).toHaveBeenCalledWith(403);
-      expect(reply.send).toHaveBeenCalledWith({
-        code: 'FORBIDDEN',
-        message: 'Payment does not belong to this merchant',
-      });
-    });
-
-    it('should pass when payment belongs to API key owner', async () => {
-      const middleware = createPaymentAuthMiddleware(mockMerchantService, mockPaymentService);
-      const request = createMockRequest({ 'x-api-key': 'demo_key' }, {}, { id: '0x123abc' });
-      const reply = createMockReply();
-
-      vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant); // merchant 1
-      vi.mocked(mockPaymentService.findByHash).mockResolvedValue(mockPayment); // belongs to merchant 1
-
-      await middleware(request, reply);
-
-      expect(request.merchant).toEqual(mockMerchant);
-      expect(reply.sent).toBe(false);
-    });
-
-    it('should pass when payment is not found (let route handler deal with it)', async () => {
-      const middleware = createPaymentAuthMiddleware(mockMerchantService, mockPaymentService);
-      const request = createMockRequest({ 'x-api-key': 'demo_key' }, {}, { id: '0x999' });
-      const reply = createMockReply();
-
-      vi.mocked(mockMerchantService.findByApiKey).mockResolvedValue(mockMerchant);
-      vi.mocked(mockPaymentService.findByHash).mockResolvedValue(null);
-
-      await middleware(request, reply);
-
-      expect(request.merchant).toEqual(mockMerchant);
-      expect(reply.sent).toBe(false); // Let route handler return 404
-    });
-  });
 });

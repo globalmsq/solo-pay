@@ -102,7 +102,7 @@ const mockPaymentService = {
   }),
 } as Partial<PaymentService> as PaymentService;
 
-describe('POST /payments/create', () => {
+describe('POST /payment', () => {
   let blockchainService: BlockchainService;
 
   beforeEach(() => {
@@ -130,7 +130,7 @@ describe('POST /payments/create', () => {
       // Verify route was registered
       expect(mockApp.post).toHaveBeenCalled();
       const callArgs = (mockApp.post as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(callArgs[0]).toBe('/payments/create');
+      expect(callArgs[0]).toBe('/payment');
     });
   });
 
