@@ -4,8 +4,7 @@ import { encodeFunctionData } from 'viem';
 import { PAYMENT_GATEWAY_ABI, FORWARDER_ABI } from '../lib/contracts';
 import {
   submitGaslessPayment,
-  pollPaymentStatus,
-  getPaymentStatus,
+  waitForRelayTransaction,
   type ForwardRequest,
 } from '../lib/api';
 import type { PaymentDetails } from '../types';
@@ -28,8 +27,6 @@ export interface UseGaslessPaymentReturn {
   isPayingGasless: boolean;
   /** Whether waiting for relay confirmation */
   isRelayConfirming: boolean;
-  /** Relay request ID */
-  relayRequestId: string | undefined;
   /** Relay transaction hash (when confirmed) */
   relayTxHash: string | undefined;
   /** Gasless payment error */
@@ -65,7 +62,6 @@ export function useGaslessPayment({
 }: UseGaslessPaymentParams): UseGaslessPaymentReturn {
   const [isPayingGasless, setIsPayingGasless] = useState(false);
   const [isRelayConfirming, setIsRelayConfirming] = useState(false);
-  const [relayRequestId, setRelayRequestId] = useState<string>();
   const [relayTxHash, setRelayTxHash] = useState<string>();
   const [error, setError] = useState<Error | null>(null);
 
@@ -115,7 +111,6 @@ export function useGaslessPayment({
     try {
       setIsPayingGasless(true);
       setError(null);
-      setRelayRequestId(undefined);
       setRelayTxHash(undefined);
 
       // Refetch nonce to ensure fresh value
@@ -205,24 +200,16 @@ export function useGaslessPayment({
         { origin }
       );
 
-      setRelayRequestId(submitResponse.relayRequestId);
-
-      // 6. Poll payment status until CONFIRMED/FAILED (gateway no longer exposes relay status endpoint)
-      const statusOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
-      const finalStatus = await pollPaymentStatus(paymentId, {
-        maxAttempts: 40,
-        intervalMs: 3000,
+      // 6. Poll relay status until CONFIRMED/FAILED
+      const relayOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
+      const relayResult = await waitForRelayTransaction(paymentId, {
+        timeout: 120000,
+        interval: 3000,
         publicKey: publicKey ?? undefined,
-        origin: statusOrigin,
+        origin: relayOrigin,
       });
 
-      if (finalStatus.status !== 'CONFIRMED') {
-        throw new Error(
-          finalStatus.status === 'FAILED' ? 'Payment failed' : 'Payment did not confirm'
-        );
-      }
-
-      setRelayTxHash(finalStatus.txHash ?? '');
+      setRelayTxHash(relayResult.transactionHash ?? '');
       setIsRelayConfirming(false);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Gasless payment failed'));
@@ -249,7 +236,6 @@ export function useGaslessPayment({
     payGasless,
     isPayingGasless,
     isRelayConfirming,
-    relayRequestId,
     relayTxHash,
     error,
     isGaslessSupported,

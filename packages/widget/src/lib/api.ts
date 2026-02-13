@@ -118,7 +118,7 @@ export async function createPayment(
   };
   if (options?.origin) headers['origin'] = options.origin;
 
-  const response = await fetch(`${apiBase}/payments/create`, {
+  const response = await fetch(`${apiBase}/payment`, {
     method: 'POST',
     headers,
     body: JSON.stringify(params),
@@ -135,6 +135,12 @@ export async function createPayment(
       response.status,
       error.details
     );
+  }
+
+  // Gateway returns { success: true, ...paymentFields }; strip `success` before returning
+  if (data && typeof data === 'object' && 'success' in data) {
+    const { success: _success, ...rest } = data as Record<string, unknown>;
+    return rest as unknown as CreatePaymentResponse;
   }
 
   return data as CreatePaymentResponse;
@@ -223,7 +229,7 @@ export async function getPaymentStatus(
   if (options?.publicKey) headers['x-public-key'] = options.publicKey;
   if (options?.origin) headers['x-origin'] = options.origin;
 
-  const response = await fetch(`${apiBase}/payments/${paymentId}/status`, {
+  const response = await fetch(`${apiBase}/payment/${paymentId}`, {
     method: 'GET',
     headers,
     cache: 'no-store',
@@ -388,21 +394,22 @@ export interface ForwardRequest {
 }
 
 /**
- * Gasless payment submission response
+ * Gasless payment submission response (POST /payment/:id/relay)
  */
 export interface GaslessPaymentResponse {
-  relayRequestId: string;
   status: string;
+  message: string;
 }
 
 /**
- * Relay transaction status response
- * Note: Gateway returns 'transactionHash', not 'txHash'
+ * Relay transaction status response (GET /payment/:id/relay)
  */
 export interface RelayStatusResponse {
-  status: 'pending' | 'submitted' | 'mined' | 'confirmed' | 'failed';
-  transactionHash?: string;
-  error?: string;
+  status: 'QUEUED' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED';
+  transactionHash?: string | null;
+  errorMessage?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -427,7 +434,7 @@ export async function submitGaslessPayment(
   };
   if (options?.origin) headers['origin'] = options.origin;
 
-  const response = await fetch(`${apiBase}/payments/${paymentId}/gasless`, {
+  const response = await fetch(`${apiBase}/payment/${paymentId}/relay`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -450,23 +457,34 @@ export async function submitGaslessPayment(
     );
   }
 
+  // Gateway returns { success: true, status, message }; strip `success`
+  if (data && typeof data === 'object' && 'success' in data) {
+    const { success: _success, ...rest } = data as Record<string, unknown>;
+    return rest as unknown as GaslessPaymentResponse;
+  }
+
   return data as GaslessPaymentResponse;
 }
 
 /**
- * Get relay transaction status
+ * Get relay transaction status (GET /payment/:id/relay)
  *
- * @param relayRequestId - Relay request ID from submitGaslessPayment
+ * @param paymentId - Payment ID (hash)
+ * @param options - Public auth options
  * @returns Current relay status
  */
-export async function getRelayStatus(relayRequestId: string): Promise<RelayStatusResponse> {
+export async function getRelayStatus(
+  paymentId: string,
+  options?: GetPaymentStatusOptions
+): Promise<RelayStatusResponse> {
   const apiBase = getGatewayApiBase();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (options?.publicKey) headers['x-public-key'] = options.publicKey;
+  if (options?.origin) headers['x-origin'] = options.origin;
 
-  const response = await fetch(`${apiBase}/payments/relay/${relayRequestId}/status`, {
+  const response = await fetch(`${apiBase}/payment/${paymentId}/relay`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     cache: 'no-store',
   });
 
@@ -482,32 +500,48 @@ export async function getRelayStatus(relayRequestId: string): Promise<RelayStatu
     );
   }
 
+  // Gateway returns { success: true, data: { status, transactionHash, errorMessage, ... } }
+  if (data && data.success === true && data.data) {
+    return data.data as RelayStatusResponse;
+  }
+
   return data as RelayStatusResponse;
 }
 
 /**
  * Wait for relay transaction to complete
  *
- * @param relayRequestId - Relay request ID
- * @param options - Timeout and interval options
+ * @param paymentId - Payment ID (hash)
+ * @param options - Timeout, interval, and public auth options
  * @returns Final relay status
  */
 export async function waitForRelayTransaction(
-  relayRequestId: string,
-  options: { timeout?: number; interval?: number } = {}
+  paymentId: string,
+  options: {
+    timeout?: number;
+    interval?: number;
+    publicKey?: string;
+    origin?: string;
+  } = {}
 ): Promise<RelayStatusResponse> {
-  const { timeout = 120000, interval = 3000 } = options;
+  const { timeout = 120000, interval = 3000, publicKey, origin } = options;
+  const authOptions =
+    publicKey !== undefined || origin !== undefined ? { publicKey, origin } : undefined;
   const startTime = Date.now();
 
   while (Date.now() - startTime < timeout) {
-    const status = await getRelayStatus(relayRequestId);
+    const status = await getRelayStatus(paymentId, authOptions);
 
-    if (status.status === 'mined' || status.status === 'confirmed') {
+    if (status.status === 'CONFIRMED') {
       return status;
     }
 
-    if (status.status === 'failed') {
-      throw new PaymentApiError('RELAY_FAILED', status.error || 'Relay transaction failed', 400);
+    if (status.status === 'FAILED') {
+      throw new PaymentApiError(
+        'RELAY_FAILED',
+        status.errorMessage || 'Relay transaction failed',
+        400
+      );
     }
 
     await new Promise((resolve) => setTimeout(resolve, interval));
