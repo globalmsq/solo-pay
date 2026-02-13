@@ -101,7 +101,7 @@ export async function getMerchantRoute(
               chainTokens: {
                 type: 'array',
                 description:
-                  'All chains with their tokens (for add payment method). Same format as GET /chain/token.',
+                  'All chains with their tokens (for add payment method). Same format as GET /chains/tokens.',
                 items: {
                   type: 'object',
                   properties: {

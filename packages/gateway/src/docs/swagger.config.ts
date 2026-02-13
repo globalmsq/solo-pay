@@ -78,7 +78,7 @@ All errors follow a consistent format:
         description: 'Refund requests for confirmed payments. Private auth (x-api-key).',
       },
       {
-        name: 'Chain',
+        name: 'Chains',
         description: 'Supported blockchain networks and tokens. No authentication required.',
       },
     ],
