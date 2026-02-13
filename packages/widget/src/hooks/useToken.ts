@@ -100,7 +100,7 @@ export function useToken({
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
-    chainId: chainId,
+    chainId,
     query: {
       enabled: !!tokenAddress && !!userAddress,
     },
@@ -116,7 +116,7 @@ export function useToken({
     abi: ERC20_ABI,
     functionName: 'allowance',
     args: userAddress && spenderAddress ? [userAddress, spenderAddress] : undefined,
-    chainId: chainId,
+    chainId,
     query: {
       enabled: !!tokenAddress && !!userAddress && !!spenderAddress,
     },

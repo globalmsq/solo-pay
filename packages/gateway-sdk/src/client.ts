@@ -54,7 +54,7 @@ export class SoloPayClient {
 
   async submitGasless(params: GaslessParams): Promise<GaslessResponse> {
     const path = `/payments/${params.paymentId}/gasless`;
-    return this.request<GaslessResponse>('POST', path, params);
+    return this.request<GaslessResponse>('POST', path, params, 'public');
   }
 
   async executeRelay(params: RelayParams): Promise<RelayResponse> {
@@ -80,12 +80,18 @@ export class SoloPayClient {
   private async request<T>(
     method: string,
     path: string,
-    body?: GaslessParams | RelayParams
+    body?: CreatePaymentParams | GaslessParams | RelayParams,
+    auth: 'api' | 'public' = 'api'
   ): Promise<T> {
-    const headers = {
-      ...DEFAULT_HEADERS,
-      'x-api-key': this.apiKey,
-    };
+    const headers: Record<string, string> = { ...DEFAULT_HEADERS };
+    if (auth === 'public' && this.publicKey) {
+      headers['x-public-key'] = this.publicKey;
+      if (this.origin) {
+        headers['origin'] = this.origin;
+      }
+    } else {
+      headers['x-api-key'] = this.apiKey;
+    }
 
     const response = await fetch(`${this.apiUrl}${path}`, {
       method,

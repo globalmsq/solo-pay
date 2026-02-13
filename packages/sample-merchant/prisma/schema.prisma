@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  CONFIRMED
+  FAILED
+  EXPIRED
+}
+
+model Product {
+  id              Int       @id @default(autoincrement())
+  name            String    
+  roast           String    
+  weight          String    
+  price           Int        
+  description     String    
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+}
+
+model Payment {
+  id                    Int           @id @default(autoincrement())
+  product_id            Int           // FK to product.id
+  amount                Decimal       @db.Decimal(65, 0)  // wei (max uint256)
+  token_symbol          String        @db.VarChar(20)
+  status                PaymentStatus @default(CREATED)
+  tx_hash               String?       @db.VarChar(66)
+  confirmed_at          DateTime?
+  created_at            DateTime      @default(now())
+  updated_at            DateTime @default(now()) @updatedAt
+
+  @@index([product_id])
+  @@index([status])
+}

@@ -362,7 +362,8 @@ export interface RelayStatusResponse {
 export async function submitGaslessPayment(
   paymentId: string,
   forwarderAddress: string,
-  forwardRequest: ForwardRequest
+  forwardRequest: ForwardRequest,
+  publicKey: string
 ): Promise<GaslessPaymentResponse> {
   const apiUrl = getApiUrl();
 
@@ -370,6 +371,7 @@ export async function submitGaslessPayment(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'x-public-key': publicKey,
     },
     body: JSON.stringify({
       paymentId,

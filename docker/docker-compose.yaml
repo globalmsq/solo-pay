@@ -214,6 +214,34 @@ services:
     networks:
       - solo-pay-network
 
+  # Sample Merchant App (Next.js + Prisma)
+  sample-merchant:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: sample-merchant
+      args:
+        NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY: ${NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY:-pk_live_xqKZ6PpVdfUaaVBJhS6qI8RbUbZUbvSq}
+        NEXT_PUBLIC_WIDGET_URL: ${NEXT_PUBLIC_WIDGET_URL:-http://localhost:3005}
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/sample-merchant:nightly
+    container_name: solo-pay-sample-merchant
+    restart: always
+    ports:
+      - '3004:3004'
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://solopay:pass@mysql:3306/solopay_sample_merchant
+      SOLO_PAY_MERCHANT_KEY: merchant_sample_001
+      SOLO_PAY_API_KEY: sample_api_key_001
+      GATEWAY_API_URL: http://gateway:3001
+    depends_on:
+      mysql:
+        condition: service_healthy
+      gateway:
+        condition: service_healthy
+    networks:
+      - solo-pay-network
+
   # Documentation (VitePress)
   guide:
     build:

@@ -163,7 +163,13 @@ const registerRoutes = async () => {
         merchantService,
         webhookQueue
       );
-      await submitGaslessRoute(scope, relayerService, relayService, paymentService);
+      await submitGaslessRoute(
+        scope,
+        relayerService,
+        relayService,
+        paymentService,
+        merchantService
+      );
       await getTokenBalanceRoute(scope, blockchainService);
       await getTokenAllowanceRoute(scope, blockchainService);
       await updateMerchantRoute(scope, merchantService);

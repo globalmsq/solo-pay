@@ -9,6 +9,8 @@ import {
 import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
+import { MerchantService } from '../../services/merchant.service';
+import { createPublicAuthMiddleware } from '../../middleware/public-auth.middleware';
 import {
   GaslessRequestSchema as GaslessRequestDocSchema,
   GaslessResponseSchema,
@@ -25,8 +27,11 @@ export async function submitGaslessRoute(
   app: FastifyInstance,
   relayerService: RelayerService,
   relayService: RelayService,
-  paymentService: PaymentService
+  paymentService: PaymentService,
+  merchantService: MerchantService
 ) {
+  const authMiddleware = createPublicAuthMiddleware(merchantService);
+
   app.post<{ Params: { id: string }; Body: SubmitGaslessRequest }>(
     '/payments/:id/gasless',
     {
@@ -53,6 +58,7 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
 - Amount in forwardRequest.data is validated against DB amount
 - Signature format is validated before relay submission
         `,
+        security: [{ PublicKeyAuth: [] }],
         params: {
           type: 'object',
           properties: {
@@ -71,6 +77,7 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
           500: ErrorResponseSchema,
         },
       },
+      preHandler: authMiddleware,
     },
     async (request, reply) => {
       try {
@@ -104,6 +111,15 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
           return reply.code(404).send({
             code: 'PAYMENT_NOT_FOUND',
             message: '결제를 찾을 수 없습니다',
+          });
+        }
+
+        // Validate payment belongs to the authenticated merchant
+        const merchant = request.merchant;
+        if (merchant && payment.merchant_id !== merchant.id) {
+          return reply.code(403).send({
+            code: 'FORBIDDEN',
+            message: 'Payment does not belong to this merchant',
           });
         }
 

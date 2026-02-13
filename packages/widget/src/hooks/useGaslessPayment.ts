@@ -2,7 +2,12 @@ import { useCallback, useState } from 'react';
 import { useReadContract, useWalletClient } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { PAYMENT_GATEWAY_ABI, FORWARDER_ABI } from '../lib/contracts';
-import { submitGaslessPayment, waitForRelayTransaction, type ForwardRequest } from '../lib/api';
+import {
+  submitGaslessPayment,
+  waitForRelayTransaction,
+  getPaymentStatus,
+  type ForwardRequest,
+} from '../lib/api';
 import type { PaymentDetails } from '../types';
 
 // ============================================================================
@@ -12,6 +17,8 @@ import type { PaymentDetails } from '../types';
 export interface UseGaslessPaymentParams {
   /** Payment details from API */
   paymentDetails: PaymentDetails | null;
+  /** Merchant public key for API authentication */
+  publicKey?: string;
 }
 
 export interface UseGaslessPaymentReturn {
@@ -54,6 +61,7 @@ export interface UseGaslessPaymentReturn {
  */
 export function useGaslessPayment({
   paymentDetails,
+  publicKey,
 }: UseGaslessPaymentParams): UseGaslessPaymentReturn {
   const [isPayingGasless, setIsPayingGasless] = useState(false);
   const [isRelayConfirming, setIsRelayConfirming] = useState(false);
@@ -133,7 +141,7 @@ export function useGaslessPayment({
 
       // 2. Create EIP-712 typed data for gasless payment forward request
       const domain = {
-        name: 'MSQForwarder',
+        name: 'SoloForwarder',
         version: '1',
         chainId: BigInt(paymentDetails?.chainId ?? 0),
         verifyingContract: forwarderAddress,
@@ -191,7 +199,8 @@ export function useGaslessPayment({
       const submitResponse = await submitGaslessPayment(
         paymentId,
         forwarderAddress,
-        forwardRequest
+        forwardRequest,
+        publicKey ?? ''
       );
 
       setRelayRequestId(submitResponse.relayRequestId);
@@ -201,6 +210,14 @@ export function useGaslessPayment({
 
       if (relayResult.status === 'failed') {
         throw new Error(relayResult.error || 'Gasless payment relay failed');
+      }
+
+      // 7. Trigger gateway to sync on-chain status and fire webhook
+      try {
+        await getPaymentStatus(paymentId);
+      } catch (e) {
+        // Non-critical: webhook may fire later via other means
+        console.warn('Failed to trigger immediate payment status sync:', e);
       }
 
       setRelayTxHash(relayResult.transactionHash);
@@ -222,6 +239,7 @@ export function useGaslessPayment({
     feeBps,
     serverSignature,
     paymentDetails?.chainId,
+    publicKey,
     refetchNonce,
   ]);
 
