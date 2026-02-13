@@ -17,6 +17,7 @@ import {
   signForwardRequest,
   encodePayFunctionData,
   getDeadline,
+  ZERO_PERMIT,
   type ForwardRequest,
 } from '../helpers/signature';
 
@@ -190,7 +191,8 @@ describe('SDK Integration', () => {
         createResponse.recipientAddress,
         createResponse.merchantId,
         createResponse.feeBps,
-        createResponse.serverSignature
+        createResponse.serverSignature,
+        ZERO_PERMIT
       );
       await tx.wait();
 

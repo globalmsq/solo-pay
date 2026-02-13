@@ -14,6 +14,7 @@ import {
   generatePaymentId,
   signPaymentRequest,
   merchantKeyToId,
+  ZERO_PERMIT,
   type PaymentParams,
 } from '../helpers/signature';
 
@@ -70,7 +71,8 @@ describe('Direct Payment Integration', () => {
       recipientAddress,
       merchantId,
       feeBps,
-      serverSignature
+      serverSignature,
+      ZERO_PERMIT
     );
     await tx.wait();
 
@@ -116,7 +118,8 @@ describe('Direct Payment Integration', () => {
       recipientAddress,
       merchantId,
       feeBps,
-      serverSignature
+      serverSignature,
+      ZERO_PERMIT
     );
     await tx.wait();
 
@@ -159,7 +162,8 @@ describe('Direct Payment Integration', () => {
       recipientAddress,
       merchantId,
       feeBps,
-      serverSignature
+      serverSignature,
+      ZERO_PERMIT
     );
     await tx.wait();
 
@@ -171,7 +175,8 @@ describe('Direct Payment Integration', () => {
         recipientAddress,
         merchantId,
         feeBps,
-        serverSignature
+        serverSignature,
+        ZERO_PERMIT
       )
     ).rejects.toThrow();
   });
@@ -201,7 +206,8 @@ describe('Direct Payment Integration', () => {
         recipientAddress,
         merchantId,
         feeBps,
-        serverSignature
+        serverSignature,
+        ZERO_PERMIT
       )
     ).rejects.toThrow();
   });
@@ -238,7 +244,8 @@ describe('Direct Payment Integration', () => {
         recipientAddress,
         merchantId,
         feeBps,
-        wrongSignature
+        wrongSignature,
+        ZERO_PERMIT
       )
     ).rejects.toThrow();
   });
@@ -272,7 +279,8 @@ describe('Direct Payment Integration', () => {
         recipientAddress,
         merchantId,
         feeBps,
-        serverSignature
+        serverSignature,
+        ZERO_PERMIT
       )
     ).rejects.toThrow();
   });

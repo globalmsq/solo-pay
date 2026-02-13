@@ -1,6 +1,16 @@
-import { ethers, Wallet, Interface, solidityPackedKeccak256 } from 'ethers';
+import { ethers, Wallet, Interface, solidityPackedKeccak256, ZeroHash } from 'ethers';
 import { CONTRACT_ADDRESSES, TEST_CHAIN_ID, HARDHAT_ACCOUNTS } from '../setup/wallets';
 import { PaymentGatewayABI, getProvider } from './blockchain';
+
+/**
+ * Zero permit signature for skipping permit and using traditional approve flow
+ */
+export const ZERO_PERMIT = {
+  deadline: 0n,
+  v: 0,
+  r: ZeroHash,
+  s: ZeroHash,
+};
 
 export interface ForwardRequest {
   from: string;
@@ -151,6 +161,7 @@ export function encodePayFunctionData(
     merchantId,
     feeBps,
     serverSignature,
+    ZERO_PERMIT,
   ]);
 }
 
@@ -234,5 +245,6 @@ export function encodeRefundFunctionData(
     payerAddress,
     merchantId,
     serverSignature,
+    ZERO_PERMIT,
   ]);
 }

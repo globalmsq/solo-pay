@@ -2,20 +2,21 @@
 pragma solidity ^0.8.24;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 /**
  * @title MockERC20
  * @author MSQ Team
- * @notice Mock ERC20 token for testing purposes
+ * @notice Mock ERC20 token for testing purposes with Permit (EIP-2612) support
  */
-contract MockERC20 is ERC20 {
+contract MockERC20 is ERC20, ERC20Permit {
     uint8 private _decimals;
 
     constructor(
         string memory name,
         string memory symbol,
         uint8 decimalsValue
-    ) ERC20(name, symbol) {
+    ) ERC20(name, symbol) ERC20Permit(name) {
         _decimals = decimalsValue;
     }
 
