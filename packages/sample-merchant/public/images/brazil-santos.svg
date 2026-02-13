@@ -1,0 +1,56 @@
+<svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tropical leaves - upper left -->
+  <g transform="translate(55, 50)" opacity="0.15">
+    <path d="M0 40 Q-15 20 -5 0 Q5 20 0 40" stroke="#3C2415" stroke-width="1.2" fill="#3C2415" opacity="0.3"/>
+    <line x1="0" y1="0" x2="0" y2="40" stroke="#3C2415" stroke-width="0.6"/>
+    <path d="M0 10 Q-8 5 -12 0" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 10 Q8 5 12 0" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 20 Q-10 15 -14 8" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 20 Q10 15 14 8" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 30 Q-8 25 -12 20" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 30 Q8 25 12 20" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+  </g>
+
+  <!-- Tropical leaves - lower right -->
+  <g transform="translate(185, 130) rotate(180)" opacity="0.12">
+    <path d="M0 40 Q-15 20 -5 0 Q5 20 0 40" stroke="#3C2415" stroke-width="1.2" fill="#3C2415" opacity="0.3"/>
+    <line x1="0" y1="0" x2="0" y2="40" stroke="#3C2415" stroke-width="0.6"/>
+    <path d="M0 10 Q-8 5 -12 0" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 10 Q8 5 12 0" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 20 Q-10 15 -14 8" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+    <path d="M0 20 Q10 15 14 8" stroke="#3C2415" stroke-width="0.5" fill="none"/>
+  </g>
+
+  <!-- Portafilter - basket (top-down view) -->
+  <circle cx="120" cy="110" r="30" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+  <circle cx="120" cy="110" r="25" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.5"/>
+
+  <!-- Crema surface -->
+  <circle cx="120" cy="110" r="23" fill="#C5A572" opacity="0.15"/>
+
+  <!-- Rosetta pattern in crema -->
+  <g opacity="0.25" stroke="#3C2415" stroke-width="0.8" fill="none">
+    <path d="M120 95 Q115 100 120 105 Q125 100 120 95"/>
+    <path d="M120 100 Q112 108 120 115 Q128 108 120 100"/>
+    <path d="M120 107 Q110 115 120 122 Q130 115 120 107"/>
+    <line x1="120" y1="93" x2="120" y2="128" stroke-width="0.5"/>
+  </g>
+
+  <!-- Handle -->
+  <path d="M150 110 L175 110 Q185 110 185 100 L185 95" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Handle grip -->
+  <rect x="180" y="85" width="10" height="12" rx="3" stroke="#3C2415" stroke-width="1.2" fill="none"/>
+
+  <!-- Almond shapes -->
+  <g opacity="0.25">
+    <path d="M82 155 Q90 148 98 155 Q90 162 82 155" stroke="#3C2415" stroke-width="0.8" fill="none"/>
+    <path d="M142 155 Q150 148 158 155 Q150 162 142 155" stroke="#3C2415" stroke-width="0.8" fill="none"/>
+  </g>
+
+  <!-- Horizontal depth lines -->
+  <g opacity="0.1" stroke="#3C2415" stroke-width="0.5">
+    <line x1="80" y1="170" x2="160" y2="170"/>
+    <line x1="85" y1="174" x2="155" y2="174"/>
+    <line x1="90" y1="178" x2="150" y2="178"/>
+  </g>
+</svg>
