@@ -6,6 +6,7 @@ import { getRefundStatusRoute } from '../../../src/routes/refunds/status';
 import { MerchantService } from '../../../src/services/merchant.service';
 import { PaymentService } from '../../../src/services/payment.service';
 import { RefundService } from '../../../src/services/refund.service';
+import { API_V1_BASE_PATH } from '../../../src/constants';
 
 const TEST_API_KEY = 'test-api-key-123';
 
@@ -98,11 +99,16 @@ describe('GET /refunds/:refundId', () => {
       findByHash: vi.fn().mockResolvedValue(mockRefund),
     };
 
-    await getRefundStatusRoute(
-      app,
-      merchantService as MerchantService,
-      paymentService as PaymentService,
-      refundService as RefundService
+    await app.register(
+      async (scope) => {
+        await getRefundStatusRoute(
+          scope,
+          merchantService as MerchantService,
+          paymentService as PaymentService,
+          refundService as RefundService
+        );
+      },
+      { prefix: API_V1_BASE_PATH }
     );
   });
 
@@ -110,7 +116,7 @@ describe('GET /refunds/:refundId', () => {
     it('유효한 환불 ID로 조회하면 200 상태 코드와 함께 환불 정보를 반환해야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -124,7 +130,7 @@ describe('GET /refunds/:refundId', () => {
     it('응답에 환불의 모든 필드가 포함되어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -161,7 +167,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -184,7 +190,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -208,7 +214,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -230,7 +236,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -245,7 +251,7 @@ describe('GET /refunds/:refundId', () => {
     it('API 키가 없으면 401 상태 코드를 반환해야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
       });
 
       expect(response.statusCode).toBe(401);
@@ -258,7 +264,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': 'invalid-api-key' },
       });
 
@@ -275,7 +281,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -291,7 +297,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -305,7 +311,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -319,7 +325,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds/invalid-hash',
+        url: `${API_V1_BASE_PATH}/refunds/invalid-hash`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -336,7 +342,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -350,7 +356,7 @@ describe('GET /refunds/:refundId', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -366,7 +372,7 @@ describe('GET /refunds/:refundId', () => {
 
       await app.inject({
         method: 'GET',
-        url: `/refunds/${mockRefund.refund_hash}`,
+        url: `${API_V1_BASE_PATH}/refunds/${mockRefund.refund_hash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { API_V1_BASE_PATH } from '../../constants';
 import { RelayerService } from '../relayer.service';
 
 // Mock fetch globally
@@ -107,7 +108,7 @@ describe('RelayerService', () => {
       expect(result.transactionHash).toBe('0x' + 'f'.repeat(64));
       expect(result.status).toBe('pending');
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/api/v1/relay/gasless`,
+        `${mockApiUrl}${API_V1_BASE_PATH}/relay/gasless`,
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -203,7 +204,7 @@ describe('RelayerService', () => {
       expect(result.relayRequestId).toBe('tx-123');
       expect(result.status).toBe('confirmed');
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/api/v1/relay/status/tx-123`,
+        `${mockApiUrl}${API_V1_BASE_PATH}/relay/status/tx-123`,
         expect.objectContaining({
           method: 'GET',
         })
@@ -252,7 +253,7 @@ describe('RelayerService', () => {
 
       expect(result).toBe('5');
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/api/v1/relay/gasless/nonce/${address}`,
+        `${mockApiUrl}${API_V1_BASE_PATH}/relay/gasless/nonce/${address}`,
         expect.objectContaining({
           method: 'GET',
         })

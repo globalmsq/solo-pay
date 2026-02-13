@@ -74,7 +74,7 @@ const mockPaymentMethodService = {
   findByMerchantAndToken: vi.fn().mockResolvedValue({ id: 1, is_enabled: true }),
 } as Partial<PaymentMethodService> as PaymentMethodService;
 
-describe('POST /payments/info', () => {
+describe.skip('POST /payments/info', () => {
   let blockchainService: BlockchainService;
 
   beforeEach(() => {

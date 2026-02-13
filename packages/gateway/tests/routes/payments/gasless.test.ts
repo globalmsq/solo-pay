@@ -6,6 +6,7 @@ import { submitGaslessRoute } from '../../../src/routes/payments/gasless';
 import { RelayerService } from '../../../src/services/relayer.service';
 import { RelayService } from '../../../src/services/relay.service';
 import { PaymentService } from '../../../src/services/payment.service';
+import { API_V1_BASE_PATH } from '../../../src/constants';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 // Test API key for authentication
@@ -107,11 +108,16 @@ describe('POST /payments/:id/gasless', () => {
       updateStatus: vi.fn().mockResolvedValue(mockPaymentData),
     };
 
-    await submitGaslessRoute(
-      app,
-      relayerService as RelayerService,
-      relayService as RelayService,
-      paymentService as PaymentService
+    await app.register(
+      async (scope) => {
+        await submitGaslessRoute(
+          scope,
+          relayerService as RelayerService,
+          relayService as RelayService,
+          paymentService as PaymentService
+        );
+      },
+      { prefix: API_V1_BASE_PATH }
     );
   });
 
@@ -121,7 +127,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-123/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
@@ -138,7 +144,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-456/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-456/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
@@ -160,7 +166,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-789/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-789/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
@@ -179,7 +185,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-101/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-101/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
@@ -198,7 +204,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-202/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-202/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: incompleteRequest,
       });
@@ -213,7 +219,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments//gasless',
+        url: `${API_V1_BASE_PATH}/payments//gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
@@ -232,7 +238,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-404/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-404/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });
@@ -253,7 +259,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-505/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-505/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: invalidRequest,
       });
@@ -272,7 +278,7 @@ describe('POST /payments/:id/gasless', () => {
 
       await app.inject({
         method: 'POST',
-        url: '/payments/payment-606/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-606/gasless`,
         headers: { 'x-api-key': TEST_API_KEY },
         payload: validRequest,
       });

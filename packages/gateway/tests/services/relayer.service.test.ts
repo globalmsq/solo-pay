@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { RelayerService } from '../../src/services/relayer.service';
+import { API_V1_BASE_PATH } from '../../src/constants';
 import { Address } from 'viem';
 
 // Mock fetch globally
@@ -72,7 +73,7 @@ describe('relayerService', () => {
       expect(result.status).toBe('pending');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/api/v1/relay/gasless`,
+        `${mockApiUrl}${API_V1_BASE_PATH}/relay/gasless`,
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -109,7 +110,7 @@ describe('relayerService', () => {
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/api/v1/relay/gasless`,
+        `${mockApiUrl}${API_V1_BASE_PATH}/relay/gasless`,
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({

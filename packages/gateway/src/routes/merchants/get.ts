@@ -98,6 +98,32 @@ export async function getMerchantRoute(
                   },
                 },
               },
+              chainTokens: {
+                type: 'array',
+                description:
+                  'All chains with their tokens (for add payment method). Same format as GET /chains/tokens.',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    network_id: { type: 'integer' },
+                    name: { type: 'string' },
+                    is_testnet: { type: 'boolean' },
+                    tokens: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'integer' },
+                          address: { type: 'string' },
+                          symbol: { type: 'string' },
+                          decimals: { type: 'integer' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           401: ErrorResponseSchema,
@@ -130,7 +156,33 @@ export async function getMerchantRoute(
         // Get chain information for merchant
         const chain = merchant.chain_id ? await chainService.findById(merchant.chain_id) : null;
 
-        // Return merchant information with payment methods
+        const allChains = await chainService.findAll();
+        const chainIds = allChains.map((c) => c.id);
+        const allTokens = await tokenService.findAllForChains(chainIds, false);
+        const tokensByChainId = new Map<number, typeof allTokens>();
+        for (const token of allTokens) {
+          if (!tokensByChainId.has(token.chain_id)) {
+            tokensByChainId.set(token.chain_id, []);
+          }
+          tokensByChainId.get(token.chain_id)?.push(token);
+        }
+        const chainTokens = allChains.map((c) => {
+          const tokens = tokensByChainId.get(c.id) || [];
+          return {
+            id: c.id,
+            network_id: c.network_id,
+            name: c.name,
+            is_testnet: c.is_testnet,
+            tokens: tokens.map((t) => ({
+              id: t.id,
+              address: t.address,
+              symbol: t.symbol,
+              decimals: t.decimals,
+            })),
+          };
+        });
+
+        // Return merchant information with payment methods and chainTokens
         return reply.code(200).send({
           success: true,
           merchant: {
@@ -154,6 +206,7 @@ export async function getMerchantRoute(
             updated_at: merchant.updated_at.toISOString(),
             payment_methods: validPaymentMethods,
           },
+          chainTokens,
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to get merchant';

@@ -1,4 +1,5 @@
 import { Address } from 'viem';
+import { API_V1_BASE_PATH } from '../constants';
 import { ForwardRequest } from '../schemas/payment.schema';
 import { createLogger } from '../lib/logger';
 
@@ -128,7 +129,7 @@ export class RelayerService {
         signature: forwardRequest.signature,
       };
 
-      const response = await fetch(`${this.baseUrl}/api/v1/relay/gasless`, {
+      const response = await fetch(`${this.baseUrl}${API_V1_BASE_PATH}/relay/gasless`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(requestBody),
@@ -181,10 +182,13 @@ export class RelayerService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/relay/status/${relayRequestId}`, {
-        method: 'GET',
-        headers: this.getHeaders(),
-      });
+      const response = await fetch(
+        `${this.baseUrl}${API_V1_BASE_PATH}/relay/status/${relayRequestId}`,
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
+      );
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -327,10 +331,13 @@ export class RelayerService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/relay/gasless/nonce/${address}`, {
-        method: 'GET',
-        headers: this.getHeaders(),
-      });
+      const response = await fetch(
+        `${this.baseUrl}${API_V1_BASE_PATH}/relay/gasless/nonce/${address}`,
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -352,7 +359,7 @@ export class RelayerService {
     message: string;
   }> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/health`, {
+      const response = await fetch(`${this.baseUrl}${API_V1_BASE_PATH}/health`, {
         method: 'GET',
         headers: this.getHeaders(),
       });

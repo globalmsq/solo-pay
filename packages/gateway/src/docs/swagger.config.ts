@@ -1,5 +1,6 @@
 import { FastifyDynamicSwaggerOptions } from '@fastify/swagger';
 import { FastifySwaggerUiOptions } from '@fastify/swagger-ui';
+import { API_V1_BASE_PATH } from '../constants';
 import { ErrorResponseSchema, EthereumAddressSchema, PaymentHashSchema } from './schemas';
 
 /**
@@ -54,22 +55,19 @@ All errors follow a consistent format:
     },
     servers: [
       {
-        url: '/',
-        description: 'Current Server',
+        url: API_V1_BASE_PATH,
+        description: 'Current Server (API v1)',
       },
       {
-        url: 'http://localhost:3001',
-        description: 'Local Development',
+        url: `http://localhost:3001${API_V1_BASE_PATH}`,
+        description: 'Local Development (API v1)',
       },
     ],
     tags: [
       {
         name: 'Merchants',
-        description: 'Merchant profile and payment method management.',
-      },
-      {
-        name: 'Chains',
-        description: 'Supported blockchain networks and tokens.',
+        description:
+          'Merchant profile and payment method management. GET /merchants/me includes chainTokens (chains and tokens for payment methods).',
       },
       {
         name: 'Tokens',
@@ -78,11 +76,11 @@ All errors follow a consistent format:
       {
         name: 'Payments',
         description:
-          'Create payment requests, submit gasless transactions (meta-transaction), check status, and view history.',
+          'Create payment requests, submit gasless transactions (meta-transaction), check status, and payment detail.',
       },
       {
-        name: 'Transactions',
-        description: 'Check blockchain transaction status.',
+        name: 'Refunds',
+        description: 'Refund requests for confirmed payments.',
       },
     ],
     components: {

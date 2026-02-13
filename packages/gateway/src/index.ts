@@ -4,6 +4,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 
 import { createLogger } from './lib/logger';
+import { API_V1_BASE_PATH } from './constants';
 import { swaggerConfig, swaggerUiConfig } from './docs/swagger.config';
 import { BlockchainService } from './services/blockchain.service';
 import { RelayerService } from './services/relayer.service';
@@ -18,21 +19,15 @@ import { getPrismaClient, disconnectPrisma } from './db/client';
 import { getRedisClient, disconnectRedis } from './db/redis';
 import { createWebhookQueue } from '@solo-pay/webhook-manager';
 import { createPaymentRoute } from './routes/payments/create';
-import { prepareWalletRoute } from './routes/payments/prepare-wallet';
 import { paymentDetailRoute } from './routes/payments/payment-detail';
-import { paymentInfoRoute } from './routes/payments/info';
 import { getPaymentStatusRoute } from './routes/payments/status';
 import { submitGaslessRoute } from './routes/payments/gasless';
-import { getRelayStatusRoute } from './routes/payments/relay-status';
-import { getPaymentHistoryRoute } from './routes/payments/history';
 import { getTokenBalanceRoute } from './routes/tokens/balance';
 import { getTokenAllowanceRoute } from './routes/tokens/allowance';
-import { getTransactionStatusRoute } from './routes/transactions/status';
 import { updateMerchantRoute } from './routes/merchants/update';
 import { getMerchantRoute } from './routes/merchants/get';
 import { merchantPublicKeyRoute } from './routes/merchants/public-key';
 import { paymentMethodsRoute } from './routes/merchants/payment-methods';
-import { getChainsRoute } from './routes/chains/get';
 import { RefundService } from './services/refund.service';
 import { createRefundRoute } from './routes/refunds/create';
 import { getRefundStatusRoute } from './routes/refunds/status';
@@ -78,13 +73,9 @@ const paymentMethodService = new PaymentMethodService(prisma);
 const relayService = new RelayService(prisma);
 const refundService = new RefundService(prisma);
 
-// Route auth (same merchant key and API):
-// - createPayment (POST /payments/create): public key + Origin only
-// - POST /payments/:id/gasless: no auth (payment ID + amount/signature validated in handler)
-// - createMerchantAuthMiddleware: POST /payments/info (body.merchantId must match x-api-key owner)
-// - createAuthMiddleware: GET /merchants/me, PATCH /merchants/me, payment-methods (no body.merchantId; uses request.merchant only)
+// Route auth: createPayment = public key + Origin; gasless = no auth (validated in handler); others = x-api-key
 const registerRoutes = async () => {
-  // Health check endpoint
+  // Health and root: no version prefix
   server.get(
     '/health',
     {
@@ -108,7 +99,6 @@ const registerRoutes = async () => {
     }
   );
 
-  // Root endpoint
   server.get(
     '/',
     {
@@ -143,82 +133,68 @@ const registerRoutes = async () => {
     }
   );
 
-  await createPaymentRoute(
-    server,
-    blockchainService,
-    merchantService,
-    chainService,
-    tokenService,
-    paymentMethodService,
-    paymentService,
-    signingServices
-  );
-  await prepareWalletRoute(
-    server,
-    blockchainService,
-    merchantService,
-    paymentService,
-    paymentMethodService,
-    tokenService
-  );
-  webhookQueueInstance = createWebhookQueue(getRedisClient());
-  await paymentDetailRoute(
-    server,
-    blockchainService,
-    merchantService,
-    paymentService,
-    webhookQueueInstance
-  );
-  await paymentInfoRoute(
-    server,
-    blockchainService,
-    merchantService,
-    chainService,
-    tokenService,
-    paymentMethodService
-  );
-  await getPaymentStatusRoute(
-    server,
-    blockchainService,
-    paymentService,
-    merchantService,
-    webhookQueueInstance
-  );
-  await submitGaslessRoute(server, relayerService, relayService, paymentService);
-  await getRelayStatusRoute(server, relayerService);
-  await getPaymentHistoryRoute(
-    server,
-    blockchainService,
-    paymentService,
-    relayService,
-    merchantService
-  );
-  await getTokenBalanceRoute(server, blockchainService);
-  await getTokenAllowanceRoute(server, blockchainService);
-  await getTransactionStatusRoute(server, blockchainService);
-  await getChainsRoute(server, chainService, tokenService);
-  await updateMerchantRoute(server, merchantService);
-  await getMerchantRoute(server, merchantService, paymentMethodService, tokenService, chainService);
-  await merchantPublicKeyRoute(server, merchantService);
-  await paymentMethodsRoute(
-    server,
-    merchantService,
-    paymentMethodService,
-    tokenService,
-    chainService
-  );
+  const webhookQueue = createWebhookQueue(getRedisClient());
+  webhookQueueInstance = webhookQueue;
 
-  // Refund routes
-  await createRefundRoute(
-    server,
-    merchantService,
-    paymentService,
-    refundService,
-    blockchainService,
-    signingServices
+  // All business routes under API_V1_BASE_PATH
+  await server.register(
+    async (scope) => {
+      await createPaymentRoute(
+        scope,
+        blockchainService,
+        merchantService,
+        chainService,
+        tokenService,
+        paymentMethodService,
+        paymentService,
+        signingServices
+      );
+      await paymentDetailRoute(
+        scope,
+        blockchainService,
+        merchantService,
+        paymentService,
+        webhookQueue
+      );
+      await getPaymentStatusRoute(
+        scope,
+        blockchainService,
+        paymentService,
+        merchantService,
+        webhookQueue
+      );
+      await submitGaslessRoute(scope, relayerService, relayService, paymentService);
+      await getTokenBalanceRoute(scope, blockchainService);
+      await getTokenAllowanceRoute(scope, blockchainService);
+      await updateMerchantRoute(scope, merchantService);
+      await getMerchantRoute(
+        scope,
+        merchantService,
+        paymentMethodService,
+        tokenService,
+        chainService
+      );
+      await merchantPublicKeyRoute(scope, merchantService);
+      await paymentMethodsRoute(
+        scope,
+        merchantService,
+        paymentMethodService,
+        tokenService,
+        chainService
+      );
+      await createRefundRoute(
+        scope,
+        merchantService,
+        paymentService,
+        refundService,
+        blockchainService,
+        signingServices
+      );
+      await getRefundStatusRoute(scope, merchantService, paymentService, refundService);
+      await getRefundListRoute(scope, merchantService, paymentService, refundService);
+    },
+    { prefix: API_V1_BASE_PATH }
   );
-  await getRefundStatusRoute(server, merchantService, paymentService, refundService);
-  await getRefundListRoute(server, merchantService, paymentService, refundService);
 };
 
 // Graceful shutdown

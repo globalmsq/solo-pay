@@ -6,6 +6,7 @@ import { getRefundListRoute } from '../../../src/routes/refunds/list';
 import { MerchantService } from '../../../src/services/merchant.service';
 import { PaymentService } from '../../../src/services/payment.service';
 import { RefundService } from '../../../src/services/refund.service';
+import { API_V1_BASE_PATH } from '../../../src/constants';
 
 const TEST_API_KEY = 'test-api-key-123';
 
@@ -115,11 +116,16 @@ describe('GET /refunds', () => {
       }),
     };
 
-    await getRefundListRoute(
-      app,
-      merchantService as MerchantService,
-      paymentService as PaymentService,
-      refundService as RefundService
+    await app.register(
+      async (scope) => {
+        await getRefundListRoute(
+          scope,
+          merchantService as MerchantService,
+          paymentService as PaymentService,
+          refundService as RefundService
+        );
+      },
+      { prefix: API_V1_BASE_PATH }
     );
   });
 
@@ -127,7 +133,7 @@ describe('GET /refunds', () => {
     it('환불 목록을 조회하면 200 상태 코드와 함께 환불 목록을 반환해야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -141,7 +147,7 @@ describe('GET /refunds', () => {
     it('각 환불 항목에 필요한 필드가 모두 포함되어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -164,7 +170,7 @@ describe('GET /refunds', () => {
     it('페이지네이션 정보가 올바르게 반환되어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -193,7 +199,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?page=2',
+        url: `${API_V1_BASE_PATH}/refunds?page=2`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -221,7 +227,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?limit=10',
+        url: `${API_V1_BASE_PATH}/refunds?limit=10`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -234,7 +240,7 @@ describe('GET /refunds', () => {
     it('page와 limit을 함께 지정할 수 있어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?page=2&limit=5',
+        url: `${API_V1_BASE_PATH}/refunds?page=2&limit=5`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -260,7 +266,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?status=CONFIRMED',
+        url: `${API_V1_BASE_PATH}/refunds?status=CONFIRMED`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -274,7 +280,7 @@ describe('GET /refunds', () => {
     it('PENDING 상태로 필터링할 수 있어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?status=PENDING',
+        url: `${API_V1_BASE_PATH}/refunds?status=PENDING`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -288,7 +294,7 @@ describe('GET /refunds', () => {
     it('SUBMITTED 상태로 필터링할 수 있어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?status=SUBMITTED',
+        url: `${API_V1_BASE_PATH}/refunds?status=SUBMITTED`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -302,7 +308,7 @@ describe('GET /refunds', () => {
     it('FAILED 상태로 필터링할 수 있어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?status=FAILED',
+        url: `${API_V1_BASE_PATH}/refunds?status=FAILED`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -328,7 +334,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds?paymentId=${paymentHash}`,
+        url: `${API_V1_BASE_PATH}/refunds?paymentId=${paymentHash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -344,7 +350,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/refunds?status=PENDING&paymentId=${paymentHash}`,
+        url: `${API_V1_BASE_PATH}/refunds?status=PENDING&paymentId=${paymentHash}`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -360,7 +366,7 @@ describe('GET /refunds', () => {
     it('API 키가 없으면 401 상태 코드를 반환해야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
       });
 
       expect(response.statusCode).toBe(401);
@@ -373,7 +379,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': 'invalid-api-key' },
       });
 
@@ -395,7 +401,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -418,7 +424,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds?status=FAILED',
+        url: `${API_V1_BASE_PATH}/refunds?status=FAILED`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -432,7 +438,7 @@ describe('GET /refunds', () => {
     it('page 미지정 시 기본값 1이 적용되어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -446,7 +452,7 @@ describe('GET /refunds', () => {
     it('limit 미지정 시 기본값 20이 적용되어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -464,7 +470,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -478,7 +484,7 @@ describe('GET /refunds', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -495,7 +501,7 @@ describe('GET /refunds', () => {
 
       await app.inject({
         method: 'GET',
-        url: '/refunds',
+        url: `${API_V1_BASE_PATH}/refunds`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 
@@ -522,7 +528,7 @@ describe('GET /refunds', () => {
 
       await app.inject({
         method: 'GET',
-        url: '/refunds?limit=100',
+        url: `${API_V1_BASE_PATH}/refunds?limit=100`,
         headers: { 'x-api-key': TEST_API_KEY },
       });
 

@@ -130,6 +130,14 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           404: ErrorResponseSchema,
+          409: {
+            type: 'object',
+            description: 'Order ID already used for this merchant',
+            properties: {
+              code: { type: 'string', example: 'DUPLICATE_ORDER' },
+              message: { type: 'string', example: 'Order ID already used for this merchant.' },
+            },
+          },
           500: ErrorResponseSchema,
         },
       },
@@ -264,6 +272,14 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
               message: 'Failed to generate payment signature',
             });
           }
+        }
+
+        const existingPayment = await paymentService.findByOrderId(validated.orderId, merchant.id);
+        if (existingPayment) {
+          return reply.code(409).send({
+            code: 'DUPLICATE_ORDER',
+            message: 'Order ID already used for this merchant.',
+          });
         }
 
         const expiresAt = new Date(Date.now() + 30 * 60 * 1000);

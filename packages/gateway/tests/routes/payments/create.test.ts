@@ -8,6 +8,7 @@ import { ChainService, ChainWithTokens } from '../../../src/services/chain.servi
 import { TokenService } from '../../../src/services/token.service';
 import { PaymentMethodService } from '../../../src/services/payment-method.service';
 import { PaymentService } from '../../../src/services/payment.service';
+import { API_V1_BASE_PATH } from '../../../src/constants';
 
 const TEST_PUBLIC_KEY = 'pk_test_demo';
 const TEST_ORIGIN = 'http://localhost:3011';
@@ -211,16 +212,22 @@ describe('POST /payments/create', () => {
 
     paymentService = {
       create: vi.fn().mockResolvedValue(mockPayment),
+      findByOrderId: vi.fn().mockResolvedValue(null),
     };
 
-    await createPaymentRoute(
-      app,
-      blockchainService,
-      merchantService as MerchantService,
-      chainService as ChainService,
-      tokenService as TokenService,
-      paymentMethodService as PaymentMethodService,
-      paymentService as PaymentService
+    await app.register(
+      async (scope) => {
+        await createPaymentRoute(
+          scope,
+          blockchainService,
+          merchantService as MerchantService,
+          chainService as ChainService,
+          tokenService as TokenService,
+          paymentMethodService as PaymentMethodService,
+          paymentService as PaymentService
+        );
+      },
+      { prefix: API_V1_BASE_PATH }
     );
   });
 
@@ -236,7 +243,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validPayment,
       });
@@ -273,7 +280,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: minimalPayment,
       });
@@ -296,7 +303,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidPayment,
       });
@@ -317,7 +324,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidPayment,
       });
@@ -339,7 +346,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: incompletePayment,
       });
@@ -352,7 +359,7 @@ describe('POST /payments/create', () => {
     it('Origin이 allowed_domains에 없으면 403을 반환해야 함', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: 'https://not-allowed.example.com' },
         payload: {
           orderId: 'order-001',
@@ -417,7 +424,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: {
           orderId: 'order-001',
@@ -431,6 +438,43 @@ describe('POST /payments/create', () => {
       expect(response.statusCode).toBe(201);
       const body = JSON.parse(response.body);
       expect(body.amount).toBe('100000000000000000000');
+    });
+
+    it('same orderId twice returns 201 then 409 DUPLICATE_ORDER', async () => {
+      const orderId = 'order-duplicate-test';
+      const payload = {
+        orderId,
+        amount: 100,
+        successUrl: 'https://example.com/success',
+        failUrl: 'https://example.com/fail',
+      };
+      const headers = { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN };
+
+      (paymentService as { findByOrderId: ReturnType<typeof vi.fn> }).findByOrderId = vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ ...mockPayment, order_id: orderId });
+
+      const first = await app.inject({
+        method: 'POST',
+        url: `${API_V1_BASE_PATH}/payments/create`,
+        headers,
+        payload,
+      });
+      expect(first.statusCode).toBe(201);
+      const firstBody = JSON.parse(first.body);
+      expect(firstBody.orderId).toBe(orderId);
+
+      const second = await app.inject({
+        method: 'POST',
+        url: `${API_V1_BASE_PATH}/payments/create`,
+        headers,
+        payload,
+      });
+      expect(second.statusCode).toBe(409);
+      const secondBody = JSON.parse(second.body);
+      expect(secondBody.code).toBe('DUPLICATE_ORDER');
+      expect(secondBody.message).toContain('Order ID already used');
     });
   });
 });

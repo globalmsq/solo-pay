@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS payments (
     INDEX idx_merchant_id (merchant_id),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at),
-    INDEX idx_order_id_merchant_id (order_id, merchant_id)
+    UNIQUE INDEX idx_payments_order_id_merchant_id (order_id, merchant_id) COMMENT 'One payment per (order_id, merchant_id); multiple NULL order_id allowed'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

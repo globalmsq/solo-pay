@@ -7,6 +7,7 @@ import { PaymentService } from '../../../src/services/payment.service';
 import { MerchantService } from '../../../src/services/merchant.service';
 import type { WebhookQueueAdapter } from '../../../src/services/webhook-queue.service';
 import { PaymentStatus } from '../../../src/schemas/payment.schema';
+import { API_V1_BASE_PATH } from '../../../src/constants';
 
 describe('GET /payments/:id/status', () => {
   let app: FastifyInstance;
@@ -76,12 +77,17 @@ describe('GET /payments/:id/status', () => {
       addPaymentConfirmed: vi.fn().mockResolvedValue(undefined),
     };
 
-    await getPaymentStatusRoute(
-      app,
-      blockchainService as BlockchainService,
-      paymentService as PaymentService,
-      merchantService as MerchantService,
-      webhookQueue
+    await app.register(
+      async (scope) => {
+        await getPaymentStatusRoute(
+          scope,
+          blockchainService as BlockchainService,
+          paymentService as PaymentService,
+          merchantService as MerchantService,
+          webhookQueue
+        );
+      },
+      { prefix: API_V1_BASE_PATH }
     );
   });
 
@@ -89,7 +95,7 @@ describe('GET /payments/:id/status', () => {
     it('유효한 결제 ID로 요청하면 200 상태 코드와 함께 결제 정보를 반환해야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/payments/payment-123/status',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
       });
 
       expect(response.statusCode).toBe(200);
@@ -102,7 +108,7 @@ describe('GET /payments/:id/status', () => {
     it('응답에 결제의 모든 필드가 포함되어야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/payments/payment-123/status',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
       });
 
       expect(response.statusCode).toBe(200);
@@ -124,7 +130,7 @@ describe('GET /payments/:id/status', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/payments/nonexistent-id/status',
+        url: `${API_V1_BASE_PATH}/payments/nonexistent-id/status`,
       });
 
       expect(response.statusCode).toBe(404);
@@ -135,7 +141,7 @@ describe('GET /payments/:id/status', () => {
     it('빈 결제 ID일 때 400 상태 코드를 반환해야 함', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/payments//status',
+        url: `${API_V1_BASE_PATH}/payments//status`,
       });
 
       // Fastify는 빈 파라미터를 다르게 처리할 수 있음
@@ -151,7 +157,7 @@ describe('GET /payments/:id/status', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/payments/payment-123/status',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
       });
 
       expect(response.statusCode).toBe(500);
@@ -180,7 +186,7 @@ describe('GET /payments/:id/status', () => {
 
         const response = await app.inject({
           method: 'GET',
-          url: `/payments/payment-${status}/status`,
+          url: `${API_V1_BASE_PATH}/payments/payment-${status}/status`,
         });
 
         expect(response.statusCode).toBe(200);
@@ -224,7 +230,7 @@ describe('GET /payments/:id/status', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/payments/payment-123/status',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
       });
 
       expect(response.statusCode).toBe(200);
@@ -256,7 +262,7 @@ describe('GET /payments/:id/status', () => {
 
       await app.inject({
         method: 'GET',
-        url: '/payments/payment-123/status',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
       });
 
       expect(webhookQueue.addPaymentConfirmed).not.toHaveBeenCalled();
@@ -269,7 +275,7 @@ describe('GET /payments/:id/status', () => {
 
       await app.inject({
         method: 'GET',
-        url: '/payments/payment-123/status',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
       });
 
       const endTime = performance.now();
