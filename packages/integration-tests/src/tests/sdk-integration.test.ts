@@ -76,7 +76,7 @@ describe('SDK Integration', () => {
   describe('Client Configuration', () => {
     it('should create SDK client with custom environment', async () => {
       const client = createTestClient(TEST_MERCHANT);
-      expect(client.getApiUrl()).toBe(GATEWAY_URL);
+      expect(client.getApiUrl()).toBe(`${GATEWAY_URL}/api/v1`);
     });
 
     it('should handle API key in headers', async () => {

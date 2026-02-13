@@ -29,6 +29,7 @@ import { getMerchantRoute } from './routes/merchants/get';
 import { merchantPublicKeyRoute } from './routes/merchants/public-key';
 import { paymentMethodsRoute } from './routes/merchants/payment-methods';
 import { RefundService } from './services/refund.service';
+import { getRelayStatusRoute } from './routes/payments/relay-status';
 import { createRefundRoute } from './routes/refunds/create';
 import { getRefundStatusRoute } from './routes/refunds/status';
 import { getRefundListRoute } from './routes/refunds/list';
@@ -188,6 +189,7 @@ const registerRoutes = async () => {
         tokenService,
         chainService
       );
+      await getRelayStatusRoute(scope, relayerService);
       await createRefundRoute(
         scope,
         merchantService,
