@@ -1,0 +1,45 @@
+{
+  "name": "@solo-pay/price-service",
+  "version": "1.0.0",
+  "description": "Token price service with CoinMarketCap API and Redis caching",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage",
+    "lint": "eslint",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.6.1",
+    "@fastify/swagger-ui": "^5.2.4",
+    "@prisma/client": "^6.0.0",
+    "fastify": "^5.0.0",
+    "ioredis": "^5.4.0",
+    "pino": "^10.1.0",
+    "pino-pretty": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.0.17",
+    "prisma": "^6.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.14",
+    "vitest-mock-extended": "^2.0.0"
+  },
+  "keywords": [
+    "price",
+    "coinmarketcap",
+    "redis",
+    "caching",
+    "token-price"
+  ],
+  "author": "MSQ Team",
+  "license": "MIT"
+}

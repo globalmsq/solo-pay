@@ -1,0 +1,26 @@
+// Subset of gateway schema for price-service (same DB, read-only access to tokens)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Token {
+  id         Int      @id @default(autoincrement())
+  chain_id   Int
+  address    String   @db.VarChar(42)
+  symbol     String   @db.VarChar(20)
+  decimals   Int
+  cmc_id     Int?     // CoinMarketCap cryptocurrency ID for price lookup
+  is_enabled Boolean  @default(true)
+  is_deleted Boolean  @default(false)
+  deleted_at DateTime?
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@unique([chain_id, address])
+  @@map("tokens")
+}
