@@ -1,5 +1,5 @@
 # SoloPay Monorepo - Multi-stage Dockerfile
-# Targets: hardhat, contracts, gateway, demo, simple-relayer, sample-merchant, guide
+# Targets: hardhat, contracts, gateway, demo, simple-relayer, sample-merchant, guide, price-service
 
 # === Dependencies Stage (tools + deps + contracts) ===
 FROM node:20-alpine AS deps
@@ -18,6 +18,7 @@ COPY packages/simple-relayer/package.json ./packages/simple-relayer/
 COPY packages/guide/package.json ./packages/guide/
 COPY packages/demo/package.json ./packages/demo/
 COPY packages/sample-merchant/package.json ./packages/sample-merchant/
+COPY packages/price-service/package.json ./packages/price-service/
 
 RUN pnpm install --frozen-lockfile
 
@@ -33,6 +34,9 @@ RUN cd /app/packages/gateway && pnpm exec prisma generate
 
 COPY packages/sample-merchant/prisma ./packages/sample-merchant/prisma
 RUN cd /app/packages/sample-merchant && pnpm exec prisma generate
+
+COPY packages/price-service/prisma ./packages/price-service/prisma
+RUN cd /app/packages/price-service && pnpm exec prisma generate
 WORKDIR /app
 
 # === Hardhat Node ===
@@ -223,6 +227,33 @@ ENV PORT=3002
 EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -sf http://127.0.0.1:3002/health || exit 1
+CMD ["node", "dist/server.js"]
+
+# === Price Service Builder ===
+FROM deps AS price-service-builder
+
+COPY packages/price-service ./packages/price-service
+WORKDIR /app/packages/price-service
+RUN pnpm build
+
+# === Price Service Runtime ===
+FROM node:20-alpine AS price-service
+
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/price-service/node_modules ./packages/price-service/node_modules
+COPY --from=price-service-builder /app/packages/price-service/dist ./packages/price-service/dist
+COPY --from=price-service-builder /app/packages/price-service/package.json ./packages/price-service/
+COPY --from=deps /app/packages/price-service/prisma ./packages/price-service/prisma
+
+WORKDIR /app/packages/price-service
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3003
+EXPOSE 3003
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -sf http://localhost:3003/health || exit 1
 CMD ["node", "dist/server.js"]
 
 # === Guide Builder ===

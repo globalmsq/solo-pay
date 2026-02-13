@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     address VARCHAR(42) NOT NULL COMMENT 'ERC20 contract address',
     symbol VARCHAR(20) NOT NULL,
     decimals INT NOT NULL,
+    cmc_id INT NULL DEFAULT NULL COMMENT 'CoinMarketCap cryptocurrency ID for price lookup',
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
