@@ -25,13 +25,19 @@ export default function TokenApproval({
   needsApproval = true,
   error,
 }: TokenApprovalProps) {
+  const hasBalance = balance !== '' && balance !== '0' && parseFloat(balance) > 0;
+
   return (
     <div className="w-full p-4 sm:p-8">
       {/* Title */}
       <div className="text-center mb-5 sm:mb-6">
-        <h1 className="text-base sm:text-lg font-bold text-gray-900">Token Approval</h1>
+        <h1 className="text-base sm:text-lg font-bold text-gray-900">
+          {needsApproval ? 'Token Approval' : 'Already Approved'}
+        </h1>
         <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          Please approve token spending permission to proceed
+          {needsApproval
+            ? 'Please approve token spending permission to proceed'
+            : 'Token is already approved. Continue to payment.'}
         </p>
       </div>
 
@@ -86,36 +92,42 @@ export default function TokenApproval({
         </div>
       )}
 
-      {/* Approve Button */}
-      <button
-        type="button"
-        className={`w-full py-3 sm:py-3.5 rounded-xl text-white text-sm font-semibold transition-colors ${
-          isApproving || error
-            ? 'bg-blue-400 cursor-not-allowed'
-            : needsApproval
-              ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 cursor-pointer'
-              : 'bg-green-600 hover:bg-green-500 cursor-pointer'
-        }`}
-        onClick={onApprove}
-        disabled={isApproving || !!error}
-      >
-        {isApproving ? (
-          <span className="flex items-center justify-center gap-2">
-            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Approving...
-          </span>
-        ) : needsApproval ? (
-          'Approve Token'
-        ) : (
-          'Continue to Payment'
-        )}
-      </button>
-
-      {/* Cancel Button - shown when there's an error */}
-      {error && onCancel && (
+      {/* Approve Button - hidden when no balance */}
+      {(hasBalance || !needsApproval) && (
         <button
           type="button"
-          className="w-full mt-3 py-3 sm:py-3.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+          className={`w-full py-3 sm:py-3.5 rounded-xl text-white text-sm font-semibold transition-colors ${
+            isApproving
+              ? 'bg-blue-400 cursor-not-allowed'
+              : error
+                ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 cursor-pointer'
+                : needsApproval
+                  ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 cursor-pointer'
+                  : 'bg-green-600 hover:bg-green-500 cursor-pointer'
+          }`}
+          onClick={onApprove}
+          disabled={isApproving}
+        >
+          {isApproving ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Approving...
+            </span>
+          ) : error ? (
+            'Try Again'
+          ) : needsApproval ? (
+            'Approve Token'
+          ) : (
+            'Continue to Payment'
+          )}
+        </button>
+      )}
+
+      {/* Cancel Button - shown when no balance */}
+      {!hasBalance && needsApproval && onCancel && (
+        <button
+          type="button"
+          className="w-full mt-3 py-3 sm:py-3.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition-colors cursor-pointer"
           onClick={onCancel}
         >
           Cancel Payment
