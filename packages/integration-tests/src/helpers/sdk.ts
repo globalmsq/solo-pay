@@ -9,7 +9,8 @@ import type {
 
 import { getMerchant } from '../fixtures/merchant';
 
-const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3001';
+const GATEWAY_BASE = process.env.GATEWAY_URL || 'http://localhost:3001';
+const GATEWAY_URL = `${GATEWAY_BASE}/api/v1`;
 
 export interface TestMerchant {
   merchantId: string;

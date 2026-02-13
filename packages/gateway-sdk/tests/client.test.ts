@@ -28,7 +28,7 @@ describe('SoloPayClient', () => {
         environment: 'development',
         apiKey: 'test-key',
       });
-      expect(devClient.getApiUrl()).toBe('http://localhost:3001');
+      expect(devClient.getApiUrl()).toBe('http://localhost:3001/api/v1');
     });
 
     it('TC-007.2: should initialize with staging environment', () => {
@@ -36,7 +36,7 @@ describe('SoloPayClient', () => {
         environment: 'staging',
         apiKey: 'test-key',
       });
-      expect(stagingClient.getApiUrl()).toBe('https://pay-api.staging.msq.com');
+      expect(stagingClient.getApiUrl()).toBe('https://pay-api.staging.msq.com/api/v1');
     });
 
     it('TC-007.3: should initialize with production environment', () => {
@@ -44,7 +44,7 @@ describe('SoloPayClient', () => {
         environment: 'production',
         apiKey: 'test-key',
       });
-      expect(prodClient.getApiUrl()).toBe('https://pay-api.msq.com');
+      expect(prodClient.getApiUrl()).toBe('https://pay-api.msq.com/api/v1');
     });
 
     it('TC-007.4: should initialize with custom environment and apiUrl', () => {
@@ -127,7 +127,7 @@ describe('SoloPayClient', () => {
       expect(result.orderId).toBe('order-001');
       expect(result.serverSignature).toBeDefined();
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/payments/create',
+        'http://localhost:3001/api/v1/payments/create',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -227,7 +227,7 @@ describe('SoloPayClient', () => {
       expect(result.data.paymentId).toBe('pay-123');
       expect(result.data.status).toBe('completed');
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/payments/pay-123/status',
+        'http://localhost:3001/api/v1/payments/pay-123/status',
         expect.objectContaining({
           method: 'GET',
         })
@@ -317,7 +317,7 @@ describe('SoloPayClient', () => {
       expect(result.relayRequestId).toBe('relay-123');
       expect(result.status).toBe('submitted');
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/payments/pay-123/gasless',
+        'http://localhost:3001/api/v1/payments/pay-123/gasless',
         expect.objectContaining({
           method: 'POST',
         })
@@ -450,7 +450,7 @@ describe('SoloPayClient', () => {
       expect(result.transactionHash).toBe('0xdef456');
       expect(result.status).toBe('mined');
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/payments/pay-123/relay',
+        'http://localhost:3001/api/v1/payments/pay-123/relay',
         expect.objectContaining({
           method: 'POST',
         })
@@ -628,7 +628,7 @@ describe('SoloPayClient', () => {
       expect(result.data[0].tokenSymbol).toBe('USDC');
       expect(result.data[0].isGasless).toBe(false);
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/payments/history?chainId=31337&payer=0x1234567890123456789012345678901234567890',
+        'http://localhost:3001/api/v1/payments/history?chainId=31337&payer=0x1234567890123456789012345678901234567890',
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -702,7 +702,7 @@ describe('SoloPayClient', () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/payments/history?chainId=31337&payer=0x1234567890123456789012345678901234567890&limit=50',
+        'http://localhost:3001/api/v1/payments/history?chainId=31337&payer=0x1234567890123456789012345678901234567890&limit=50',
         expect.any(Object)
       );
     });
