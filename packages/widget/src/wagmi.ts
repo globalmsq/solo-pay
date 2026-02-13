@@ -15,18 +15,6 @@ const localhost = defineChain({
   },
 });
 
-// Localhost (Hardhat/Anvil) for local dev - so widget can read balance on same chain as payment
-const localhost = defineChain({
-  id: 31337,
-  name: 'Localhost',
-  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: [process.env.NEXT_PUBLIC_LOCALHOST_RPC || 'http://127.0.0.1:8545'],
-    },
-  },
-});
-
 const chains = [
   localhost,
   mainnet,
