@@ -9,7 +9,7 @@ import { PaymentMethodService } from '../../../services/payment-method.service';
 import { PaymentService } from '../../../services/payment.service';
 
 // 테스트용 ChainWithTokens mock (DB에서 로드된 형식)
-const mockChainsWithTokens: ChainWithTokens[] = [
+const mockChainTokens: ChainWithTokens[] = [
   {
     id: 1,
     network_id: 80002,
@@ -105,7 +105,7 @@ describe('POST /payments/create', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    blockchainService = new BlockchainService(mockChainsWithTokens);
+    blockchainService = new BlockchainService(mockChainTokens);
   });
 
   describe('Valid requests', () => {

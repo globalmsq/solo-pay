@@ -13,8 +13,8 @@ import { API_V1_BASE_PATH } from '../../../src/constants';
 const TEST_PUBLIC_KEY = 'pk_test_demo';
 const TEST_ORIGIN = 'http://localhost:3011';
 
-// Mock ChainWithTokens data (format yang diharapkan BlockchainService)
-const mockChainsWithTokens: ChainWithTokens[] = [
+// Mock chainTokens data (cast for Prisma Chain type resolution in test env)
+const mockChainTokens = [
   {
     id: 1,
     network_id: 80002,
@@ -71,7 +71,7 @@ const mockChainsWithTokens: ChainWithTokens[] = [
       },
     ],
   },
-];
+] as unknown as ChainWithTokens[];
 
 const mockMerchant = {
   id: 1,
@@ -147,7 +147,7 @@ describe('POST /payments/create', () => {
     await app.register(cors);
 
     // 실제 BlockchainService 인스턴스 생성
-    blockchainService = new BlockchainService(mockChainsWithTokens);
+    blockchainService = new BlockchainService(mockChainTokens);
 
     // Mock getDecimals and getTokenSymbolOnChain to return on-chain values
     blockchainService.getDecimals = vi.fn().mockResolvedValue(18);
@@ -380,7 +380,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: {
           orderId: 'order-001',
@@ -403,7 +403,7 @@ describe('POST /payments/create', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/create',
+        url: `${API_V1_BASE_PATH}/payments/create`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: {
           orderId: 'order-001',
@@ -445,6 +445,7 @@ describe('POST /payments/create', () => {
       const payload = {
         orderId,
         amount: 100,
+        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
         successUrl: 'https://example.com/success',
         failUrl: 'https://example.com/fail',
       };

@@ -7,7 +7,7 @@ import { ChainService, ChainWithTokens } from '../../../services/chain.service';
 import { TokenService } from '../../../services/token.service';
 import { PaymentMethodService } from '../../../services/payment-method.service';
 
-const mockChainsWithTokens: ChainWithTokens[] = [
+const mockChainTokens: ChainWithTokens[] = [
   {
     id: 1,
     network_id: 31337,
@@ -79,7 +79,7 @@ describe.skip('POST /payments/info', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    blockchainService = new BlockchainService(mockChainsWithTokens);
+    blockchainService = new BlockchainService(mockChainTokens);
   });
 
   describe('Route registration', () => {

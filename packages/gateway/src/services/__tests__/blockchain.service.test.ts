@@ -18,7 +18,7 @@ vi.mock('viem', () => ({
 }));
 
 // 테스트용 ChainWithTokens mock (DB에서 로드된 형식)
-const mockChainsWithTokens: ChainWithTokens[] = [
+const mockChainTokens: ChainWithTokens[] = [
   {
     id: 1,
     network_id: 80002,
@@ -98,7 +98,7 @@ describe('BlockchainService - New methods for SPEC-API-001', () => {
   let service: BlockchainService;
 
   beforeEach(() => {
-    service = new BlockchainService(mockChainsWithTokens);
+    service = new BlockchainService(mockChainTokens);
   });
 
   describe('getTokenAddress', () => {
@@ -208,7 +208,7 @@ describe('BlockchainService - Constructor and chain initialization', () => {
   });
 
   it('should initialize multiple chains correctly', () => {
-    const service = new BlockchainService(mockChainsWithTokens);
+    const service = new BlockchainService(mockChainTokens);
     expect(service.isChainSupported(80002)).toBe(true);
     expect(service.isChainSupported(31337)).toBe(true);
     expect(service.getSupportedChainIds()).toContain(80002);
@@ -220,7 +220,7 @@ describe('BlockchainService - Token validation methods', () => {
   let service: BlockchainService;
 
   beforeEach(() => {
-    service = new BlockchainService(mockChainsWithTokens);
+    service = new BlockchainService(mockChainTokens);
   });
 
   describe('validateToken', () => {
@@ -387,7 +387,7 @@ describe('BlockchainService - Blockchain interaction methods', () => {
       getTransactionReceipt: vi.fn(),
     };
     vi.mocked(viem.createPublicClient).mockReturnValue(mockClient as never);
-    service = new BlockchainService(mockChainsWithTokens);
+    service = new BlockchainService(mockChainTokens);
   });
 
   describe('getTokenBalance', () => {
