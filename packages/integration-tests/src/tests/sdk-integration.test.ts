@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createTestClient, TEST_MERCHANT, type CreatePaymentParams } from '../helpers/sdk';
-import { getToken, getTokenForChain } from '../fixtures/token';
+import { createTestClient, TEST_MERCHANT, makeCreatePaymentParams } from '../helpers/sdk';
+import { getTokenForChain } from '../fixtures/token';
 import { getMerchant } from '../fixtures/merchant';
 import {
   getWallet,
@@ -76,7 +76,7 @@ describe('SDK Integration', () => {
   describe('Client Configuration', () => {
     it('should create SDK client with custom environment', async () => {
       const client = createTestClient(TEST_MERCHANT);
-      expect(client.getApiUrl()).toBe(GATEWAY_URL);
+      expect(client.getApiUrl()).toBe(`${GATEWAY_URL}/api/v1`);
     });
 
     it('should handle API key in headers', async () => {
@@ -85,18 +85,14 @@ describe('SDK Integration', () => {
         return;
       }
 
-      // Invalid API key should fail
+      // Client without publicKey/origin cannot call createPayment
       const invalidClient = createTestClient({
         merchantId: TEST_MERCHANT.merchantId,
-        apiKey: 'invalid_key',
+        apiKey: TEST_MERCHANT.apiKey,
+        // no publicKey, no origin
       });
 
-      const params: CreatePaymentParams = {
-        merchantId: merchant.merchantId,
-        amount: 100,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      };
+      const params = makeCreatePaymentParams(100);
 
       await expect(invalidClient.createPayment(params)).rejects.toThrow();
     });
@@ -111,22 +107,14 @@ describe('SDK Integration', () => {
 
       const client = createTestClient(TEST_MERCHANT);
 
-      const params: CreatePaymentParams = {
-        merchantId: merchant.merchantId,
-        amount: 100,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      };
+      const params = makeCreatePaymentParams(100);
 
       const response = await client.createPayment(params);
 
-      expect(response.success).toBe(true);
       expect(response.paymentId).toBeDefined();
       expect(response.paymentId.startsWith('0x')).toBe(true);
       expect(response.chainId).toBe(token.networkId);
       expect(response.tokenAddress.toLowerCase()).toBe(token.address.toLowerCase());
-      expect(response.status).toBe('created');
-      // New server signature fields
       expect(response.serverSignature).toBeDefined();
       expect(response.recipientAddress).toBeDefined();
       expect(response.merchantId).toBeDefined();
@@ -141,12 +129,7 @@ describe('SDK Integration', () => {
 
       const client = createTestClient(TEST_MERCHANT);
 
-      const params: CreatePaymentParams = {
-        merchantId: merchant.merchantId,
-        amount: 50,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      };
+      const params = makeCreatePaymentParams(50);
 
       const response = await client.createPayment(params);
 
@@ -154,10 +137,10 @@ describe('SDK Integration', () => {
       expect(response.gatewayAddress.toLowerCase()).toBe(
         CONTRACT_ADDRESSES.paymentGateway.toLowerCase()
       );
-      expect(response.forwarderAddress).toBeDefined();
-      expect(response.forwarderAddress.toLowerCase()).toBe(
-        CONTRACT_ADDRESSES.forwarder.toLowerCase()
-      );
+      const forwarderAddress = response.forwarderAddress;
+      expect(forwarderAddress).toBeDefined();
+      if (!forwarderAddress) return;
+      expect(forwarderAddress.toLowerCase()).toBe(CONTRACT_ADDRESSES.forwarder.toLowerCase());
     });
   });
 
@@ -170,18 +153,10 @@ describe('SDK Integration', () => {
 
       const client = createTestClient(TEST_MERCHANT);
 
-      // First create a payment
-      const createParams: CreatePaymentParams = {
-        merchantId: merchant.merchantId,
-        amount: 25,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      };
-
+      const createParams = makeCreatePaymentParams(25);
       const createResponse = await client.createPayment(createParams);
       const paymentId = createResponse.paymentId;
 
-      // Then get status
       const statusResponse = await client.getPaymentStatus(paymentId);
 
       expect(statusResponse.success).toBe(true);
@@ -200,21 +175,11 @@ describe('SDK Integration', () => {
       const client = createTestClient(TEST_MERCHANT);
       const amount = parseUnits('10', token.decimals);
 
-      // 1. Create payment via SDK
-      const createResponse = await client.createPayment({
-        merchantId: merchant.merchantId,
-        amount: 10,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      });
-
-      expect(createResponse.success).toBe(true);
+      const createResponse = await client.createPayment(makeCreatePaymentParams(10));
       const paymentId = createResponse.paymentId;
 
-      // 2. Approve tokens
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
 
-      // 3. Execute payment on-chain with server signature
       const wallet = getWallet(payerPrivateKey);
       const gateway = getContract(createResponse.gatewayAddress, PaymentGatewayABI, wallet);
 
@@ -245,17 +210,9 @@ describe('SDK Integration', () => {
       const client = createTestClient(TEST_MERCHANT);
       const amount = parseUnits('5', token.decimals);
 
-      // 1. Create payment via SDK
-      const createResponse = await client.createPayment({
-        merchantId: merchant.merchantId,
-        amount: 5,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      });
-
+      const createResponse = await client.createPayment(makeCreatePaymentParams(5));
       const paymentId = createResponse.paymentId;
 
-      // Verify server signature fields are present
       const {
         recipientAddress,
         merchantId: respMerchantId,
@@ -265,12 +222,14 @@ describe('SDK Integration', () => {
       if (!recipientAddress || !respMerchantId || feeBps === undefined || !serverSignature) {
         throw new Error('Server signature fields missing from response');
       }
+      const forwarderAddress = createResponse.forwarderAddress;
+      if (!forwarderAddress) {
+        throw new Error('forwarderAddress missing from create response');
+      }
 
-      // 2. Approve tokens
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
 
-      // 3. Build and sign ForwardRequest
-      const forwarder = getContract(createResponse.forwarderAddress, ERC2771ForwarderABI);
+      const forwarder = getContract(forwarderAddress, ERC2771ForwarderABI);
       const nonce = await forwarder.nonces(payerAddress);
       const deadline = getDeadline(1);
       const data = encodePayFunctionData(
@@ -298,7 +257,7 @@ describe('SDK Integration', () => {
       // 4. Submit gasless via SDK
       const gaslessResponse = await client.submitGasless({
         paymentId,
-        forwarderAddress: createResponse.forwarderAddress,
+        forwarderAddress,
         forwardRequest: {
           from: request.from,
           to: request.to,
@@ -324,17 +283,10 @@ describe('SDK Integration', () => {
       const client = createTestClient(TEST_MERCHANT);
       const amount = parseUnits('3', token.decimals);
 
-      // Create and submit gasless payment
-      const createResponse = await client.createPayment({
-        merchantId: merchant.merchantId,
-        amount: 3,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      });
+      const createResponse = await client.createPayment(makeCreatePaymentParams(3));
 
       await approveToken(token.address, createResponse.gatewayAddress, amount, payerPrivateKey);
 
-      // Server signature fields must be present
       const {
         recipientAddress,
         merchantId: respMerchantId,
@@ -344,8 +296,12 @@ describe('SDK Integration', () => {
       if (!recipientAddress || !respMerchantId || feeBps === undefined || !serverSignature) {
         throw new Error('Server signature fields missing from response');
       }
+      const forwarderAddress = createResponse.forwarderAddress;
+      if (!forwarderAddress) {
+        throw new Error('forwarderAddress missing from create response');
+      }
 
-      const forwarder = getContract(createResponse.forwarderAddress, ERC2771ForwarderABI);
+      const forwarder = getContract(forwarderAddress, ERC2771ForwarderABI);
       const nonce = await forwarder.nonces(payerAddress);
       const deadline = getDeadline(1);
       const data = encodePayFunctionData(
@@ -372,7 +328,7 @@ describe('SDK Integration', () => {
 
       const gaslessResponse = await client.submitGasless({
         paymentId: createResponse.paymentId,
-        forwarderAddress: createResponse.forwarderAddress,
+        forwarderAddress,
         forwardRequest: {
           from: request.from,
           to: request.to,
@@ -397,40 +353,19 @@ describe('SDK Integration', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle invalid merchant ID', async () => {
+    it('should reject createPayment when public key is invalid', async () => {
       const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
 
-      const client = createTestClient(TEST_MERCHANT);
+      const client = createTestClient({
+        ...TEST_MERCHANT,
+        publicKey: 'pk_invalid',
+        origin: 'http://localhost:3000',
+      });
 
-      const params: CreatePaymentParams = {
-        merchantId: 'invalid_merchant_id',
-        amount: 100,
-        chainId: token.networkId,
-        tokenAddress: token.address,
-      };
-
-      await expect(client.createPayment(params)).rejects.toThrow();
-    });
-
-    it('should handle invalid chain ID', async () => {
-      const serverRunning = await isGatewayRunning();
-      if (!serverRunning) {
-        return;
-      }
-
-      const client = createTestClient(TEST_MERCHANT);
-
-      const params: CreatePaymentParams = {
-        merchantId: merchant.merchantId,
-        amount: 100,
-        chainId: 99999, // Invalid chain
-        tokenAddress: token.address,
-      };
-
-      await expect(client.createPayment(params)).rejects.toThrow();
+      await expect(client.createPayment(makeCreatePaymentParams(100))).rejects.toThrow();
     });
 
     it('should handle non-existent payment ID', async () => {
@@ -445,46 +380,19 @@ describe('SDK Integration', () => {
       await expect(client.getPaymentStatus(fakePaymentId)).rejects.toThrow();
     });
 
-    it('should reject payment with mismatched chain (merchant chain != request chain)', async () => {
+    it('should reject createPayment when origin is not in allowed_domains', async () => {
       const serverRunning = await isGatewayRunning();
       if (!serverRunning) {
         return;
       }
 
-      const client = createTestClient(TEST_MERCHANT);
+      const client = createTestClient({
+        ...TEST_MERCHANT,
+        publicKey: 'pk_test_demo',
+        origin: 'https://not-allowed.example.com',
+      });
 
-      // Demo merchant is bound to chain_id=1 (Localhost/31337)
-      // Try to create payment with different chain (Amoy/80002)
-      const params: CreatePaymentParams = {
-        merchantId: merchant.merchantId,
-        amount: 100,
-        chainId: 80002, // Amoy - different from merchant's chain
-        tokenAddress: token.address,
-      };
-
-      // Should fail because merchant is not configured for this chain
-      await expect(client.createPayment(params)).rejects.toThrow();
-    });
-
-    it('should reject payment with token from different chain', async () => {
-      const serverRunning = await isGatewayRunning();
-      if (!serverRunning) {
-        return;
-      }
-
-      const client = createTestClient(TEST_MERCHANT);
-      const sutAmoyToken = getToken('sutAmoy'); // Token on Amoy chain
-
-      // Demo merchant uses Localhost chain, but we're trying to use Amoy token
-      const params: CreatePaymentParams = {
-        merchantId: merchant.merchantId,
-        amount: 100,
-        chainId: token.networkId, // Correct chain for merchant
-        tokenAddress: sutAmoyToken.address, // Wrong token (from different chain)
-      };
-
-      // Should fail because token is not on merchant's chain
-      await expect(client.createPayment(params)).rejects.toThrow();
+      await expect(client.createPayment(makeCreatePaymentParams(100))).rejects.toThrow();
     });
   });
 

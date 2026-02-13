@@ -7,7 +7,7 @@ export type PaymentStepType =
 
 /**
  * URL parameters for widget initialization
- * Matches: /?pk=xxx&orderId=xxx&amount=xxx&successUrl=xxx&failUrl=xxx&webhookUrl=xxx
+ * Matches: /?pk=xxx&orderId=xxx&amount=xxx&tokenAddress=xxx&successUrl=xxx&failUrl=xxx&webhookUrl=xxx
  */
 export interface WidgetUrlParams {
   /** Public key for merchant authentication (required) */
@@ -16,6 +16,8 @@ export interface WidgetUrlParams {
   orderId: string;
   /** Payment amount in human readable format (required) */
   amount: string;
+  /** ERC-20 token contract address (required, must be whitelisted and enabled for merchant) */
+  tokenAddress: string;
   /** Redirect URL on success (required) */
   successUrl: string;
   /** Redirect URL on failure (required) */
@@ -37,15 +39,15 @@ export interface UrlParamsValidationResult {
 }
 
 /**
- * API response from POST /payments/create-public
+ * API response from POST /payments/create
  */
 export interface PaymentDetails {
   /** Payment hash for smart contract */
   paymentId: string;
   /** Merchant order ID */
   orderId: string;
-  /** Server signature for contract verification */
-  signature: string;
+  /** Server EIP-712 signature for contract verification */
+  serverSignature: string;
   /** Blockchain network ID */
   chainId: number;
   /** ERC20 token contract address */

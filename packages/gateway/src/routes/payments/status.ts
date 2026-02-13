@@ -6,6 +6,7 @@ import {
   enqueuePaymentConfirmedWebhook,
   type WebhookQueueAdapter,
 } from '../../services/webhook-queue.service';
+import { createPublicAuthMiddleware } from '../../middleware/public-auth.middleware';
 import { PaymentStatusResponseSchema, ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getPaymentStatusRoute(
@@ -15,6 +16,8 @@ export async function getPaymentStatusRoute(
   merchantService: MerchantService,
   webhookQueue: WebhookQueueAdapter
 ) {
+  const authMiddleware = createPublicAuthMiddleware(merchantService);
+
   app.get<{
     Params: { id: string };
   }>(
@@ -25,7 +28,7 @@ export async function getPaymentStatusRoute(
         tags: ['Payments'],
         summary: 'Get payment status',
         description: `
-Retrieves the current status of a payment by its payment hash.
+Retrieves the current status of a payment by its payment hash. Requires x-public-key and Origin (must match merchant allowed_domains).
 
 **Status Values:**
 - \`CREATED\` - Payment created, awaiting on-chain transaction
@@ -35,6 +38,20 @@ Retrieves the current status of a payment by its payment hash.
 
 **Note:** This endpoint syncs on-chain status with database status.
         `,
+        headers: {
+          type: 'object',
+          properties: {
+            'x-public-key': {
+              type: 'string',
+              description: 'Public key (pk_live_xxx or pk_test_xxx)',
+            },
+            'x-origin': {
+              type: 'string',
+              description:
+                'Origin for this GET endpoint (proxy often strips Origin). Must match merchant allowed_domains.',
+            },
+          },
+        },
         params: {
           type: 'object',
           properties: {
@@ -48,10 +65,13 @@ Retrieves the current status of a payment by its payment hash.
         response: {
           200: PaymentStatusResponseSchema,
           400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
           404: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
       },
+      preHandler: authMiddleware,
     },
     async (request, reply) => {
       try {

@@ -44,27 +44,28 @@ curl -H "x-api-key: sk_test_xxxxx" https://api.solopay.com/...
 
 ### POST /payments/create
 
-Creates a payment.
+Creates a payment. Auth: `x-public-key` + `Origin` headers.
 
 **Request**
 
 ```json
 {
-  "merchantId": "merchant_demo_001",
+  "orderId": "order-001",
   "amount": 10.5,
-  "chainId": 80002,
   "tokenAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-  "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  "successUrl": "https://example.com/success",
+  "failUrl": "https://example.com/fail"
 }
 ```
 
-| Field              | Type    | Required | Description                                   |
-| ------------------ | ------- | -------- | --------------------------------------------- |
-| `merchantId`       | string  | ✓        | Merchant unique identifier (merchant_key)     |
-| `amount`           | number  | ✓        | Payment amount (token units, e.g., 10.5 USDC) |
-| `chainId`          | number  | ✓        | Blockchain network ID                         |
-| `tokenAddress`     | address | ✓        | ERC-20 token contract address                 |
-| `recipientAddress` | address | ✓        | Payment recipient address                     |
+| Field          | Type    | Required | Description                                                         |
+| -------------- | ------- | -------- | ------------------------------------------------------------------- |
+| `orderId`      | string  | ✓        | Merchant order identifier                                           |
+| `amount`       | number  | ✓        | Payment amount (token units, e.g., 10.5 USDC)                       |
+| `tokenAddress` | address | ✓        | ERC-20 token address (must be whitelisted and enabled for merchant) |
+| `successUrl`   | string  | ✓        | Redirect URL on success                                             |
+| `failUrl`      | string  | ✓        | Redirect URL on failure                                             |
+| `webhookUrl`   | string  |          | Optional per-payment webhook URL                                    |
 
 **Response (201)**
 

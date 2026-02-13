@@ -29,14 +29,16 @@ WORKDIR /app/packages/contracts
 RUN npx hardhat compile
 WORKDIR /app
 
-COPY packages/gateway/prisma ./packages/gateway/prisma
-RUN cd /app/packages/gateway && pnpm exec prisma generate
-
 COPY packages/sample-merchant/prisma ./packages/sample-merchant/prisma
 RUN cd /app/packages/sample-merchant && pnpm exec prisma generate
 
 COPY packages/price-service/prisma ./packages/price-service/prisma
 RUN cd /app/packages/price-service && pnpm exec prisma generate
+
+# Gateway prisma generate MUST run last: it writes to the shared @prisma/client
+# in node_modules, so the most complete schema (with Chain, Token, etc.) wins.
+COPY packages/gateway/prisma ./packages/gateway/prisma
+RUN cd /app/packages/gateway && pnpm exec prisma generate
 WORKDIR /app
 
 # === Hardhat Node ===
@@ -95,7 +97,7 @@ ENV NODE_ENV=production
 EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -sf http://localhost:3001/health || exit 1
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss && node dist/index.js"]
 
 # === Demo Builder ===
 FROM deps AS demo-builder
@@ -167,7 +169,7 @@ ENV NODE_ENV=production
 EXPOSE 3004
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD curl -sf http://localhost:3004 || exit 1
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npx tsx prisma/seed.ts && npx next start -p 3004"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss && npx tsx prisma/seed.ts && npx next start -p 3004"]
 
 # === Simple Relayer Builder ===
 FROM deps AS simple-relayer-builder

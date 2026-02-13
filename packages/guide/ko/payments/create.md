@@ -31,40 +31,46 @@
 
 ## SDK 사용
 
+인증은 **public key + Origin** (클라이언트 설정)을 사용합니다. 체인/수령 주소는 가맹점 설정에서 오며, `tokenAddress`는 반드시 전달해야 합니다 (whitelist 등록 및 가맹점에서 활성화된 토큰).
+
 ```typescript
 const payment = await client.createPayment({
-  merchantId: 'merchant_demo_001',
-  amount: 10.5, // 10.5 USDC (토큰 단위)
-  chainId: 80002, // Polygon Amoy
-  tokenAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  orderId: 'order-001',
+  amount: 10.5, // 토큰 단위 (예: 10.5 USDC)
+  tokenAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // whitelist 등록 및 가맹점 활성화 필수
+  successUrl: 'https://example.com/success',
+  failUrl: 'https://example.com/fail',
 });
 ```
 
 ## REST API 사용
 
+인증: `x-public-key` 헤더 (pk_live_xxx 또는 pk_test_xxx), `Origin` 헤더 (가맹점 `allowed_domains` 중 하나와 일치).
+
 ```bash
 curl -X POST http://localhost:3001/payments/create \
-  -H "x-api-key: sk_test_xxxxx" \
+  -H "x-public-key: pk_test_demo" \
+  -H "Origin: http://localhost:3000" \
   -H "Content-Type: application/json" \
   -d '{
-    "merchantId": "merchant_demo_001",
+    "orderId": "order-001",
     "amount": 10.5,
-    "chainId": 80002,
     "tokenAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-    "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    "successUrl": "https://example.com/success",
+    "failUrl": "https://example.com/fail"
   }'
 ```
 
 ## 요청 파라미터
 
-| 필드               | 타입      | 필수 | 설명                                 |
-| ------------------ | --------- | ---- | ------------------------------------ |
-| `merchantId`       | `string`  | ✓    | 가맹점 고유 식별자 (merchant_key)    |
-| `amount`           | `number`  | ✓    | 결제 금액 (토큰 단위, 예: 10.5 USDC) |
-| `chainId`          | `number`  | ✓    | 블록체인 네트워크 ID                 |
-| `tokenAddress`     | `address` | ✓    | ERC-20 토큰 컨트랙트 주소            |
-| `recipientAddress` | `address` | ✓    | 결제 수령 주소                       |
+| 필드           | 타입      | 필수 | 설명                                                             |
+| -------------- | --------- | ---- | ---------------------------------------------------------------- |
+| `orderId`      | `string`  | ✓    | 가맹점 주문 식별자                                               |
+| `amount`       | `number`  | ✓    | 결제 금액 (토큰 단위, 예: 10.5 USDC)                             |
+| `tokenAddress` | `address` | ✓    | ERC-20 토큰 컨트랙트 주소 (whitelist 등록 및 가맹점 활성화 필수) |
+| `successUrl`   | `string`  | ✓    | 성공 시 리다이렉트 URL                                           |
+| `failUrl`      | `string`  | ✓    | 실패 시 리다이렉트 URL                                           |
+| `webhookUrl`   | `string`  |      | 결제별 웹훅 URL (선택)                                           |
 
 ::: tip 금액 입력
 금액은 토큰 단위로 입력합니다. 서버에서 자동으로 wei 단위로 변환합니다.
@@ -95,10 +101,12 @@ curl -X POST http://localhost:3001/payments/create \
 
 ```json
 {
-  "code": "UNSUPPORTED_TOKEN",
-  "message": "Unsupported token"
+  "code": "TOKEN_NOT_ENABLED",
+  "message": "Token is not enabled for this merchant. Add and enable it in payment methods first."
 }
 ```
+
+기타 코드: `TOKEN_NOT_FOUND`(whitelist 미등록), `VALIDATION_ERROR`, `UNSUPPORTED_TOKEN`.
 
 ## 응답 필드 설명
 

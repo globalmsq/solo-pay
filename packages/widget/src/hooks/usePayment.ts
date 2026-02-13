@@ -72,7 +72,7 @@ export function usePayment({ paymentDetails }: UsePaymentParams): UsePaymentRetu
   const recipientAddress = paymentDetails?.recipientAddress as `0x${string}` | undefined;
   const merchantId = paymentDetails?.merchantId as `0x${string}` | undefined;
   const feeBps = paymentDetails?.feeBps ?? 0;
-  const serverSignature = paymentDetails?.signature as `0x${string}` | undefined;
+  const serverSignature = paymentDetails?.serverSignature as `0x${string}` | undefined;
 
   // Check if payment is already processed
   const { data: isProcessed, refetch: refetchProcessed } = useReadContract({

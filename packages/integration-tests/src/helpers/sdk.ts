@@ -9,7 +9,8 @@ import type {
 
 import { getMerchant } from '../fixtures/merchant';
 
-const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3001';
+const GATEWAY_BASE = process.env.GATEWAY_URL || 'http://localhost:3001';
+const GATEWAY_URL = `${GATEWAY_BASE}/api/v1`;
 
 export interface TestMerchant {
   merchantId: string;
@@ -24,8 +25,8 @@ export interface TestMerchant {
 export const TEST_MERCHANT: TestMerchant = {
   merchantId: 'merchant_demo_001',
   apiKey: '123',
-  publicKey: 'pk_test_demo_001',
-  origin: 'http://localhost:3000',
+  publicKey: 'pk_test_demo',
+  origin: process.env.PAY_SERVER_ORIGIN || 'http://localhost:3000',
 };
 
 export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): SoloPayClient {
@@ -45,8 +46,30 @@ export function createTestClientFromFixture(merchantName: string = 'default'): S
     apiUrl: GATEWAY_URL,
     apiKey: fixture.apiKey,
     publicKey: fixture.publicKey,
-    origin: fixture.allowedDomains?.[0],
+    origin: fixture.origin,
   });
+}
+
+/**
+ * Default token for merchant_demo_001 (init.sql: chain_id=1, token_id=1, address 0xe7f17...)
+ */
+const DEFAULT_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+
+/** Build params for createPayment (POST /payments/create uses orderId, amount, tokenAddress, successUrl, failUrl). */
+export function makeCreatePaymentParams(
+  amount: number,
+  orderId?: string,
+  tokenAddress: string = DEFAULT_TOKEN_ADDRESS
+): CreatePaymentParams {
+  const base = process.env.PAY_SERVER_ORIGIN || 'http://localhost:3000';
+  const oid = orderId ?? `order-${Date.now()}`;
+  return {
+    orderId: oid,
+    amount,
+    tokenAddress,
+    successUrl: `${base}/success?orderId=${oid}`,
+    failUrl: `${base}/fail?orderId=${oid}`,
+  };
 }
 
 export async function createPayment(

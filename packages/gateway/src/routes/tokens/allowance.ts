@@ -1,11 +1,16 @@
 import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
+import { MerchantService } from '../../services/merchant.service';
+import { createPublicAuthMiddleware } from '../../middleware/public-auth.middleware';
 import { ErrorResponseSchema, TokenAllowanceResponseSchema } from '../../docs/schemas';
 
 export async function getTokenAllowanceRoute(
   app: FastifyInstance,
-  blockchainService: BlockchainService
+  blockchainService: BlockchainService,
+  merchantService: MerchantService
 ) {
+  const authMiddleware = createPublicAuthMiddleware(merchantService);
+
   app.get<{
     Params: { tokenAddress: string };
     Querystring: { chainId: string; owner: string; spender: string };
@@ -16,7 +21,21 @@ export async function getTokenAllowanceRoute(
         operationId: 'getTokenAllowance',
         tags: ['Tokens'],
         summary: 'Get token allowance',
-        description: 'Returns the ERC20 token allowance for a spender address',
+        description:
+          'Returns the ERC20 token allowance for a spender address. Requires x-public-key and Origin.',
+        headers: {
+          type: 'object',
+          properties: {
+            'x-public-key': {
+              type: 'string',
+              description: 'Public key (pk_live_xxx or pk_test_xxx)',
+            },
+            origin: {
+              type: 'string',
+              description: 'Request origin; must match merchant allowed_domains',
+            },
+          },
+        },
         params: {
           type: 'object',
           properties: {
@@ -51,9 +70,12 @@ export async function getTokenAllowanceRoute(
         response: {
           200: TokenAllowanceResponseSchema,
           400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
       },
+      preHandler: authMiddleware,
     },
     async (request, reply) => {
       try {

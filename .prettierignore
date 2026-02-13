@@ -6,6 +6,7 @@ dist/
 build/
 .next/
 coverage/
+next-env.d.ts
 
 # Generated files
 artifacts/

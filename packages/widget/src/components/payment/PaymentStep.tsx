@@ -238,7 +238,7 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     setConfigError(null);
 
     // Validate required payment details before proceeding
-    if (!paymentDetails?.signature) {
+    if (!paymentDetails?.serverSignature) {
       setConfigError(
         'Payment configuration error: Missing server signature. Please contact support.'
       );

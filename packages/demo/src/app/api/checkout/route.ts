@@ -100,34 +100,32 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Note: recipientAddress removed - contract pays to treasury (set at deployment)
+    // Create payment via gateway (public key + Origin). orderId, tokenAddress, and redirect URLs required.
+    const orderId = `order-${Date.now()}`;
+    const baseUrl = merchantConfig.origin.replace(/\/$/, '');
     const client = getSoloPayClient();
     const payment = await client.createPayment({
-      merchantId: merchantConfig.merchantId,
+      orderId,
       amount: totalAmount,
-      chainId: merchantConfig.chainId,
       tokenAddress: merchantConfig.tokenAddress,
+      successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
+      failUrl: `${baseUrl}/payment/fail?orderId=${orderId}`,
     });
 
     // 클라이언트에 결제 정보 반환
-    // tokenSymbol, tokenDecimals는 결제 서버에서 on-chain 조회한 값 사용 (source of truth)
     return NextResponse.json(
       {
         success: true,
-        // 결제 서버에서 생성된 paymentId
         paymentId: payment.paymentId,
-        // 상품 정보 (배열)
+        orderId: payment.orderId,
         products: productInfos,
-        // 결제 정보 (상점 설정 기반)
         totalAmount: totalAmount.toString(),
         chainId: payment.chainId,
-        tokenSymbol: payment.tokenSymbol, // From on-chain via pay-server
+        tokenSymbol: payment.tokenSymbol,
         tokenAddress: payment.tokenAddress,
-        decimals: payment.tokenDecimals, // From on-chain via pay-server
-        // 결제 컨트랙트 정보 (결제 서버 응답)
+        decimals: payment.tokenDecimals,
         gatewayAddress: payment.gatewayAddress,
         forwarderAddress: payment.forwarderAddress,
-        // Server signature fields for V2 payment flow
         recipientAddress: payment.recipientAddress,
         merchantId: payment.merchantId,
         feeBps: payment.feeBps,

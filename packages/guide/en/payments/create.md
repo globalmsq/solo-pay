@@ -32,40 +32,46 @@ Payment creation is the first step in SoloPay integration. Created payments **au
 
 ## SDK Usage
 
+Authentication uses **public key + Origin** (set in client config). Chain and recipient come from merchant config; you must pass `tokenAddress` (whitelisted and enabled for the merchant).
+
 ```typescript
 const payment = await client.createPayment({
-  merchantId: 'merchant_demo_001',
-  amount: 10.5, // 10.5 USDC (token units)
-  chainId: 80002, // Polygon Amoy
-  tokenAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-  recipientAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  orderId: 'order-001',
+  amount: 10.5, // token units (e.g. 10.5 USDC)
+  tokenAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // must be whitelisted and enabled for merchant
+  successUrl: 'https://example.com/success',
+  failUrl: 'https://example.com/fail',
 });
 ```
 
 ## REST API Usage
 
+Auth: `x-public-key` header (pk_live_xxx or pk_test_xxx) and `Origin` header (must match one of merchant `allowed_domains`).
+
 ```bash
 curl -X POST http://localhost:3001/payments/create \
-  -H "x-api-key: sk_test_xxxxx" \
+  -H "x-public-key: pk_test_demo" \
+  -H "Origin: http://localhost:3000" \
   -H "Content-Type: application/json" \
   -d '{
-    "merchantId": "merchant_demo_001",
+    "orderId": "order-001",
     "amount": 10.5,
-    "chainId": 80002,
     "tokenAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-    "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    "successUrl": "https://example.com/success",
+    "failUrl": "https://example.com/fail"
   }'
 ```
 
 ## Request Parameters
 
-| Field              | Type      | Required | Description                                   |
-| ------------------ | --------- | -------- | --------------------------------------------- |
-| `merchantId`       | `string`  | ✓        | Merchant unique identifier (merchant_key)     |
-| `amount`           | `number`  | ✓        | Payment amount (token units, e.g., 10.5 USDC) |
-| `chainId`          | `number`  | ✓        | Blockchain network ID                         |
-| `tokenAddress`     | `address` | ✓        | ERC-20 token contract address                 |
-| `recipientAddress` | `address` | ✓        | Payment recipient address                     |
+| Field          | Type      | Required | Description                                                                  |
+| -------------- | --------- | -------- | ---------------------------------------------------------------------------- |
+| `orderId`      | `string`  | ✓        | Merchant order identifier                                                    |
+| `amount`       | `number`  | ✓        | Payment amount in token units (e.g. 10.5 USDC)                               |
+| `tokenAddress` | `address` | ✓        | ERC-20 token contract address (must be whitelisted and enabled for merchant) |
+| `successUrl`   | `string`  | ✓        | Redirect URL on success                                                      |
+| `failUrl`      | `string`  | ✓        | Redirect URL on failure                                                      |
+| `webhookUrl`   | `string`  |          | Optional per-payment webhook URL                                             |
 
 ::: tip Amount Input
 Enter amounts in token units. The server automatically converts to wei.
@@ -96,10 +102,12 @@ Example: 10.5 USDC → 10500000 (6 decimals)
 
 ```json
 {
-  "code": "UNSUPPORTED_TOKEN",
-  "message": "Unsupported token"
+  "code": "TOKEN_NOT_ENABLED",
+  "message": "Token is not enabled for this merchant. Add and enable it in payment methods first."
 }
 ```
+
+Other possible codes: `TOKEN_NOT_FOUND` (not whitelisted), `VALIDATION_ERROR`, `UNSUPPORTED_TOKEN`.
 
 ## Response Field Description
 

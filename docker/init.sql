@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS payments (
     INDEX idx_merchant_id (merchant_id),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at),
-    INDEX idx_order_id_merchant_id (order_id, merchant_id)
+    UNIQUE INDEX idx_payments_order_id_merchant_id (order_id, merchant_id) COMMENT 'One payment per (order_id, merchant_id); multiple NULL order_id allowed'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -257,15 +257,15 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 -- recipient_address: Account #1 (recipient) for receiving payments
 -- webhook_url: Demo app receives webhooks at /api/webhook (Docker: http://demo:3000/api/webhook)
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, public_key, public_key_hash, allowed_domains, webhook_url, fee_bps, recipient_address) VALUES
-('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'pk_test_demo_001', '51a9fbfc241088a3463f5df1db9d4d1963e4b74056f0892417f7db37bdf17b01', '["http://localhost:3000"]', 'http://demo:3000/api/webhook', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
+('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'pk_test_demo', 'cfaaf44f4fcf9f65805b2a4642a68173d0b427f104dd192adbb489f01e392b76', '["http://localhost:3000"]', 'http://demo:3000/api/webhook', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
 
 -- MetaStar Merchant (id=2)
 -- API Key: msq_sk_metastar_123 -> SHA-256 hash
 -- chain_id=3 (Amoy chain)
 -- recipient_address: Steven's wallet address for receiving payments
 -- public_key, public_key_hash, allowed_domains: NULL by default; configure via POST /merchants/me/public-key
-INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
-('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL, 0, '0x7bE4CfF95eb3c3d2162410abCd5506f691C624Ed');
+INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, public_key, public_key_hash, allowed_domains, webhook_url, fee_bps, recipient_address) VALUES
+('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL, NULL, NULL, NULL, 0, '0x7bE4CfF95eb3c3d2162410abCd5506f691C624Ed');
 
 -- Sample Merchant (id=3)
 -- API Key: sample_api_key_001 -> SHA-256 hash

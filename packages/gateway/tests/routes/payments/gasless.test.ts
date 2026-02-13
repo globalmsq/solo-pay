@@ -7,13 +7,13 @@ import { RelayerService } from '../../../src/services/relayer.service';
 import { RelayService } from '../../../src/services/relay.service';
 import { PaymentService } from '../../../src/services/payment.service';
 import { MerchantService } from '../../../src/services/merchant.service';
+import { API_V1_BASE_PATH } from '../../../src/constants';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
 // Test public key for authentication (widget uses x-public-key, not x-api-key)
 const TEST_PUBLIC_KEY = 'pk_test_abc123';
 const TEST_ORIGIN = 'http://localhost:3000';
 
-// Mock merchant data for auth
 const mockMerchant = {
   id: 1,
   merchant_key: 'merchant_demo_001',
@@ -75,11 +75,11 @@ const createValidGaslessRequest = (
   ...overrides,
 });
 
-// Mock payment data - merchant_id must match mockMerchant.id
+// Mock payment data
 const mockPaymentData = {
   id: 1,
   payment_hash: 'payment-123',
-  merchant_id: 1, // matches mockMerchant.id
+  merchant_id: 1,
   status: 'CREATED',
   amount: '1000000000000000000', // 1 token in wei (18 decimals)
   chain_id: 80002,
@@ -130,12 +130,17 @@ describe('POST /payments/:id/gasless', () => {
       findByPublicKey: vi.fn().mockResolvedValue(mockMerchant),
     };
 
-    await submitGaslessRoute(
-      app,
-      relayerService as RelayerService,
-      relayService as RelayService,
-      paymentService as PaymentService,
-      merchantService as MerchantService
+    await app.register(
+      async (scope) => {
+        await submitGaslessRoute(
+          scope,
+          relayerService as RelayerService,
+          relayService as RelayService,
+          paymentService as PaymentService,
+          merchantService as MerchantService
+        );
+      },
+      { prefix: API_V1_BASE_PATH }
     );
   });
 
@@ -145,7 +150,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-123/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
@@ -162,7 +167,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-456/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-456/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
@@ -184,7 +189,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-789/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-789/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidRequest,
       });
@@ -203,7 +208,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-101/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-101/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidRequest,
       });
@@ -222,7 +227,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-202/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-202/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: incompleteRequest,
       });
@@ -237,7 +242,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments//gasless',
+        url: `${API_V1_BASE_PATH}/payments//gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
@@ -256,7 +261,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-404/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-404/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
@@ -277,7 +282,7 @@ describe('POST /payments/:id/gasless', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/payments/payment-505/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-505/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidRequest,
       });
@@ -296,7 +301,7 @@ describe('POST /payments/:id/gasless', () => {
 
       await app.inject({
         method: 'POST',
-        url: '/payments/payment-606/gasless',
+        url: `${API_V1_BASE_PATH}/payments/payment-606/gasless`,
         headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });

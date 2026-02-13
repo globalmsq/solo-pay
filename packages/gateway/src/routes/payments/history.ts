@@ -2,14 +2,19 @@ import { FastifyInstance } from 'fastify';
 import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
 import { RelayService } from '../../services/relay.service';
+import { createAuthMiddleware } from '../../middleware/auth.middleware';
+import { MerchantService } from '../../services/merchant.service';
 import { ErrorResponseSchema } from '../../docs/schemas';
 
 export async function getPaymentHistoryRoute(
   app: FastifyInstance,
   blockchainService: BlockchainService,
   paymentService: PaymentService,
-  relayService: RelayService
+  relayService: RelayService,
+  merchantService: MerchantService
 ) {
+  const authMiddleware = createAuthMiddleware(merchantService);
+
   app.get<{ Querystring: { chainId: string; payer: string; limit?: string } }>(
     '/payments/history',
     {
@@ -17,7 +22,9 @@ export async function getPaymentHistoryRoute(
         operationId: 'getPaymentHistory',
         tags: ['Payments'],
         summary: 'Get payment history',
-        description: 'Returns payment history for a payer address from blockchain events',
+        description:
+          'Returns payment history for a payer address from blockchain events. API Key required.',
+        security: [{ ApiKeyAuth: [] }],
         querystring: {
           type: 'object',
           properties: {
@@ -67,9 +74,11 @@ export async function getPaymentHistoryRoute(
             },
           },
           400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
       },
+      preHandler: authMiddleware,
     },
     async (request, reply) => {
       try {

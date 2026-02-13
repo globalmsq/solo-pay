@@ -138,7 +138,7 @@ model Payment {
 
   @@index([merchant_id])
   @@index([status])
-  @@index([order_id, merchant_id])
+  @@unique([order_id, merchant_id])
   @@map("payments")
 }
 

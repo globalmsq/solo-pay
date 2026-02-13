@@ -30,7 +30,6 @@ export async function submitGaslessRoute(
   paymentService: PaymentService,
   merchantService: MerchantService
 ) {
-  // Public key auth middleware (widget uses x-public-key, not x-api-key)
   const authMiddleware = createPublicAuthMiddleware(merchantService);
 
   app.post<{ Params: { id: string }; Body: SubmitGaslessRequest }>(
@@ -54,11 +53,11 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
 - EIP-712 signature from the payer
 - Token approval for PaymentGateway contract
 
-**Security:**
+**Security (no auth required):**
+- Payment ID is validated (payment must exist; amount and status checked)
 - Amount in forwardRequest.data is validated against DB amount
 - Signature format is validated before relay submission
         `,
-        security: [{ PublicKeyAuth: [] }],
         params: {
           type: 'object',
           properties: {

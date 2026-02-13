@@ -44,27 +44,28 @@ curl -H "x-api-key: sk_test_xxxxx" https://api.solopay.com/...
 
 ### POST /payments/create
 
-결제를 생성합니다.
+결제를 생성합니다. 인증: `x-public-key`, `Origin` 헤더.
 
 **Request**
 
 ```json
 {
-  "merchantId": "merchant_demo_001",
+  "orderId": "order-001",
   "amount": 10.5,
-  "chainId": 80002,
   "tokenAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-  "recipientAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  "successUrl": "https://example.com/success",
+  "failUrl": "https://example.com/fail"
 }
 ```
 
-| 필드               | 타입    | 필수 | 설명                                 |
-| ------------------ | ------- | ---- | ------------------------------------ |
-| `merchantId`       | string  | ✓    | 가맹점 고유 식별자 (merchant_key)    |
-| `amount`           | number  | ✓    | 결제 금액 (토큰 단위, 예: 10.5 USDC) |
-| `chainId`          | number  | ✓    | 블록체인 네트워크 ID                 |
-| `tokenAddress`     | address | ✓    | ERC-20 토큰 컨트랙트 주소            |
-| `recipientAddress` | address | ✓    | 결제 수령 주소                       |
+| 필드           | 타입    | 필수 | 설명                                                    |
+| -------------- | ------- | ---- | ------------------------------------------------------- |
+| `orderId`      | string  | ✓    | 가맹점 주문 식별자                                      |
+| `amount`       | number  | ✓    | 결제 금액 (토큰 단위, 예: 10.5 USDC)                    |
+| `tokenAddress` | address | ✓    | ERC-20 토큰 주소 (whitelist 등록 및 가맹점 활성화 필수) |
+| `successUrl`   | string  | ✓    | 성공 시 리다이렉트 URL                                  |
+| `failUrl`      | string  | ✓    | 실패 시 리다이렉트 URL                                  |
+| `webhookUrl`   | string  |      | 결제별 웹훅 URL (선택)                                  |
 
 **Response (201)**
 

@@ -41,7 +41,6 @@ Public Key auth.
         `,
         headers: {
           type: 'object',
-          required: ['x-public-key', 'origin'],
           properties: {
             'x-public-key': {
               type: 'string',

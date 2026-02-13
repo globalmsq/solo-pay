@@ -6,8 +6,10 @@ export interface MerchantFixture {
   chainId: number; // DB chain_id (logical reference to chains.id)
   networkId: number; // EIP-155 chain ID for blockchain
   webhookUrl?: string;
+  /** For POST /payments/create (public key auth). Must match DB public_key and allowed_domains. */
   publicKey?: string;
-  allowedDomains?: string[];
+  /** Origin for createPayment; must be in merchant allowed_domains. */
+  origin?: string;
 }
 
 /**
@@ -24,11 +26,11 @@ export const TEST_MERCHANTS: Record<string, MerchantFixture> = {
     merchantId: 'merchant_demo_001',
     apiKey: '123',
     apiKeyHash: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
-    chainId: 1, // DB chains.id = 1
-    networkId: 31337, // Hardhat localhost
+    chainId: 1,
+    networkId: 31337,
     webhookUrl: 'https://webhook.site/demo',
-    publicKey: 'pk_test_demo_001',
-    allowedDomains: ['http://localhost:3000'],
+    publicKey: 'pk_test_demo',
+    origin: 'http://localhost:3000',
   },
   // MetaStar Merchant (id=2) - Amoy chain (chain_id=3, network_id=80002)
   metastar: {

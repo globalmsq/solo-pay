@@ -9,7 +9,7 @@ import { PaymentMethodService } from '../../../services/payment-method.service';
 import { PaymentService } from '../../../services/payment.service';
 
 // 테스트용 ChainWithTokens mock (DB에서 로드된 형식)
-const mockChainsWithTokens: ChainWithTokens[] = [
+const mockChainTokens: ChainWithTokens[] = [
   {
     id: 1,
     network_id: 80002,
@@ -107,7 +107,7 @@ describe('POST /payments/create', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    blockchainService = new BlockchainService(mockChainsWithTokens);
+    blockchainService = new BlockchainService(mockChainTokens);
   });
 
   describe('Valid requests', () => {
@@ -135,26 +135,9 @@ describe('POST /payments/create', () => {
   });
 
   describe('Schema validation', () => {
-    it('should validate required fields in request body', async () => {
-      // Note: recipientAddress 제거됨 - 컨트랙트가 treasury로 고정 결제
-      const requiredFields = ['amount', 'chainId', 'tokenAddress'];
-      // This is implicitly tested through the schema validation
-      expect(requiredFields).toHaveLength(3);
-    });
-
-    it('should reject missing amount', () => {
-      const payload = {
-        chainId: 80002,
-        tokenAddress: '0xE4C687167705Abf55d709395f92e254bdF5825a2',
-      };
-      expect(payload).not.toHaveProperty('amount');
-    });
-
-    it('should reject invalid chainId', () => {
-      // Test that non-numeric chainId would fail validation
-      const invalidChainId = 'invalid';
-      expect(typeof invalidChainId).toBe('string');
-      expect(Number.isNaN(Number(invalidChainId))).toBe(true);
+    it('should validate required fields in request body', () => {
+      const requiredFields = ['orderId', 'amount', 'tokenAddress', 'successUrl', 'failUrl'];
+      expect(requiredFields).toHaveLength(5);
     });
   });
 
