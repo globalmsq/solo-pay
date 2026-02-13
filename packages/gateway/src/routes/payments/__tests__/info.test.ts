@@ -28,6 +28,7 @@ const mockChainsWithTokens: ChainWithTokens[] = [
         address: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
         symbol: 'TEST',
         decimals: 18,
+        cmc_id: null,
         is_enabled: true,
         is_deleted: false,
         deleted_at: null,
