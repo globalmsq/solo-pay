@@ -242,6 +242,40 @@ services:
     networks:
       - solo-pay-network
 
+  # Price Service (Token price lookup via CoinMarketCap API)
+  price-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: price-service
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/price-service:nightly
+    container_name: solo-pay-price-service
+    restart: always
+    ports:
+      - '3006:3003'
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      HOST: 0.0.0.0
+      DATABASE_URL: mysql://solopay:pass@mysql:3306/solopay
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_TTL: 60
+      CMC_API_KEY: ${CMC_API_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - solo-pay-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://127.0.0.1:3003/health']
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
   # Documentation (VitePress)
   guide:
     build:
