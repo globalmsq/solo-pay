@@ -25,6 +25,7 @@ const roastBgMap: Record<string, string> = {
 export default function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [tokenAddress, setTokenAddress] = useState<string | null>(null);
 
   const handleClickPayNow = async () => {
     const response = await fetch('/api/payments', {
@@ -35,13 +36,13 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
       body: JSON.stringify({
         productId: product.id,
         price: product.price,
-        tokenSymbol: 'TEST',
       }),
     });
 
-    const { paymentId } = await response.json();
+    const data = await response.json();
 
-    setPaymentId(paymentId);
+    setPaymentId(data.paymentId);
+    setTokenAddress(data.tokenAddress);
     setIsWidgetOpen(true);
   };
 
@@ -101,10 +102,11 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
         </div>
       </div>
 
-      {isWidgetOpen && paymentId && (
+      {isWidgetOpen && paymentId && tokenAddress && (
         <PaymentModal
           product={product}
           paymentId={paymentId}
+          tokenAddress={tokenAddress}
           onClose={() => setIsWidgetOpen(false)}
         />
       )}

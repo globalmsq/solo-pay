@@ -4,16 +4,15 @@ import { useRouter } from 'next/navigation';
 export default function PaymentModal({
   product,
   paymentId,
+  tokenAddress,
   onClose,
 }: {
   product: { price: number };
   paymentId: string;
+  tokenAddress: string;
   onClose: () => void;
 }) {
   const router = useRouter();
-
-  const tokenAddress =
-    process.env.NEXT_PUBLIC_SOLO_PAY_TOKEN_ADDRESS || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
 
   const widgetUrl = useMemo(() => {
     const url = new URL(process.env.NEXT_PUBLIC_WIDGET_URL || 'http://localhost:3005');
