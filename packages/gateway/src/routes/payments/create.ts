@@ -53,7 +53,6 @@ Creates a payment. Single endpoint for both widget and backend. Uses Public Key 
         `,
         headers: {
           type: 'object',
-          required: ['x-public-key', 'origin'],
           properties: {
             'x-public-key': {
               type: 'string',

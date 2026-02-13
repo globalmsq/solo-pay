@@ -9,6 +9,11 @@ import type { WebhookQueueAdapter } from '../../../src/services/webhook-queue.se
 import { PaymentStatus } from '../../../src/schemas/payment.schema';
 import { API_V1_BASE_PATH } from '../../../src/constants';
 
+const TEST_PUBLIC_KEY = 'pk_test_demo';
+const TEST_ORIGIN = 'http://localhost:3011';
+
+const publicAuthHeaders = { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN };
+
 describe('GET /payments/:id/status', () => {
   let app: FastifyInstance;
   let blockchainService: Partial<BlockchainService>;
@@ -71,6 +76,11 @@ describe('GET /payments/:id/status', () => {
         id: 1,
         webhook_url: 'https://merchant.example/webhook',
       }),
+      findByPublicKey: vi.fn().mockResolvedValue({
+        id: 1,
+        webhook_url: 'https://merchant.example/webhook',
+        allowed_domains: [TEST_ORIGIN],
+      }),
     };
 
     webhookQueue = {
@@ -91,11 +101,36 @@ describe('GET /payments/:id/status', () => {
     );
   });
 
+  describe('Public auth', () => {
+    it('x-public-key 없이 요청하면 2xx가 아니어야 함', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: { origin: TEST_ORIGIN },
+      });
+      // Schema validation (400) or middleware (401) must reject the request
+      expect(response.statusCode).toBeGreaterThanOrEqual(400);
+      expect(response.statusCode).toBeLessThan(500);
+    });
+
+    it('허용되지 않은 origin으로 요청하면 403을 반환해야 함', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: 'https://not-allowed.example.com' },
+      });
+      expect(response.statusCode).toBe(403);
+      const body = JSON.parse(response.body);
+      expect(body.code).toBe('FORBIDDEN');
+    });
+  });
+
   describe('정상 케이스', () => {
     it('유효한 결제 ID로 요청하면 200 상태 코드와 함께 결제 정보를 반환해야 함', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: publicAuthHeaders,
       });
 
       expect(response.statusCode).toBe(200);
@@ -109,6 +144,7 @@ describe('GET /payments/:id/status', () => {
       const response = await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: publicAuthHeaders,
       });
 
       expect(response.statusCode).toBe(200);
@@ -131,6 +167,7 @@ describe('GET /payments/:id/status', () => {
       const response = await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments/nonexistent-id/status`,
+        headers: publicAuthHeaders,
       });
 
       expect(response.statusCode).toBe(404);
@@ -142,6 +179,7 @@ describe('GET /payments/:id/status', () => {
       const response = await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments//status`,
+        headers: publicAuthHeaders,
       });
 
       // Fastify는 빈 파라미터를 다르게 처리할 수 있음
@@ -158,6 +196,7 @@ describe('GET /payments/:id/status', () => {
       const response = await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: publicAuthHeaders,
       });
 
       expect(response.statusCode).toBe(500);
@@ -187,6 +226,7 @@ describe('GET /payments/:id/status', () => {
         const response = await app.inject({
           method: 'GET',
           url: `${API_V1_BASE_PATH}/payments/payment-${status}/status`,
+          headers: publicAuthHeaders,
         });
 
         expect(response.statusCode).toBe(200);
@@ -231,6 +271,7 @@ describe('GET /payments/:id/status', () => {
       const response = await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: publicAuthHeaders,
       });
 
       expect(response.statusCode).toBe(200);
@@ -263,6 +304,7 @@ describe('GET /payments/:id/status', () => {
       await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: publicAuthHeaders,
       });
 
       expect(webhookQueue.addPaymentConfirmed).not.toHaveBeenCalled();
@@ -276,6 +318,7 @@ describe('GET /payments/:id/status', () => {
       await app.inject({
         method: 'GET',
         url: `${API_V1_BASE_PATH}/payments/payment-123/status`,
+        headers: publicAuthHeaders,
       });
 
       const endTime = performance.now();

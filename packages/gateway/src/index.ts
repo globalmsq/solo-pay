@@ -170,8 +170,8 @@ const registerRoutes = async () => {
         paymentService,
         merchantService
       );
-      await getTokenBalanceRoute(scope, blockchainService);
-      await getTokenAllowanceRoute(scope, blockchainService);
+      await getTokenBalanceRoute(scope, blockchainService, merchantService);
+      await getTokenAllowanceRoute(scope, blockchainService, merchantService);
       await updateMerchantRoute(scope, merchantService);
       await getMerchantRoute(
         scope,

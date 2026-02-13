@@ -58,7 +58,6 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
 - Amount in forwardRequest.data is validated against DB amount
 - Signature format is validated before relay submission
         `,
-        security: [{ PublicKeyAuth: [] }],
         params: {
           type: 'object',
           properties: {
