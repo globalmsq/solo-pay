@@ -7,7 +7,6 @@ import { usePaymentApi } from '../../hooks/usePaymentApi';
 import { useWallet } from '../../hooks/useWallet';
 import { useToken } from '../../hooks/useToken';
 import { useGaslessPayment } from '../../hooks/useGaslessPayment';
-import { requestGas } from '../../lib/api';
 import { ConnectButton } from '../ConnectButton';
 import type { PaymentStepType, WidgetUrlParams } from '../../types/index';
 import { formatUnits } from 'viem';
@@ -102,10 +101,6 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
 
   // Error for invalid payment configuration
   const [configError, setConfigError] = useState<string | null>(null);
-  // Gas faucet request state
-  const [isRequestingGas, setIsRequestingGas] = useState(false);
-  const [gasRequestError, setGasRequestError] = useState<string | null>(null);
-  const [gasReceived, setGasReceived] = useState(false);
 
   // Wallet connection state from wagmi
   const { address, isConnected, disconnect } = useWallet();
@@ -167,7 +162,6 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
 
   // Step navigation handlers
   const goToWalletConnect = () => setCurrentStep('wallet-connect');
-  const goToTokenApproval = () => setCurrentStep('token-approval');
   const goToPaymentConfirm = () => setCurrentStep('payment-confirm');
   const goToPaymentProcessing = () => setCurrentStep('payment-processing');
   const goToPaymentComplete = () => setCurrentStep('payment-complete');
@@ -237,28 +231,6 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
       goToPaymentConfirm();
     }
   }, [needsApproval, approve]);
-
-  // Request gas (faucet) handler
-  const handleGetGas = useCallback(async () => {
-    if (!urlParams?.pk || !paymentDetails?.paymentId || !address) return;
-    setGasRequestError(null);
-    setGasReceived(false);
-    setIsRequestingGas(true);
-    try {
-      await requestGas(
-        urlParams.pk,
-        typeof window !== 'undefined' ? window.location.origin : '',
-        paymentDetails.paymentId,
-        address
-      );
-      setGasReceived(true);
-      refetchToken();
-    } catch (err) {
-      setGasRequestError(err instanceof Error ? err.message : 'Failed to request gas');
-    } finally {
-      setIsRequestingGas(false);
-    }
-  }, [urlParams?.pk, paymentDetails?.paymentId, address, refetchToken]);
 
   // Pay handler (gasless only)
   const handlePay = useCallback(() => {
@@ -390,10 +362,6 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
             walletAddress={address ? formatAddress(address) : ''}
             balance={formatBalance(formattedBalance)}
             token={paymentDetails.tokenSymbol}
-            onGetGas={handleGetGas}
-            isRequestingGas={isRequestingGas}
-            gasRequestError={gasRequestError}
-            gasReceived={gasReceived}
             onApprove={handleApprove}
             onDisconnect={handleDisconnect}
             onCancel={urlParams?.failUrl ? handleCancel : undefined}
@@ -422,7 +390,6 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
               token={paymentDetails.tokenSymbol}
               network={getNetworkName(paymentDetails.chainId)}
               onPay={handlePay}
-              onBack={goToTokenApproval}
             />
           </div>
         );

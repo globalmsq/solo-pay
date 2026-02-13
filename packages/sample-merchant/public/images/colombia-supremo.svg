@@ -1,0 +1,43 @@
+<svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Mountains background -->
+  <g opacity="0.2">
+    <path d="M30 120 L80 55 L130 120" fill="#3C2415"/>
+    <path d="M70 120 L120 45 L170 120" fill="#3C2415" opacity="0.7"/>
+    <path d="M110 120 L155 60 L200 120" fill="#3C2415" opacity="0.5"/>
+  </g>
+
+  <!-- Sunrise arc -->
+  <path d="M65 50 Q120 15 175 50" stroke="#C5A572" stroke-width="1" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <g opacity="0.15">
+    <line x1="120" y1="22" x2="120" y2="15" stroke="#C5A572" stroke-width="0.8"/>
+    <line x1="100" y1="28" x2="96" y2="22" stroke="#C5A572" stroke-width="0.8"/>
+    <line x1="140" y1="28" x2="144" y2="22" stroke="#C5A572" stroke-width="0.8"/>
+  </g>
+
+  <!-- Coffee cup - tulip shape -->
+  <path d="M96 120 Q92 145 100 158 L140 158 Q148 145 144 120" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="120" cy="120" rx="24" ry="5" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+
+  <!-- Coffee surface -->
+  <ellipse cx="120" cy="120" rx="20" ry="3.5" fill="#3C2415" opacity="0.1"/>
+
+  <!-- Handle -->
+  <path d="M144 128 Q160 130 160 140 Q160 150 144 152" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Saucer -->
+  <ellipse cx="120" cy="162" rx="32" ry="5" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+
+  <!-- Steam -->
+  <path d="M112 115 Q108 100 114 90" stroke="#3C2415" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <path d="M128 115 Q132 100 126 90" stroke="#3C2415" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Coffee beans -->
+  <g transform="translate(78, 168)" opacity="0.4">
+    <ellipse cx="0" cy="0" rx="5" ry="3.5" stroke="#3C2415" stroke-width="1" fill="none" transform="rotate(-20)"/>
+    <path d="M-2,-3 Q0,0 -2,3" stroke="#3C2415" stroke-width="0.5" transform="rotate(-20)"/>
+  </g>
+  <g transform="translate(162, 168)" opacity="0.4">
+    <ellipse cx="0" cy="0" rx="5" ry="3.5" stroke="#3C2415" stroke-width="1" fill="none" transform="rotate(20)"/>
+    <path d="M-2,-3 Q0,0 -2,3" stroke="#3C2415" stroke-width="0.5" transform="rotate(20)"/>
+  </g>
+</svg>

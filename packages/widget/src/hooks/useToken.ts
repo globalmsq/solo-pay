@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { ERC20_ABI } from '../lib/contracts';
 import { formatUnits, parseGwei } from 'viem';
@@ -128,7 +128,13 @@ export function useToken({
     data: approvalTxHash,
     isPending: isApproving,
     error: approvalWriteError,
+    reset: resetApproval,
   } = useWriteContract();
+
+  // Reset approval state when wallet address changes
+  useEffect(() => {
+    resetApproval();
+  }, [userAddress, resetApproval]);
 
   // Wait for approval confirmation
   const { isLoading: isApprovalConfirming, error: approvalReceiptError } =

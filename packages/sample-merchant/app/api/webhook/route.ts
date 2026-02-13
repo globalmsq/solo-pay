@@ -4,6 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 const GATEWAY_API_URL = process.env.GATEWAY_API_URL || 'http://localhost:3001';
 const API_KEY = process.env.SOLO_PAY_API_KEY || '';
 
+/** Convert human-readable token amount to wei string (e.g. 25 → "25000000000000000000") */
+function toWei(amount: number, decimals: number): string {
+  const [intPart, decPart = ''] = amount.toString().split('.');
+  const paddedDec = decPart.padEnd(decimals, '0').slice(0, decimals);
+  return BigInt(intPart + paddedDec).toString();
+}
+
 interface GatewayPaymentResponse {
   paymentId: string;
   orderId?: string;
@@ -75,13 +82,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment not confirmed on gateway' }, { status: 400 });
     }
 
-    // 4. Verify amount matches (compare wei directly — no floating point conversion)
-    const gatewayAmountWei = BigInt(gatewayPayment.amount);
-    const localAmountWei = BigInt(localPayment.amount.toString());
+    // 4. Verify amount matches against Product price (source of truth)
+    const product = await prisma.product.findUnique({
+      where: { id: localPayment.product_id },
+    });
 
-    if (gatewayAmountWei !== localAmountWei) {
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    const expectedWei = toWei(product.price, gatewayPayment.tokenDecimals);
+    const gatewayAmountWei = gatewayPayment.amount;
+
+    if (expectedWei !== gatewayAmountWei) {
       console.error(
-        `[webhook] Amount mismatch: local=${localAmountWei}, gateway=${gatewayAmountWei}`
+        `[webhook] Amount mismatch: product price=${product.price}, expected wei=${expectedWei}, gateway wei=${gatewayAmountWei}`
       );
       return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
     }

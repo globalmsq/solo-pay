@@ -160,13 +160,14 @@ COPY --from=sample-merchant-builder /app/packages/sample-merchant/package.json .
 COPY --from=sample-merchant-builder /app/packages/sample-merchant/next.config.ts ./packages/sample-merchant/
 COPY --from=sample-merchant-builder /app/packages/sample-merchant/app/generated ./packages/sample-merchant/app/generated
 COPY --from=sample-merchant-builder /app/packages/sample-merchant/prisma ./packages/sample-merchant/prisma
+COPY --from=sample-merchant-builder /app/packages/sample-merchant/public ./packages/sample-merchant/public
 
 WORKDIR /app/packages/sample-merchant
 ENV NODE_ENV=production
 EXPOSE 3004
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD curl -sf http://localhost:3004 || exit 1
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npx next start -p 3004"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && npx tsx prisma/seed.ts && npx next start -p 3004"]
 
 # === Simple Relayer Builder ===
 FROM deps AS simple-relayer-builder
