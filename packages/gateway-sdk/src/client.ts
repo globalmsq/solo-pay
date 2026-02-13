@@ -49,7 +49,12 @@ export class SoloPayClient {
   }
 
   async getPaymentStatus(paymentId: string): Promise<PaymentStatusResponse> {
-    return this.request<PaymentStatusResponse>('GET', `/payments/${paymentId}/status`, undefined, 'public');
+    return this.request<PaymentStatusResponse>(
+      'GET',
+      `/payments/${paymentId}/status`,
+      undefined,
+      'public'
+    );
   }
 
   async submitGasless(params: GaslessParams): Promise<GaslessResponse> {
