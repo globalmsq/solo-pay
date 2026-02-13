@@ -1,9 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Product } from '../data/products';
 import PaymentModal from './PaymentModal';
-import CoffeeIllustration from './CoffeeIllustration';
+
+interface Product {
+  id: number;
+  name: string;
+  roast: string;
+  weight: string;
+  price: number;
+  description: string;
+  image_url: string | null;
+}
 
 const roastBgMap: Record<string, string> = {
   'Light Roast': 'bg-roast-light',
@@ -46,10 +54,13 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
       >
         {/* Illustration Zone */}
         <div className={`aspect-4/3 w-full ${roastBg} flex items-center justify-center p-6`}>
-          <CoffeeIllustration
-            productId={product.id}
-            className="w-full h-full transition-transform duration-500 hover:-translate-y-1"
-          />
+          {product.image_url && (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-contain transition-transform duration-500 hover:-translate-y-1"
+            />
+          )}
         </div>
 
         {/* Content Zone */}

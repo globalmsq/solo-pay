@@ -1,0 +1,47 @@
+<svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Volcano background -->
+  <path d="M50 165 L120 40 L190 165" stroke="#3C2415" stroke-width="1" fill="#3C2415" opacity="0.08" stroke-linejoin="round"/>
+  <!-- Crater -->
+  <path d="M108 48 L120 40 L132 48" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.3"/>
+  <!-- Volcano smoke -->
+  <path d="M120 38 Q118 28 122 20" stroke="#3C2415" stroke-width="0.8" fill="none" opacity="0.25" stroke-linecap="round"/>
+  <path d="M122 20 Q126 12 120 8" stroke="#3C2415" stroke-width="0.8" fill="none" opacity="0.15" stroke-linecap="round"/>
+
+  <!-- Moka Pot - body -->
+  <path d="M100 165 L104 120 L136 120 L140 165" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+  <!-- Moka Pot - waist -->
+  <path d="M104 120 Q120 115 136 120" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+  <!-- Moka Pot - upper chamber -->
+  <path d="M106 120 L110 90 L130 90 L134 120" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+  <!-- Moka Pot - top/lid -->
+  <path d="M110 90 Q120 85 130 90" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+  <line x1="120" y1="85" x2="120" y2="78" stroke="#3C2415" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="120" cy="76" r="3" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+
+  <!-- Handle -->
+  <path d="M100 125 Q85 128 85 142 Q85 156 100 160" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Steam from spout -->
+  <path d="M120 74 Q115 65 120 56" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <path d="M120 56 Q125 50 120 44" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.35" stroke-linecap="round"/>
+
+  <!-- Cocoa pods -->
+  <g transform="translate(60, 158)" opacity="0.3">
+    <ellipse cx="0" cy="0" rx="8" ry="4" stroke="#C5A572" stroke-width="1" fill="none" transform="rotate(-15)"/>
+    <line x1="-5" y1="0" x2="5" y2="0" stroke="#C5A572" stroke-width="0.5" transform="rotate(-15)"/>
+  </g>
+  <g transform="translate(180, 158)" opacity="0.3">
+    <ellipse cx="0" cy="0" rx="8" ry="4" stroke="#C5A572" stroke-width="1" fill="none" transform="rotate(15)"/>
+    <line x1="-5" y1="0" x2="5" y2="0" stroke="#C5A572" stroke-width="0.5" transform="rotate(15)"/>
+  </g>
+
+  <!-- Spice diamonds -->
+  <g opacity="0.2" fill="#C5A572">
+    <rect x="148" y="72" width="4" height="4" transform="rotate(45 150 74)"/>
+    <rect x="158" y="82" width="3" height="3" transform="rotate(45 159.5 83.5)"/>
+    <rect x="88" y="75" width="3.5" height="3.5" transform="rotate(45 89.75 76.75)"/>
+  </g>
+
+  <!-- Base line -->
+  <line x1="90" y1="170" x2="150" y2="170" stroke="#3C2415" stroke-width="1" opacity="0.3"/>
+</svg>

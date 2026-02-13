@@ -1,7 +1,10 @@
 import ProductCard from './components/ProductCard';
-import { products } from './data/products';
+import { prisma } from './lib/prisma';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const products = await prisma.product.findMany({ orderBy: { id: 'asc' } });
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* Header */}

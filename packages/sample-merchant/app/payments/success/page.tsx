@@ -1,7 +1,8 @@
 import { prisma } from '@/app/lib/prisma';
-import { products } from '@/app/data/products';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 
 export default async function PaymentSuccessPage({
   searchParams,
@@ -18,8 +19,9 @@ export default async function PaymentSuccessPage({
 
   if (!payment) return notFound();
 
-  // Match product from mock data by product_id
-  const product = products.find((p) => p.id === payment.product_id);
+  const product = await prisma.product.findUnique({
+    where: { id: payment.product_id },
+  });
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">

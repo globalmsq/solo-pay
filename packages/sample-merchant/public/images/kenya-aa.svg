@@ -1,0 +1,52 @@
+<svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Geometric border pattern - left side -->
+  <g opacity="0.2" stroke="#C5A572" stroke-width="1">
+    <path d="M35 40 L45 55 L35 70 L45 85 L35 100 L45 115 L35 130 L45 145 L35 160" fill="none"/>
+    <path d="M40 40 L50 55 L40 70 L50 85 L40 100 L50 115 L40 130 L50 145 L40 160" fill="none"/>
+  </g>
+
+  <!-- Geometric border pattern - bottom -->
+  <g opacity="0.15" stroke="#C5A572" stroke-width="1">
+    <path d="M60 175 L75 165 L90 175 L105 165 L120 175 L135 165 L150 175 L165 165 L180 175" fill="none"/>
+  </g>
+
+  <!-- Chemex body - hourglass shape -->
+  <path d="M100 60 L92 110 L92 115 Q92 120 100 125 L100 165" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M150 60 L158 110 L158 115 Q158 120 150 125 L150 165" stroke="#3C2415" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Chemex top opening -->
+  <ellipse cx="125" cy="60" rx="25" ry="5" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+
+  <!-- Chemex bottom -->
+  <ellipse cx="125" cy="165" rx="25" ry="4" stroke="#3C2415" stroke-width="1.5" fill="none"/>
+
+  <!-- Wooden collar -->
+  <rect x="114" y="108" width="22" height="14" rx="2" stroke="#3C2415" stroke-width="1.2" fill="none"/>
+  <!-- Collar tie -->
+  <path d="M125 108 L125 122" stroke="#3C2415" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- Coffee drip -->
+  <line x1="125" y1="125" x2="125" y2="135" stroke="#3C2415" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
+  <circle cx="125" cy="138" r="1.5" fill="#3C2415" opacity="0.3"/>
+
+  <!-- Filter cone visible at top -->
+  <path d="M105 62 L125 85 L145 62" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.4" stroke-dasharray="3 2"/>
+
+  <!-- Berry clusters -->
+  <g transform="translate(175, 85)" opacity="0.4">
+    <circle cx="0" cy="0" r="3" fill="#C5A572" opacity="0.5"/>
+    <circle cx="5" cy="-3" r="2.5" fill="#C5A572" opacity="0.4"/>
+    <circle cx="-4" cy="-4" r="2.5" fill="#C5A572" opacity="0.4"/>
+    <circle cx="2" cy="-7" r="2" fill="#C5A572" opacity="0.3"/>
+    <circle cx="-2" cy="4" r="2" fill="#C5A572" opacity="0.3"/>
+  </g>
+  <g transform="translate(68, 100)" opacity="0.35">
+    <circle cx="0" cy="0" r="2.5" fill="#C5A572" opacity="0.5"/>
+    <circle cx="4" cy="-2" r="2" fill="#C5A572" opacity="0.4"/>
+    <circle cx="-3" cy="-3" r="2" fill="#C5A572" opacity="0.4"/>
+  </g>
+
+  <!-- Steam -->
+  <path d="M118 55 Q114 40 119 30" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.4" stroke-linecap="round"/>
+  <path d="M132 55 Q136 40 131 30" stroke="#3C2415" stroke-width="1" fill="none" opacity="0.4" stroke-linecap="round"/>
+</svg>
