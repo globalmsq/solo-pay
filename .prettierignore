@@ -13,6 +13,7 @@ build-info/
 cache/
 typechain-types/
 packages/subgraph/generated/
+packages/sample-merchant/app/generated/
 
 # Config/tool files
 .moai/

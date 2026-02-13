@@ -4,6 +4,8 @@ export interface SoloPayConfig {
   environment: Environment;
   apiKey: string;
   apiUrl?: string;
+  publicKey?: string;
+  origin?: string;
 }
 
 // Request types

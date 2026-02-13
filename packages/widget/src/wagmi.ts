@@ -3,8 +3,6 @@ import { injected, metaMask } from 'wagmi/connectors';
 import { arbitrum, base, mainnet, optimism, polygon, polygonAmoy, sepolia } from 'wagmi/chains';
 import { defineChain } from 'viem';
 
-const enableTestnets = process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true';
-
 // Localhost (Hardhat/Anvil) for local dev - so widget can read balance on same chain as payment
 const localhost = defineChain({
   id: 31337,
@@ -25,7 +23,7 @@ const chains = [
   optimism,
   arbitrum,
   base,
-  ...(enableTestnets ? ([sepolia] as const) : []),
+  sepolia,
 ] as const;
 
 export const config = createConfig({

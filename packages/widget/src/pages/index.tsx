@@ -84,19 +84,23 @@ const Home: NextPage = () => {
         <link href="/favicon.ico" rel="icon" />
       </Head>
 
-      <main className="flex items-center justify-center min-h-screen p-2 sm:p-4 bg-transparent">
-        <div className="w-full max-w-lg rounded-none sm:rounded-2xl shadow-none sm:shadow-xl border-0 sm:border border-gray-200 bg-white p-4 sm:p-6">
+      <main className="flex items-center justify-center min-h-screen bg-transparent">
+        <div className="w-full h-[700px] max-w-lg rounded-none sm:rounded-2xl shadow-none sm:shadow-xl border-0 sm:border border-gray-200 bg-white p-4 sm:p-8 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="pb-4 mb-4 border-b border-gray-200">
+          <div className="shrink-0 pb-4 mb-4 border-b border-gray-200">
             <h1 className="text-base sm:text-lg font-bold text-gray-900">Solo Pay</h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">Secure Blockchain Payment</p>
           </div>
 
           {/* Payment content */}
-          <PaymentContent />
+          <div className="flex-1 min-h-0 flex flex-col justify-center overflow-y-auto">
+            <PaymentContent />
+          </div>
 
           {/* Footer */}
-          <p className="text-center text-xs mt-4 sm:mt-6 text-gray-400">Powered by Solo Pay</p>
+          <p className="shrink-0 text-center text-xs pt-4 sm:pt-6 text-gray-400">
+            Powered by Solo Pay
+          </p>
         </div>
       </main>
     </>

@@ -139,7 +139,7 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
     relayTxHash,
     error: gaslessError,
     isGaslessSupported,
-  } = useGaslessPayment({ paymentDetails });
+  } = useGaslessPayment({ paymentDetails, publicKey: urlParams?.pk });
 
   // Prevent double API call in React Strict Mode
   const isInitialized = useRef(false);
@@ -302,7 +302,13 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
   // Confirm/redirect handler (success)
   const handleConfirm = useCallback(() => {
     if (paymentDetails?.successUrl) {
-      window.location.href = paymentDetails.successUrl;
+      const isIframe = window.parent !== window;
+      if (isIframe) {
+        const targetOrigin = new URL(paymentDetails.successUrl).origin;
+        window.parent.postMessage({ type: 'payment_complete', status: 'success' }, targetOrigin);
+      } else {
+        window.location.href = paymentDetails.successUrl;
+      }
       return;
     }
     goToWalletConnect();
@@ -311,7 +317,13 @@ export default function PaymentStep({ urlParams }: PaymentStepProps) {
   // Cancel/fail redirect handler
   const handleCancel = useCallback(() => {
     if (urlParams?.failUrl) {
-      window.location.href = urlParams.failUrl;
+      const isIframe = window.parent !== window;
+      if (isIframe) {
+        const targetOrigin = new URL(urlParams.failUrl).origin;
+        window.parent.postMessage({ type: 'payment_complete', status: 'fail' }, targetOrigin);
+      } else {
+        window.location.href = urlParams.failUrl;
+      }
     }
   }, [urlParams?.failUrl]);
 

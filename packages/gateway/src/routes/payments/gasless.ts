@@ -10,7 +10,7 @@ import { RelayerService } from '../../services/relayer.service';
 import { RelayService } from '../../services/relay.service';
 import { PaymentService } from '../../services/payment.service';
 import { MerchantService } from '../../services/merchant.service';
-import { createPaymentAuthMiddleware } from '../../middleware/auth.middleware';
+import { createPublicAuthMiddleware } from '../../middleware/public-auth.middleware';
 import {
   GaslessRequestSchema as GaslessRequestDocSchema,
   GaslessResponseSchema,
@@ -30,8 +30,8 @@ export async function submitGaslessRoute(
   paymentService: PaymentService,
   merchantService: MerchantService
 ) {
-  // Auth + payment ownership middleware
-  const authMiddleware = createPaymentAuthMiddleware(merchantService, paymentService);
+  // Public key auth middleware (widget uses x-public-key, not x-api-key)
+  const authMiddleware = createPublicAuthMiddleware(merchantService);
 
   app.post<{ Params: { id: string }; Body: SubmitGaslessRequest }>(
     '/payments/:id/gasless',
@@ -58,7 +58,7 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
 - Amount in forwardRequest.data is validated against DB amount
 - Signature format is validated before relay submission
         `,
-        security: [{ ApiKeyAuth: [] }],
+        security: [{ PublicKeyAuth: [] }],
         params: {
           type: 'object',
           properties: {
@@ -111,6 +111,15 @@ Submits a gasless (meta-transaction) payment using ERC-2771 forwarder.
           return reply.code(404).send({
             code: 'PAYMENT_NOT_FOUND',
             message: '결제를 찾을 수 없습니다',
+          });
+        }
+
+        // Validate payment belongs to the authenticated merchant
+        const merchant = request.merchant;
+        if (merchant && payment.merchant_id !== merchant.id) {
+          return reply.code(403).send({
+            code: 'FORBIDDEN',
+            message: 'Payment does not belong to this merchant',
           });
         }
 

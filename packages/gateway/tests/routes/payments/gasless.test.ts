@@ -9,8 +9,9 @@ import { PaymentService } from '../../../src/services/payment.service';
 import { MerchantService } from '../../../src/services/merchant.service';
 import PaymentGatewayV1Artifact from '@solo-pay/contracts/artifacts/src/PaymentGatewayV1.sol/PaymentGatewayV1.json';
 
-// Test API key for authentication
-const TEST_API_KEY = 'test-api-key-123';
+// Test public key for authentication (widget uses x-public-key, not x-api-key)
+const TEST_PUBLIC_KEY = 'pk_test_abc123';
+const TEST_ORIGIN = 'http://localhost:3000';
 
 // Mock merchant data for auth
 const mockMerchant = {
@@ -18,6 +19,8 @@ const mockMerchant = {
   merchant_key: 'merchant_demo_001',
   name: 'Demo Store',
   api_key_hash: 'hashed',
+  public_key_hash: 'hashed_public',
+  allowed_domains: [TEST_ORIGIN],
   webhook_url: null,
   is_enabled: true,
   is_deleted: false,
@@ -124,7 +127,7 @@ describe('POST /payments/:id/gasless', () => {
     };
 
     merchantService = {
-      findByApiKey: vi.fn().mockResolvedValue(mockMerchant),
+      findByPublicKey: vi.fn().mockResolvedValue(mockMerchant),
     };
 
     await submitGaslessRoute(
@@ -143,7 +146,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-123/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
 
@@ -160,7 +163,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-456/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
 
@@ -182,7 +185,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-789/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidRequest,
       });
 
@@ -201,7 +204,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-101/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidRequest,
       });
 
@@ -220,7 +223,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-202/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: incompleteRequest,
       });
 
@@ -235,7 +238,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments//gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
 
@@ -254,7 +257,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-404/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
 
@@ -275,7 +278,7 @@ describe('POST /payments/:id/gasless', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/payments/payment-505/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: invalidRequest,
       });
 
@@ -294,7 +297,7 @@ describe('POST /payments/:id/gasless', () => {
       await app.inject({
         method: 'POST',
         url: '/payments/payment-606/gasless',
-        headers: { 'x-api-key': TEST_API_KEY },
+        headers: { 'x-public-key': TEST_PUBLIC_KEY, origin: TEST_ORIGIN },
         payload: validRequest,
       });
 

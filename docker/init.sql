@@ -5,6 +5,13 @@
 
 -- Create database if not exists
 CREATE DATABASE IF NOT EXISTS solopay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS solopay_sample_merchant CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Grant permissions to solopay user for sample_merchant database
+GRANT ALL PRIVILEGES ON solopay_sample_merchant.* TO 'solopay'@'%';
+-- Grant CREATE/DROP for Prisma shadow database (used by prisma migrate dev)
+GRANT CREATE, DROP ON *.* TO 'solopay'@'%';
+FLUSH PRIVILEGES;
 
 USE solopay;
 
@@ -244,12 +251,12 @@ INSERT INTO tokens (chain_id, address, symbol, decimals) VALUES
 
 -- Demo Merchant (id=1)
 -- API Key: 123 -> SHA-256 hash
+-- Public Key: pk_test_demo_001 -> SHA-256 hash
 -- chain_id=1 (Localhost chain)
 -- recipient_address: Account #1 (recipient) for receiving payments
--- public_key, public_key_hash, allowed_domains: NULL by default; configure via POST /merchants/me/public-key
 -- webhook_url: Demo app receives webhooks at /api/webhook (Docker: http://demo:3000/api/webhook)
-INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
-('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'http://demo:3000/api/webhook', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
+INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, public_key, public_key_hash, allowed_domains, webhook_url, fee_bps, recipient_address) VALUES
+('merchant_demo_001', 'Demo Store', 1, 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'pk_test_demo_001', '51a9fbfc241088a3463f5df1db9d4d1963e4b74056f0892417f7db37bdf17b01', '["http://localhost:3000"]', 'http://demo:3000/api/webhook', 0, '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
 
 -- MetaStar Merchant (id=2)
 -- API Key: msq_sk_metastar_123 -> SHA-256 hash
@@ -259,6 +266,15 @@ INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, 
 INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, fee_bps, recipient_address) VALUES
 ('merchant_metastar_001', 'Metastar Global', 3, '0136f3e97619f4aa51dffe177e9b7d6bf495ffd6b09547f5463ef483d1db705a', NULL, 0, '0x7bE4CfF95eb3c3d2162410abCd5506f691C624Ed');
 
+-- Sample Merchant (id=3)
+-- API Key: sample_api_key_001 -> SHA-256 hash
+-- chain_id=1 (Localhost chain)
+-- recipient_address: Account #6 (recipient) for receiving payments
+-- public_key, public_key_hash, allowed_domains: NULL by default; configure via POST /merchants/me/public-key
+-- webhook_url: http://sample-merchant:3004/api/webhook (Docker internal network)
+INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, public_key, public_key_hash, allowed_domains, webhook_url, fee_bps, recipient_address) VALUES
+('merchant_sample_001', 'Sample Merchant', 1, '9074171b675d51a53e7524e3b79d1dfa920d72063dcaab734856dd8f97749bd3', 'pk_live_xqKZ6PpVdfUaaVBJhS6qI8RbUbZUbvSq', '05994e195c9cde2a1548d848fa5d40d3506da18d0071785981db25daeb86d4f6', '["http://localhost:3005"]', 'http://sample-merchant:3004/api/webhook', 0, '0x976EA74026E726554dB657fA54763abd0C3a0aa9');
+
 -- Payment Methods
 -- Note: Payment methods must use tokens from the merchant's chain
 -- Note: recipient_address removed - contract pays to treasury (set at deployment)
@@ -266,7 +282,8 @@ INSERT INTO merchants (merchant_key, name, chain_id, api_key_hash, webhook_url, 
 -- id=2: MetaStar (chain_id=3) + SUT on Amoy (token_id=3, chain_id=3)
 INSERT INTO merchant_payment_methods (merchant_id, token_id) VALUES
 (1, 1),
-(2, 5);
+(2, 5),
+(3, 1);
 
 -- Show created tables
 SHOW TABLES;

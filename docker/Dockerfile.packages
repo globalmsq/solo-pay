@@ -1,5 +1,5 @@
 # SoloPay Monorepo - Multi-stage Dockerfile
-# Targets: hardhat, contracts, gateway, demo, simple-relayer, guide
+# Targets: hardhat, contracts, gateway, demo, simple-relayer, sample-merchant, guide
 
 # === Dependencies Stage (tools + deps + contracts) ===
 FROM node:20-alpine AS deps
@@ -17,6 +17,7 @@ COPY packages/faucet-manager/package.json ./packages/faucet-manager/
 COPY packages/simple-relayer/package.json ./packages/simple-relayer/
 COPY packages/guide/package.json ./packages/guide/
 COPY packages/demo/package.json ./packages/demo/
+COPY packages/sample-merchant/package.json ./packages/sample-merchant/
 
 RUN pnpm install --frozen-lockfile
 
@@ -29,6 +30,9 @@ WORKDIR /app
 
 COPY packages/gateway/prisma ./packages/gateway/prisma
 RUN cd /app/packages/gateway && pnpm exec prisma generate
+
+COPY packages/sample-merchant/prisma ./packages/sample-merchant/prisma
+RUN cd /app/packages/sample-merchant && pnpm exec prisma generate
 WORKDIR /app
 
 # === Hardhat Node ===
@@ -122,6 +126,43 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -sf http://localhost:3000 || exit 1
 CMD ["pnpm", "start"]
+
+# === Sample Merchant Builder ===
+FROM deps AS sample-merchant-builder
+
+WORKDIR /app
+COPY eslint.config.ts ./
+COPY packages/sample-merchant ./packages/sample-merchant
+RUN cd /app/packages/sample-merchant && pnpm exec prisma generate
+ARG NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY
+ARG NEXT_PUBLIC_WIDGET_URL
+ENV NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY=${NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY}
+ENV NEXT_PUBLIC_WIDGET_URL=${NEXT_PUBLIC_WIDGET_URL}
+WORKDIR /app/packages/sample-merchant
+RUN pnpm build
+
+# === Sample Merchant Runtime ===
+FROM node:20-alpine AS sample-merchant
+
+RUN apk add --no-cache curl && \
+    corepack enable
+WORKDIR /app
+COPY package.json pnpm-workspace.yaml ./
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/sample-merchant/node_modules ./packages/sample-merchant/node_modules
+COPY --from=sample-merchant-builder /app/packages/sample-merchant/.next ./packages/sample-merchant/.next
+COPY --from=sample-merchant-builder /app/packages/sample-merchant/package.json ./packages/sample-merchant/
+COPY --from=sample-merchant-builder /app/packages/sample-merchant/next.config.ts ./packages/sample-merchant/
+COPY --from=sample-merchant-builder /app/packages/sample-merchant/app/generated ./packages/sample-merchant/app/generated
+COPY --from=sample-merchant-builder /app/packages/sample-merchant/prisma ./packages/sample-merchant/prisma
+
+WORKDIR /app/packages/sample-merchant
+ENV NODE_ENV=production
+EXPOSE 3004
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
+  CMD curl -sf http://localhost:3004 || exit 1
+CMD ["sh", "-c", "npx prisma db push --skip-generate && npx next start -p 3004"]
 
 # === Simple Relayer Builder ===
 FROM deps AS simple-relayer-builder

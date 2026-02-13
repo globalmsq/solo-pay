@@ -333,7 +333,68 @@ describe('SoloPayClient', () => {
       }
     });
 
-    it('TC-005.2: should throw SoloPayError on invalid signature', async () => {
+    it('TC-005.2: should use x-public-key header when publicKey is configured', async () => {
+      const publicClient = new SoloPayClient({
+        environment: 'development',
+        apiKey: 'test-api-key',
+        publicKey: 'pk_test_demo_001',
+        origin: 'http://localhost:3000',
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          relayRequestId: 'relay-123',
+          status: 'submitted',
+          message: 'Transaction submitted',
+        }),
+      });
+
+      await publicClient.submitGasless(validParams);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-public-key': 'pk_test_demo_001',
+            origin: 'http://localhost:3000',
+          }),
+        })
+      );
+      // Should NOT include x-api-key when using public auth
+      const callHeaders = mockFetch.mock.calls[0][1].headers;
+      expect(callHeaders).not.toHaveProperty('x-api-key');
+    });
+
+    it('TC-005.3: should use x-public-key without origin when origin is not configured', async () => {
+      const publicClientNoOrigin = new SoloPayClient({
+        environment: 'development',
+        apiKey: 'test-api-key',
+        publicKey: 'pk_test_demo_001',
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          relayRequestId: 'relay-456',
+          status: 'submitted',
+          message: 'Transaction submitted',
+        }),
+      });
+
+      await publicClientNoOrigin.submitGasless(validParams);
+
+      const callHeaders = mockFetch.mock.calls[0][1].headers;
+      expect(callHeaders['x-public-key']).toBe('pk_test_demo_001');
+      expect(callHeaders).not.toHaveProperty('origin');
+      expect(callHeaders).not.toHaveProperty('x-api-key');
+    });
+
+    it('TC-005.4: should throw SoloPayError on invalid signature', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,

@@ -14,6 +14,8 @@ const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3001';
 export interface TestMerchant {
   merchantId: string;
   apiKey: string;
+  publicKey?: string;
+  origin?: string;
 }
 
 /**
@@ -22,6 +24,8 @@ export interface TestMerchant {
 export const TEST_MERCHANT: TestMerchant = {
   merchantId: 'merchant_demo_001',
   apiKey: '123',
+  publicKey: 'pk_test_demo_001',
+  origin: 'http://localhost:3000',
 };
 
 export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): SoloPayClient {
@@ -29,6 +33,8 @@ export function createTestClient(merchant: TestMerchant = TEST_MERCHANT): SoloPa
     environment: 'custom',
     apiUrl: GATEWAY_URL,
     apiKey: merchant.apiKey,
+    publicKey: merchant.publicKey,
+    origin: merchant.origin,
   });
 }
 
@@ -38,6 +44,8 @@ export function createTestClientFromFixture(merchantName: string = 'default'): S
     environment: 'custom',
     apiUrl: GATEWAY_URL,
     apiKey: fixture.apiKey,
+    publicKey: fixture.publicKey,
+    origin: fixture.allowedDomains?.[0],
   });
 }
 

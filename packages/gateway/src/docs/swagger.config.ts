@@ -93,6 +93,12 @@ All errors follow a consistent format:
           name: 'x-api-key',
           description: 'Merchant API key for authentication.',
         },
+        PublicKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-public-key',
+          description: 'Merchant public key for widget authentication (pk_live_xxx).',
+        },
       },
       schemas: {
         // Imported from schemas.ts - single source of truth
