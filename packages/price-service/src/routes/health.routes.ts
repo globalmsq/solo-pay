@@ -1,5 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { isRedisAvailable } from '../lib/redis';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const { version } = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8'));
 
 export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
   /**
@@ -30,7 +34,7 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
       return {
         status: 'healthy',
         service: 'price-service',
-        version: '1.0.0',
+        version,
         timestamp: new Date().toISOString(),
         redis: isRedisAvailable(),
       };

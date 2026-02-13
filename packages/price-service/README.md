@@ -29,7 +29,7 @@ Provides token price lookup by chain ID and contract address. Tokens must be reg
 | Cache     | ioredis    | ^5.4.0  |
 | Runtime   | Node.js    | 20+     |
 | Language  | TypeScript | ^5.4.0  |
-| Testing   | Vitest     | ^2.0.0  |
+| Testing   | Vitest     | ^4.0.14 |
 
 ## Getting Started
 

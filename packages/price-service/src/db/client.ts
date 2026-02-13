@@ -18,10 +18,10 @@ function getDatabaseUrl(): string {
 
 export function getPrismaClient(): PrismaClient {
   if (!prismaInstance) {
-    if (!process.env.DATABASE_URL) {
-      process.env.DATABASE_URL = getDatabaseUrl();
-    }
-    prismaInstance = new PrismaClient();
+    const databaseUrl = process.env.DATABASE_URL ?? getDatabaseUrl();
+    prismaInstance = new PrismaClient({
+      datasources: { db: { url: databaseUrl } },
+    });
   }
   return prismaInstance;
 }
