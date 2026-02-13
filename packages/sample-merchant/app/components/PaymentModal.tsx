@@ -12,19 +12,22 @@ export default function PaymentModal({
 }) {
   const router = useRouter();
 
-  // Build widget iframe URL with payment params as query string
+  const tokenAddress =
+    process.env.NEXT_PUBLIC_SOLO_PAY_TOKEN_ADDRESS || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+
   const widgetUrl = useMemo(() => {
     const url = new URL(process.env.NEXT_PUBLIC_WIDGET_URL || 'http://localhost:3005');
     url.searchParams.set('pk', process.env.NEXT_PUBLIC_SOLO_PAY_PUBLIC_KEY || '');
     url.searchParams.set('orderId', `${paymentId}`);
     url.searchParams.set('amount', `${product.price}`);
+    url.searchParams.set('tokenAddress', tokenAddress);
     url.searchParams.set(
       'successUrl',
       `${window.location.origin}/payments/success?paymentId=${paymentId}`
     );
     url.searchParams.set('failUrl', `${window.location.origin}`);
     return url.toString();
-  }, [paymentId, product.price]);
+  }, [paymentId, product.price, tokenAddress]);
 
   // Lock body scroll while modal is open
   useEffect(() => {

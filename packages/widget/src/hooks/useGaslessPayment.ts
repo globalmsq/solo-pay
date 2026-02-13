@@ -4,7 +4,7 @@ import { encodeFunctionData } from 'viem';
 import { PAYMENT_GATEWAY_ABI, FORWARDER_ABI } from '../lib/contracts';
 import {
   submitGaslessPayment,
-  waitForRelayTransaction,
+  pollPaymentStatus,
   getPaymentStatus,
   type ForwardRequest,
 } from '../lib/api';
@@ -196,31 +196,33 @@ export function useGaslessPayment({
       setIsPayingGasless(false);
       setIsRelayConfirming(true);
 
+      const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
       const submitResponse = await submitGaslessPayment(
         paymentId,
         forwarderAddress,
         forwardRequest,
-        publicKey ?? ''
+        publicKey ?? '',
+        { origin }
       );
 
       setRelayRequestId(submitResponse.relayRequestId);
 
-      // 6. Wait for relay transaction to be mined
-      const relayResult = await waitForRelayTransaction(submitResponse.relayRequestId);
+      // 6. Poll payment status until CONFIRMED/FAILED (gateway no longer exposes relay status endpoint)
+      const statusOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
+      const finalStatus = await pollPaymentStatus(paymentId, {
+        maxAttempts: 40,
+        intervalMs: 3000,
+        publicKey: publicKey ?? undefined,
+        origin: statusOrigin,
+      });
 
-      if (relayResult.status === 'failed') {
-        throw new Error(relayResult.error || 'Gasless payment relay failed');
+      if (finalStatus.status !== 'CONFIRMED') {
+        throw new Error(
+          finalStatus.status === 'FAILED' ? 'Payment failed' : 'Payment did not confirm'
+        );
       }
 
-      // 7. Trigger gateway to sync on-chain status and fire webhook
-      try {
-        await getPaymentStatus(paymentId);
-      } catch (e) {
-        // Non-critical: webhook may fire later via other means
-        console.warn('Failed to trigger immediate payment status sync:', e);
-      }
-
-      setRelayTxHash(relayResult.transactionHash);
+      setRelayTxHash(finalStatus.txHash ?? '');
       setIsRelayConfirming(false);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Gasless payment failed'));

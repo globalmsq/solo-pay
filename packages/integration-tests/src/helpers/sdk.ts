@@ -9,8 +9,10 @@ import type {
 
 import { getMerchant } from '../fixtures/merchant';
 
+/** Gateway host (no path). CI: GATEWAY_URL=http://127.0.0.1:3001 */
 const GATEWAY_BASE = process.env.GATEWAY_URL || 'http://localhost:3001';
-const GATEWAY_URL = `${GATEWAY_BASE}/api/v1`;
+/** Full gateway API v1 base for SDK (must match gateway mount /api/v1). */
+const GATEWAY_URL = `${GATEWAY_BASE.replace(/\/$/, '')}/api/v1`;
 
 export interface TestMerchant {
   merchantId: string;

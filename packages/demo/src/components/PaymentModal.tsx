@@ -18,12 +18,7 @@ import {
   parseGwei,
   type Address,
 } from 'viem';
-import {
-  getPaymentStatus,
-  checkout,
-  submitGaslessPayment,
-  waitForRelayTransaction,
-} from '@/lib/api';
+import { getPaymentStatus, checkout, submitGaslessPayment } from '@/lib/api';
 import type { CheckoutResponse } from '@/lib/api';
 import { CopyButton } from './CopyButton';
 
@@ -509,24 +504,19 @@ export function PaymentModal({ product, onClose, onSuccess }: PaymentModalProps)
 
       setRelayRequestId(submitResponse.data.relayRequestId);
 
-      // 6. Wait for relay transaction to be mined
-      const relayResult = await waitForRelayTransaction(submitResponse.data.relayRequestId);
-
-      if (relayResult.status === 'failed') {
-        throw new Error('Gasless payment relay failed');
-      }
-
-      // 7. Verify payment via server (Contract = Source of Truth)
-      // Server queries contract.processedPayments[paymentId] or PaymentProcessed event
+      // 6. Poll payment status until CONFIRMED (gateway no longer exposes relay status endpoint)
       await pollPaymentStatus(paymentId);
 
-      // 8. Payment confirmed by server
-      await refetchBalance(); // Update balance to show deducted amount
-      setPendingTxHash(relayResult.transactionHash as Address | undefined);
+      // 7. Get final status for txHash
+      const finalStatus = await getPaymentStatus(paymentId);
+      const txHash = finalStatus.data?.transactionHash;
+
+      await refetchBalance();
+      setPendingTxHash(txHash as Address | undefined);
       setStatus('success');
 
-      if (onSuccess && relayResult.transactionHash) {
-        onSuccess(relayResult.transactionHash);
+      if (onSuccess && txHash) {
+        onSuccess(txHash);
       }
       // Don't auto-close - let user view details and close manually
     } catch (err: unknown) {

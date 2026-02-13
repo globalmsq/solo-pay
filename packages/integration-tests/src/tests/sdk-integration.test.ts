@@ -326,7 +326,7 @@ describe('SDK Integration', () => {
 
       const signature = await signForwardRequest(request, payerPrivateKey);
 
-      const gaslessResponse = await client.submitGasless({
+      await client.submitGasless({
         paymentId: createResponse.paymentId,
         forwarderAddress,
         forwardRequest: {
@@ -341,14 +341,12 @@ describe('SDK Integration', () => {
         },
       });
 
-      // Track relay status
-      const relayStatus = await client.getRelayStatus(gaslessResponse.relayRequestId);
-
-      expect(relayStatus.success).toBe(true);
-      expect(relayStatus.relayRequestId).toBe(gaslessResponse.relayRequestId);
-      expect(['submitted', 'pending', 'mined', 'confirmed', 'failed']).toContain(
-        relayStatus.status
-      );
+      // Gateway no longer exposes GET /payments/relay/:id/status; poll payment status instead
+      const paymentId = createResponse.paymentId;
+      const statusResponse = await client.getPaymentStatus(paymentId);
+      expect(statusResponse.success).toBe(true);
+      expect(statusResponse.data?.paymentId).toBe(paymentId);
+      expect(['CREATED', 'PENDING', 'CONFIRMED', 'FAILED']).toContain(statusResponse.data?.status);
     });
   });
 
