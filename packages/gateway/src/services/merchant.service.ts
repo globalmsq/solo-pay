@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, Merchant } from '@prisma/client';
+import { Prisma, PrismaClient, Merchant } from '@solo-pay/database';
 import crypto from 'crypto';
 
 /** Message thrown when merchant_key already exists (for 409 handling in routes). */

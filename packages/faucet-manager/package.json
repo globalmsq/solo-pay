@@ -5,28 +5,26 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:coverage": "vitest --run --coverage",
     "lint": "eslint",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit",
-    "prisma:generate": "prisma generate"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
     "@fastify/swagger": "^9.6.1",
     "@fastify/swagger-ui": "^5.2.4",
-    "@prisma/client": "^6.0.0",
+    "@solo-pay/database": "workspace:*",
     "dotenv": "^16.4.0",
     "fastify": "^5.0.0",
     "viem": "^2.44.4",
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "prisma": "^6.0.0",
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^4.0.17",
     "typescript": "^5.4.0",

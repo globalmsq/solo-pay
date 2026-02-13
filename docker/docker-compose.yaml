@@ -15,7 +15,7 @@ services:
       MYSQL_PASSWORD: pass
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
     networks:
       - solo-pay-network
     healthcheck:
@@ -112,6 +112,23 @@ services:
     networks:
       - solo-pay-network
 
+  # Database Migration (runs once and exits)
+  db-migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.packages
+      target: db-migrate
+    image: 347765734000.dkr.ecr.ap-northeast-2.amazonaws.com/solo-pay/db-migrate:nightly
+    container_name: solo-pay-db-migrate
+    restart: 'no'
+    environment:
+      DATABASE_URL: mysql://solopay:pass@mysql:3306/solopay
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - solo-pay-network
+
   # Faucet Manager (one-time gas grant per wallet per chain)
   faucet-manager:
     build:
@@ -133,6 +150,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     networks:
       - solo-pay-network
     healthcheck:
@@ -173,6 +192,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_started
       hardhat-node:
@@ -265,6 +286,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_started
     networks:

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { requestGas } from '../faucet.service';
 import { RequestGasError } from '../types';
 import type { GasFaucetPorts } from '../ports';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@solo-pay/database';
 
 const RequestGasBodySchema = z.object({
   paymentId: z.string().min(1),

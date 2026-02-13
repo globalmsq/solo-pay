@@ -1,4 +1,4 @@
-import { PrismaClient, Chain, Token } from '@prisma/client';
+import { PrismaClient, Chain, Token } from '@solo-pay/database';
 
 export interface CreateChainInput {
   network_id: number;

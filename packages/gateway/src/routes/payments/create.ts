@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { parseUnits, keccak256, toHex, Hex, Address } from 'viem';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@solo-pay/database';
 import { randomBytes } from 'crypto';
 import { ZodError } from 'zod';
 import { CreatePaymentSchema } from '../../schemas/payment.schema';

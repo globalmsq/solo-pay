@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import type { Payment } from '@prisma/client';
-import type { Merchant } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import type { Payment } from '@solo-pay/database';
+import type { Merchant } from '@solo-pay/database';
+import { Decimal } from '@solo-pay/database';
 import { resolveWebhookUrl, buildPaymentConfirmedBody } from '../webhook-queue.service';
 
 describe('webhook-queue.service', () => {

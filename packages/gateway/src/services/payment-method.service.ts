@@ -1,4 +1,4 @@
-import { PrismaClient, MerchantPaymentMethod } from '@prisma/client';
+import { PrismaClient, MerchantPaymentMethod } from '@solo-pay/database';
 import { TokenService } from './token.service';
 import { ChainService } from './chain.service';
 

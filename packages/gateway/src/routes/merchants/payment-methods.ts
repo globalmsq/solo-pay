@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { MerchantPaymentMethod } from '@prisma/client';
+import { MerchantPaymentMethod } from '@solo-pay/database';
 import { MerchantService } from '../../services/merchant.service';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { TokenService } from '../../services/token.service';

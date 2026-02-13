@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { Payment } from '@prisma/client';
+import { Payment } from '@solo-pay/database';
 import { BlockchainService } from '../../services/blockchain.service';
 import { PaymentService } from '../../services/payment.service';
 import { createAuthMiddleware } from '../../middleware/auth.middleware';

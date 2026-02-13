@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@solo-pay/database';
 import { createLogger } from '../lib/logger';
 import { getCache, setCache } from '../lib/redis';
 

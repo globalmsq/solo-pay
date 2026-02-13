@@ -1,5 +1,5 @@
-import { PrismaClient, RelayRequest, RelayStatus } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaClient, RelayRequest, RelayStatus } from '@solo-pay/database';
+import { Decimal } from '@solo-pay/database';
 
 export interface CreateRelayInput {
   relay_ref: string;

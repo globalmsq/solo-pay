@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@solo-pay/database';
 import { createRefundRoute } from '../../../src/routes/refunds/create';
 import { MerchantService } from '../../../src/services/merchant.service';
 import { PaymentService } from '../../../src/services/payment.service';

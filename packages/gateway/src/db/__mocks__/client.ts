@@ -5,7 +5,7 @@
  * It uses vitest-mock-extended to create type-safe deep mocks.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@solo-pay/database';
 import { DeepMockProxy, mockDeep, mockReset } from 'vitest-mock-extended';
 
 // Create a deep mock of PrismaClient with full type safety

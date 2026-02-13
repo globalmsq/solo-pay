@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockPrisma, resetPrismaMocks } from '../../db/__mocks__/client';
-import { Decimal } from '@prisma/client/runtime/library';
-import { PaymentStatus } from '@prisma/client';
+import { Decimal } from '@solo-pay/database';
+import { PaymentStatus } from '@solo-pay/database';
 
 // Mock the client module
 vi.mock('../../db/client', () => ({

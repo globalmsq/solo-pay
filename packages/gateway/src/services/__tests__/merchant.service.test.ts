@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@solo-pay/database';
 import { mockPrisma, resetPrismaMocks } from '../../db/__mocks__/client';
 import crypto from 'crypto';
 
@@ -9,7 +9,7 @@ vi.mock('../../db/client', () => ({
   disconnectPrisma: vi.fn(),
 }));
 
-import { Merchant } from '@prisma/client';
+import { Merchant } from '@solo-pay/database';
 import {
   MerchantService,
   MERCHANT_KEY_EXISTS_MESSAGE,

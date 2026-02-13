@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockPrisma, resetPrismaMocks } from '../../db/__mocks__/client';
-import { RelayStatus } from '@prisma/client';
+import { RelayStatus } from '@solo-pay/database';
 
 // Mock the client module
 vi.mock('../../db/client', () => ({

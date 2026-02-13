@@ -19,6 +19,7 @@ COPY packages/guide/package.json ./packages/guide/
 COPY packages/demo/package.json ./packages/demo/
 COPY packages/sample-merchant/package.json ./packages/sample-merchant/
 COPY packages/price-service/package.json ./packages/price-service/
+COPY packages/database/package.json ./packages/database/
 
 RUN pnpm install --frozen-lockfile
 
@@ -29,17 +30,15 @@ WORKDIR /app/packages/contracts
 RUN npx hardhat compile
 WORKDIR /app
 
+# Database package - MUST be built first (shared Prisma client for gateway, faucet-manager, price-service)
+COPY packages/database ./packages/database
+WORKDIR /app/packages/database
+RUN pnpm run build
+WORKDIR /app
+
+# Sample merchant has its own independent schema (separate database)
 COPY packages/sample-merchant/prisma ./packages/sample-merchant/prisma
 RUN cd /app/packages/sample-merchant && pnpm exec prisma generate
-
-COPY packages/price-service/prisma ./packages/price-service/prisma
-RUN cd /app/packages/price-service && pnpm exec prisma generate
-
-# Gateway prisma generate MUST run last: it writes to the shared @prisma/client
-# in node_modules, so the most complete schema (with Chain, Token, etc.) wins.
-COPY packages/gateway/prisma ./packages/gateway/prisma
-RUN cd /app/packages/gateway && pnpm exec prisma generate
-WORKDIR /app
 
 # === Hardhat Node ===
 FROM deps AS hardhat
@@ -55,6 +54,17 @@ FROM deps AS contracts
 
 WORKDIR /app/packages/contracts
 CMD ["npx", "hardhat", "run", "scripts/check-and-deploy.ts", "--network", "localhost"]
+
+# === Database Migration ===
+FROM deps AS db-migrate
+
+RUN apk add --no-cache curl
+
+WORKDIR /app/packages/database
+ENV NODE_ENV=production
+
+# Run migration and exit (no tail -f, completes and stops)
+CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss"]
 
 # === Webhook Manager Builder ===
 FROM deps AS webhook-manager-builder
@@ -85,19 +95,20 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/gateway/node_modules ./packages/gateway/node_modules
 COPY --from=deps /app/packages/contracts/typechain-types ./packages/contracts/typechain-types
 COPY --from=deps /app/packages/contracts/artifacts ./packages/contracts/artifacts
+COPY --from=deps /app/packages/database/dist ./packages/database/dist
+COPY --from=deps /app/packages/database/package.json ./packages/database/package.json
 COPY --from=deps /app/packages/webhook-manager/node_modules ./packages/webhook-manager/node_modules
 COPY --from=webhook-manager-builder /app/packages/webhook-manager/dist ./packages/webhook-manager/dist
 COPY --from=webhook-manager-builder /app/packages/webhook-manager/package.json ./packages/webhook-manager/package.json
 COPY --from=gateway-builder /app/packages/gateway/dist ./packages/gateway/dist
 COPY --from=gateway-builder /app/packages/gateway/package.json ./packages/gateway/
-COPY --from=deps /app/packages/gateway/prisma ./packages/gateway/prisma
 
 WORKDIR /app/packages/gateway
 ENV NODE_ENV=production
 EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -sf http://localhost:3001/health || exit 1
-CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss && node dist/index.js"]
+CMD ["node", "dist/index.js"]
 
 # === Demo Builder ===
 FROM deps AS demo-builder
@@ -219,6 +230,8 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/faucet-manager/node_modules ./packages/faucet-manager/node_modules
+COPY --from=deps /app/packages/database/dist ./packages/database/dist
+COPY --from=deps /app/packages/database/package.json ./packages/database/package.json
 COPY --from=faucet-manager-builder /app/packages/faucet-manager/dist ./packages/faucet-manager/dist
 COPY --from=faucet-manager-builder /app/packages/faucet-manager/package.json ./packages/faucet-manager/package.json
 
@@ -245,9 +258,10 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/price-service/node_modules ./packages/price-service/node_modules
+COPY --from=deps /app/packages/database/dist ./packages/database/dist
+COPY --from=deps /app/packages/database/package.json ./packages/database/package.json
 COPY --from=price-service-builder /app/packages/price-service/dist ./packages/price-service/dist
 COPY --from=price-service-builder /app/packages/price-service/package.json ./packages/price-service/
-COPY --from=deps /app/packages/price-service/prisma ./packages/price-service/prisma
 
 WORKDIR /app/packages/price-service
 ENV NODE_ENV=production
