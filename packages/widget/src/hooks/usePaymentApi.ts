@@ -83,6 +83,11 @@ export function usePaymentApi(): UsePaymentApiReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  /** Stored for getPaymentStatus public auth (from urlParams when createPayment was called) */
+  const [publicAuth, setPublicAuth] = useState<{
+    publicKey: string;
+    origin: string;
+  } | null>(null);
 
   /**
    * Create a new payment
@@ -96,6 +101,10 @@ export function usePaymentApi(): UsePaymentApiReturn {
       try {
         const result = await createPaymentFromUrlParams(urlParams);
         setPayment(result);
+        setPublicAuth({
+          publicKey: urlParams.pk,
+          origin: typeof window !== 'undefined' ? window.location.origin : '',
+        });
         return result;
       } catch (err) {
         console.error(err);
@@ -124,7 +133,11 @@ export function usePaymentApi(): UsePaymentApiReturn {
       setErrorCode(null);
 
       try {
-        const result = await getPaymentStatus(paymentId);
+        const options =
+          publicAuth && (publicAuth.publicKey || publicAuth.origin)
+            ? { publicKey: publicAuth.publicKey, origin: publicAuth.origin }
+            : undefined;
+        const result = await getPaymentStatus(paymentId, options);
         setStatus(result);
         return result;
       } catch (err) {
@@ -140,7 +153,7 @@ export function usePaymentApi(): UsePaymentApiReturn {
         setIsLoading(false);
       }
     },
-    []
+    [publicAuth]
   );
 
   /**
@@ -161,6 +174,8 @@ export function usePaymentApi(): UsePaymentApiReturn {
             setStatus(s);
             onStatusChange?.(s);
           },
+          publicKey: publicAuth?.publicKey,
+          origin: publicAuth?.origin,
         });
         return result;
       } catch (err) {
@@ -176,7 +191,7 @@ export function usePaymentApi(): UsePaymentApiReturn {
         setIsLoading(false);
       }
     },
-    []
+    [publicAuth]
   );
 
   /**
@@ -193,6 +208,7 @@ export function usePaymentApi(): UsePaymentApiReturn {
   const reset = useCallback(() => {
     setPayment(null);
     setStatus(null);
+    setPublicAuth(null);
     setIsLoading(false);
     setError(null);
     setErrorCode(null);

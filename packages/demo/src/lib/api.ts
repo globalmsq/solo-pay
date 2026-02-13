@@ -287,18 +287,6 @@ export const GaslessPaymentResponseSchema = z.object({
 export type GaslessPaymentResponse = z.infer<typeof GaslessPaymentResponseSchema>;
 
 /**
- * Relay Status Response Schema
- */
-export const RelayStatusResponseSchema = z.object({
-  success: z.boolean(),
-  relayRequestId: z.string(),
-  transactionHash: z.string().optional(),
-  status: z.enum(['submitted', 'pending', 'mined', 'confirmed', 'failed']),
-});
-
-export type RelayStatusResponse = z.infer<typeof RelayStatusResponseSchema>;
-
-/**
  * Submit gasless payment via OZ Defender relay
  * @param paymentId Payment ID (from checkout)
  * @param forwarderAddress Forwarder contract address (from checkout response)
@@ -360,69 +348,6 @@ export async function submitGaslessPayment(
       message: err instanceof Error ? err.message : 'Network error',
     };
   }
-}
-
-/**
- * Get relay transaction status
- * @param relayRequestId Relay request ID (from submitGaslessPayment response)
- */
-export async function getRelayStatus(
-  relayRequestId: string
-): Promise<ApiResponse<RelayStatusResponse>> {
-  try {
-    const response = await fetch(`${API_URL}/payments/relay/${relayRequestId}/status`);
-
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: 'Failed to fetch relay status' }));
-      return {
-        success: false,
-        code: error.code || ApiErrorCode.SERVER_ERROR,
-        message: error.message,
-      };
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      data: data as RelayStatusResponse,
-    };
-  } catch (err) {
-    return {
-      success: false,
-      code: ApiErrorCode.NETWORK_ERROR,
-      message: err instanceof Error ? err.message : 'Network error',
-    };
-  }
-}
-
-/**
- * Wait for relay transaction to complete
- * @param relayRequestId Relay request ID
- * @param options Polling options
- */
-export async function waitForRelayTransaction(
-  relayRequestId: string,
-  options: { timeout?: number; interval?: number } = {}
-): Promise<RelayStatusResponse> {
-  const { timeout = 120000, interval = 3000 } = options;
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < timeout) {
-    const response = await getRelayStatus(relayRequestId);
-
-    if (response.success && response.data) {
-      const status = response.data.status;
-      if (status === 'mined' || status === 'confirmed' || status === 'failed') {
-        return response.data;
-      }
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, interval));
-  }
-
-  throw new Error('Relay transaction confirmation timeout');
 }
 
 // API Error Codes

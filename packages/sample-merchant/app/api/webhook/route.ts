@@ -1,7 +1,8 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
-const GATEWAY_API_URL = process.env.GATEWAY_API_URL || 'http://localhost:3001';
+const GATEWAY_BASE = (process.env.GATEWAY_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+const GATEWAY_API_URL = `${GATEWAY_BASE}/api/v1`;
 const API_KEY = process.env.SOLO_PAY_API_KEY || '';
 
 /** Convert human-readable token amount to wei string (e.g. 25 → "25000000000000000000") */
